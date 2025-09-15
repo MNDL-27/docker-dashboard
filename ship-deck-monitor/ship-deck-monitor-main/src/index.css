@@ -1,0 +1,77 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
+All colors MUST be HSL.
+*/
+
+@layer base {
+  :root {
+    /* Docker Dashboard - Dark Professional Theme */
+    --background: 220 13% 9%;
+    --foreground: 210 20% 92%;
+
+    --card: 220 13% 11%;
+    --card-foreground: 210 20% 92%;
+
+    --popover: 220 13% 11%;
+    --popover-foreground: 210 20% 92%;
+
+    --primary: 213 94% 68%;
+    --primary-foreground: 220 13% 9%;
+
+    --secondary: 220 13% 15%;
+    --secondary-foreground: 210 20% 92%;
+
+    --muted: 220 13% 15%;
+    --muted-foreground: 215 15% 65%;
+
+    --accent: 220 13% 15%;
+    --accent-foreground: 210 20% 92%;
+
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 210 20% 92%;
+
+    --border: 220 13% 20%;
+    --input: 220 13% 15%;
+    --ring: 213 94% 68%;
+
+    --radius: 0.75rem;
+
+    /* Docker Dashboard Status Colors */
+    --status-connected: 142 76% 36%;
+    --status-connecting: 43 96% 56%;
+    --status-error: 0 84% 60%;
+    --status-closed: 215 15% 45%;
+
+    /* Dashboard specific tokens */
+    --dashboard-header: 220 13% 8%;
+    --container-card: 220 13% 12%;
+    --container-card-hover: 220 13% 14%;
+    --stats-bg: 220 13% 8%;
+    --logs-bg: 220 13% 7%;
+
+    /* Gradients */
+    --gradient-primary: linear-gradient(135deg, hsl(213 94% 68%), hsl(213 94% 78%));
+    --gradient-card: linear-gradient(135deg, hsl(220 13% 12%), hsl(220 13% 14%));
+    
+    /* Shadows */
+    --shadow-card: 0 4px 6px -1px hsl(220 13% 4% / 0.4), 0 2px 4px -1px hsl(220 13% 4% / 0.3);
+    --shadow-elevated: 0 10px 15px -3px hsl(220 13% 4% / 0.4), 0 4px 6px -2px hsl(220 13% 4% / 0.3);
+
+    /* Animations */
+    --transition-smooth: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-bounce: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+  }
+}
