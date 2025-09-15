@@ -1,0 +1,31 @@
+body {
+	background: #181a20;
+	color: #eee;
+	font-family: sans-serif;
+	margin: 0;
+	padding: 0;
+}
+h1 {
+	text-align: center;
+	margin: 1em 0;
+}
+#container-grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+	gap: 1em;
+	padding: 2em;
+}
+.container-card {
+	background: #23272f;
+	border-radius: 8px;
+	box-shadow: 0 2px 8px #0004;
+	padding: 1em;
+	min-height: 180px;
+}
+.stats, .logs {
+	margin-top: 1em;
+	font-size: 0.95em;
+	background: #181a20;
+	padding: 0.5em;
+	border-radius: 4px;
+}
