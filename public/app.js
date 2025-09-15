@@ -188,17 +188,10 @@ function mountConfig() {
 	});
 }
 
-function navigate(route) {
-	if (route === 'config') mountConfig(); else mountDashboard();
+// Initial mount based on URL path
+const pathname = window.location.pathname || '/';
+if (pathname === '/config.html') {
+	mountConfig();
+} else {
+	mountDashboard();
 }
-
-document.addEventListener('click', (e) => {
-	const btn = e.target.closest && e.target.closest('.nav-btn');
-	if (btn) {
-		const route = btn.getAttribute('data-route');
-		navigate(route);
-	}
-});
-
-// initial route
-navigate('dashboard');
