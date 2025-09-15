@@ -10,6 +10,7 @@ COPY ship-deck-monitor/ship-deck-monitor-main/vite.config.ts ./
 COPY ship-deck-monitor/ship-deck-monitor-main/tsconfig.json ./
 COPY ship-deck-monitor/ship-deck-monitor-main/postcss.config.js ./
 COPY ship-deck-monitor/ship-deck-monitor-main/tailwind.config.ts ./
+COPY ship-deck-monitor/ship-deck-monitor-main/index.html ./
 COPY ship-deck-monitor/ship-deck-monitor-main/public ./public
 COPY ship-deck-monitor/ship-deck-monitor-main/src ./src
 RUN npm ci --silent
