@@ -1,5 +1,5 @@
 module.exports = {
-	PORT: process.env.PORT || 8088,
+	PORT: process.env.PORT || 1713,
 	USE_PORTAINER: process.env.USE_PORTAINER || 'false',
 	DOCKER_SOCKET: process.env.DOCKER_SOCKET || '/var/run/docker.sock',
 	PORTAINER_URL: process.env.PORTAINER_URL || '',
