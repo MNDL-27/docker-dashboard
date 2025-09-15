@@ -7,18 +7,18 @@
 	<link rel="stylesheet" href="styles.css">
 </head>
 <body>
-	<h1>Docker Dashboard</h1>
-	<div style="margin-bottom: 1em;">
-		<label for="refresh-interval">Stats refresh rate:</label>
-		<select id="refresh-interval">
-			<option value="1000">1s</option>
-			<option value="2000">2s</option>
-			<option value="3000">3s</option>
-			<option value="5000">5s</option>
-			<option value="10000">10s</option>
-		</select>
-	</div>
-	<div id="container-grid"></div>
+	<header>
+		<h1>Docker Dashboard</h1>
+		<nav>
+			<button data-route="dashboard" class="nav-btn">Dashboard</button>
+			<button data-route="config" class="nav-btn">Config</button>
+		</nav>
+	</header>
+
+	<main id="app-root">
+		<!-- Router mount point -->
+	</main>
+
 	<script src="app.js"></script>
 </body>
 </html>
