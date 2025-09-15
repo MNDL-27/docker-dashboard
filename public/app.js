@@ -22,9 +22,10 @@ async function fetchContainers() {
 	return await res.json();
 }
 
-function createWS(path, id, onMessage) {
+// Create a reconnecting WebSocket with exponential backoff.
+// onMessage will be called for parsed JSON messages. onStatus(statusString) is optional and receives 'CONNECTING'|'OPEN'|'CLOSED'|'ERROR'.
+function createReconnectWS(path, id, onMessage, onStatus) {
 	const cfg = loadConfig();
-	// Build websocket URL using URL to preserve possible path prefix
 	const baseStr = cfg.apiBase && cfg.apiBase.trim() ? cfg.apiBase.replace(/\/$/, '') : window.location.origin;
 	let baseUrl;
 	try { baseUrl = new URL(baseStr); } catch (e) { baseUrl = new URL(window.location.origin); }
@@ -32,10 +33,45 @@ function createWS(path, id, onMessage) {
 	const basePath = baseUrl.pathname.replace(/\/$/, '');
 	const hostAndPort = baseUrl.host; // hostname[:port]
 	const wsUrl = `${wsProtocol}//${hostAndPort}${basePath}/ws${path}?id=${encodeURIComponent(id)}`;
-	const ws = new WebSocket(wsUrl);
-	ws.onmessage = e => onMessage(JSON.parse(e.data));
-	ws.onerror = e => console.warn('WS error', e);
-	return ws;
+
+	let ws = null;
+	let shouldStop = false;
+	let attempt = 0;
+
+	function setStatus(s) { if (typeof onStatus === 'function') onStatus(s); }
+
+	function connect() {
+		if (shouldStop) return;
+		attempt += 1;
+		setStatus('CONNECTING');
+		ws = new WebSocket(wsUrl);
+		ws.onopen = () => {
+			attempt = 0; // reset backoff
+			setStatus('OPEN');
+		};
+		ws.onmessage = e => {
+			try { onMessage(JSON.parse(e.data)); } catch (err) { console.warn('Failed to parse WS message', err); }
+		};
+		ws.onerror = (e) => {
+			console.warn('WS error', e);
+			setStatus('ERROR');
+		};
+		ws.onclose = () => {
+			setStatus('CLOSED');
+			if (shouldStop) return;
+			// exponential backoff: cap at 30s
+			const delay = Math.min(30000, Math.pow(2, Math.min(attempt, 6)) * 1000);
+			setTimeout(connect, delay);
+		};
+	}
+
+	// kick off
+	connect();
+
+	return {
+		send: (obj) => { if (ws && ws.readyState === WebSocket.OPEN) ws.send(JSON.stringify(obj)); },
+		close: () => { shouldStop = true; if (ws) ws.close(); }
+	};
 }
 
 function renderContainers(containers) {
@@ -49,34 +85,37 @@ function renderContainers(containers) {
 			<div class="logs">Loading logs...</div>`;
 		grid.appendChild(card);
 
-		// Stats WebSocket
-		const statsWs = createWS('/stats', container.Id, stats => {
-			try {
-				card.querySelector('.stats').textContent = `CPU: ${Number(stats.cpu_percent || 0).toFixed(2)}% | Mem: ${stats.memory_stats?.usage || 'N/A'} bytes`;
-			} catch (e) {
-				console.warn('Failed to render stats', e);
-			}
-		});
-		// add ws status badge
+		// Stats WebSocket (reconnecting)
 		const badge = document.createElement('div');
 		badge.className = 'ws-badge';
 		badge.textContent = 'CONNECTING';
 		badge.style.fontSize = '0.8em';
 		badge.style.marginTop = '6px';
 		card.appendChild(badge);
-		statsWs.addEventListener('open', () => { badge.textContent = 'OPEN'; badge.style.color = '#8ef'; });
-		statsWs.addEventListener('close', () => { badge.textContent = 'CLOSED'; badge.style.color = '#f88'; });
-		statsWs.addEventListener('error', () => { badge.textContent = 'ERROR'; badge.style.color = '#f88'; });
-		// send initial interval when open
-		statsWs.addEventListener('open', () => {
-			const ms = parseInt(document.getElementById('refresh-interval').value, 10) || 1000;
-			statsWs.send(JSON.stringify({ type: 'interval', interval: ms }));
+
+		const statsWs = createReconnectWS('/stats', container.Id, stats => {
+			try {
+				card.querySelector('.stats').textContent = `CPU: ${Number(stats.cpu_percent || 0).toFixed(2)}% | Mem: ${stats.memory_stats?.usage || 'N/A'} bytes`;
+			} catch (e) {
+				console.warn('Failed to render stats', e);
+			}
+		}, status => {
+			badge.textContent = status;
+			if (status === 'OPEN') badge.style.color = '#8ef';
+			if (status === 'CLOSED' || status === 'ERROR') badge.style.color = '#f88';
+			if (status === 'CONNECTING') badge.style.color = '#888';
 		});
-		// store websocket so we can update interval later
+
+		// store websocket handle so we can update interval later
 		window._dockerDashboardStats = window._dockerDashboardStats || new Map();
 		window._dockerDashboardStats.set(container.Id, statsWs);
-		// Logs WebSocket
-		createWS('/logs', container.Id, logs => {
+
+		// send initial interval (createReconnectWS exposes .send)
+		const initialIntervalMs = parseInt(document.getElementById('refresh-interval').value, 10) || 1000;
+		statsWs.send({ type: 'interval', interval: initialIntervalMs });
+
+		// Logs WebSocket (reconnecting)
+		const logsHandle = createReconnectWS('/logs', container.Id, logs => {
 			card.querySelector('.logs').textContent = logs.log || logs.error || 'No logs';
 		});
 	});

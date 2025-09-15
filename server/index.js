@@ -30,15 +30,19 @@ app.use(express.static(path.join(__dirname, '../public')));
 
 const server = http.createServer(app);
 // Log raw upgrade attempts to help debug WebSocket handshakes (Cloudflared/tunnel visibility)
+// Optional raw upgrade logging to help debug WebSocket handshakes (Cloudflared/tunnel visibility)
+// Controlled by env var DEBUG_UPGRADE (set to 'true' to enable).
 server.on('upgrade', (req, socket, head) => {
-    console.log(`[${new Date().toISOString()}] HTTP upgrade attempt: ${req.url}`);
-    // log a few headers that matter for WebSocket
-    console.log('  upgrade headers:', {
-        connection: req.headers['connection'],
-        upgrade: req.headers['upgrade'],
-        host: req.headers['host'],
-        origin: req.headers['origin']
-    });
+    if (process.env.DEBUG_UPGRADE === 'true') {
+        console.log(`[${new Date().toISOString()}] HTTP upgrade attempt: ${req.url}`);
+        // log a few headers that matter for WebSocket
+        console.log('  upgrade headers:', {
+            connection: req.headers['connection'],
+            upgrade: req.headers['upgrade'],
+            host: req.headers['host'],
+            origin: req.headers['origin']
+        });
+    }
 });
 let httpsServer;
 
@@ -71,13 +75,15 @@ if (process.env.HTTPS === 'true') {
         console.log(`HTTPS server listening on port ${PORT}`);
     });
     httpsServer.on('upgrade', (req, socket, head) => {
-        console.log(`[${new Date().toISOString()}] HTTPS upgrade attempt: ${req.url}`);
-        console.log('  upgrade headers:', {
-            connection: req.headers['connection'],
-            upgrade: req.headers['upgrade'],
-            host: req.headers['host'],
-            origin: req.headers['origin']
-        });
+        if (process.env.DEBUG_UPGRADE === 'true') {
+            console.log(`[${new Date().toISOString()}] HTTPS upgrade attempt: ${req.url}`);
+            console.log('  upgrade headers:', {
+                connection: req.headers['connection'],
+                upgrade: req.headers['upgrade'],
+                host: req.headers['host'],
+                origin: req.headers['origin']
+            });
+        }
     });
 } else {
     server.listen(PORT, () => {
