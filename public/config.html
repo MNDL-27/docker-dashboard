@@ -15,6 +15,20 @@
 		</nav>
 	</header>
 
+		<!-- localStorage migration shim: keep old/new config keys in sync -->
+		<script>
+			(function(){
+				try {
+					const oldKey = 'dockerDashConfig';
+					const newKey = 'dockerDashboardConfig';
+					const oldVal = localStorage.getItem(oldKey);
+					const newVal = localStorage.getItem(newKey);
+					if (oldVal && !newVal) localStorage.setItem(newKey, oldVal);
+					if (newVal && !oldVal) localStorage.setItem(oldKey, newVal);
+				} catch (e) { console.warn('localStorage shim failed', e); }
+			})();
+		</script>
+
 	<main id="app-root">
 		<!-- Config page will be mounted here by app.js -->
 	</main>
