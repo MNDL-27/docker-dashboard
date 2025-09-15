@@ -29,17 +29,41 @@ app.use('/api/containers', containersRoute);
 app.use(express.static(path.join(__dirname, '../public')));
 
 const server = http.createServer(app);
-const wss = new WebSocket.Server({ server, path: '/ws' });
+let httpsServer;
 
-wss.on('connection', (ws, req) => {
-	console.log(`[${new Date().toISOString()}] WS connection: ${req.url}`);
-	wsHandlers.handleConnection(ws, req);
+if (process.env.HTTPS === 'true') {
+    const fs = require('fs');
+    const https = require('https');
+    const sslOptions = {
+        key: fs.readFileSync(process.env.SSL_KEY_PATH || '/etc/ssl/private/key.pem'),
+        cert: fs.readFileSync(process.env.SSL_CERT_PATH || '/etc/ssl/certs/cert.pem'),
+    };
+    httpsServer = https.createServer(sslOptions, app);
+}
+
+const wssStats = new WebSocket.Server({ server: process.env.HTTPS === 'true' ? httpsServer : server, path: '/ws/stats' });
+const wssLogs = new WebSocket.Server({ server: process.env.HTTPS === 'true' ? httpsServer : server, path: '/ws/logs' });
+
+wssStats.on('connection', (ws, req) => {
+    console.log(`[${new Date().toISOString()}] WS connection: ${req.url}`);
+    wsHandlers.handleConnection(ws, req);
+});
+
+wssLogs.on('connection', (ws, req) => {
+    console.log(`[${new Date().toISOString()}] WS connection: ${req.url}`);
+    wsHandlers.handleConnection(ws, req);
 });
 
 const PORT = config.PORT;
-server.listen(PORT, () => {
-	console.log(`Server listening on port ${PORT}`);
-});
+if (process.env.HTTPS === 'true') {
+    httpsServer.listen(PORT, () => {
+        console.log(`HTTPS server listening on port ${PORT}`);
+    });
+} else {
+    server.listen(PORT, () => {
+        console.log(`HTTP server listening on port ${PORT}`);
+    });
+}
 
 // Basic error logging
 process.on('uncaughtException', err => {
