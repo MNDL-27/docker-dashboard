@@ -1,0 +1,16 @@
+{
+  "name": "docker-dashboard",
+  "version": "1.0.0",
+  "description": "Modern Docker container dashboard with live stats, logs, and Portainer gateway support.",
+  "main": "server/index.js",
+  "scripts": {
+    "start": "node server/index.js"
+  },
+  "author": "MNDL-27",
+  "license": "AGPL-3.0",
+  "dependencies": {
+    "express": "^4.18.2",
+    "ws": "^8.13.0",
+    "compression": "^1.7.4"
+  }
+}
