@@ -30,3 +30,35 @@ function dockerRequest(path, method = 'GET') {
 }
 
 module.exports = { dockerRequest };
+
+// Stream container logs: call onData for each chunk received, onEnd when connection closes, onError on errors
+function streamContainerLogs(id, { onData, onEnd, onError } = {}) {
+	const path = `/containers/${id}/logs?follow=1&stdout=1&stderr=1&tail=200`;
+	try {
+		const options = {
+			socketPath: config.DOCKER_SOCKET,
+			path,
+			method: 'GET',
+			timeout: 0, // allow long-lived connection
+		};
+		const req = http.request(options, res => {
+			res.on('data', chunk => {
+				if (onData) onData(chunk);
+			});
+			res.on('end', () => {
+				if (onEnd) onEnd();
+			});
+			res.on('error', err => {
+				if (onError) onError(err);
+			});
+		});
+		req.on('error', err => { if (onError) onError(err); });
+		req.end();
+		return req; // caller can abort if needed
+	} catch (err) {
+		if (onError) onError(err);
+		return null;
+	}
+}
+
+module.exports = { dockerRequest, streamContainerLogs };

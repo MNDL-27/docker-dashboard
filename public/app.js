@@ -24,11 +24,15 @@ async function fetchContainers() {
 
 function createWS(path, id, onMessage) {
 	const cfg = loadConfig();
-	const base = cfg.apiBase ? cfg.apiBase.replace(/\/$/, '') : window.location.origin;
-	const protocol = base.startsWith('https') ? 'wss' : (base.startsWith('http') ? 'ws' : (window.location.protocol === 'https:' ? 'wss' : 'ws'));
-	// if apiBase is same origin (''), use location.host
-	const host = cfg.apiBase ? base.replace(/^https?:\/\//, '') : window.location.host;
-	const ws = new WebSocket(`${protocol}://${host}/ws${path}?id=${id}`);
+	// Build websocket URL using URL to preserve possible path prefix
+	const baseStr = cfg.apiBase && cfg.apiBase.trim() ? cfg.apiBase.replace(/\/$/, '') : window.location.origin;
+	let baseUrl;
+	try { baseUrl = new URL(baseStr); } catch (e) { baseUrl = new URL(window.location.origin); }
+	const wsProtocol = (baseUrl.protocol === 'https:' ? 'wss:' : 'ws:');
+	const basePath = baseUrl.pathname.replace(/\/$/, '');
+	const hostAndPort = baseUrl.host; // hostname[:port]
+	const wsUrl = `${wsProtocol}//${hostAndPort}${basePath}/ws${path}?id=${encodeURIComponent(id)}`;
+	const ws = new WebSocket(wsUrl);
 	ws.onmessage = e => onMessage(JSON.parse(e.data));
 	ws.onerror = e => console.warn('WS error', e);
 	return ws;
