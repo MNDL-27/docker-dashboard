@@ -2,8 +2,9 @@
 version: "3.8"
 services:
   dashboard:
-    build: .
+    image: node:18-alpine
     container_name: docker-dashboard
+    working_dir: /app
     restart: unless-stopped
     ports:
       - "${PORT:-1713}:1713"
@@ -14,7 +15,6 @@ services:
       - PORTAINER_API_KEY=${PORTAINER_API_KEY}
       - DOCKER_SOCKET=${DOCKER_SOCKET}
     volumes:
+      - .:/app
       - /var/run/docker.sock:/var/run/docker.sock:ro
-    # Uncomment below to disable direct socket and use Portainer gateway only
-    # volumes:
-    #   - /dev/null:/var/run/docker.sock
+    command: sh -c "npm install && npm start"
