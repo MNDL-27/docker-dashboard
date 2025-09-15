@@ -22,12 +22,3 @@ services:
       - .:/app
       - /var/run/docker.sock:/var/run/docker.sock:ro
     command: sh -c "npm install && npm start"
-  proxy:
-    image: caddy:latest
-    container_name: docker-dashboard-proxy
-    restart: unless-stopped
-    ports:
-      - "443:443"
-      - "80:80"
-    volumes:
-      - ./Caddyfile:/etc/caddy/Caddyfile
