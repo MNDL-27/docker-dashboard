@@ -29,6 +29,17 @@ app.use('/api/containers', containersRoute);
 app.use(express.static(path.join(__dirname, '../public')));
 
 const server = http.createServer(app);
+// Log raw upgrade attempts to help debug WebSocket handshakes (Cloudflared/tunnel visibility)
+server.on('upgrade', (req, socket, head) => {
+    console.log(`[${new Date().toISOString()}] HTTP upgrade attempt: ${req.url}`);
+    // log a few headers that matter for WebSocket
+    console.log('  upgrade headers:', {
+        connection: req.headers['connection'],
+        upgrade: req.headers['upgrade'],
+        host: req.headers['host'],
+        origin: req.headers['origin']
+    });
+});
 let httpsServer;
 
 if (process.env.HTTPS === 'true') {
@@ -58,6 +69,15 @@ const PORT = config.PORT;
 if (process.env.HTTPS === 'true') {
     httpsServer.listen(PORT, () => {
         console.log(`HTTPS server listening on port ${PORT}`);
+    });
+    httpsServer.on('upgrade', (req, socket, head) => {
+        console.log(`[${new Date().toISOString()}] HTTPS upgrade attempt: ${req.url}`);
+        console.log('  upgrade headers:', {
+            connection: req.headers['connection'],
+            upgrade: req.headers['upgrade'],
+            host: req.headers['host'],
+            origin: req.headers['origin']
+        });
     });
 } else {
     server.listen(PORT, () => {

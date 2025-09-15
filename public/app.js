@@ -30,6 +30,16 @@ function renderContainers(containers) {
 				console.warn('Failed to render stats', e);
 			}
 		});
+		// add ws status badge
+		const badge = document.createElement('div');
+		badge.className = 'ws-badge';
+		badge.textContent = 'CONNECTING';
+		badge.style.fontSize = '0.8em';
+		badge.style.marginTop = '6px';
+		card.appendChild(badge);
+		statsWs.addEventListener('open', () => { badge.textContent = 'OPEN'; badge.style.color = '#8ef'; });
+		statsWs.addEventListener('close', () => { badge.textContent = 'CLOSED'; badge.style.color = '#f88'; });
+		statsWs.addEventListener('error', () => { badge.textContent = 'ERROR'; badge.style.color = '#f88'; });
 		// send initial interval when open
 		statsWs.addEventListener('open', () => {
 			const ms = parseInt(document.getElementById('refresh-interval').value, 10) || 1000;

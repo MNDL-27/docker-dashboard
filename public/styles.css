@@ -25,6 +25,13 @@ h1 {
 .stats, .logs {
 	margin-top: 1em;
 	font-size: 0.95em;
+
+.ws-badge {
+	display: inline-block;
+	padding: 4px 8px;
+	border-radius: 4px;
+	background: rgba(255,255,255,0.03);
+}
 	background: #181a20;
 	padding: 0.5em;
 	border-radius: 4px;
