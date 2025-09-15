@@ -19,7 +19,61 @@ async function fetchContainers() {
 	const cfg = loadConfig();
 	const url = cfg.apiBase ? `${cfg.apiBase.replace(/\/$/, '')}/api/containers` : '/api/containers';
 	const res = await fetch(url);
-	return await res.json();
+	const contentType = res.headers.get('content-type') || '';
+	// read the body as text first so we can show raw responses when parsing fails
+	const bodyText = await res.text();
+	if (!res.ok) {
+		throw new Error(`API error ${res.status} ${res.statusText}: ${bodyText}`);
+	}
+	if (!contentType.includes('application/json')) {
+		throw new Error(`Expected JSON but received ${contentType || 'unknown'}:\n${bodyText}`);
+	}
+	try {
+		return JSON.parse(bodyText);
+	} catch (err) {
+		throw new Error(`Failed to parse JSON response: ${err.message}\n${bodyText}`);
+	}
+}
+
+// show an error banner at the top of the app-root with a retry button
+function showErrorBanner(message, onRetry) {
+	const root = document.getElementById('app-root');
+	// remove existing banner if any
+	const existing = document.getElementById('error-banner');
+	if (existing) existing.remove();
+
+	const banner = document.createElement('div');
+	banner.id = 'error-banner';
+	banner.style.background = '#5a1f1f';
+	banner.style.color = '#ffdede';
+	banner.style.padding = '12px';
+	banner.style.borderRadius = '6px';
+	banner.style.marginBottom = '12px';
+	banner.innerHTML = `
+		<div style="display:flex;align-items:center;justify-content:space-between">
+			<div style="flex:1;">
+				<strong>Connection Error</strong>
+				<div style="margin-top:6px;white-space:pre-wrap;">${escapeHtml(message)}</div>
+			</div>
+			<div style="margin-left:12px;">
+				<button id="retry-btn">Retry</button>
+			</div>
+		</div>
+	`;
+	root.prepend(banner);
+	document.getElementById('retry-btn').addEventListener('click', () => {
+		banner.remove();
+		if (typeof onRetry === 'function') onRetry();
+	});
+}
+
+function escapeHtml(unsafe) {
+	return String(unsafe)
+		.replace(/&/g, '&amp;')
+		.replace(/</g, '&lt;')
+		.replace(/>/g, '&gt;')
+		.replace(/"/g, '&quot;')
+		.replace(/'/g, '&#039;');
 }
 
 // Create a reconnecting WebSocket with exponential backoff.
@@ -139,7 +193,16 @@ function mountDashboard() {
 	`;
 	const cfg = loadConfig();
 	document.getElementById('refresh-interval').value = String(cfg.defaultInterval || 1000);
-	fetchContainers().then(renderContainers);
+	// load and render with error handling that surfaces raw response text
+	function loadAndRender() {
+		// clear any previous error banner
+		const b = document.getElementById('error-banner'); if (b) b.remove();
+		fetchContainers().then(renderContainers).catch(err => {
+			console.warn('Failed to load containers:', err);
+			showErrorBanner(err.message || String(err), loadAndRender);
+		});
+	}
+	loadAndRender();
 	document.getElementById('refresh-interval').addEventListener('change', (e) => {
 		const ms = parseInt(e.target.value, 10) || 1000;
 		if (window._dockerDashboardStats) {

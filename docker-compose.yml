@@ -22,3 +22,17 @@ services:
       - .:/app
       - /var/run/docker.sock:/var/run/docker.sock:ro
     command: sh -c "npm install && npm start"
+
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile.frontend
+      args:
+        VITE_API_BASE: ${BUILDTIME_API_BASE:-}
+    container_name: docker-dashboard-frontend
+    restart: unless-stopped
+    ports:
+      - "${FRONTEND_PORT:-8080}:80"
+    environment:
+      # Optionally set BUILDTIME_API_BASE to bake API base into the build (not required)
+      - BUILDTIME_API_BASE=${BUILDTIME_API_BASE}
