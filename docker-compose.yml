@@ -9,10 +9,14 @@ services:
     ports:
       - "${PORT:-1713}:1713"
     environment:
+      # Set USE_PORTAINER=true in .env to use Portainer gateway
+      # Set USE_PORTAINER=false to use direct Docker socket
       - USE_PORTAINER=${USE_PORTAINER}
+      # Only required if using Portainer gateway
       - PORTAINER_URL=${PORTAINER_URL}
       - PORTAINER_ENDPOINT_ID=${PORTAINER_ENDPOINT_ID}
       - PORTAINER_API_KEY=${PORTAINER_API_KEY}
+      # Only required if using direct Docker socket
       - DOCKER_SOCKET=${DOCKER_SOCKET}
     volumes:
       - .:/app
