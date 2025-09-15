@@ -4,8 +4,10 @@ async function fetchContainers() {
 }
 
 function createWS(path, id, onMessage) {
-	const ws = new WebSocket(`${window.location.origin.replace('http', 'ws')}/ws${path}?id=${id}`);
+	const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws';
+	const ws = new WebSocket(`${protocol}://${window.location.host}/ws${path}?id=${id}`);
 	ws.onmessage = e => onMessage(JSON.parse(e.data));
+	ws.onerror = e => console.warn('WS error', e);
 	return ws;
 }
 
@@ -21,9 +23,21 @@ function renderContainers(containers) {
 		grid.appendChild(card);
 
 		// Stats WebSocket
-		createWS('/stats', container.Id, stats => {
-			card.querySelector('.stats').textContent = `CPU: ${stats.cpu_percent?.toFixed(2) || 'N/A'}% | Mem: ${stats.memory_stats?.usage || 'N/A'} bytes`;
+		const statsWs = createWS('/stats', container.Id, stats => {
+			try {
+				card.querySelector('.stats').textContent = `CPU: ${Number(stats.cpu_percent || 0).toFixed(2)}% | Mem: ${stats.memory_stats?.usage || 'N/A'} bytes`;
+			} catch (e) {
+				console.warn('Failed to render stats', e);
+			}
 		});
+		// send initial interval when open
+		statsWs.addEventListener('open', () => {
+			const ms = parseInt(document.getElementById('refresh-interval').value, 10) || 1000;
+			statsWs.send(JSON.stringify({ type: 'interval', interval: ms }));
+		});
+		// store websocket so we can update interval later
+		window._dockerDashboardStats = window._dockerDashboardStats || new Map();
+		window._dockerDashboardStats.set(container.Id, statsWs);
 		// Logs WebSocket
 		createWS('/logs', container.Id, logs => {
 			card.querySelector('.logs').textContent = logs.log || logs.error || 'No logs';
@@ -32,3 +46,15 @@ function renderContainers(containers) {
 }
 
 fetchContainers().then(renderContainers);
+
+// refresh interval control
+document.getElementById('refresh-interval').addEventListener('change', (e) => {
+	const ms = parseInt(e.target.value, 10) || 1000;
+	if (window._dockerDashboardStats) {
+		for (const ws of window._dockerDashboardStats.values()) {
+			if (ws && ws.readyState === WebSocket.OPEN) {
+				ws.send(JSON.stringify({ type: 'interval', interval: ms }));
+			}
+		}
+	}
+});
