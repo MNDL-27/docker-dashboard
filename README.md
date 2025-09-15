@@ -1,5 +1,3 @@
-docker compose up -d
-
 <div align="center">
   <h1>🚢 Docker Dashboard</h1>
   <p>A modern web app to monitor, manage, and view live stats/logs for all your Docker containers.<br>
