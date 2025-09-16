@@ -1,18 +1,21 @@
 ## Multi-stage build for Vite React frontend (ship-deck-monitor)
 FROM node:18-alpine AS builder
-WORKDIR /app
 # allow providing a build-time API base (Vite expects VITE_* env vars)
 ARG VITE_API_BASE
 ENV VITE_API_BASE=${VITE_API_BASE}
 
-COPY ship-deck-monitor/ship-deck-monitor-main/package*.json ./
-COPY ship-deck-monitor/ship-deck-monitor-main/vite.config.ts ./
-COPY ship-deck-monitor/ship-deck-monitor-main/tsconfig.json ./
-COPY ship-deck-monitor/ship-deck-monitor-main/postcss.config.js ./
-COPY ship-deck-monitor/ship-deck-monitor-main/tailwind.config.ts ./
-COPY ship-deck-monitor/ship-deck-monitor-main/index.html ./
-COPY ship-deck-monitor/ship-deck-monitor-main/public ./public
-COPY ship-deck-monitor/ship-deck-monitor-main/src ./src
+WORKDIR /app
+COPY public/tsconfig.node.json ./
+COPY public/package*.json ./
+COPY public/vite.config.ts ./
+COPY public/tsconfig.json ./
+COPY public/tsconfig.app.json ./
+COPY public/postcss.config.js ./
+COPY public/tailwind.config.ts ./
+COPY public/index.html ./
+COPY public/public ./public
+COPY public/src ./src
+COPY nginx.conf /etc/nginx/conf.d/default.conf
 RUN npm ci --silent
 # build with the provided VITE_API_BASE available as import.meta.env.VITE_API_BASE
 RUN npm run build

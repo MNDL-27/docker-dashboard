@@ -26,7 +26,7 @@ app.use((req, res, next) => {
 });
 
 app.use('/api/containers', containersRoute);
-app.use(express.static(path.join(__dirname, '../public')));
+// app.use(express.static(path.join(__dirname, '../public'))); // Disabled: UI now served by frontend React app
 
 const server = http.createServer(app);
 // Log raw upgrade attempts to help debug WebSocket handshakes (Cloudflared/tunnel visibility)

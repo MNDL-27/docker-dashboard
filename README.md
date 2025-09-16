@@ -11,25 +11,26 @@
 
 ---
 
-## Features
+## Usage
 
-- 🚀 **Live container stats** (CPU, memory, network, IO)
-- 📜 **Real-time logs** (search, tail, multiplexed)
-- 🖥️ **Single-page dashboard UI** (responsive, dark theme)
-- 🔌 **REST API & WebSocket streaming**
-- 🛡️ **Portainer gateway support** (multi-host, API key)
-- 🐳 **Dockerized deployment** (compose, Dockerfile)
+1. Start the backend server (API only):
+  ```bash
+  docker-compose up dashboard
+  ```
 
----
+2. Start the frontend (modern React dashboard):
+  ```bash
+  docker-compose up frontend
+  ```
 
-## Quick Start
+3. Access the dashboard:
+  - Modern UI: http://localhost:8080
 
-```bash
-# Clone the repo
-git clone https://github.com/MNDL-27/docker-dashboard.git
-cd docker-dashboard
+4. The backend API will be available at http://localhost:1713/api/containers (or your configured port).
 
-# Copy and edit environment variables
+5. Configure environment variables in `.env` as needed.
+
+## Security Notes
 cp .env.example .env
 
 # Start with Docker Compose
