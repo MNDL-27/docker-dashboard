@@ -13,21 +13,16 @@ try {
 	console.error(err.message);
 	process.exit(1);
 }
-
-
 const app = express();
 app.use(compression());
 app.use(express.json());
-
 // Basic request logging
 app.use((req, res, next) => {
-	console.log(`[${new Date().toISOString()}] ${req.method} ${req.url}`);
-	next();
+    console.log(`[${new Date().toISOString()}] ${req.method} ${req.url}`);
+    next();
 });
-
 app.use('/api/containers', containersRoute);
-// app.use(express.static(path.join(__dirname, '../public'))); // Disabled: UI now served by frontend React app
-
+app.use(express.static(path.join(__dirname, '../public'))); // Re-enabled: serve static dashboard UI
 const server = http.createServer(app);
 // Log raw upgrade attempts to help debug WebSocket handshakes (Cloudflared/tunnel visibility)
 // Optional raw upgrade logging to help debug WebSocket handshakes (Cloudflared/tunnel visibility)
@@ -45,7 +40,6 @@ server.on('upgrade', (req, socket, head) => {
     }
 });
 let httpsServer;
-
 if (process.env.HTTPS === 'true') {
     const fs = require('fs');
     const https = require('https');
@@ -55,20 +49,16 @@ if (process.env.HTTPS === 'true') {
     };
     httpsServer = https.createServer(sslOptions, app);
 }
-
 const wssStats = new WebSocket.Server({ server: process.env.HTTPS === 'true' ? httpsServer : server, path: '/ws/stats' });
 const wssLogs = new WebSocket.Server({ server: process.env.HTTPS === 'true' ? httpsServer : server, path: '/ws/logs' });
-
 wssStats.on('connection', (ws, req) => {
     console.log(`[${new Date().toISOString()}] WS connection: ${req.url}`);
     wsHandlers.handleConnection(ws, req);
 });
-
 wssLogs.on('connection', (ws, req) => {
     console.log(`[${new Date().toISOString()}] WS connection: ${req.url}`);
     wsHandlers.handleConnection(ws, req);
 });
-
 const PORT = config.PORT;
 if (process.env.HTTPS === 'true') {
     httpsServer.listen(PORT, () => {
@@ -90,7 +80,6 @@ if (process.env.HTTPS === 'true') {
         console.log(`HTTP server listening on port ${PORT}`);
     });
 }
-
 // Basic error logging
 process.on('uncaughtException', err => {
 	console.error('Uncaught Exception:', err);

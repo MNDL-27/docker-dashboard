@@ -7,7 +7,7 @@ services:
     working_dir: /app
     restart: unless-stopped
     ports:
-      - "${PORT:-1713}:1713"
+      - "1714:1714"
     environment:
       # Set USE_PORTAINER=true in .env to use Portainer gateway
       # Set USE_PORTAINER=false to use direct Docker socket
@@ -23,15 +23,3 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock:ro
     command: sh -c "npm install && npm start"
 
-  frontend:
-    build:
-      context: .
-      dockerfile: Dockerfile.frontend
-      args:
-        VITE_API_BASE: ${BUILDTIME_API_BASE:-}
-    container_name: docker-dashboard-frontend
-    restart: unless-stopped
-    ports:
-      - "1714:80"
-    environment:
-      - BUILDTIME_API_BASE=http://dashboard:1713

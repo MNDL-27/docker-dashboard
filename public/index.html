@@ -3,21 +3,16 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Docker Dashboard</title>
-    <meta name="description" content="Modern Docker container monitoring dashboard with real-time stats and logs" />
-    <meta name="author" content="Docker Dashboard" />
-
-    <meta property="og:title" content="Docker Dashboard" />
-    <meta property="og:description" content="Modern Docker container monitoring dashboard with real-time stats and logs" />
-    <meta property="og:type" content="website" />
-
-    <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="Docker Dashboard" />
-    <meta name="twitter:description" content="Modern Docker container monitoring dashboard with real-time stats and logs" />
+    <title>Docker Stats Dashboard</title>
+    <link rel="stylesheet" href="styles.css">
   </head>
 
   <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.tsx"></script>
+    <div class="container">
+      <h1>Docker Stats Dashboard</h1>
+      <button onclick="fetchStats()">Refresh Stats</button>
+      <div id="stats"></div>
+    </div>
+    <script src="app.js"></script>
   </body>
 </html>
