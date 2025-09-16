@@ -1,47 +1,52 @@
-<div align="center">
-  <h1>🚢 Docker Dashboard</h1>
-  <p>A modern web app to monitor, manage, and view live stats/logs for all your Docker containers.<br>
-  <b>Node.js backend + SPA frontend + Portainer gateway support</b></p>
-  <p>
-    <img src="https://img.shields.io/github/license/MNDL-27/docker-dashboard?style=flat-square" alt="License">
-    <img src="https://img.shields.io/github/languages/top/MNDL-27/docker-dashboard?style=flat-square" alt="Top Language">
-    <img src="https://img.shields.io/github/last-commit/MNDL-27/docker-dashboard?style=flat-square" alt="Last Commit">
-  </p>
-</div>
+````markdown
+# 🚢 Docker Dashboard
+A modern web app to monitor, manage, and view live stats/logs for all your Docker containers.
+**Node.js backend + SPA frontend + Portainer gateway support**
+
+<p align="center">
+  <img src="https" alt="License">
+  <img src="https" alt="Top Language">
+  <img src="https" alt="Last Commit">
+</p>
 
 ---
 
 ## Usage
 
-1. Start the backend server (API only):
-  ```bash
-  docker-compose up dashboard
-  ```
+1.  Start the backend server (API only):
+    ```bash
+    docker-compose up dashboard
+    ```
 
-2. Start the frontend (modern React dashboard):
-  ```bash
-  docker-compose up frontend
-  ```
+2.  Start the frontend (modern React dashboard):
+    ```bash
+    docker-compose up frontend
+    ```
 
-3. Access the dashboard:
-  - Modern UI: http://localhost:8080
+3.  Access the dashboard:
+    * Modern UI: [http://localhost:8080](http://localhost:8080)
 
-4. The backend API will be available at http://localhost:1713/api/containers (or your configured port).
+4.  The backend API will be available at `http://localhost:1713/api/containers` (or your configured port).
 
-5. Configure environment variables in `.env` as needed.
+5.  Configure environment variables in `.env` as needed.
 
 ## Security Notes
+```bash
 cp .env.example .env
+````
 
-# Start with Docker Compose
+### Start with Docker Compose
+
+```bash
 # (edit .env to use Portainer gateway if needed)
 docker compose up -d
-
-# Access the dashboard
-http://localhost:8088
 ```
 
----
+### Access the dashboard
+
+[http://localhost:8088](https://www.google.com/search?q=http://localhost:8088)
+
+-----
 
 ## Configuration
 
@@ -51,49 +56,52 @@ Edit `.env` for your environment:
 USE_PORTAINER=false
 PORT=8088
 DOCKER_SOCKET=/var/run/docker.sock
-PORTAINER_URL=https://portainer.example.com:9443
+PORTAINER_URL=[https://portainer.example.com:9443](https://portainer.example.com:9443)
 PORTAINER_ENDPOINT_ID=1
 PORTAINER_API_KEY=replace_me
 ```
 
-- Set `USE_PORTAINER=true` to use Portainer gateway (multi-host, API key required)
-- Otherwise, direct Docker Engine access via socket
+  * Set `USE_PORTAINER=true` to use Portainer gateway (multi-host, API key required)
+  * Otherwise, direct Docker Engine access via socket
 
----
+-----
 
 ## Security Notes
 
-- **API keys**: Keep your Portainer API key secret. Do not commit `.env` with real keys.
-- **Socket access**: Only mount Docker socket for trusted users.
-- **HTTPS**: Use HTTPS for Portainer and dashboard in production.
-- **Authentication**: Add authentication if exposing dashboard publicly.
+  * **API keys**: Keep your Portainer API key secret. Do not commit `.env` with real keys.
+  * **Socket access**: Only mount Docker socket for trusted users.
+  * **HTTPS**: Use HTTPS for Portainer and dashboard in production.
+  * **Authentication**: Add authentication if exposing dashboard publicly.
 
----
+-----
 
 ## Portainer Gateway How-To
 
-1. Set up Portainer and create an API key.
-2. Set `USE_PORTAINER=true` in `.env`.
-3. Fill in `PORTAINER_URL`, `PORTAINER_ENDPOINT_ID`, and `PORTAINER_API_KEY`.
-4. Restart the dashboard.
-5. All API calls will route through Portainer for multi-host and RBAC support.
+1.  Set up Portainer and create an API key.
+2.  Set `USE_PORTAINER=true` in `.env`.
+3.  Fill in `PORTAINER_URL`, `PORTAINER_ENDPOINT_ID`, and `PORTAINER_API_KEY`.
+4.  Restart the dashboard.
+5.  All API calls will route through Portainer for multi-host and RBAC support.
 
----
+-----
 
 ## Limitations
 
-- No built-in authentication (add reverse proxy or middleware for public use)
-- Stats/logs streaming is best-effort; may need tuning for large clusters
-- Portainer gateway requires valid API key and endpoint ID
+  * No built-in authentication (add reverse proxy or middleware for public use)
+  * Stats/logs streaming is best-effort; may need tuning for large clusters
+  * Portainer gateway requires valid API key and endpoint ID
 
----
+-----
 
 ## Contributing
 
-Pull requests and issues welcome! See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
+Pull requests and issues welcome\! See [CONTRIBUTING.md](https://www.google.com/search?q=CONTRIBUTING.md) for guidelines.
 
----
+-----
 
 ## License
 
-This project is licensed under the AGPL-3.0. See [LICENSE](LICENSE) for details.
+This project is licensed under the AGPL-3.0. See [LICENSE](https://www.google.com/search?q=LICENSE) for details.
+
+```
+```
