@@ -4,15 +4,17 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Docker Stats Dashboard</title>
-    <link rel="stylesheet" href="styles.css">
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
   </head>
 
-  <body>
-    <div class="container">
-      <h1>Docker Stats Dashboard</h1>
-      <button onclick="fetchStats()">Refresh Stats</button>
-      <div id="stats"></div>
-    </div>
-    <script src="app.js"></script>
-  </body>
-</html>
+<body class="bg-gray-100 min-h-screen">
+  <div class="max-w-3xl mx-auto py-10">
+    <h1 class="text-3xl font-bold text-blue-700 text-center mb-6">Docker Stats Dashboard</h1>
+    <button onclick="fetchStats()" class="block mx-auto px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 mb-6 shadow">
+      Refresh Stats
+    </button>
+    <div id="stats" class="grid grid-cols-1 sm:grid-cols-2 gap-4"></div>
+  </div>
+  <script src="app.js"></script>
+</body>
+
