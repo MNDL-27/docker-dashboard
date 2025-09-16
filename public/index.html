@@ -1,12 +1,11 @@
 <!doctype html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Docker Stats Dashboard</title>
-    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
-  </head>
-
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Docker Stats Dashboard</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+</head>
 <body class="bg-gray-100 min-h-screen">
   <div class="max-w-3xl mx-auto py-10">
     <h1 class="text-3xl font-bold text-blue-700 text-center mb-6">Docker Stats Dashboard</h1>
@@ -15,6 +14,18 @@
     </button>
     <div id="stats" class="grid grid-cols-1 sm:grid-cols-2 gap-4"></div>
   </div>
+
+  <!-- Modal Overlay -->
+  <div id="stats-modal" class="fixed inset-0 flex items-center justify-center bg-gray-800 bg-opacity-50 z-50 hidden">
+    <div class="bg-white rounded-lg p-8 max-w-md w-full shadow relative">
+      <button onclick="closeStatsModal()" class="absolute top-2 right-2 text-gray-500 hover:text-blue-600 text-xl">&times;</button>
+      <h2 id="modal-title" class="text-2xl font-bold text-blue-700 mb-4"></h2>
+      <div id="modal-content">
+        <!-- Stats go here -->
+      </div>
+    </div>
+  </div>
+
   <script src="app.js"></script>
 </body>
-
+</html>
