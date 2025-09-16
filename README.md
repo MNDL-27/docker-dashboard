@@ -1,5 +1,3 @@
-
-````markdown
 <div align="center">
   <h1>🚢 Docker Dashboard</h1>
   <p>A modern web app to monitor, manage, and view live stats/logs for all your Docker containers.<br>
@@ -13,13 +11,21 @@
 
 ---
 
+## ✨ Features
+
+* **Live Monitoring:** Real-time stats for all your Docker containers.
+* **Log Streaming:** View live container logs.
+* **Container Management:** Start, stop, and restart containers.
+* **Portainer Integration:** Use Portainer as a gateway for multi-host support.
+
+---
+
 ## 🚀 Getting Started
 
 ### 1. Clone the repository
 ```bash
 git clone [https://github.com/MNDL-27/docker-dashboard.git](https://github.com/MNDL-27/docker-dashboard.git)
 cd docker-dashboard
-````
 
 ### 2\. Configure your environment
 
