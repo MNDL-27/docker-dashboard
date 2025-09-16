@@ -5,27 +5,46 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Docker Stats Dashboard</title>
   <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <style>
+    body { background: radial-gradient(circle at 28% 13%, #6c53e4 0,rgba(44,45,60,0) 75%),linear-gradient(120deg,#232336 65%,#1c1a2a 100%);}
+    .glass {
+      background: rgba(255,255,255,0.08);
+      box-shadow: 0 8px 36px 0 rgba(0,0,0,0.18);
+      backdrop-filter: blur(14px);
+      border: 1.3px solid rgba(255,255,255,0.1);
+    }
+  </style>
 </head>
-<body class="bg-gray-100 min-h-screen">
-  <div class="max-w-3xl mx-auto py-10">
-    <h1 class="text-3xl font-bold text-blue-700 text-center mb-6">Docker Stats Dashboard</h1>
-    <button onclick="fetchStats()" class="block mx-auto px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 mb-6 shadow">
-      Refresh Stats
-    </button>
-    <div id="stats" class="grid grid-cols-1 sm:grid-cols-2 gap-4"></div>
-  </div>
-
-  <!-- Modal Overlay -->
-  <div id="stats-modal" class="fixed inset-0 flex items-center justify-center bg-gray-800 bg-opacity-50 z-50 hidden">
-    <div class="bg-white rounded-lg p-8 max-w-md w-full shadow relative">
-      <button onclick="closeStatsModal()" class="absolute top-2 right-2 text-gray-500 hover:text-blue-600 text-xl">&times;</button>
-      <h2 id="modal-title" class="text-2xl font-bold text-blue-700 mb-4"></h2>
-      <div id="modal-content">
-        <!-- Stats go here -->
-      </div>
-    </div>
-  </div>
-
-  <script src="app.js"></script>
+<body class="min-h-screen py-10">
+  <h1 class="text-4xl font-bold text-white mb-10 text-center">Docker Stats Dashboard</h1>
+  <div id="stats" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 max-w-6xl mx-auto"></div>
+  <script>
+    function getStatusColor(status) {
+      if (status && status.includes('Up') && status.includes('healthy')) return 'bg-green-200 text-green-800';
+      if (status && status.includes('Up')) return 'bg-blue-200 text-blue-800';
+      return 'bg-red-200 text-red-800';
+    }
+    function getStatusText(status) {
+      if (status && status.includes('Up') && status.includes('healthy')) return 'Healthy';
+      if (status && status.includes('Up')) return 'Running';
+      return 'Stopped';
+    }
+    fetch('/api/containers')
+      .then(res => res.json())
+      .then(containers => {
+        document.getElementById('stats').innerHTML = containers.map(container => `
+          <div class="glass rounded-2xl p-6 shadow-lg text-white">
+            <div class="flex items-center justify-between mb-1">
+              <span class="font-bold text-lg truncate">${container.Names ? container.Names.join(', ') : container.Id}</span>
+              <span class="px-3 py-1 text-xs font-semibold rounded-full ${getStatusColor(container.Status)}">
+                ${getStatusText(container.Status)}
+              </span>
+            </div>
+            <div class="text-xs text-gray-300 mb-2"><span class="font-semibold">Image:</span> ${container.Image}</div>
+            <a href="container.html?id=${container.Id}" class="mt-4 inline-block text-sm font-medium px-4 py-2 rounded shadow bg-indigo-600 hover:bg-indigo-400 transition">Show Stats</a>
+          </div>
+        `).join('');
+      });
+  </script>
 </body>
 </html>

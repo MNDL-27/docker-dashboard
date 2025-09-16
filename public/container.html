@@ -1,0 +1,159 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Container Stats</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body { background: linear-gradient(120deg,#232336 60%,#1c1a2a 100%);}
+    .glass {
+      background: rgba(255,255,255,0.09);
+      box-shadow: 0 8px 36px 0 rgba(0,0,0,0.18);
+      backdrop-filter: blur(14px);
+      border: 1.3px solid rgba(255,255,255,0.13);
+    }
+  </style>
+</head>
+<body class="min-h-screen py-10">
+  <div class="max-w-4xl mx-auto">
+    <a href="index.html" class="text-indigo-400 underline">&larr; Back to Dashboard</a>
+    <h1 id="containerTitle" class="text-3xl md:text-4xl font-bold text-white mt-2 mb-8"></h1>
+    <div id="containerMeta" class="mb-4"></div>
+    <div class="glass rounded-2xl p-8 mb-8">
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <div>
+          <div class="text-white text-sm font-semibold mb-1">CPU Usage</div>
+          <span id="cpuStat" class="block text-2xl font-bold mb-2 text-blue-100">--%</span>
+          <canvas id="cpuChart" height="50"></canvas>
+        </div>
+        <div>
+          <div class="text-white text-sm font-semibold mb-1">RAM Usage</div>
+          <span id="ramStat" class="block text-2xl font-bold mb-2 text-green-100">--/-- GB</span>
+          <canvas id="ramChart" height="50"></canvas>
+        </div>
+        <div>
+          <div class="text-white text-sm font-semibold mb-1">Network RX/TX</div>
+          <span id="netStat" class="block text-lg font-bold mb-2 text-yellow-100">-- / --</span>
+          <canvas id="netChart" height="50"></canvas>
+        </div>
+        <div>
+          <div class="text-white text-sm font-semibold mb-1">Disk Usage</div>
+          <span id="diskStat" class="block text-2xl font-bold mb-2 text-pink-100">-- / -- GB</span>
+          <div class="w-full h-3 rounded bg-white/20">
+            <div id="diskBar" class="h-3 rounded bg-pink-400 transition-all" style="width:10%"></div>
+          </div>
+        </div>
+      </div>
+      <div class="flex gap-3 mt-6">
+        <button onclick="containerAction('start')" class="px-4 py-2 rounded bg-green-600 text-white hover:bg-green-700 transition">Start</button>
+        <button onclick="containerAction('stop')" class="px-4 py-2 rounded bg-red-600 text-white hover:bg-red-700 transition">Stop</button>
+        <button onclick="containerAction('restart')" class="px-4 py-2 rounded bg-blue-600 text-white hover:bg-blue-700 transition">Restart</button>
+      </div>
+    </div>
+  </div>
+  <script>
+    // Get ID from query param, as before
+    function getParam(key) {
+      return new URLSearchParams(window.location.search).get(key);
+    }
+    const id = getParam('id');
+    let cpuH=[], ramH=[], netH=[], cpuChart, ramChart, netChart;
+
+    function renderMeta(container) {
+      document.getElementById('containerTitle').textContent = container.Names ? container.Names.join(', ') : container.Id;
+      document.getElementById('containerMeta').innerHTML = `<span class="text-xs text-gray-300"><b>Image:</b> ${container.Image} &mdash; <b>Status:</b> ${container.Status}</span>`;
+    }
+
+    // Render live, as before
+    function renderCharts(cpu, ram, totalRam, rx) {
+      cpuH.push(cpu); if (cpuH.length > 15) cpuH.shift();
+      ramH.push(ram); if (ramH.length > 15) ramH.shift();
+      netH.push(rx); if (netH.length > 15) netH.shift();
+      if (cpuChart) cpuChart.destroy();
+      if (ramChart) ramChart.destroy();
+      if (netChart) netChart.destroy();
+      cpuChart = new Chart(document.getElementById('cpuChart'), {
+        type: 'line', data: { labels:Array(cpuH.length).fill(''), datasets:[{data:cpuH,borderColor:"#3b82f6",backgroundColor:"rgba(59,130,246,.11)",fill:true,tension:.45}] },
+        options:{responsive:true,plugins:{legend:{display:false}},scales:{x:{display:false},y:{display:false,min:0,max:100}}}
+      });
+      ramChart = new Chart(document.getElementById('ramChart'), {
+        type: 'line', data: { labels:Array(ramH.length).fill(''), datasets:[{data:ramH,borderColor:"#10b981",backgroundColor:"rgba(16,185,129,.15)",fill:true,tension:.45}] },
+        options:{responsive:true,plugins:{legend:{display:false}},scales:{x:{display:false},y:{display:false,min:0}}}
+      });
+      netChart = new Chart(document.getElementById('netChart'), {
+        type: 'line', data:{labels:Array(netH.length).fill(''),datasets:[{data:netH,borderColor:"#fde047",backgroundColor:"rgba(250,204,21,.09)",fill:true,tension:.45}]},
+        options:{responsive:true,plugins:{legend:{display:false}},scales:{x:{display:false},y:{display:false,min:0}}}
+      });
+    }
+
+    function updateStats() {
+      fetch(`/api/containers/${id}/stats`)
+        .then(res => res.json())
+        .then(stats => {
+          let cpu=0, ram=0, ramTotal = 1, rx=0, tx=0;
+          try {
+            if (stats.cpu_stats && stats.precpu_stats) {
+              const cpuDelta = stats.cpu_stats.cpu_usage.total_usage - stats.precpu_stats.cpu_usage.total_usage;
+              const sysDelta = stats.cpu_stats.system_cpu_usage - stats.precpu_stats.system_cpu_usage;
+              const cpuCount = stats.cpu_stats.online_cpus||1;
+              if (cpuDelta>0 && sysDelta>0) cpu = ((cpuDelta/sysDelta)*cpuCount*100);
+            }
+            if (stats.memory_stats && stats.memory_stats.usage) {
+              ram = stats.memory_stats.usage / 1024 / 1024 / 1024;
+              ramTotal = stats.memory_stats.limit / 1024 / 1024 / 1024;
+            }
+            if (stats.networks) {
+              let totalRx = 0;
+              Object.values(stats.networks).forEach(nw => {totalRx += nw.rx_bytes||0;});
+              rx = totalRx/1024; // KB
+            }
+          } catch(e){}
+          document.getElementById('cpuStat').textContent = `${cpu.toFixed(1)}%`;
+          document.getElementById('ramStat').textContent = `${ram.toFixed(2)} / ${ramTotal.toFixed(2)} GB`;
+          document.getElementById('netStat').innerHTML = `↑ ${rx.toFixed(1)} KB/s`;
+          renderCharts(cpu, ram, ramTotal, rx);
+        });
+    }
+
+    function fetchAndShowMeta() {
+      fetch('/api/containers')
+        .then(res => res.json())
+        .then(containers => {
+          const found = containers.find(c => c.Id === id);
+          if (!found) {
+            document.getElementById('containerTitle').textContent = "Not found";
+          } else {
+            renderMeta(found);
+          }
+        });
+    }
+
+    // --- Disk Usage Fetcher ---
+    function updateDiskUsage() {
+      fetch(`/api/containers/${id}/json`)
+        .then(res => res.json())
+        .then(info => {
+          const used = (info.SizeRw || 0) / 1024 / 1024 / 1024;
+          const total = (info.SizeRootFs || 16 * 1024 * 1024 * 1024) / 1024 / 1024 / 1024;
+          document.getElementById('diskStat').textContent = `${used.toFixed(2)} / ${total.toFixed(2)} GB`;
+          const fill = Math.min(100, 100 * used / total);
+          document.getElementById('diskBar').style.width = fill + "%";
+        });
+    }
+
+    window.containerAction = function(action){
+      fetch(`/api/containers/${id}/${action}`,{method:'POST'})
+        .then(res=>res.json())
+        .then(()=>alert("Action "+action+" sent!"));
+    };
+
+    fetchAndShowMeta();
+    updateStats();
+    updateDiskUsage();
+    setInterval(updateStats, 2000);
+    setInterval(updateDiskUsage, 10000);
+  </script>
+</body>
+</html>
