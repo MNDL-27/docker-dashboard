@@ -1,10 +1,20 @@
 const express = require('express');
 const router = express.Router();
 const proxy = require('../docker/proxy');
-
-// For disk usage API
 const Docker = require('dockerode');
 const docker = new Docker({ socketPath: process.env.DOCKER_SOCKET || '/var/run/docker.sock' });
+
+// --- DISK USAGE / CONTAINER INFO ENDPOINT ---
+// This must come FIRST!
+router.get('/:id/json', async (req, res) => {
+  try {
+    const container = docker.getContainer(req.params.id);
+    const info = await container.inspect({ size: true });
+    res.json(info);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
 
 // --- STATS ROUTE ---
 router.get('/:id/stats', async (req, res) => {
@@ -39,15 +49,5 @@ router.get('/', async (req, res) => {
   }
 });
 
-// --- DISK USAGE / CONTAINER INFO ENDPOINT ---
-router.get('/:id/json', async (req, res) => {
-  try {
-    const container = docker.getContainer(req.params.id);
-    const info = await container.inspect({ size: true });
-    res.json(info);
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
-
+// *** THIS LINE IS CRUCIAL ***
 module.exports = router;

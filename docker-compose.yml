@@ -1,25 +1,16 @@
-# Run the app; mount /var/run/docker.sock or use Portainer env
 version: "3.8"
 services:
   dashboard:
-    image: node:18-alpine
+    build: .
     container_name: docker-dashboard
-    working_dir: /app
-    restart: unless-stopped
     ports:
       - "1714:1714"
     environment:
-      # Set USE_PORTAINER=true in .env to use Portainer gateway
-      # Set USE_PORTAINER=false to use direct Docker socket
+      - DOCKER_SOCKET=/var/run/docker.sock
       - USE_PORTAINER=${USE_PORTAINER}
-      # Only required if using Portainer gateway
       - PORTAINER_URL=${PORTAINER_URL}
       - PORTAINER_ENDPOINT_ID=${PORTAINER_ENDPOINT_ID}
       - PORTAINER_API_KEY=${PORTAINER_API_KEY}
-      # Only required if using direct Docker socket
-      - DOCKER_SOCKET=${DOCKER_SOCKET}
     volumes:
-      - .:/app
       - /var/run/docker.sock:/var/run/docker.sock:ro
-    command: sh -c "npm install && npm start"
-
+    restart: unless-stopped
