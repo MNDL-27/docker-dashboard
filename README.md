@@ -1,107 +1,121 @@
-````markdown
-# 🚢 Docker Dashboard
-A modern web app to monitor, manage, and view live stats/logs for all your Docker containers.
-**Node.js backend + SPA frontend + Portainer gateway support**
 
-<p align="center">
-  <img src="https" alt="License">
-  <img src="https" alt="Top Language">
-  <img src="https" alt="Last Commit">
-</p>
+````markdown
+<div align="center">
+  <h1>🚢 Docker Dashboard</h1>
+  <p>A modern web app to monitor, manage, and view live stats/logs for all your Docker containers.<br>
+  <b>Node.js backend + SPA frontend + Portainer gateway support</b></p>
+  <p>
+    <img src="https://img.shields.io/github/license/MNDL-27/docker-dashboard?style=flat-square" alt="License">
+    <img src="https://img.shields.io/github/languages/top/MNDL-27/docker-dashboard?style=flat-square" alt="Top Language">
+    <img src="https://img.shields.io/github/last-commit/MNDL-27/docker-dashboard?style=flat-square" alt="Last Commit">
+  </p>
+</div>
 
 ---
 
-## Usage
+## 🚀 Getting Started
 
-1.  Start the backend server (API only):
-    ```bash
-    docker-compose up dashboard
-    ```
-
-2.  Start the frontend (modern React dashboard):
-    ```bash
-    docker-compose up frontend
-    ```
-
-3.  Access the dashboard:
-    * Modern UI: [http://localhost:8080](http://localhost:8080)
-
-4.  The backend API will be available at `http://localhost:1713/api/containers` (or your configured port).
-
-5.  Configure environment variables in `.env` as needed.
-
-## Security Notes
+### 1. Clone the repository
 ```bash
-cp .env.example .env
+git clone [https://github.com/MNDL-27/docker-dashboard.git](https://github.com/MNDL-27/docker-dashboard.git)
+cd docker-dashboard
 ````
 
-### Start with Docker Compose
+### 2\. Configure your environment
 
 ```bash
-# (edit .env to use Portainer gateway if needed)
+cp .env.example .env
+```
+
+Now, open the `.env` file and edit the variables to match your setup.
+
+### 3\. Run with Docker Compose
+
+```bash
 docker compose up -d
 ```
 
-### Access the dashboard
+### 4\. Access the Dashboard
 
-[http://localhost:8088](https://www.google.com/search?q=http://localhost:8088)
+Once the containers are running, you can access the dashboard in your browser:
+
+  * **Modern UI:** [http://localhost:8088](https://www.google.com/search?q=http://localhost:8088)
+  * **Backend API:** [http://localhost:1713/api/containers](https://www.google.com/search?q=http://localhost:1713/api/containers)
 
 -----
 
-## Configuration
+## ⚙️ Configuration
 
-Edit `.env` for your environment:
+You can customize the application by editing the `.env` file:
 
 ```env
+# Set to true to use Portainer as a gateway
 USE_PORTAINER=false
+
+# The port to expose the dashboard on
 PORT=8088
+
+# The path to the Docker socket
 DOCKER_SOCKET=/var/run/docker.sock
+
+# --- Portainer Gateway Settings ---
+# (Only used if USE_PORTAINER is set to true)
+
+# The URL of your Portainer instance
 PORTAINER_URL=[https://portainer.example.com:9443](https://portainer.example.com:9443)
+
+# The ID of the Portainer endpoint you want to connect to
 PORTAINER_ENDPOINT_ID=1
+
+# Your Portainer API key
 PORTAINER_API_KEY=replace_me
 ```
 
-  * Set `USE_PORTAINER=true` to use Portainer gateway (multi-host, API key required)
-  * Otherwise, direct Docker Engine access via socket
+-----
+
+## 🛡️ Security Notes
+
+> **Important:** Please take a moment to review these security recommendations.
+
+  * **API Keys:** Keep your Portainer API key a secret. Do not commit your `.env` file with your actual keys to version control.
+  * **Socket Access:** Only mount the Docker socket for trusted users. Granting access to the Docker socket is equivalent to giving root access to your host.
+  * **HTTPS:** Always use HTTPS for both the dashboard and your Portainer instance in a production environment.
+  * **Authentication:** This application does not have built-in authentication. If you plan to expose the dashboard publicly, it is strongly recommended to add an authentication layer using a reverse proxy (like Nginx or Traefik) or other middleware.
 
 -----
 
-## Security Notes
+## 🔗 Portainer Gateway
 
-  * **API keys**: Keep your Portainer API key secret. Do not commit `.env` with real keys.
-  * **Socket access**: Only mount Docker socket for trusted users.
-  * **HTTPS**: Use HTTPS for Portainer and dashboard in production.
-  * **Authentication**: Add authentication if exposing dashboard publicly.
+You can use a Portainer instance as a gateway to manage multiple Docker hosts and leverage Portainer's Role-Based Access Control (RBAC).
 
------
+### How to set it up:
 
-## Portainer Gateway How-To
+1.  Set up a Portainer instance and create an API key.
+2.  In your `.env` file, set `USE_PORTAINER=true`.
+3.  Fill in the `PORTAINER_URL`, `PORTAINER_ENDPOINT_ID`, and `PORTAINER_API_KEY` variables.
+4.  Restart the dashboard: `docker compose up -d --force-recreate`
 
-1.  Set up Portainer and create an API key.
-2.  Set `USE_PORTAINER=true` in `.env`.
-3.  Fill in `PORTAINER_URL`, `PORTAINER_ENDPOINT_ID`, and `PORTAINER_API_KEY`.
-4.  Restart the dashboard.
-5.  All API calls will route through Portainer for multi-host and RBAC support.
+All API calls will now be routed through your Portainer instance.
 
 -----
 
-## Limitations
+## ⚠️ Limitations
 
-  * No built-in authentication (add reverse proxy or middleware for public use)
-  * Stats/logs streaming is best-effort; may need tuning for large clusters
-  * Portainer gateway requires valid API key and endpoint ID
-
------
-
-## Contributing
-
-Pull requests and issues welcome\! See [CONTRIBUTING.md](https://www.google.com/search?q=CONTRIBUTING.md) for guidelines.
+  * **No Built-in Authentication:** As mentioned in the security notes, you should add your own authentication for public-facing deployments.
+  * **Stats/Logs Streaming:** The real-time stats and logs streaming is a best-effort implementation and may require tuning for large-scale clusters.
+  * **Portainer Gateway:** Requires a valid API key and endpoint ID to function correctly.
 
 -----
 
-## License
+## 🙌 Contributing
 
-This project is licensed under the AGPL-3.0. See [LICENSE](https://www.google.com/search?q=LICENSE) for details.
+We welcome contributions\! Please see our [CONTRIBUTING.md](https://www.google.com/search?q=CONTRIBUTING.md) file for guidelines on how to get started.
+
+-----
+
+## 📄 License
+
+This project is licensed under the AGPL-3.0 License. See the [LICENSE](https://www.google.com/search?q=LICENSE) file for details.
 
 ```
 ```
