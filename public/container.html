@@ -17,189 +17,262 @@
   </style>
 </head>
 <body class="min-h-screen py-10">
-  <div class="max-w-6xl mx-auto">
+  <div class="max-w-7xl mx-auto">
     <a href="index.html" class="text-indigo-400 underline">&larr; Back to Dashboard</a>
     <h1 id="containerTitle" class="text-3xl md:text-4xl font-bold text-white mt-2 mb-8"></h1>
-    <div id="containerMeta" class="mb-4"></div>
-    <div class="glass rounded-2xl p-8 mb-8">
-      <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
-        <!-- CPU -->
-        <div class="flex flex-col items-center bg-white/10 rounded-xl py-4 px-2 min-h-[220px]">
-          <div class="text-white text-base font-semibold mb-2">CPU Usage</div>
-          <span id="cpuStat" class="block text-3xl font-bold mb-2 text-blue-100">--%</span>
-          <canvas id="cpuChart" height="90"></canvas>
+    <div id="containerMeta" class="mb-6"></div>
+    <!-- History/period selection -->
+    <div class="mb-4 flex items-center gap-3">
+      <label class="text-white font-semibold" for="historyLen">Show chart for:</label>
+      <select id="historyLen" class="bg-gray-900 text-white rounded px-2 py-1">
+        <option value="30">30 seconds</option>
+        <option value="60">1 minute</option>
+        <option value="150">2.5 minutes</option>
+        <option value="300">5 minutes</option>
+      </select>
+      <span class="text-gray-400 text-xs">(affects all chart widths)</span>
+    </div>
+    <div class="glass rounded-2xl px-8 py-12 mb-8">
+      <!-- 2x2 grid -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-10">
+        <!-- Top row: CPU, RAM -->
+        <div class="flex flex-col items-center bg-white/10 rounded-2xl py-8 px-4 min-h-[320px] w-full">
+          <div class="text-white text-xl font-semibold mb-2">CPU Usage</div>
+          <span id="cpuStat" class="block text-4xl font-bold mb-3 text-blue-100">--%</span>
+          <canvas id="cpuChart" height="112"></canvas>
         </div>
-        <!-- RAM -->
-        <div class="flex flex-col items-center bg-white/10 rounded-xl py-4 px-2 min-h-[220px]">
-          <div class="text-white text-base font-semibold mb-2">RAM Usage</div>
-          <span id="ramStat" class="block text-3xl font-bold mb-2 text-green-100">-- / -- GB</span>
-          <canvas id="ramChart" height="90"></canvas>
+        <div class="flex flex-col items-center bg-white/10 rounded-2xl py-8 px-4 min-h-[320px] w-full">
+          <div class="text-white text-xl font-semibold mb-2">RAM Usage</div>
+          <span id="ramStat" class="block text-4xl font-bold mb-3 text-green-100">-- / -- GB</span>
+          <canvas id="ramChart" height="112"></canvas>
         </div>
-        <!-- Network -->
-        <div class="flex flex-col items-center bg-white/10 rounded-xl py-4 px-2 min-h-[220px]">
-          <div class="text-white text-base font-semibold mb-2">Network RX/TX</div>
-          <span id="netStat" class="block text-xl font-bold mb-2 text-yellow-100">-- / --</span>
-          <canvas id="netChart" height="90"></canvas>
+
+        <!-- Bottom row: Network, Disk -->
+        <div class="flex flex-col items-center bg-white/10 rounded-2xl py-8 px-4 min-h-[320px] w-full">
+          <div class="text-white text-xl font-semibold mb-2">Network RX/TX</div>
+          <span id="netStat" class="block text-2xl font-bold mb-3 text-yellow-100">-- / --</span>
+          <canvas id="netChart" height="112"></canvas>
         </div>
-        <!-- Disk -->
-        <div class="flex flex-col items-center bg-white/10 rounded-xl py-4 px-2 min-h-[220px]">
-          <div class="text-white text-base font-semibold mb-2">
+        <div class="flex flex-col items-center bg-white/10 rounded-2xl py-8 px-4 min-h-[320px] w-full">
+          <div class="text-white text-xl font-semibold mb-2">
             Disk Usage <span title="Only container-internal data. Does not include mounted host folders." style="cursor:help;color:#f3b">[?]</span>
           </div>
-          <span id="diskStat" class="block text-3xl font-bold mb-2 text-pink-100">-- / -- GB</span>
-          <canvas id="diskChart" height="90"></canvas>
+          <span id="diskStat" class="block text-4xl font-bold mb-3 text-pink-100">-- / -- GB</span>
+          <canvas id="diskChart" height="112"></canvas>
           <div class="w-full h-3 rounded bg-white/20 mt-2">
             <div id="diskBar" class="h-3 rounded bg-pink-400 transition-all" style="width:10%"></div>
           </div>
         </div>
       </div>
-      <div class="flex gap-3 mt-6">
-        <button onclick="containerAction('start')" class="px-4 py-2 rounded bg-green-600 text-white hover:bg-green-700 transition">Start</button>
-        <button onclick="containerAction('stop')" class="px-4 py-2 rounded bg-red-600 text-white hover:bg-red-700 transition">Stop</button>
-        <button onclick="containerAction('restart')" class="px-4 py-2 rounded bg-blue-600 text-white hover:bg-blue-700 transition">Restart</button>
+      <div class="flex gap-3 mt-8 justify-center">
+        <button onclick="containerAction('start')" class="px-6 py-3 rounded bg-green-600 text-white hover:bg-green-700 transition text-lg">Start</button>
+        <button onclick="containerAction('stop')" class="px-6 py-3 rounded bg-red-600 text-white hover:bg-red-700 transition text-lg">Stop</button>
+        <button onclick="containerAction('restart')" class="px-6 py-3 rounded bg-blue-600 text-white hover:bg-blue-700 transition text-lg">Restart</button>
       </div>
     </div>
   </div>
-  <script>
-    // --- Configuration ---
-    let histLen = 40;
+  <!-- Main JS -->
+<script>
+let histLen = 30;
+let cpuH = [], ramH = [], netH = [], diskH = [];
+let cpuChart, ramChart, netChart, diskChart;
+let prevNetStats = { rx: 0, tx: 0, lastTime: Date.now() };
+let currentDisk = 0;
+let pollingStats = null, pollingDisk = null;
 
-    // --- Get Container ID from Query Param ---
-    function getParam(key) {
-      return new URLSearchParams(window.location.search).get(key);
-    }
-    const id = getParam('id');
+function getParam(key) {
+  return new URLSearchParams(window.location.search).get(key);
+}
+const id = getParam('id');
 
-    // --- History Arrays for Graphs ---
-    let cpuH=[], ramH=[], netH=[], diskH=[];
-    let cpuChart, ramChart, netChart, diskChart;
-    let prevNetStats = { rx: 0, tx: 0, lastTime: Date.now() };
+document.addEventListener("DOMContentLoaded", function () {
+  document.getElementById('historyLen').addEventListener('change', function() {
+    histLen = parseInt(this.value, 10);
+    loadHistoryAndStart();
+  });
+});
 
-    function renderMeta(container) {
-      document.getElementById('containerTitle').textContent = container.Names ? container.Names.join(', ') : container.Id;
-      document.getElementById('containerMeta').innerHTML = `<span class="text-xs text-gray-300"><b>Image:</b> ${container.Image} &mdash; <b>Status:</b> ${container.Status}</span>`;
-    }
+function fmtNet(x) {
+  if (x > 1024*1024)      return (x/1024/1024).toFixed(1) + " GB/s";
+  if (x > 1024)           return (x/1024).toFixed(1) + " MB/s";
+  return x.toFixed(1) + " KB/s";
+}
 
-    function renderCharts(cpu, ram, totalRam, rx, diskUsed) {
-      cpuH.push(cpu); if (cpuH.length > histLen) cpuH.shift();
-      ramH.push(ram); if (ramH.length > histLen) ramH.shift();
-      netH.push(rx); if (netH.length > histLen) netH.shift();
-      diskH.push(diskUsed); if (diskH.length > histLen) diskH.shift();
+function renderMeta(container) {
+  document.getElementById('containerTitle').textContent = container.Names ? container.Names.join(', ') : container.Id;
+  document.getElementById('containerMeta').innerHTML = `<span class="text-xs text-gray-300"><b>Image:</b> ${container.Image} &mdash; <b>Status:</b> ${container.Status}</span>`;
+}
 
-      if (cpuChart) cpuChart.destroy();
-      if (ramChart) ramChart.destroy();
-      if (netChart) netChart.destroy();
-      if (diskChart) diskChart.destroy();
+function renderCharts(cpu, ram, totalRam, rx, diskUsed) {
+  cpuH.push(cpu); if (cpuH.length > histLen) cpuH.shift();
+  ramH.push(ram); if (ramH.length > histLen) ramH.shift();
+  netH.push(rx);  if (netH.length > histLen) netH.shift();
+  diskH.push(diskUsed); if (diskH.length > histLen) diskH.shift();
 
-      cpuChart = new Chart(document.getElementById('cpuChart'), {
-        type: 'line',
-        data: { labels:Array(cpuH.length).fill(''), datasets:[{data:cpuH,borderColor:"#3b82f6",backgroundColor:"rgba(59,130,246,.11)",fill:true,tension:.45}] },
-        options:{responsive:true,plugins:{legend:{display:false}},scales:{x:{display:false},y:{display:false,min:0,max:100}}}
-      });
-      ramChart = new Chart(document.getElementById('ramChart'), {
-        type: 'line',
-        data: { labels:Array(ramH.length).fill(''), datasets:[{data:ramH,borderColor:"#10b981",backgroundColor:"rgba(16,185,129,.15)",fill:true,tension:.45}] },
-        options:{responsive:true,plugins:{legend:{display:false}},scales:{x:{display:false},y:{display:false,min:0}}}
-      });
-      netChart = new Chart(document.getElementById('netChart'), {
-        type: 'line',
-        data: { labels:Array(netH.length).fill(''), datasets:[{data:netH,borderColor:"#fde047",backgroundColor:"rgba(250,204,21,.09)",fill:true,tension:.45}] },
-        options:{responsive:true,plugins:{legend:{display:false}},scales:{x:{display:false},y:{display:false,min:0}}}
-      });
-      diskChart = new Chart(document.getElementById('diskChart'), {
-        type: 'line',
-        data: { labels:Array(diskH.length).fill(''), datasets:[{data:diskH,borderColor:"#f472b6",backgroundColor:"rgba(244,114,182,.10)",fill:true,tension:.4}] },
-        options:{responsive:true,plugins:{legend:{display:false}},scales:{x:{display:false},y:{display:true,min:0}} }
-      });
-    }
-
-    let currentDisk = 0;
-
-    function updateStats() {
-      fetch(`/api/containers/${id}/stats`)
-        .then(res => res.json())
-        .then(stats => {
-          let cpu=0, ram=0, ramTotal = 1, rx=0, tx=0;
-
-          try {
-            // CPU calculation as before...
-            if (stats.cpu_stats && stats.precpu_stats) {
-              const cpuDelta = stats.cpu_stats.cpu_usage.total_usage - stats.precpu_stats.cpu_usage.total_usage;
-              const sysDelta = stats.cpu_stats.system_cpu_usage - stats.precpu_stats.system_cpu_usage;
-              const cpuCount = stats.cpu_stats.online_cpus||1;
-              if (cpuDelta>0 && sysDelta>0) cpu = ((cpuDelta/sysDelta)*cpuCount*100);
+  // CPU
+  if (!cpuChart) {
+    cpuChart = new Chart(document.getElementById('cpuChart'), {
+      type: 'line',
+      data: { labels:Array(cpuH.length).fill(''), datasets:[{data:cpuH, borderColor:"#3b82f6", backgroundColor:"rgba(59,130,246,.11)", fill:true, tension:.45 }] },
+      options:{responsive:true, plugins:{legend:{display:false}}, scales:{x:{display:false},y:{display:false,min:0,max:100}}}
+    });
+  } else {
+    cpuChart.data.labels = Array(cpuH.length).fill('');
+    cpuChart.data.datasets[0].data = cpuH;
+    cpuChart.update('active');
+  }
+  // RAM
+  if (!ramChart) {
+    ramChart = new Chart(document.getElementById('ramChart'), {
+      type: 'line',
+      data: { labels:Array(ramH.length).fill(''), datasets:[{data:ramH, borderColor:"#10b981", backgroundColor:"rgba(16,185,129,.15)", fill:true, tension:.45 }] },
+      options:{responsive:true, plugins:{legend:{display:false}}, scales:{x:{display:false},y:{display:false,min:0}}}
+    });
+  } else {
+    ramChart.data.labels = Array(ramH.length).fill('');
+    ramChart.data.datasets[0].data = ramH;
+    ramChart.update('active');
+  }
+  // Network
+  if (!netChart) {
+    netChart = new Chart(document.getElementById('netChart'), {
+      type: 'line',
+      data: { labels:Array(netH.length).fill(''), datasets:[{data:netH, borderColor:"#fde047", backgroundColor:"rgba(250,204,21,.09)", fill:true, tension:.45 }] },
+      options: {
+        responsive:true,
+        plugins:{legend:{display:false}},
+        scales: {
+          x:{display:false},
+          y:{
+            display:true,
+            min:0,
+            ticks:{
+              callback: fmtNet
             }
-
-            // RAM calculation as before...
-            if (stats.memory_stats && stats.memory_stats.usage) {
-              ram = stats.memory_stats.usage / 1024 / 1024 / 1024;
-              ramTotal = stats.memory_stats.limit / 1024 / 1024 / 1024;
-            }
-
-            // --- NEW: calculate live network up/down ---
-            if (stats.networks) {
-              for (const nw of Object.values(stats.networks)) {
-                rx += nw.rx_bytes || 0;
-                tx += nw.tx_bytes || 0;
-              }
-            }
-            const now = Date.now();
-            const dt = (now - prevNetStats.lastTime) / 1000; // seconds
-            const rxRate = dt > 0 ? ((rx - prevNetStats.rx) / 1024) / dt : 0; // KB/s
-            const txRate = dt > 0 ? ((tx - prevNetStats.tx) / 1024) / dt : 0; // KB/s
-            prevNetStats = { rx, tx, lastTime: now };
-
-            document.getElementById('netStat').innerHTML = `↓ ${rxRate.toFixed(1)} KB/s ↑ ${txRate.toFixed(1)} KB/s`;
-
-            document.getElementById('cpuStat').textContent = `${cpu.toFixed(1)}%`;
-            document.getElementById('ramStat').textContent = `${ram.toFixed(2)} / ${ramTotal.toFixed(2)} GB`;
-
-            // Render charts, use `currentDisk` which is updated in updateDiskUsage()
-            renderCharts(cpu, ram, ramTotal, rxRate, currentDisk);
-
-          } catch(e){}
-        });
-    }
-
-    function fetchAndShowMeta() {
-      fetch('/api/containers')
-        .then(res => res.json())
-        .then(containers => {
-          const found = containers.find(c => c.Id === id);
-          if (!found) {
-            document.getElementById('containerTitle').textContent = "Not found";
-          } else {
-            renderMeta(found);
           }
-        });
-    }
+        }
+      }
+    });
+  } else {
+    netChart.data.labels = Array(netH.length).fill('');
+    netChart.data.datasets[0].data = netH;
+    netChart.update('active');
+  }
+  // Disk
+  if (!diskChart) {
+    diskChart = new Chart(document.getElementById('diskChart'), {
+      type: 'line',
+      data: { labels:Array(diskH.length).fill(''), datasets:[{data:diskH, borderColor:"#f472b6", backgroundColor:"rgba(244,114,182,.10)", fill:true, tension:.4 }] },
+      options:{responsive:true, plugins:{legend:{display:false}}, scales:{x:{display:false},y:{display:true,min:0}} }
+    });
+  } else {
+    diskChart.data.labels = Array(diskH.length).fill('');
+    diskChart.data.datasets[0].data = diskH;
+    diskChart.update('active');
+  }
+}
 
-    // --- Disk Usage Fetcher ---
-    function updateDiskUsage() {
-      fetch(`/api/containers/${id}/json`)
-        .then(res => res.json())
-        .then(info => {
-          const used = (info.SizeRw || 0) / 1024 / 1024 / 1024;
-          currentDisk = used; // So it appears in disk chart history as well
-          const total = (info.SizeRootFs || 16 * 1024 * 1024 * 1024) / 1024 / 1024 / 1024;
-          document.getElementById('diskStat').textContent = `${used.toFixed(2)} / ${total.toFixed(2)} GB`;
-          const fill = Math.min(100, 100 * used / total);
-          document.getElementById('diskBar').style.width = fill + "%";
-        });
-    }
+function updateStats() {
+  fetch(`/api/containers/${id}/stats`)
+    .then(res => res.json())
+    .then(stats => {
+      let cpu=0, ram=0, ramTotal = 1, rx=0, tx=0;
 
-    window.containerAction = function(action){
-      fetch(`/api/containers/${id}/${action}`,{method:'POST'})
-        .then(res=>res.json())
-        .then(()=>alert("Action "+action+" sent!"));
-    };
+      try {
+        if (stats.cpu_stats && stats.precpu_stats) {
+          const cpuDelta = stats.cpu_stats.cpu_usage.total_usage - stats.precpu_stats.cpu_usage.total_usage;
+          const sysDelta = stats.cpu_stats.system_cpu_usage - stats.precpu_stats.system_cpu_usage;
+          const cpuCount = stats.cpu_stats.online_cpus||1;
+          if (cpuDelta>0 && sysDelta>0) cpu = ((cpuDelta/sysDelta)*cpuCount*100);
+        }
+        if (stats.memory_stats && stats.memory_stats.usage) {
+          ram = stats.memory_stats.usage / 1024 / 1024 / 1024;
+          ramTotal = stats.memory_stats.limit / 1024 / 1024 / 1024;
+        }
+        if (stats.networks) {
+          for (const nw of Object.values(stats.networks)) {
+            rx += nw.rx_bytes || 0;
+            tx += nw.tx_bytes || 0;
+          }
+        }
+        const now = Date.now();
+        const dt = (now - prevNetStats.lastTime) / 1000;
+        const rxRate = dt > 0 ? ((rx - prevNetStats.rx) / 1024) / dt : 0;
+        const txRate = dt > 0 ? ((tx - prevNetStats.tx) / 1024) / dt : 0;
+        prevNetStats = { rx, tx, lastTime: now };
 
-    fetchAndShowMeta();
-    updateStats();
-    updateDiskUsage();
-    setInterval(updateStats, 2000);
-    setInterval(updateDiskUsage, 10000);
+        document.getElementById('netStat').innerHTML =
+          `↓ ${fmtNet(rxRate)} ↑ ${fmtNet(txRate)}`;
 
-  </script>
+        document.getElementById('cpuStat').textContent = `${cpu.toFixed(1)}%`;
+        document.getElementById('ramStat').textContent = `${ram.toFixed(2)} / ${ramTotal.toFixed(2)} GB`;
+
+        renderCharts(cpu, ram, ramTotal, rxRate, currentDisk);
+      } catch(e){}
+    });
+}
+
+function fetchAndShowMeta() {
+  fetch('/api/containers')
+    .then(res => res.json())
+    .then(containers => {
+      const found = containers.find(c => c.Id === id);
+      if (!found) {
+        document.getElementById('containerTitle').textContent = "Not found";
+      } else {
+        renderMeta(found);
+      }
+    });
+}
+
+function updateDiskUsage() {
+  fetch(`/api/containers/${id}/json`)
+    .then(res => res.json())
+    .then(info => {
+      const used = (info.SizeRw || 0) / 1024 / 1024 / 1024;
+      currentDisk = used;
+      const total = (info.SizeRootFs || 16 * 1024 * 1024 * 1024) / 1024 / 1024 / 1024;
+      document.getElementById('diskStat').textContent = `${used.toFixed(2)} / ${total.toFixed(2)} GB`;
+      const fill = Math.min(100, 100 * used / total);
+      document.getElementById('diskBar').style.width = fill + "%";
+    });
+}
+
+window.containerAction = function(action){
+  fetch(`/api/containers/${id}/${action}`,{method:'POST'})
+    .then(res=>res.json())
+    .then(()=>alert("Action "+action+" sent!"));
+};
+
+function loadHistoryAndStart() {
+  if (pollingStats) clearInterval(pollingStats);
+  if (pollingDisk) clearInterval(pollingDisk);
+
+  fetch(`/api/containers/${id}/history?t=${histLen}`)
+    .then(res => res.json())
+    .then(points => {
+      cpuH = points.map(p => p.cpu);
+      ramH = points.map(p => p.ram);
+      netH = points.map(p => p.rx);
+      diskH = points.map(p => p.disk);
+      if(points.length) currentDisk = points[points.length-1].disk;
+      renderCharts(
+        cpuH.length ? cpuH[cpuH.length-1] : 0,
+        ramH.length ? ramH[ramH.length-1] : 0,
+        ramH.length ? points[points.length-1].ramTotal : 1,
+        netH.length ? netH[netH.length-1] : 0,
+        diskH.length ? diskH[diskH.length-1] : 0
+      );
+    })
+    .finally(() => {
+      pollingStats = setInterval(updateStats, 2000);
+      pollingDisk  = setInterval(updateDiskUsage, 10000);
+    });
+}
+
+fetchAndShowMeta();
+loadHistoryAndStart();
+</script>
+
 </body>
 </html>
