@@ -1,57 +1,403 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Docker Dashboard</title>
+    <title>Docker Dashboard Demo</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        body { 
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif; 
-            line-height: 1.6; 
-            color: #e6edf3;
-            background-color: #0d1117;
-            margin: 0;
-            padding: 0;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #111827; /* Dark gray background */
         }
-        .container {
-            text-align: center;
-            padding: 40px;
-            max-width: 600px;
+        .container-card {
+            transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
         }
-        h1 {
-            font-size: 2.5em;
-            color: #58a6ff;
-            margin-bottom: 10px;
+        .container-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05), 0 0 20px rgba(59, 130, 246, 0.3);
         }
-        p {
-            font-size: 1.2em;
-            color: #c9d1d9;
-        }
-        .button {
+        .status-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
             display: inline-block;
-            margin-top: 25px;
-            padding: 12px 24px;
-            background-color: #238636;
-            color: #ffffff;
-            text-decoration: none;
-            font-weight: bold;
-            border-radius: 6px;
-            transition: background-color 0.2s;
         }
-        .button:hover {
-            background-color: #2ea043;
+        .status-running {
+            background-color: #22c55e; /* Green-500 */
+            box-shadow: 0 0 8px #22c55e;
+        }
+        .status-exited {
+            background-color: #ef4444; /* Red-500 */
+            box-shadow: 0 0 8px #ef4444;
+        }
+        .status-restarting {
+            background-color: #eab308; /* Yellow-500 */
+            box-shadow: 0 0 8px #eab308;
+            animation: pulse 1.5s infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        .logs-container {
+            height: 400px;
+            font-family: 'monospace';
+            background-color: #000;
+        }
+        .log-line {
+            white-space: pre-wrap;
+            word-break: break-all;
+        }
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #1f2937;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #4b5563;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #6b7280;
         }
     </style>
 </head>
-<body>
-    <div class="container">
-        <h1>Docker Dashboard</h1>
-        <p>A simple and intuitive dashboard for managing your Docker containers and services.</p>
-        <a href="https://github.com/MNDL-27/docker-dashboard" class="button">View on GitHub</a>
+<body class="text-gray-200">
+
+    <div id="app" class="container mx-auto p-4 md:p-8">
+        <header class="mb-8 text-center">
+            <h1 class="text-4xl md:text-5xl font-bold text-white">🚢 Docker Dashboard</h1>
+            <p class="text-gray-400 mt-2 text-lg">A modern dashboard for your containers.</p>
+        </header>
+
+        <!-- Container List View -->
+        <main id="container-list-view">
+             <div id="loading-state" class="text-center text-gray-400 hidden">
+                <p class="text-2xl">Loading containers...</p>
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6" id="container-grid">
+                <!-- Container cards will be injected here -->
+            </div>
+        </main>
+
+        <!-- Container Detail View (Initially Hidden) -->
+        <div id="container-detail-view" class="hidden">
+            <button id="back-to-list" class="mb-6 bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg transition-colors duration-200">
+                &larr; Back to Dashboard
+            </button>
+            <div class="bg-gray-800 rounded-xl shadow-2xl p-6">
+                <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-6">
+                    <div>
+                        <h2 id="detail-name" class="text-3xl font-bold text-white"></h2>
+                        <p id="detail-image" class="text-gray-400"></p>
+                    </div>
+                    <div class="flex items-center space-x-2 mt-4 md:mt-0">
+                         <span id="detail-status-dot" class="status-dot"></span>
+                         <span id="detail-status-text" class="text-lg font-medium"></span>
+                    </div>
+                </div>
+
+                 <!-- Action Buttons -->
+                <div id="detail-actions" class="flex flex-wrap gap-3 mb-8">
+                    <!-- Action buttons injected here -->
+                </div>
+
+                <!-- Stats and Logs Tabs -->
+                <div class="mb-4 border-b border-gray-700">
+                    <nav class="-mb-px flex space-x-8" aria-label="Tabs">
+                        <button class="tab-button border-blue-500 text-blue-400 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm" data-tab="stats">
+                          Stats
+                        </button>
+                        <button class="tab-button border-transparent text-gray-400 hover:text-gray-200 hover:border-gray-500 whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm" data-tab="logs">
+                          Logs
+                        </button>
+                    </nav>
+                </div>
+                
+                <!-- Stats Content -->
+                <div id="stats-tab" class="tab-content">
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div class="bg-gray-900/50 p-4 rounded-lg">
+                            <h3 class="text-lg font-semibold text-gray-300">CPU Usage</h3>
+                            <p id="cpu-stat" class="text-4xl font-bold text-blue-400 mt-2">0.00%</p>
+                            <div class="w-full bg-gray-700 rounded-full h-2.5 mt-3">
+                                <div id="cpu-bar" class="bg-blue-500 h-2.5 rounded-full" style="width: 0%"></div>
+                            </div>
+                        </div>
+                        <div class="bg-gray-900/50 p-4 rounded-lg">
+                            <h3 class="text-lg font-semibold text-gray-300">Memory Usage</h3>
+                            <p id="mem-stat" class="text-4xl font-bold text-green-400 mt-2">0 MiB / 0 MiB</p>
+                             <div class="w-full bg-gray-700 rounded-full h-2.5 mt-3">
+                                <div id="mem-bar" class="bg-green-500 h-2.5 rounded-full" style="width: 0%"></div>
+                            </div>
+                        </div>
+                        <div class="bg-gray-900/50 p-4 rounded-lg">
+                            <h3 class="text-lg font-semibold text-gray-300">Network I/O</h3>
+                            <p class="text-xl font-semibold text-gray-400 mt-2">
+                                <span id="net-rx" class="text-purple-400">0 KB</span> ↓ / 
+                                <span id="net-tx" class="text-yellow-400">0 KB</span> ↑
+                            </p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Logs Content -->
+                <div id="logs-tab" class="tab-content hidden">
+                    <div id="logs-container" class="logs-container overflow-y-auto p-4 rounded-lg text-sm text-gray-300">
+                        <!-- Logs will be streamed here -->
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // --- STATE ---
+            let allContainers = [];
+            let selectedContainer = null;
+            let statsInterval = null;
+            let logsInterval = null;
+
+            // --- MOCK DATA ---
+            const mockContainers = [
+                { Id: 'container-1', Names: ['/web-server'], Image: 'nginx:latest', State: 'running', Status: 'Up 2 hours' },
+                { Id: 'container-2', Names: ['/database'], Image: 'postgres:15', State: 'running', Status: 'Up 2 hours' },
+                { Id: 'container-3', Names: ['/api-gateway'], Image: 'my-api:1.2.0', State: 'exited', Status: 'Exited (0) 15 minutes ago' },
+                { Id: 'container-4', Names: ['/worker-1'], Image: 'redis:alpine', State: 'running', Status: 'Up 1 hour' },
+                { Id: 'container-5', Names: ['/old-service'], Image: 'ubuntu:18.04', State: 'exited', Status: 'Exited (137) 3 days ago' },
+                { Id: 'container-6', Names: ['/caching-layer'], Image: 'memcached:latest', State: 'running', Status: 'Up 30 minutes' },
+            ];
+
+            // --- DOM ELEMENTS ---
+            const containerGridView = document.getElementById('container-list-view');
+            const containerDetailView = document.getElementById('container-detail-view');
+            const containerGrid = document.getElementById('container-grid');
+            const loadingState = document.getElementById('loading-state');
+            const backButton = document.getElementById('back-to-list');
+            const tabs = document.querySelectorAll('.tab-button');
+
+            // --- RENDERING FUNCTIONS ---
+            const renderContainerList = () => {
+                loadingState.classList.add('hidden');
+                containerGrid.innerHTML = '';
+                allContainers.forEach(container => {
+                    const isRunning = container.State === 'running';
+                    let statusClass = 'status-exited';
+                    if (isRunning) statusClass = 'status-running';
+                    if (container.State === 'restarting') statusClass = 'status-restarting';
+
+                    const cardHtml = `
+                        <div class="container-card bg-gray-800 rounded-xl shadow-lg p-5 cursor-pointer" data-id="${container.Id}">
+                            <div class="flex justify-between items-center mb-3">
+                                <h3 class="text-xl font-bold truncate text-white">${container.Names[0].substring(1)}</h3>
+                                <div class="flex items-center space-x-2">
+                                    <span class="status-dot ${statusClass}"></span>
+                                    <span class="font-semibold text-sm capitalize ${isRunning ? 'text-green-400' : 'text-red-400'}">${container.State}</span>
+                                </div>
+                            </div>
+                            <p class="text-sm text-gray-400 truncate">${container.Image}</p>
+                            <p class="text-xs text-gray-500 mt-1">${container.Status}</p>
+                        </div>
+                    `;
+                    containerGrid.insertAdjacentHTML('beforeend', cardHtml);
+                });
+
+                document.querySelectorAll('.container-card').forEach(card => {
+                    card.addEventListener('click', () => showContainerDetails(card.dataset.id));
+                });
+            };
+
+            const renderContainerDetails = () => {
+                if (!selectedContainer) return;
+
+                document.getElementById('detail-name').textContent = selectedContainer.Names[0].substring(1);
+                document.getElementById('detail-image').textContent = selectedContainer.Image;
+                
+                updateStatusUI();
+                renderActionButtons();
+            };
+            
+            const updateStatusUI = () => {
+                 const statusDot = document.getElementById('detail-status-dot');
+                 const statusText = document.getElementById('detail-status-text');
+                 statusDot.className = 'status-dot';
+                 if (selectedContainer.State === 'running') {
+                     statusDot.classList.add('status-running');
+                     statusText.textContent = selectedContainer.Status;
+                     statusText.className = 'text-lg font-medium text-green-400';
+                 } else if (selectedContainer.State === 'restarting'){
+                    statusDot.classList.add('status-restarting');
+                    statusText.textContent = 'Restarting...';
+                    statusText.className = 'text-lg font-medium text-yellow-400';
+                 } else {
+                     statusDot.classList.add('status-exited');
+                     statusText.textContent = selectedContainer.Status;
+                     statusText.className = 'text-lg font-medium text-red-400';
+                 }
+            };
+            
+            const renderActionButtons = () => {
+                 const actionsContainer = document.getElementById('detail-actions');
+                 actionsContainer.innerHTML = '';
+                 const isRunning = selectedContainer.State === 'running';
+                 const isRestarting = selectedContainer.State === 'restarting';
+
+                 const startButton = { text: 'Start', icon: '▶', class: 'bg-green-600 hover:bg-green-700', action: startContainer, show: !isRunning && !isRestarting };
+                 const stopButton = { text: 'Stop', icon: '■', class: 'bg-red-600 hover:bg-red-700', action: stopContainer, show: isRunning };
+                 const restartButton = { text: 'Restart', icon: '↻', class: 'bg-yellow-600 hover:bg-yellow-700', action: restartContainer, show: isRunning };
+                 
+                 [startButton, stopButton, restartButton].forEach(btn => {
+                     if (btn.show) {
+                        const buttonEl = document.createElement('button');
+                        buttonEl.className = `flex items-center gap-2 text-white font-bold py-2 px-4 rounded-lg transition-transform transform hover:scale-105 duration-200 ${btn.class}`;
+                        buttonEl.innerHTML = `<span>${btn.icon}</span> ${btn.text}`;
+                        buttonEl.onclick = () => btn.action(selectedContainer.Id);
+                        actionsContainer.appendChild(buttonEl);
+                     }
+                 });
+            };
+
+            // --- VIEW MANAGEMENT ---
+            const showContainerDetails = (id) => {
+                selectedContainer = allContainers.find(c => c.Id === id);
+                if (selectedContainer) {
+                    renderContainerDetails();
+                    containerGridView.classList.add('hidden');
+                    containerDetailView.classList.remove('hidden');
+                    simulateStreams();
+                    switchTab('stats');
+                }
+            };
+
+            const showListView = () => {
+                containerGridView.classList.remove('hidden');
+                containerDetailView.classList.add('hidden');
+                stopStreams();
+                selectedContainer = null;
+                renderContainerList();
+            };
+
+            const switchTab = (tabName) => {
+                 tabs.forEach(button => {
+                     if (button.dataset.tab === tabName) {
+                         button.classList.remove('border-transparent', 'text-gray-400', 'hover:text-gray-200', 'hover:border-gray-500');
+                         button.classList.add('border-blue-500', 'text-blue-400');
+                     } else {
+                         button.classList.remove('border-blue-500', 'text-blue-400');
+                         button.classList.add('border-transparent', 'text-gray-400', 'hover:text-gray-200', 'hover:border-gray-500');
+                     }
+                 });
+
+                 document.querySelectorAll('.tab-content').forEach(content => {
+                     content.classList.add('hidden');
+                 });
+                 document.getElementById(`${tabName}-tab`).classList.remove('hidden');
+            };
+
+            // --- SIMULATED ACTIONS & STREAMS ---
+            const updateContainerState = (id, state, status) => {
+                const container = allContainers.find(c => c.Id === id);
+                if (container) {
+                    container.State = state;
+                    container.Status = status;
+                    if (selectedContainer && selectedContainer.Id === id) {
+                       updateStatusUI();
+                       renderActionButtons();
+                    }
+                }
+            };
+
+            const startContainer = (id) => updateContainerState(id, 'running', 'Up 1 second');
+            const stopContainer = (id) => updateContainerState(id, 'exited', 'Exited (0) 1 second ago');
+            const restartContainer = (id) => {
+                updateContainerState(id, 'restarting', 'Restarting...');
+                setTimeout(() => {
+                    if (selectedContainer && selectedContainer.Id === id && selectedContainer.State === 'restarting') {
+                         updateContainerState(id, 'running', 'Up 1 second');
+                    }
+                }, 3000);
+            };
+
+            const simulateStreams = () => {
+                stopStreams();
+                
+                // Stats simulation
+                statsInterval = setInterval(() => {
+                    if (selectedContainer.State !== 'running') {
+                        updateStatsUI({ cpu: '0.00', memory: { usage: '0', limit: '1024' }, network: { rx: '0 KB', tx: '0 KB' } });
+                        return;
+                    }
+                    const cpu = (Math.random() * 15).toFixed(2);
+                    const memUsage = (Math.random() * 512).toFixed(1);
+                    const memLimit = 1024;
+                    const netRx = (Math.random() * 1000).toFixed(1) + ' KB';
+                    const netTx = (Math.random() * 200).toFixed(1) + ' KB';
+                    updateStatsUI({ cpu, memory: { usage: memUsage, limit: memLimit }, network: { rx: netRx, tx: netTx } });
+                }, 2000);
+
+                // Logs simulation
+                const logsContainer = document.getElementById('logs-container');
+                logsContainer.innerHTML = '';
+                const logMessages = [
+                    'INFO: Server started successfully on port 80.', 'WARN: Deprecated API endpoint called.', 'ERROR: Database connection failed.',
+                    'DEBUG: User authenticated with ID 12345.', 'INFO: Request received: GET /api/data', 'INFO: Processing background job...'
+                ];
+                logsInterval = setInterval(() => {
+                     if (selectedContainer.State !== 'running') return;
+                     const logLine = document.createElement('div');
+                     logLine.className = 'log-line';
+                     logLine.textContent = `[${new Date().toISOString()}] ${logMessages[Math.floor(Math.random() * logMessages.length)]}`;
+                     logsContainer.appendChild(logLine);
+                     logsContainer.scrollTop = logsContainer.scrollHeight;
+                }, 1500 + Math.random() * 2000);
+            };
+
+            const stopStreams = () => {
+                clearInterval(statsInterval);
+                clearInterval(logsInterval);
+            };
+
+            const updateStatsUI = (stats) => {
+                const cpuStat = document.getElementById('cpu-stat');
+                const memStat = document.getElementById('mem-stat');
+                const netRx = document.getElementById('net-rx');
+                const netTx = document.getElementById('net-tx');
+                const cpuBar = document.getElementById('cpu-bar');
+                const memBar = document.getElementById('mem-bar');
+
+                const cpuUsage = parseFloat(stats.cpu) || 0;
+                const memUsage = parseFloat(stats.memory.usage) || 0;
+                const memLimit = parseFloat(stats.memory.limit) || 1;
+                const memPercent = (memUsage / memLimit) * 100;
+                
+                cpuStat.textContent = `${cpuUsage.toFixed(2)}%`;
+                cpuBar.style.width = `${Math.min(100, cpuUsage)}%`;
+                
+                memStat.textContent = `${memUsage.toFixed(1)} MiB / ${memLimit.toFixed(0)} MiB`;
+                memBar.style.width = `${Math.min(100, memPercent)}%`;
+
+                netRx.textContent = stats.network.rx;
+                netTx.textContent = stats.network.tx;
+            };
+
+            // --- INITIALIZATION ---
+            const init = () => {
+                backButton.addEventListener('click', showListView);
+                tabs.forEach(button => {
+                    button.addEventListener('click', () => switchTab(button.dataset.tab));
+                });
+                allContainers = mockContainers;
+                renderContainerList();
+            };
+
+            init();
+        });
+    </script>
 </body>
 </html>
