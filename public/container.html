@@ -372,6 +372,75 @@ function setBandwidthRange(range) {
   console.log(`Bandwidth range changed to: ${range}`);
 }
 
+// qBittorrent API integration
+let isQBittorrent = false;
+let qbittorrentPolling = null;
+
+async function detectAndLoadQBittorrent(container) {
+  // Detect if this is a qBittorrent container
+  const image = container.Image ? container.Image.toLowerCase() : '';
+  const name = container.Names ? container.Names.join(',').toLowerCase() : '';
+  
+  isQBittorrent = image.includes('qbittorrent') || name.includes('qbittorrent');
+  
+  if (isQBittorrent) {
+    console.log('qBittorrent detected - will use API for bandwidth stats');
+    startQBittorrentPolling();
+  }
+}
+
+async function fetchQBittorrentStats() {
+  try {
+    const response = await fetch('/api/qbittorrent/transfer');
+    if (!response.ok) {
+      console.warn('qBittorrent API not available, falling back to Docker stats');
+      return null;
+    }
+    
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error('Failed to fetch qBittorrent stats:', error);
+    return null;
+  }
+}
+
+function startQBittorrentPolling() {
+  // Initial fetch
+  updateQBittorrentBandwidth();
+  
+  // Poll every 2 seconds
+  qbittorrentPolling = setInterval(updateQBittorrentBandwidth, 2000);
+}
+
+async function updateQBittorrentBandwidth() {
+  const stats = await fetchQBittorrentStats();
+  
+  if (stats) {
+    // Update bandwidth display with qBittorrent API data
+    totalRxBytes = stats.dlInfoData || 0;
+    totalTxBytes = stats.upInfoData || 0;
+    updateBandwidthDisplay();
+    
+    // Also update the network speed display if available
+    const netElement = document.getElementById('network');
+    if (netElement && stats.dlInfoSpeed !== undefined && stats.upInfoSpeed !== undefined) {
+      const dlSpeed = (stats.dlInfoSpeed / 1024).toFixed(1); // Convert to KB/s
+      const upSpeed = (stats.upInfoSpeed / 1024).toFixed(1);
+      netElement.textContent = `↓${dlSpeed} KB/s ↑${upSpeed} KB/s`;
+    }
+    
+    // Update connection status if element exists
+    const statusElement = document.querySelector('.text-gray-500');
+    if (statusElement && stats.connectionStatus) {
+      const statusText = stats.connectionStatus === 'connected' ? '✓ Connected' : '⚠ Disconnected';
+      const statusColor = stats.connectionStatus === 'connected' ? 'text-green-400' : 'text-yellow-400';
+      statusElement.className = `text-sm ${statusColor}`;
+      statusElement.textContent = statusText;
+    }
+  }
+}
+
 function renderMeta(container) {
   document.getElementById('containerTitle').textContent = container.Names ? container.Names.join(', ') : container.Id;
   document.getElementById('containerMeta').innerHTML = `<span class="text-xs text-gray-300"><b>Image:</b> ${container.Image} &mdash; <b>Status:</b> ${container.Status}</span>`;
@@ -505,6 +574,8 @@ function fetchAndShowMeta() {
         document.getElementById('containerTitle').textContent = "Not found";
       } else {
         renderMeta(found);
+        // Detect and initialize qBittorrent if applicable
+        detectAndLoadQBittorrent(found);
       }
     });
 }

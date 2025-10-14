@@ -4,6 +4,7 @@ const http = require('http');
 const WebSocket = require('ws');
 const compression = require('compression');
 const containersRoute = require('./routes/containers');
+const qbittorrentRoute = require('./routes/qbittorrent');
 const wsHandlers = require('./sockets');
 const path = require('path');
 const config = require('./config/defaults');
@@ -23,6 +24,7 @@ app.use((req, res, next) => {
     next();
 });
 app.use('/api/containers', containersRoute);
+app.use('/api/qbittorrent', qbittorrentRoute);
 
 // Serve static files with cache control
 app.use(express.static(path.join(__dirname, '../public'), {

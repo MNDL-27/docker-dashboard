@@ -12,6 +12,10 @@ services:
       - PORTAINER_URL=${PORTAINER_URL:-}
       - PORTAINER_ENDPOINT_ID=${PORTAINER_ENDPOINT_ID:-}
       - PORTAINER_API_KEY=${PORTAINER_API_KEY:-}
+      # qBittorrent integration (optional)
+      - QBITTORRENT_URL=${QBITTORRENT_URL:-http://qbittorrent:8080}
+      - QBITTORRENT_USERNAME=${QBITTORRENT_USERNAME:-admin}
+      - QBITTORRENT_PASSWORD=${QBITTORRENT_PASSWORD:-adminadmin}
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
     restart: unless-stopped
