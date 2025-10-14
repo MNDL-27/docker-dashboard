@@ -1,13 +1,30 @@
 {
   "name": "docker-dashboard",
-  "version": "1.0.0",
-  "description": "Modern Docker container dashboard with live stats, logs, and Portainer gateway support.",
+  "version": "2.0.0",
+  "description": "Fully containerized Docker dashboard with live stats, logs, and modern UI. Linux optimized. No local dependencies required.",
   "main": "server/index.js",
   "scripts": {
     "start": "node server/index.js"
   },
+  "keywords": [
+    "docker",
+    "dashboard",
+    "container",
+    "monitoring",
+    "linux",
+    "containerized",
+    "docker-compose"
+  ],
   "author": "MNDL-27",
   "license": "AGPL-3.0",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/MNDL-27/docker-dashboard.git"
+  },
+  "engines": {
+    "node": ">=18.0.0",
+    "docker": ">=20.10.0"
+  },
   "dependencies": {
     "express": "^4.18.2",
     "ws": "^8.13.0",

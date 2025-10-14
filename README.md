@@ -1,10 +1,11 @@
 <div align="center">
   <h1>🚢 Docker Dashboard</h1>
-  <p>A modern web app to monitor, manage, and view live stats/logs for all your Docker containers.<br>
-  <b>Node.js backend + SPA frontend + Portainer gateway support</b></p>
+  <p>A fully containerized web app to monitor, manage, and view live stats/logs for all your Docker containers.<br>
+  <b>100% Docker-based | No local dependencies | Linux optimized</b></p>
   <p>
+    <img src="https://img.shields.io/badge/docker-required-2496ED?style=flat-square&logo=docker" alt="Docker">
+    <img src="https://img.shields.io/badge/platform-linux-FCC624?style=flat-square&logo=linux&logoColor=black" alt="Linux">
     <img src="https://img.shields.io/github/license/MNDL-27/docker-dashboard?style=flat-square" alt="License">
-    <img src="https://img.shields.io/github/languages/top/MNDL-27/docker-dashboard?style=flat-square" alt="Top Language">
     <img src="https://img.shields.io/github/last-commit/MNDL-27/docker-dashboard?style=flat-square" alt="Last Commit">
   </p>
 </div>
@@ -19,13 +20,12 @@
 * **Container Management:** Start, stop, and restart containers with one click
 * **Modern UI:** Ultra-modern glass-morphism design with animated gradients
 * **Portainer Integration:** Use Portainer as a gateway for multi-host support
-* **Docker Socket Access:** Direct Docker engine monitoring or remote via Portainer
+* **Fully Containerized:** No Node.js, npm, or any local dependencies required
+* **Linux Optimized:** Designed and tested for Linux servers
 
 ---
 
-## 🚀 Quick Start
-
-### Option 1: Docker Compose (Recommended)
+## 🚀 Quick Start (Docker Only)
 
 ```bash
 # Clone the repository
@@ -35,43 +35,27 @@ cd docker-dashboard
 # Start with Docker Compose
 docker compose up -d
 
-# Or use the helper script (Windows)
-start.bat
-
-# Or use the helper script (Linux/Mac)
+# Or use the helper script
 chmod +x start.sh
 ./start.sh
 ```
 
 **Access Dashboard:** Open [http://localhost:1714](http://localhost:1714)
 
-### Option 2: Development Mode
-
-```bash
-# Clone the repository
-git clone https://github.com/MNDL-27/docker-dashboard.git
-cd docker-dashboard
-
-# Install dependencies
-npm install
-
-# Start the server
-npm start
-```
-
-**Access Dashboard:** Open [http://localhost:1714](http://localhost:1714)
+> **⚠️ Prerequisites:** Docker and Docker Compose must be installed on your Linux system.  
+> No other dependencies required!
 
 ---
 
-## 🐳 Docker Deployment
+## 🐳 Deployment
 
-### Using Docker Compose
+### Method 1: Docker Compose (Recommended)
 
 ```bash
 docker compose up -d
 ```
 
-### Using Docker CLI
+### Method 2: Docker CLI
 
 ```bash
 docker build -t docker-dashboard .
@@ -83,88 +67,113 @@ docker run -d \
   docker-dashboard
 ```
 
-**📖 Full deployment guide:** See [DOCKER_DEPLOYMENT.md](DOCKER_DEPLOYMENT.md)
+### Method 3: Helper Script
+
+```bash
+chmod +x start.sh
+./start.sh
+```
+
+**📖 Advanced configuration:** See [DOCKER_DEPLOYMENT.md](DOCKER_DEPLOYMENT.md)
 
 ---
 
 ## ⚙️ Configuration
 
-Create a `.env` file or set environment variables:
+Configure via environment variables in `docker-compose.yml`:
 
------
-
-## ⚙️ Configuration
-
-You can customize the application by editing the `.env` file:
-
-```env
-# Set to true to use Portainer as a gateway
-USE_PORTAINER=false
-
-# The port to expose the dashboard on
-PORT=8088
-
-# The path to the Docker socket
-DOCKER_SOCKET=/var/run/docker.sock
-
-# --- Portainer Gateway Settings ---
-# (Only used if USE_PORTAINER is set to true)
-
-# The URL of your Portainer instance
-PORTAINER_URL=[https://portainer.example.com:9443](https://portainer.example.com:9443)
-
-# The ID of the Portainer endpoint you want to connect to
-PORTAINER_ENDPOINT_ID=1
-
-# Your Portainer API key
-PORTAINER_API_KEY=replace_me
+```yaml
+environment:
+  - PORT=1714                    # Dashboard port
+  - NODE_ENV=production          # Production mode
+  - USE_PORTAINER=false          # Use Portainer gateway
+  - PORTAINER_URL=               # Portainer instance URL
+  - PORTAINER_ENDPOINT_ID=1      # Portainer endpoint ID
+  - PORTAINER_API_KEY=           # Portainer API key
 ```
 
------
+**📖 Full configuration guide:** See [INSTALL.md](INSTALL.md)
 
-## 🛡️ Security Notes
+---
 
-> **Important:** Please take a moment to review these security recommendations.
+## � Management Commands
 
-  * **API Keys:** Keep your Portainer API key a secret. Do not commit your `.env` file with your actual keys to version control.
-  * **Socket Access:** Only mount the Docker socket for trusted users. Granting access to the Docker socket is equivalent to giving root access to your host.
-  * **HTTPS:** Always use HTTPS for both the dashboard and your Portainer instance in a production environment.
-  * **Authentication:** This application does not have built-in authentication. If you plan to expose the dashboard publicly, it is strongly recommended to add an authentication layer using a reverse proxy (like Nginx or Traefik) or other middleware.
+```bash
+# Start dashboard
+docker compose up -d
 
------
+# Stop dashboard
+docker compose down
+
+# View logs
+docker logs -f docker-dashboard
+
+# Restart dashboard
+docker compose restart
+
+# Update to latest version
+git pull && docker compose up -d --build
+
+# Check health status
+docker inspect docker-dashboard --format='{{.State.Health.Status}}'
+```
+
+---
+
+## 🛡️ Security Features
+
+✅ **Read-only Docker socket** - Container cannot modify Docker  
+✅ **Minimal privileges** - Runs as non-root when possible  
+✅ **Health checks** - Automatic health monitoring every 30s  
+✅ **Auto-restart** - Container restarts on failure  
+✅ **Network isolation** - Custom bridge network  
+
+> **⚠️ Important:** Add authentication (Nginx, Traefik, Authelia) before exposing publicly!
+
+---
 
 ## 🔗 Portainer Gateway
 
-You can use a Portainer instance as a gateway to manage multiple Docker hosts and leverage Portainer's Role-Based Access Control (RBAC).
+Use Portainer to manage multiple Docker hosts with RBAC:
 
-### How to set it up:
+1. Set up Portainer and create an API key
+2. Edit `docker-compose.yml`:
+   ```yaml
+   environment:
+     - USE_PORTAINER=true
+     - PORTAINER_URL=https://portainer.example.com:9443
+     - PORTAINER_ENDPOINT_ID=1
+     - PORTAINER_API_KEY=your_api_key_here
+   ```
+3. Restart: `docker compose up -d --force-recreate`
 
-1.  Set up a Portainer instance and create an API key.
-2.  In your `.env` file, set `USE_PORTAINER=true`.
-3.  Fill in the `PORTAINER_URL`, `PORTAINER_ENDPOINT_ID`, and `PORTAINER_API_KEY` variables.
-4.  Restart the dashboard: `docker compose up -d --force-recreate`
+---
 
-All API calls will now be routed through your Portainer instance.
+## 📚 Documentation
 
------
+- [INSTALL.md](INSTALL.md) - Detailed installation guide
+- [DOCKER_DEPLOYMENT.md](DOCKER_DEPLOYMENT.md) - Advanced deployment options
+- [start.sh](start.sh) - Interactive helper script
 
-## ⚠️ Limitations
-
-  * **No Built-in Authentication:** As mentioned in the security notes, you should add your own authentication for public-facing deployments.
-  * **Stats/Logs Streaming:** The real-time stats and logs streaming is a best-effort implementation and may require tuning for large-scale clusters.
-  * **Portainer Gateway:** Requires a valid API key and endpoint ID to function correctly.
-
------
+---
 
 ## 🙌 Contributing
 
-We welcome contributions\! Please see our [CONTRIBUTING.md](https://www.google.com/search?q=CONTRIBUTING.md) file for guidelines on how to get started.
+Contributions are welcome! Please feel free to submit issues and pull requests.
 
------
+---
 
 ## 📄 License
 
-This project is licensed under the AGPL-3.0 License. See the [LICENSE](https://www.google.com/search?q=LICENSE) file for details.
+This project is licensed under the AGPL-3.0 License. See [LICENSE](LICENSE) for details.
 
-```
-```
+---
+
+<div align="center">
+  <p>Made with ❤️ for the Docker community</p>
+  <p>
+    <a href="https://github.com/MNDL-27/docker-dashboard">⭐ Star this repo</a> •
+    <a href="https://github.com/MNDL-27/docker-dashboard/issues">🐛 Report Bug</a> •
+    <a href="https://github.com/MNDL-27/docker-dashboard/issues">💡 Request Feature</a>
+  </p>
+</div>

@@ -1,31 +1,53 @@
 # 🐳 Docker Deployment Guide
 
-## Quick Start with Docker Compose
+> **📌 This project is fully containerized and requires ONLY Docker.**  
+> No Node.js, npm, or any local dependencies needed!
 
-### 1. Build and Start
+## Prerequisites
+
+- **Docker** (version 20.10 or higher)
+- **Docker Compose** (version 2.0 or higher)
+- **Linux** operating system (Ubuntu, Debian, CentOS, etc.)
+- Access to Docker socket (`/var/run/docker.sock`)
+
+## Quick Start
+
+### 1. Clone and Deploy
 ```bash
-docker-compose up -d
+git clone https://github.com/MNDL-27/docker-dashboard.git
+cd docker-dashboard
+docker compose up -d
 ```
 
 ### 2. View Logs
 ```bash
-docker-compose logs -f dashboard
+docker logs -f docker-dashboard
 ```
 
 ### 3. Stop
 ```bash
-docker-compose down
+docker compose down
 ```
 
-## Manual Docker Commands
+## Alternative Deployment Methods
 
-### Build Image
+### Method 1: Helper Script (Interactive)
+```bash
+chmod +x start.sh
+./start.sh
+```
+
+The script provides a menu with options:
+- Start containers
+- Stop containers
+- View logs
+- Restart containers
+- Rebuild images
+- Cleanup
+
+### Method 2: Docker CLI (Without Compose)
 ```bash
 docker build -t docker-dashboard .
-```
-
-### Run Container
-```bash
 docker run -d \
   --name docker-dashboard \
   -p 1714:1714 \
@@ -38,6 +60,7 @@ docker run -d \
 Open your browser and navigate to:
 ```
 http://localhost:1714
+http://your-server-ip:1714
 ```
 
 ## Environment Variables
