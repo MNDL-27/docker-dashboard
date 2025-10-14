@@ -21,6 +21,8 @@ services:
     restart: unless-stopped
     networks:
       - docker-dashboard
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     labels:
       - "com.docker.dashboard.managed=true"
       - "com.docker.dashboard.version=1.0"
