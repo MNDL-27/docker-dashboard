@@ -81,6 +81,21 @@
       transform: translateY(-2px);
       box-shadow: 0 8px 20px rgba(0,0,0,0.3);
     }
+    .bandwidth-range-btn {
+      background: rgba(255, 255, 255, 0.05);
+      border-color: rgba(255, 255, 255, 0.1);
+      color: rgba(255, 255, 255, 0.6);
+    }
+    .bandwidth-range-btn:hover {
+      background: rgba(255, 255, 255, 0.1);
+      border-color: rgba(255, 255, 255, 0.2);
+      color: rgba(255, 255, 255, 0.9);
+    }
+    .bandwidth-range-btn.active {
+      background: #6366f1;
+      border-color: #6366f1;
+      color: white;
+    }
   </style>
 </head>
 <body class="min-h-screen p-4 md:p-8" style="position: relative; z-index: 1;">
@@ -215,6 +230,21 @@
                 <div class="text-sm text-gray-500">Since container started</div>
               </div>
             </div>
+            <!-- Time Range Controls -->
+            <div class="flex gap-2 flex-wrap">
+              <button onclick="setBandwidthRange('day')" class="bandwidth-range-btn px-3 py-1.5 text-xs font-semibold rounded-lg border transition-all" data-range="day">
+                Last 24h
+              </button>
+              <button onclick="setBandwidthRange('week')" class="bandwidth-range-btn px-3 py-1.5 text-xs font-semibold rounded-lg border transition-all" data-range="week">
+                Last Week
+              </button>
+              <button onclick="setBandwidthRange('month')" class="bandwidth-range-btn px-3 py-1.5 text-xs font-semibold rounded-lg border transition-all" data-range="month">
+                Last Month
+              </button>
+              <button onclick="setBandwidthRange('all')" class="bandwidth-range-btn active px-3 py-1.5 text-xs font-semibold rounded-lg border transition-all" data-range="all">
+                All Time
+              </button>
+            </div>
           </div>
           <div class="grid grid-cols-2 gap-6">
             <div class="text-center p-4 rounded-xl bg-green-500/10 border border-green-500/30">
@@ -290,6 +320,56 @@ function updateBandwidthDisplay() {
   document.getElementById('totalRx').textContent = fmtBytes(totalRxBytes);
   document.getElementById('totalTx').textContent = fmtBytes(totalTxBytes);
   document.getElementById('totalBandwidth').textContent = fmtBytes(totalRxBytes + totalTxBytes);
+}
+
+// Bandwidth range selection
+let bandwidthRange = 'all'; // 'day', 'week', 'month', 'all'
+let bandwidthStartTime = null;
+
+function setBandwidthRange(range) {
+  bandwidthRange = range;
+  const now = Date.now();
+  
+  // Calculate start time based on range
+  switch(range) {
+    case 'day':
+      bandwidthStartTime = now - (24 * 60 * 60 * 1000); // 24 hours ago
+      break;
+    case 'week':
+      bandwidthStartTime = now - (7 * 24 * 60 * 60 * 1000); // 7 days ago
+      break;
+    case 'month':
+      bandwidthStartTime = now - (30 * 24 * 60 * 60 * 1000); // 30 days ago
+      break;
+    case 'all':
+      bandwidthStartTime = null; // No limit
+      break;
+  }
+  
+  // Update button states
+  document.querySelectorAll('.bandwidth-range-btn').forEach(btn => {
+    if (btn.dataset.range === range) {
+      btn.classList.add('active');
+    } else {
+      btn.classList.remove('active');
+    }
+  });
+  
+  // Update subtitle text
+  const subtitle = document.querySelector('.stat-card .text-sm.text-gray-500');
+  const rangeText = {
+    'day': 'Last 24 hours',
+    'week': 'Last 7 days',
+    'month': 'Last 30 days',
+    'all': 'Since container started'
+  };
+  if (subtitle) {
+    subtitle.textContent = rangeText[range];
+  }
+  
+  // Note: In a real implementation, you would reset the counters or
+  // fetch historical data from the server based on the time range
+  console.log(`Bandwidth range changed to: ${range}`);
 }
 
 function renderMeta(container) {
