@@ -23,7 +23,19 @@ app.use((req, res, next) => {
     next();
 });
 app.use('/api/containers', containersRoute);
-app.use(express.static(path.join(__dirname, '../public'))); // Re-enabled: serve static dashboard UI
+
+// Serve static files with cache control
+app.use(express.static(path.join(__dirname, '../public'), {
+  setHeaders: (res, filePath) => {
+    // Disable caching for HTML files to always get fresh content
+    if (filePath.endsWith('.html')) {
+      res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+      res.setHeader('Pragma', 'no-cache');
+      res.setHeader('Expires', '0');
+    }
+  }
+}));
+
 const server = http.createServer(app);
 // Log raw upgrade attempts to help debug WebSocket handshakes (Cloudflared/tunnel visibility)
 // Optional raw upgrade logging to help debug WebSocket handshakes (Cloudflared/tunnel visibility)
