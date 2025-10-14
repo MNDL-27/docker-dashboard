@@ -10,94 +10,238 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <style>
-    * { font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; }
+    * { 
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
     body { 
-      background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #334155 100%);
+      background: linear-gradient(135deg, #0a0e27 0%, #1a1f3a 25%, #2d1b69 50%, #1a1f3a 75%, #0a0e27 100%);
+      background-size: 200% 200%;
+      animation: gradientShift 15s ease infinite;
       min-height: 100vh;
+      position: relative;
+      overflow-x: hidden;
+    }
+    body::before {
+      content: '';
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: radial-gradient(circle at 20% 50%, rgba(139, 92, 246, 0.15) 0%, transparent 50%),
+                  radial-gradient(circle at 80% 80%, rgba(59, 130, 246, 0.15) 0%, transparent 50%);
+      pointer-events: none;
+      z-index: 0;
+    }
+    @keyframes gradientShift {
+      0%, 100% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
     }
     .card {
       background: linear-gradient(135deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0.05) 100%);
-      backdrop-filter: blur(20px);
-      border: 1px solid rgba(255,255,255,0.1);
+      backdrop-filter: blur(20px) saturate(180%);
+      border: 1px solid rgba(255,255,255,0.18);
+      border-radius: 20px;
+      position: relative;
+      z-index: 1;
     }
     .stat-card {
-      background: linear-gradient(135deg, rgba(139, 92, 246, 0.1) 0%, rgba(99, 102, 241, 0.1) 100%);
+      background: linear-gradient(135deg, rgba(139, 92, 246, 0.15) 0%, rgba(99, 102, 241, 0.15) 100%);
+      backdrop-filter: blur(20px);
       border: 1px solid rgba(139, 92, 246, 0.3);
-      transition: all 0.3s ease;
+      border-radius: 16px;
+      transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+      position: relative;
+      overflow: hidden;
+    }
+    .stat-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, rgba(139, 92, 246, 0.8), transparent);
+      opacity: 0;
+      transition: opacity 0.4s;
     }
     .stat-card:hover {
-      transform: translateY(-4px);
-      box-shadow: 0 10px 30px rgba(139, 92, 246, 0.3);
+      transform: translateY(-6px) scale(1.02);
+      box-shadow: 0 20px 40px rgba(139, 92, 246, 0.4),
+                  0 0 0 1px rgba(139, 92, 246, 0.4);
+      border-color: rgba(139, 92, 246, 0.6);
+    }
+    .stat-card:hover::before {
+      opacity: 1;
     }
     .gradient-text {
       background: linear-gradient(135deg, #60a5fa 0%, #a78bfa 50%, #ec4899 100%);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
       background-clip: text;
+      font-weight: 800;
+      letter-spacing: -0.02em;
+    }
+    .tab-button {
+      transition: all 0.3s ease;
+      position: relative;
     }
     .tab-button.active {
       background: linear-gradient(135deg, #8b5cf6 0%, #6366f1 100%);
       color: white;
+      box-shadow: 0 4px 15px rgba(139, 92, 246, 0.4);
+    }
+    .tab-button:not(.active):hover {
+      background: rgba(139, 92, 246, 0.1);
     }
     .log-line {
       font-family: 'Courier New', monospace;
       font-size: 0.75rem;
-      line-height: 1.5;
+      line-height: 1.6;
+      padding: 0.25rem 0;
+      border-bottom: 1px solid rgba(255,255,255,0.05);
+    }
+    .action-btn {
+      position: relative;
+      overflow: hidden;
+      transition: all 0.3s ease;
+    }
+    .action-btn::before {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 0;
+      height: 0;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.3);
+      transform: translate(-50%, -50%);
+      transition: width 0.6s, height 0.6s;
+    }
+    .action-btn:hover::before {
+      width: 300px;
+      height: 300px;
+    }
+    .action-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 20px rgba(0,0,0,0.3);
     }
   </style>
 </head>
-<body class="min-h-screen p-4 md:p-8">
+<body class="min-h-screen p-4 md:p-8" style="position: relative; z-index: 1;">
   <div class="max-w-7xl mx-auto">
-    <a href="index.html" class="text-indigo-400 underline">&larr; Back to Dashboard</a>
-    <h1 id="containerTitle" class="text-3xl md:text-4xl font-bold text-white mt-2 mb-8"></h1>
-    <div id="containerMeta" class="mb-6"></div>
-    <!-- History/period selection -->
-    <div class="mb-4 flex items-center gap-3">
-      <label class="text-white font-semibold" for="historyLen">Show chart for:</label>
-      <select id="historyLen" class="bg-gray-900 text-white rounded px-2 py-1">
-        <option value="30">30 seconds</option>
-        <option value="60">1 minute</option>
-        <option value="150">2.5 minutes</option>
-        <option value="300">5 minutes</option>
-      </select>
-      <span class="text-gray-400 text-xs">(affects all chart widths)</span>
+    <!-- Back Button -->
+    <a href="index.html" class="inline-flex items-center gap-2 text-indigo-400 hover:text-indigo-300 transition font-medium mb-6">
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+      </svg>
+      Back to Dashboard
+    </a>
+    
+    <!-- Container Title -->
+    <div class="card p-6 mb-6">
+      <h1 id="containerTitle" class="text-4xl md:text-5xl font-black gradient-text mb-3"></h1>
+      <div id="containerMeta" class="text-gray-400"></div>
     </div>
-    <div class="glass rounded-2xl px-8 py-12 mb-8">
-      <!-- 2x2 grid -->
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-10">
-        <!-- Top row: CPU, RAM -->
-        <div class="flex flex-col items-center bg-white/10 rounded-2xl py-8 px-4 min-h-[320px] w-full">
-          <div class="text-white text-xl font-semibold mb-2">CPU Usage</div>
-          <span id="cpuStat" class="block text-4xl font-bold mb-3 text-blue-100">--%</span>
-          <canvas id="cpuChart" height="112"></canvas>
-        </div>
-        <div class="flex flex-col items-center bg-white/10 rounded-2xl py-8 px-4 min-h-[320px] w-full">
-          <div class="text-white text-xl font-semibold mb-2">RAM Usage</div>
-          <span id="ramStat" class="block text-4xl font-bold mb-3 text-green-100">-- / -- GB</span>
-          <canvas id="ramChart" height="112"></canvas>
+    
+    <!-- Chart Period Selection -->
+    <div class="card p-4 mb-6 flex items-center justify-between">
+      <label class="text-white font-semibold flex items-center gap-2" for="historyLen">
+        <svg class="w-5 h-5 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+        </svg>
+        Show chart for:
+      </label>
+      <div class="flex items-center gap-3">
+        <select id="historyLen" class="bg-gray-900/50 text-white rounded-lg px-4 py-2 border border-purple-500/30 focus:border-purple-500 focus:outline-none transition">
+          <option value="30">30 seconds</option>
+          <option value="60">1 minute</option>
+          <option value="150">2.5 minutes</option>
+          <option value="300">5 minutes</option>
+        </select>
+        <span class="text-gray-500 text-sm">affects all charts</span>
+      </div>
+    </div>
+    <!-- Stats Grid -->
+    <div class="card p-8 mb-8">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+        <!-- CPU Usage -->
+        <div class="stat-card p-6">
+          <div class="flex items-center gap-3 mb-4">
+            <div class="w-12 h-12 rounded-xl bg-blue-500/20 flex items-center justify-center">
+              <span class="text-2xl">💻</span>
+            </div>
+            <div>
+              <div class="text-gray-400 text-sm font-medium">CPU Usage</div>
+              <span id="cpuStat" class="block text-3xl font-bold text-blue-400">--%</span>
+            </div>
+          </div>
+          <canvas id="cpuChart" height="180"></canvas>
         </div>
 
-        <!-- Bottom row: Network, Disk -->
-        <div class="flex flex-col items-center bg-white/10 rounded-2xl py-8 px-4 min-h-[320px] w-full">
-          <div class="text-white text-xl font-semibold mb-2">Network RX/TX</div>
-          <span id="netStat" class="block text-2xl font-bold mb-3 text-yellow-100">-- / --</span>
-          <canvas id="netChart" height="112"></canvas>
-        </div>
-        <div class="flex flex-col items-center bg-white/10 rounded-2xl py-8 px-4 min-h-[320px] w-full">
-          <div class="text-white text-xl font-semibold mb-2">
-            Disk Usage <span title="Only container-internal data. Does not include mounted host folders." style="cursor:help;color:#f3b">[?]</span>
+        <!-- RAM Usage -->
+        <div class="stat-card p-6">
+          <div class="flex items-center gap-3 mb-4">
+            <div class="w-12 h-12 rounded-xl bg-green-500/20 flex items-center justify-center">
+              <span class="text-2xl">🧠</span>
+            </div>
+            <div>
+              <div class="text-gray-400 text-sm font-medium">RAM Usage</div>
+              <span id="ramStat" class="block text-3xl font-bold text-green-400">-- / -- GB</span>
+            </div>
           </div>
-          <span id="diskStat" class="block text-4xl font-bold mb-3 text-pink-100">-- / -- GB</span>
-          <canvas id="diskChart" height="112"></canvas>
-          <div class="w-full h-3 rounded bg-white/20 mt-2">
-            <div id="diskBar" class="h-3 rounded bg-pink-400 transition-all" style="width:10%"></div>
+          <canvas id="ramChart" height="180"></canvas>
+        </div>
+
+        <!-- Network RX/TX -->
+        <div class="stat-card p-6">
+          <div class="flex items-center gap-3 mb-4">
+            <div class="w-12 h-12 rounded-xl bg-yellow-500/20 flex items-center justify-center">
+              <span class="text-2xl">🌐</span>
+            </div>
+            <div>
+              <div class="text-gray-400 text-sm font-medium">Network RX/TX</div>
+              <span id="netStat" class="block text-2xl font-bold text-yellow-400">-- / --</span>
+            </div>
+          </div>
+          <canvas id="netChart" height="180"></canvas>
+        </div>
+
+        <!-- Disk Usage -->
+        <div class="stat-card p-6">
+          <div class="flex items-center gap-3 mb-4">
+            <div class="w-12 h-12 rounded-xl bg-pink-500/20 flex items-center justify-center">
+              <span class="text-2xl">💾</span>
+            </div>
+            <div class="flex-1">
+              <div class="flex items-center gap-2">
+                <div class="text-gray-400 text-sm font-medium">Disk Usage</div>
+                <span title="Only container-internal data. Does not include mounted host folders." class="text-pink-400 cursor-help text-xs">ⓘ</span>
+              </div>
+              <span id="diskStat" class="block text-3xl font-bold text-pink-400">-- / -- GB</span>
+            </div>
+          </div>
+          <canvas id="diskChart" height="140"></canvas>
+          <div class="w-full h-3 rounded-full bg-white/10 mt-4 overflow-hidden">
+            <div id="diskBar" class="h-3 rounded-full bg-gradient-to-r from-pink-500 to-purple-500 transition-all duration-500" style="width:10%"></div>
           </div>
         </div>
       </div>
-      <div class="flex gap-3 mt-8 justify-center">
-        <button onclick="containerAction('start')" class="px-6 py-3 rounded bg-green-600 text-white hover:bg-green-700 transition text-lg">Start</button>
-        <button onclick="containerAction('stop')" class="px-6 py-3 rounded bg-red-600 text-white hover:bg-red-700 transition text-lg">Stop</button>
-        <button onclick="containerAction('restart')" class="px-6 py-3 rounded bg-blue-600 text-white hover:bg-blue-700 transition text-lg">Restart</button>
+
+      <!-- Action Buttons -->
+      <div class="flex gap-4 mt-8 justify-center flex-wrap">
+        <button onclick="containerAction('start')" class="action-btn px-8 py-3 rounded-xl bg-green-600 hover:bg-green-700 text-white font-semibold text-lg shadow-lg relative z-10">
+          <span class="relative z-10">▶ Start</span>
+        </button>
+        <button onclick="containerAction('stop')" class="action-btn px-8 py-3 rounded-xl bg-red-600 hover:bg-red-700 text-white font-semibold text-lg shadow-lg relative z-10">
+          <span class="relative z-10">⏹ Stop</span>
+        </button>
+        <button onclick="containerAction('restart')" class="action-btn px-8 py-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-semibold text-lg shadow-lg relative z-10">
+          <span class="relative z-10">🔄 Restart</span>
+        </button>
       </div>
     </div>
   </div>
