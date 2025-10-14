@@ -302,7 +302,7 @@
 
         // Fetch stats for all running containers
         const statsPromises = runningContainers.map(c => 
-          fetch(`/api/stats/${c.Id}`).then(r => r.json()).catch(() => null)
+          fetch(`/api/containers/${c.Id}/stats`).then(r => r.json()).catch(() => null)
         );
         const allStats = await Promise.all(statsPromises);
         const validStats = allStats.filter(s => s !== null);
