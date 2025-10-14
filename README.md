@@ -13,40 +13,83 @@
 
 ## ✨ Features
 
-* **Live Monitoring:** Real-time stats for all your Docker containers.
-* **Log Streaming:** View live container logs.
-* **Container Management:** Start, stop, and restart containers.
-* **Portainer Integration:** Use Portainer as a gateway for multi-host support.
+* **Live Monitoring:** Real-time CPU, RAM, Network, and Disk usage with interactive charts
+* **Bandwidth Tracking:** Monitor total data downloaded/uploaded by each container
+* **Log Streaming:** View live container logs with WebSocket streaming
+* **Container Management:** Start, stop, and restart containers with one click
+* **Modern UI:** Ultra-modern glass-morphism design with animated gradients
+* **Portainer Integration:** Use Portainer as a gateway for multi-host support
+* **Docker Socket Access:** Direct Docker engine monitoring or remote via Portainer
 
 ---
 
-## 🚀 Getting Started
+## 🚀 Quick Start
 
-### 1. Clone the repository
+### Option 1: Docker Compose (Recommended)
+
 ```bash
-git clone [https://github.com/MNDL-27/docker-dashboard.git](https://github.com/MNDL-27/docker-dashboard.git)
+# Clone the repository
+git clone https://github.com/MNDL-27/docker-dashboard.git
 cd docker-dashboard
 
-### 2\. Configure your environment
+# Start with Docker Compose
+docker compose up -d
 
-```bash
-cp .env.example .env
+# Or use the helper script (Windows)
+start.bat
+
+# Or use the helper script (Linux/Mac)
+chmod +x start.sh
+./start.sh
 ```
 
-Now, open the `.env` file and edit the variables to match your setup.
+**Access Dashboard:** Open [http://localhost:1714](http://localhost:1714)
 
-### 3\. Run with Docker Compose
+### Option 2: Development Mode
+
+```bash
+# Clone the repository
+git clone https://github.com/MNDL-27/docker-dashboard.git
+cd docker-dashboard
+
+# Install dependencies
+npm install
+
+# Start the server
+npm start
+```
+
+**Access Dashboard:** Open [http://localhost:1714](http://localhost:1714)
+
+---
+
+## 🐳 Docker Deployment
+
+### Using Docker Compose
 
 ```bash
 docker compose up -d
 ```
 
-### 4\. Access the Dashboard
+### Using Docker CLI
 
-Once the containers are running, you can access the dashboard in your browser:
+```bash
+docker build -t docker-dashboard .
+docker run -d \
+  --name docker-dashboard \
+  -p 1714:1714 \
+  -v /var/run/docker.sock:/var/run/docker.sock:ro \
+  --restart unless-stopped \
+  docker-dashboard
+```
 
-  * **Modern UI:** [http://localhost:8088](https://www.google.com/search?q=http://localhost:8088)
-  * **Backend API:** [http://localhost:1713/api/containers](https://www.google.com/search?q=http://localhost:1713/api/containers)
+**📖 Full deployment guide:** See [DOCKER_DEPLOYMENT.md](DOCKER_DEPLOYMENT.md)
+
+---
+
+## ⚙️ Configuration
+
+Create a `.env` file or set environment variables:
 
 -----
 

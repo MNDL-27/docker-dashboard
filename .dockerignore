@@ -1,0 +1,44 @@
+# Node modules
+node_modules
+npm-debug.log
+
+# Git
+.git
+.gitignore
+
+# Documentation
+README.md
+LICENSE
+docs/
+
+# Development files
+.env
+.env.example
+.vscode
+.idea
+
+# Tests
+test/
+*.test.js
+
+# Build artifacts
+dist/
+build/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Docker files (don't copy into image)
+Dockerfile
+docker-compose.yml
+.dockerignore
+
+# CI/CD
+.github/
+.gitlab-ci.yml
+
+# Temporary files
+*.log
+*.tmp
+.cache
