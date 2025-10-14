@@ -167,7 +167,28 @@
     </div>
     <!-- Stats Grid -->
     <div class="card p-8 mb-8">
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+      <!-- Quick Stats Bar -->
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+        <div class="card p-4 text-center">
+          <div class="text-gray-400 text-xs font-medium mb-1">CPU Usage</div>
+          <div id="cpuStatQuick" class="text-2xl font-bold text-blue-400">--%</div>
+        </div>
+        <div class="card p-4 text-center">
+          <div class="text-gray-400 text-xs font-medium mb-1">Memory</div>
+          <div id="ramStatQuick" class="text-2xl font-bold text-green-400">-- GB</div>
+        </div>
+        <div class="card p-4 text-center">
+          <div class="text-gray-400 text-xs font-medium mb-1">Network</div>
+          <div id="netStatQuick" class="text-2xl font-bold text-yellow-400">↓↑</div>
+        </div>
+        <div class="card p-4 text-center">
+          <div class="text-gray-400 text-xs font-medium mb-1">Disk</div>
+          <div id="diskStatQuick" class="text-2xl font-bold text-pink-400">-- GB</div>
+        </div>
+      </div>
+
+      <!-- Detailed Stats Grid -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <!-- CPU Usage -->
         <div class="stat-card p-6">
           <div class="flex items-center gap-3 mb-4">
@@ -229,6 +250,39 @@
             <div id="diskBar" class="h-3 rounded-full bg-gradient-to-r from-pink-500 to-purple-500 transition-all duration-500" style="width:10%"></div>
           </div>
         </div>
+
+        <!-- Total Bandwidth Usage -->
+        <div class="stat-card p-6 lg:col-span-2">
+          <div class="flex items-center justify-between mb-4">
+            <div class="flex items-center gap-3">
+              <div class="w-12 h-12 rounded-xl bg-indigo-500/20 flex items-center justify-center">
+                <span class="text-2xl">📊</span>
+              </div>
+              <div>
+                <div class="text-gray-400 text-sm font-medium">Total Bandwidth Usage</div>
+                <div class="text-sm text-gray-500">Since container started</div>
+              </div>
+            </div>
+          </div>
+          <div class="grid grid-cols-2 gap-6">
+            <div class="text-center p-4 rounded-xl bg-green-500/10 border border-green-500/30">
+              <div class="text-green-400 text-sm font-medium mb-2">↓ Downloaded</div>
+              <div id="totalRx" class="text-3xl font-bold text-green-400">-- MB</div>
+            </div>
+            <div class="text-center p-4 rounded-xl bg-blue-500/10 border border-blue-500/30">
+              <div class="text-blue-400 text-sm font-medium mb-2">↑ Uploaded</div>
+              <div id="totalTx" class="text-3xl font-bold text-blue-400">-- MB</div>
+            </div>
+          </div>
+          <div class="mt-4 pt-4 border-t border-white/10">
+            <div class="flex justify-between items-center">
+              <span class="text-gray-400 text-sm">Combined Total</span>
+              <span id="totalBandwidth" class="text-2xl font-bold gradient-text">-- MB</span>
+            </div>
+          </div>
+        </div>
+          </div>
+        </div>
       </div>
 
       <!-- Action Buttons -->
@@ -253,6 +307,7 @@ let cpuChart, ramChart, netChart, diskChart;
 let prevNetStats = { rx: 0, tx: 0, lastTime: Date.now() };
 let currentDisk = 0;
 let pollingStats = null, pollingDisk = null;
+let totalRxBytes = 0, totalTxBytes = 0; // Track total bandwidth
 
 function getParam(key) {
   return new URLSearchParams(window.location.search).get(key);
@@ -270,6 +325,19 @@ function fmtNet(x) {
   if (x > 1024*1024)      return (x/1024/1024).toFixed(1) + " GB/s";
   if (x > 1024)           return (x/1024).toFixed(1) + " MB/s";
   return x.toFixed(1) + " KB/s";
+}
+
+function fmtBytes(bytes) {
+  if (bytes > 1024*1024*1024) return (bytes/1024/1024/1024).toFixed(2) + " GB";
+  if (bytes > 1024*1024)      return (bytes/1024/1024).toFixed(2) + " MB";
+  if (bytes > 1024)           return (bytes/1024).toFixed(2) + " KB";
+  return bytes.toFixed(0) + " B";
+}
+
+function updateBandwidthDisplay() {
+  document.getElementById('totalRx').textContent = fmtBytes(totalRxBytes);
+  document.getElementById('totalTx').textContent = fmtBytes(totalTxBytes);
+  document.getElementById('totalBandwidth').textContent = fmtBytes(totalRxBytes + totalTxBytes);
 }
 
 function renderMeta(container) {
@@ -369,6 +437,12 @@ function updateStats() {
             tx += nw.tx_bytes || 0;
           }
         }
+        
+        // Update total bandwidth counters
+        totalRxBytes = rx;
+        totalTxBytes = tx;
+        updateBandwidthDisplay();
+        
         const now = Date.now();
         const dt = (now - prevNetStats.lastTime) / 1000;
         const rxRate = dt > 0 ? ((rx - prevNetStats.rx) / 1024) / dt : 0;
@@ -377,9 +451,13 @@ function updateStats() {
 
         document.getElementById('netStat').innerHTML =
           `↓ ${fmtNet(rxRate)} ↑ ${fmtNet(txRate)}`;
+        document.getElementById('netStatQuick').innerHTML = 
+          `<span class="text-sm">↓${fmtNet(rxRate).replace(' ', '')}</span>`;
 
         document.getElementById('cpuStat').textContent = `${cpu.toFixed(1)}%`;
+        document.getElementById('cpuStatQuick').textContent = `${cpu.toFixed(1)}%`;
         document.getElementById('ramStat').textContent = `${ram.toFixed(2)} / ${ramTotal.toFixed(2)} GB`;
+        document.getElementById('ramStatQuick').textContent = `${ram.toFixed(2)} GB`;
 
         renderCharts(cpu, ram, ramTotal, rxRate, currentDisk);
       } catch(e){}
@@ -407,6 +485,7 @@ function updateDiskUsage() {
       currentDisk = used;
       const total = (info.SizeRootFs || 16 * 1024 * 1024 * 1024) / 1024 / 1024 / 1024;
       document.getElementById('diskStat').textContent = `${used.toFixed(2)} / ${total.toFixed(2)} GB`;
+      document.getElementById('diskStatQuick').textContent = `${used.toFixed(2)} GB`;
       const fill = Math.min(100, 100 * used / total);
       document.getElementById('diskBar').style.width = fill + "%";
     });
