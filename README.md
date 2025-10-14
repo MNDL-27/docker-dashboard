@@ -16,6 +16,8 @@
 
 * **Live Monitoring:** Real-time CPU, RAM, Network, and Disk usage with interactive charts
 * **Bandwidth Tracking:** Monitor total data downloaded/uploaded by each container
+* **qBittorrent Integration:** Accurate bandwidth tracking for VPN-bound qBittorrent containers
+* **Time Range Controls:** View bandwidth stats for Last 24h, Week, Month, or All Time
 * **Log Streaming:** View live container logs with WebSocket streaming
 * **Container Management:** Start, stop, and restart containers with one click
 * **Modern UI:** Ultra-modern glass-morphism design with animated gradients
@@ -90,7 +92,58 @@ environment:
   - PORTAINER_URL=               # Portainer instance URL
   - PORTAINER_ENDPOINT_ID=1      # Portainer endpoint ID
   - PORTAINER_API_KEY=           # Portainer API key
+  # qBittorrent integration (optional)
+  - QBITTORRENT_URL=http://192.168.0.102:8081  # qBittorrent WebUI URL
+  - QBITTORRENT_USERNAME=admin                  # qBittorrent username
+  - QBITTORRENT_PASSWORD=adminadmin             # qBittorrent password
 ```
+
+### 🌐 qBittorrent Integration Setup
+
+If your qBittorrent container uses a VPN (like WireGuard) and shows 0 B bandwidth in Docker stats, you can enable direct API integration:
+
+1. **Create a `.env` file** in the project root:
+   ```env
+   QBITTORRENT_URL=http://192.168.0.102:8081
+   QBITTORRENT_USERNAME=your_username
+   QBITTORRENT_PASSWORD=your_password
+   ```
+
+2. **Configure qBittorrent WebUI Security:**
+   - Open qBittorrent WebUI → Settings (⚙️) → Web UI
+   - Find **"Bypass authentication for clients in whitelisted IP subnets"**
+   - Add your Docker network subnet (e.g., `192.168.16.0/24` or `192.168.0.0/16`)
+   - **Disable** "Enable Host header validation" (or add your dashboard IP to allowed hosts)
+   - Click **Save**
+
+3. **Find your Docker network subnet:**
+   ```bash
+   docker inspect docker-dashboard -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}'
+   # Example output: 192.168.16.2
+   # Subnet: 192.168.16.0/24
+   ```
+
+4. **Restart the dashboard:**
+   ```bash
+   docker compose restart
+   ```
+
+5. **Verify the integration:**
+   ```bash
+   # Test API connection
+   docker exec docker-dashboard wget -qO- http://192.168.0.102:8081/api/v2/app/version
+   
+   # Check logs for any errors
+   docker logs docker-dashboard --tail 20
+   ```
+
+**✅ Features:**
+- Automatic detection when viewing qBittorrent containers
+- Real-time bandwidth stats (updates every 2 seconds)
+- Total downloaded/uploaded data from qBittorrent's session
+- Bypasses Docker network stats limitations for VPN-bound containers
+
+**📖 Detailed guide:** See [QBITTORRENT_INTEGRATION.md](QBITTORRENT_INTEGRATION.md)
 
 **📖 Full configuration guide:** See [INSTALL.md](INSTALL.md)
 
@@ -153,6 +206,7 @@ Use Portainer to manage multiple Docker hosts with RBAC:
 
 - [INSTALL.md](INSTALL.md) - Detailed installation guide
 - [DOCKER_DEPLOYMENT.md](DOCKER_DEPLOYMENT.md) - Advanced deployment options
+- [QBITTORRENT_INTEGRATION.md](QBITTORRENT_INTEGRATION.md) - qBittorrent API integration guide
 - [start.sh](start.sh) - Interactive helper script
 
 ---
