@@ -1,0 +1,383 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Resource Breakdown - Docker Dashboard</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    * { 
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; 
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    body { 
+      background: linear-gradient(to bottom, #1a202c 0%, #2d3748 100%);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+    .card {
+      background: rgba(45, 55, 72, 0.9);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 12px;
+      transition: all 0.3s ease;
+    }
+    .card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+      border-color: rgba(255, 255, 255, 0.2);
+    }
+    .tab-button {
+      transition: all 0.3s ease;
+    }
+    .tab-button.active {
+      background: linear-gradient(135deg, #8b5cf6 0%, #6366f1 100%);
+      color: white;
+      box-shadow: 0 4px 15px rgba(139, 92, 246, 0.4);
+    }
+    .loading {
+      animation: spin 1s linear infinite;
+    }
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+  </style>
+</head>
+<body class="p-4 md:p-8">
+  <!-- Header -->
+  <header class="max-w-7xl mx-auto mb-8">
+    <div class="flex items-center justify-between">
+      <div class="flex items-center gap-4">
+        <a href="index.html" class="text-gray-400 hover:text-white transition">
+          <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+          </svg>
+        </a>
+        <div>
+          <h1 class="text-3xl md:text-4xl font-bold text-white">Resource Breakdown</h1>
+          <p class="text-gray-400 text-sm mt-1">Detailed view of container resource usage</p>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Tabs -->
+  <section class="max-w-7xl mx-auto mb-8">
+    <div class="flex flex-wrap gap-3">
+      <button onclick="switchTab('cpu')" id="tab-cpu" class="tab-button active px-6 py-3 rounded-lg font-semibold text-sm">
+        📊 CPU Usage
+      </button>
+      <button onclick="switchTab('ram')" id="tab-ram" class="tab-button px-6 py-3 rounded-lg font-semibold text-sm bg-gray-700 text-gray-300">
+        💾 RAM Usage
+      </button>
+      <button onclick="switchTab('network')" id="tab-network" class="tab-button px-6 py-3 rounded-lg font-semibold text-sm bg-gray-700 text-gray-300">
+        ⚡ Network Speed
+      </button>
+      <button onclick="switchTab('data')" id="tab-data" class="tab-button px-6 py-3 rounded-lg font-semibold text-sm bg-gray-700 text-gray-300">
+        📈 Data Usage
+      </button>
+    </div>
+  </section>
+
+  <!-- Loading State -->
+  <div id="loading" class="text-center py-20">
+    <div class="loading inline-block w-16 h-16 border-4 border-purple-500 border-t-transparent rounded-full"></div>
+    <p class="text-gray-400 mt-4 text-lg">Loading container stats...</p>
+  </div>
+
+  <!-- Content Container -->
+  <main class="max-w-7xl mx-auto">
+    <div id="content" class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+      <!-- Stats cards will be inserted here -->
+    </div>
+    
+    <div id="empty-state" class="hidden text-center py-20">
+      <svg class="w-24 h-24 mx-auto text-gray-600 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"></path>
+      </svg>
+      <h3 class="text-2xl font-bold text-gray-400 mb-2">No running containers</h3>
+      <p class="text-gray-500">Start some Docker containers to see their resource usage</p>
+    </div>
+  </main>
+
+  <script>
+    // Get tab from URL parameter
+    const urlParams = new URLSearchParams(window.location.search);
+    let currentTab = urlParams.get('tab') || 'cpu';
+    let containerStatsData = [];
+    let previousNetworkStats = new Map();
+
+    // Set active tab on page load
+    window.addEventListener('DOMContentLoaded', () => {
+      switchTab(currentTab);
+    });
+
+    // Format bytes to human readable
+    function formatBytes(bytes) {
+      if (bytes === 0) return '0 B';
+      const k = 1024;
+      const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
+      const i = Math.floor(Math.log(bytes) / Math.log(k));
+      return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    }
+
+    // Format speed (bytes/sec)
+    function formatSpeed(bytesPerSec) {
+      if (bytesPerSec === 0) return '0 B/s';
+      const k = 1024;
+      const sizes = ['B/s', 'KB/s', 'MB/s', 'GB/s'];
+      const i = Math.floor(Math.log(bytesPerSec) / Math.log(k));
+      return parseFloat((bytesPerSec / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    }
+
+    // Switch tabs
+    function switchTab(tab) {
+      currentTab = tab;
+      
+      // Update tab buttons
+      document.querySelectorAll('.tab-button').forEach(btn => {
+        btn.classList.remove('active');
+        btn.classList.add('bg-gray-700', 'text-gray-300');
+      });
+      document.getElementById(`tab-${tab}`).classList.add('active');
+      document.getElementById(`tab-${tab}`).classList.remove('bg-gray-700', 'text-gray-300');
+      
+      // Render content
+      renderContent();
+    }
+
+    // Fetch and update stats
+    async function updateStats() {
+      try {
+        const res = await fetch('/api/containers');
+        const containers = await res.json();
+        
+        const runningContainers = containers.filter(c => c.State === 'running');
+        
+        if (runningContainers.length === 0) {
+          document.getElementById('loading').classList.add('hidden');
+          document.getElementById('empty-state').classList.remove('hidden');
+          document.getElementById('content').classList.add('hidden');
+          return;
+        }
+
+        // Fetch stats for all running containers
+        const statsPromises = runningContainers.map(c => 
+          fetch(`/api/containers/${c.Id}/stats`).then(r => r.json()).catch(() => null)
+        );
+        const allStats = await Promise.all(statsPromises);
+        const validStats = allStats.filter(s => s !== null);
+
+        if (validStats.length === 0) return;
+
+        containerStatsData = [];
+
+        validStats.forEach((stat, index) => {
+          const container = runningContainers[index];
+          const containerId = container.Id;
+          const containerName = container.Names ? container.Names[0].replace(/^\//, '') : containerId.substring(0, 12);
+          const containerImage = container.Image;
+
+          let cpuPercent = 0;
+          let memoryUsage = 0;
+          let memoryLimit = 1;
+          let downloadSpeed = 0;
+          let uploadSpeed = 0;
+          let downloadBytes = 0;
+          let uploadBytes = 0;
+
+          // CPU
+          if (stat.cpu_stats && stat.precpu_stats) {
+            const cpuDelta = stat.cpu_stats.cpu_usage.total_usage - stat.precpu_stats.cpu_usage.total_usage;
+            const systemDelta = stat.cpu_stats.system_cpu_usage - stat.precpu_stats.system_cpu_usage;
+            const cpuCount = stat.cpu_stats.online_cpus || 1;
+            if (systemDelta > 0 && cpuDelta > 0) {
+              cpuPercent = (cpuDelta / systemDelta) * cpuCount * 100;
+            }
+          }
+
+          // Memory
+          if (stat.memory_stats) {
+            memoryUsage = stat.memory_stats.usage || 0;
+            memoryLimit = stat.memory_stats.limit || 1;
+          }
+
+          // Network
+          if (stat.networks) {
+            Object.values(stat.networks).forEach(network => {
+              downloadBytes += network.rx_bytes || 0;
+              uploadBytes += network.tx_bytes || 0;
+            });
+
+            const prevStats = previousNetworkStats.get(containerId);
+            if (prevStats) {
+              const timeDiff = (Date.now() - prevStats.timestamp) / 1000;
+              if (timeDiff > 0) {
+                downloadSpeed = (downloadBytes - prevStats.downloadBytes) / timeDiff;
+                uploadSpeed = (uploadBytes - prevStats.uploadBytes) / timeDiff;
+              }
+            }
+
+            previousNetworkStats.set(containerId, {
+              downloadBytes,
+              uploadBytes,
+              timestamp: Date.now()
+            });
+          }
+
+          containerStatsData.push({
+            id: containerId,
+            name: containerName,
+            image: containerImage,
+            cpuPercent,
+            memoryUsage,
+            memoryLimit,
+            memoryPercent: (memoryUsage / memoryLimit) * 100,
+            downloadSpeed,
+            uploadSpeed,
+            downloadBytes,
+            uploadBytes
+          });
+        });
+
+        document.getElementById('loading').classList.add('hidden');
+        document.getElementById('empty-state').classList.add('hidden');
+        document.getElementById('content').classList.remove('hidden');
+        
+        renderContent();
+      } catch (error) {
+        console.error('Error updating stats:', error);
+        document.getElementById('loading').innerHTML = `
+          <div class="text-red-400">
+            <svg class="w-16 h-16 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
+            <p class="text-lg font-semibold">Failed to load container stats</p>
+            <p class="text-sm text-gray-500 mt-2">Please check if Docker is running</p>
+          </div>
+        `;
+      }
+    }
+
+    // Render content based on current tab
+    function renderContent() {
+      const content = document.getElementById('content');
+      let sortedData = [...containerStatsData];
+
+      if (currentTab === 'cpu') {
+        sortedData.sort((a, b) => b.cpuPercent - a.cpuPercent);
+        content.innerHTML = sortedData.map((c, index) => `
+          <div class="card p-6">
+            <div class="flex items-start justify-between mb-4">
+              <div class="flex-1">
+                <div class="flex items-center gap-2 mb-2">
+                  <span class="text-2xl font-bold text-gray-400">#${index + 1}</span>
+                  <div>
+                    <h3 class="text-xl font-bold text-white">${c.name}</h3>
+                    <p class="text-xs text-gray-400">${c.image}</p>
+                    <p class="text-xs text-gray-500 font-mono mt-1">${c.id.substring(0, 12)}</p>
+                  </div>
+                </div>
+              </div>
+              <div class="text-right">
+                <div class="text-4xl font-bold text-purple-400">${c.cpuPercent.toFixed(1)}%</div>
+              </div>
+            </div>
+            <div class="w-full bg-gray-700 rounded-full h-3">
+              <div class="bg-gradient-to-r from-purple-500 to-pink-500 h-3 rounded-full transition-all duration-500" style="width: ${Math.min(c.cpuPercent, 100)}%"></div>
+            </div>
+          </div>
+        `).join('');
+      } else if (currentTab === 'ram') {
+        sortedData.sort((a, b) => b.memoryUsage - a.memoryUsage);
+        content.innerHTML = sortedData.map((c, index) => `
+          <div class="card p-6">
+            <div class="flex items-start justify-between mb-4">
+              <div class="flex-1">
+                <div class="flex items-center gap-2 mb-2">
+                  <span class="text-2xl font-bold text-gray-400">#${index + 1}</span>
+                  <div>
+                    <h3 class="text-xl font-bold text-white">${c.name}</h3>
+                    <p class="text-xs text-gray-400">${c.image}</p>
+                    <p class="text-xs text-gray-500 font-mono mt-1">${c.id.substring(0, 12)}</p>
+                  </div>
+                </div>
+              </div>
+              <div class="text-right">
+                <div class="text-4xl font-bold text-blue-400">${(c.memoryUsage / (1024 ** 3)).toFixed(2)} GB</div>
+                <div class="text-sm text-gray-400 mt-1">${c.memoryPercent.toFixed(1)}% of ${(c.memoryLimit / (1024 ** 3)).toFixed(1)} GB</div>
+              </div>
+            </div>
+            <div class="w-full bg-gray-700 rounded-full h-3">
+              <div class="bg-gradient-to-r from-blue-500 to-cyan-500 h-3 rounded-full transition-all duration-500" style="width: ${Math.min(c.memoryPercent, 100)}%"></div>
+            </div>
+          </div>
+        `).join('');
+      } else if (currentTab === 'network') {
+        sortedData.sort((a, b) => (b.downloadSpeed + b.uploadSpeed) - (a.downloadSpeed + a.uploadSpeed));
+        content.innerHTML = sortedData.map((c, index) => `
+          <div class="card p-6">
+            <div class="flex items-center gap-2 mb-4">
+              <span class="text-2xl font-bold text-gray-400">#${index + 1}</span>
+              <div class="flex-1">
+                <h3 class="text-xl font-bold text-white">${c.name}</h3>
+                <p class="text-xs text-gray-400">${c.image}</p>
+                <p class="text-xs text-gray-500 font-mono mt-1">${c.id.substring(0, 12)}</p>
+              </div>
+            </div>
+            <div class="grid grid-cols-2 gap-4">
+              <div class="text-center p-4 bg-green-500/10 rounded-lg border border-green-500/30">
+                <div class="text-sm text-gray-400 mb-1">↓ Download</div>
+                <div class="text-3xl font-bold text-green-400">${formatSpeed(c.downloadSpeed)}</div>
+              </div>
+              <div class="text-center p-4 bg-blue-500/10 rounded-lg border border-blue-500/30">
+                <div class="text-sm text-gray-400 mb-1">↑ Upload</div>
+                <div class="text-3xl font-bold text-blue-400">${formatSpeed(c.uploadSpeed)}</div>
+              </div>
+            </div>
+          </div>
+        `).join('');
+      } else if (currentTab === 'data') {
+        sortedData.sort((a, b) => (b.downloadBytes + b.uploadBytes) - (a.downloadBytes + a.uploadBytes));
+        content.innerHTML = sortedData.map((c, index) => `
+          <div class="card p-6">
+            <div class="flex items-center gap-2 mb-4">
+              <span class="text-2xl font-bold text-gray-400">#${index + 1}</span>
+              <div class="flex-1">
+                <h3 class="text-xl font-bold text-white">${c.name}</h3>
+                <p class="text-xs text-gray-400">${c.image}</p>
+                <p class="text-xs text-gray-500 font-mono mt-1">${c.id.substring(0, 12)}</p>
+              </div>
+              <div class="text-right">
+                <div class="text-sm text-gray-400">Total</div>
+                <div class="text-xl font-bold text-cyan-400">${formatBytes(c.downloadBytes + c.uploadBytes)}</div>
+              </div>
+            </div>
+            <div class="grid grid-cols-2 gap-4">
+              <div class="text-center p-4 bg-green-500/10 rounded-lg border border-green-500/30">
+                <div class="text-sm text-gray-400 mb-1">↓ Downloaded</div>
+                <div class="text-2xl font-bold text-green-400">${formatBytes(c.downloadBytes)}</div>
+              </div>
+              <div class="text-center p-4 bg-blue-500/10 rounded-lg border border-blue-500/30">
+                <div class="text-sm text-gray-400 mb-1">↑ Uploaded</div>
+                <div class="text-2xl font-bold text-blue-400">${formatBytes(c.uploadBytes)}</div>
+              </div>
+            </div>
+          </div>
+        `).join('');
+      }
+    }
+
+    // Initial load
+    updateStats();
+
+    // Auto-refresh every 5 seconds
+    setInterval(updateStats, 5000);
+  </script>
+</body>
+</html>

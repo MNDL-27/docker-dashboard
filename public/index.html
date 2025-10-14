@@ -187,7 +187,7 @@
   <section class="max-w-7xl mx-auto mb-8">
     <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
       <!-- CPU Usage -->
-      <div class="card p-6 stat-card-clickable" onclick="showStatsModal('cpu')">
+      <a href="stats-breakdown.html?tab=cpu" class="card p-6 stat-card-clickable block no-underline">
         <div class="flex items-start justify-between mb-3">
           <div>
             <h3 class="text-sm font-semibold text-gray-400 mb-1">Total CPU Usage</h3>
@@ -202,11 +202,11 @@
         <div class="w-full bg-gray-700 rounded-full h-2">
           <div id="global-cpu-bar" class="bg-gradient-to-r from-purple-500 to-pink-500 h-2 rounded-full transition-all duration-500" style="width: 0%"></div>
         </div>
-        <div class="text-xs text-gray-500 mt-2 text-center">Click to see breakdown</div>
-      </div>
+        <div class="text-xs text-gray-500 mt-2 text-center">Click to see breakdown →</div>
+      </a>
 
       <!-- RAM Usage -->
-      <div class="card p-6 stat-card-clickable" onclick="showStatsModal('ram')">
+      <a href="stats-breakdown.html?tab=ram" class="card p-6 stat-card-clickable block no-underline">
         <div class="flex items-start justify-between mb-3">
           <div>
             <h3 class="text-sm font-semibold text-gray-400 mb-1">Total RAM Usage</h3>
@@ -221,11 +221,11 @@
         <div class="text-xs text-gray-500">
           <span id="global-ram-percent">0.0</span>% of <span id="global-ram-total">0</span> GB
         </div>
-        <div class="text-xs text-gray-500 mt-2 text-center">Click to see breakdown</div>
-      </div>
+        <div class="text-xs text-gray-500 mt-2 text-center">Click to see breakdown →</div>
+      </a>
 
       <!-- Network Speed -->
-      <div class="card p-6 stat-card-clickable" onclick="showStatsModal('network')">
+      <a href="stats-breakdown.html?tab=network" class="card p-6 stat-card-clickable block no-underline">
         <div class="flex items-start justify-between mb-3">
           <div class="flex-1">
             <h3 class="text-sm font-semibold text-gray-400 mb-1">Network Speed</h3>
@@ -246,11 +246,11 @@
             </svg>
           </div>
         </div>
-        <div class="text-xs text-gray-500 mt-2 text-center">Click to see breakdown</div>
-      </div>
+        <div class="text-xs text-gray-500 mt-2 text-center">Click to see breakdown →</div>
+      </a>
 
       <!-- Total Data Usage -->
-      <div class="card p-6 stat-card-clickable" onclick="showStatsModal('data')">
+      <a href="stats-breakdown.html?tab=data" class="card p-6 stat-card-clickable block no-underline">
         <div class="flex items-start justify-between mb-3">
           <div class="flex-1">
             <h3 class="text-sm font-semibold text-gray-400 mb-1">Total Data Usage</h3>
@@ -270,8 +270,8 @@
         <div class="text-xs text-gray-500">
           Combined: <span id="global-combined-total" class="text-gray-300 font-semibold">0 B</span>
         </div>
-        <div class="text-xs text-gray-500 mt-2 text-center">Click to see breakdown</div>
-      </div>
+        <div class="text-xs text-gray-500 mt-2 text-center">Click to see breakdown →</div>
+      </a>
     </div>
   </section>
 
