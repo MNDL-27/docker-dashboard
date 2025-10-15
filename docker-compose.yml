@@ -16,6 +16,11 @@ services:
       - QBITTORRENT_URL=${QBITTORRENT_URL:-http://qbittorrent:8080}
       - QBITTORRENT_USERNAME=${QBITTORRENT_USERNAME:-admin}
       - QBITTORRENT_PASSWORD=${QBITTORRENT_PASSWORD:-adminadmin}
+      # Authentication (set AUTH_ENABLED=true to enable)
+      - AUTH_ENABLED=${AUTH_ENABLED:-false}
+      - AUTH_USERNAME=${AUTH_USERNAME:-admin}
+      - AUTH_PASSWORD=${AUTH_PASSWORD:-admin}
+      - SESSION_SECRET=${SESSION_SECRET:-docker-dashboard-secret-change-in-production}
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
     restart: unless-stopped

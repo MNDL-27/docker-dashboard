@@ -3,8 +3,11 @@ const express = require('express');
 const http = require('http');
 const WebSocket = require('ws');
 const compression = require('compression');
+const session = require('express-session');
 const containersRoute = require('./routes/containers');
 const qbittorrentRoute = require('./routes/qbittorrent');
+const authRoute = require('./routes/auth');
+const { requireAuth, isAuthEnabled } = require('./middleware/auth');
 const wsHandlers = require('./sockets');
 const path = require('path');
 const config = require('./config/defaults');
@@ -16,6 +19,19 @@ try {
 	process.exit(1);
 }
 const app = express();
+
+// Session configuration
+app.use(session({
+    secret: process.env.SESSION_SECRET || 'docker-dashboard-secret-change-this-in-production',
+    resave: false,
+    saveUninitialized: false,
+    cookie: {
+        secure: process.env.HTTPS === 'true',
+        httpOnly: true,
+        maxAge: 24 * 60 * 60 * 1000 // 24 hours
+    }
+}));
+
 app.use(compression());
 app.use(express.json());
 // Basic request logging
@@ -23,8 +39,13 @@ app.use((req, res, next) => {
     console.log(`[${new Date().toISOString()}] ${req.method} ${req.url}`);
     next();
 });
-app.use('/api/containers', containersRoute);
-app.use('/api/qbittorrent', qbittorrentRoute);
+
+// Auth routes (no auth required for these)
+app.use('/api/auth', authRoute);
+
+// Protected API routes
+app.use('/api/containers', requireAuth, containersRoute);
+app.use('/api/qbittorrent', requireAuth, qbittorrentRoute);
 
 // Serve static files with cache control
 app.use(express.static(path.join(__dirname, '../public'), {
@@ -37,6 +58,15 @@ app.use(express.static(path.join(__dirname, '../public'), {
     }
   }
 }));
+
+// Protect all pages except login
+app.use((req, res, next) => {
+    // Allow login page and static assets
+    if (req.path === '/login.html' || req.path.startsWith('/api/auth')) {
+        return next();
+    }
+    requireAuth(req, res, next);
+});
 
 const server = http.createServer(app);
 // Log raw upgrade attempts to help debug WebSocket handshakes (Cloudflared/tunnel visibility)

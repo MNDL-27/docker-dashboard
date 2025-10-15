@@ -30,6 +30,8 @@
     "ws": "^8.13.0",
     "compression": "^1.7.4",
     "dockerode": "^4.0.9",
-    "axios": "^1.6.0"
+    "axios": "^1.6.0",
+    "express-session": "^1.18.1",
+    "bcrypt": "^5.1.1"
   }
 }
