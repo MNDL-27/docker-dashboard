@@ -1,162 +1,321 @@
-<div align="center"><div align="center">
+<div align="center"><div align="center"><div align="center">
 
-  <h1>🚢 Docker Dashboard</h1>  <h1>🚢 Docker Dashboard</h1>
 
-  <p>A fully containerized web app to monitor, manage, and view live stats/logs for all your Docker containers.<br>  <p>A fully containerized web app to monitor, manage, and view live stats/logs for all your Docker containers.<br>
+
+  <h1>🚢 Docker Dashboard</h1>  <h1>🚢 Docker Dashboard</h1>  <h1>🚢 Docker Dashboard</h1>
+
+
+
+  <p>A fully containerized web app to monitor, manage, and view live stats/logs for all your Docker containers.<br>  <p>A fully containerized web app to monitor, manage, and view live stats/logs for all your Docker containers.<br>  <p>A fully containerized web app to monitor, manage, and view live stats/logs for all your Docker containers.<br>
+
+  <b>100% Docker-based | No local dependencies | Linux optimized</b></p>
 
   <b>100% Docker-based | No local dependencies | Linux optimized</b></p>  <b>100% Docker-based | No local dependencies | Linux optimized</b></p>
 
-  <p>  <p>
+  <p>
 
-    <img src="https://img.shields.io/badge/docker-required-2496ED?style=flat-square&logo=docker" alt="Docker">    <img src="https://img.shields.io/badge/docker-required-2496ED?style=flat-square&logo=docker" alt="Docker">
+    <img src="https://img.shields.io/badge/docker-required-2496ED?style=flat-square&logo=docker" alt="Docker">  <p>  <p>
 
-    <img src="https://img.shields.io/badge/platform-linux-FCC624?style=flat-square&logo=linux&logoColor=black" alt="Linux">    <img src="https://img.shields.io/badge/platform-linux-FCC624?style=flat-square&logo=linux&logoColor=black" alt="Linux">
+    <img src="https://img.shields.io/badge/platform-linux-FCC624?style=flat-square&logo=linux&logoColor=black" alt="Linux">
 
-    <img src="https://img.shields.io/github/license/MNDL-27/docker-dashboard?style=flat-square" alt="License">    <img src="https://img.shields.io/github/license/MNDL-27/docker-dashboard?style=flat-square" alt="License">
+    <img src="https://img.shields.io/github/license/MNDL-27/docker-dashboard?style=flat-square" alt="License">    <img src="https://img.shields.io/badge/docker-required-2496ED?style=flat-square&logo=docker" alt="Docker">    <img src="https://img.shields.io/badge/docker-required-2496ED?style=flat-square&logo=docker" alt="Docker">
 
-    <img src="https://img.shields.io/github/last-commit/MNDL-27/docker-dashboard?style=flat-square" alt="Last Commit">    <img src="https://img.shields.io/github/last-commit/MNDL-27/docker-dashboard?style=flat-square" alt="Last Commit">
+    <img src="https://img.shields.io/github/last-commit/MNDL-27/docker-dashboard?style=flat-square" alt="Last Commit">
 
-  </p>  </p>
-
-</div></div>
+  </p>    <img src="https://img.shields.io/badge/platform-linux-FCC624?style=flat-square&logo=linux&logoColor=black" alt="Linux">    <img src="https://img.shields.io/badge/platform-linux-FCC624?style=flat-square&logo=linux&logoColor=black" alt="Linux">
 
 
 
-------
+</div>    <img src="https://img.shields.io/github/license/MNDL-27/docker-dashboard?style=flat-square" alt="License">    <img src="https://img.shields.io/github/license/MNDL-27/docker-dashboard?style=flat-square" alt="License">
 
 
 
-## ✨ Features## ✨ Features
+---    <img src="https://img.shields.io/github/last-commit/MNDL-27/docker-dashboard?style=flat-square" alt="Last Commit">    <img src="https://img.shields.io/github/last-commit/MNDL-27/docker-dashboard?style=flat-square" alt="Last Commit">
 
 
 
-* **Live Monitoring:** Real-time CPU, RAM, Network, and Disk usage with interactive charts* **Live Monitoring:** Real-time CPU, RAM, Network, and Disk usage with interactive charts
+## ✨ Features  </p>  </p>
 
-* **Bandwidth Tracking:** Monitor total data downloaded/uploaded by each container* **Bandwidth Tracking:** Monitor total data downloaded/uploaded by each container
 
-* **qBittorrent Integration:** Accurate bandwidth tracking for VPN-bound qBittorrent containers* **qBittorrent Integration:** Accurate bandwidth tracking for VPN-bound qBittorrent containers
 
-* **Log Streaming:** View live container logs with WebSocket streaming* **Time Range Controls:** View bandwidth stats for Last 24h, Week, Month, or All Time
+* **Live Monitoring:** Real-time CPU, RAM, Network, and Disk usage with interactive charts</div></div>
 
-* **Container Management:** Start, stop, and restart containers with one click* **Log Streaming:** View live container logs with WebSocket streaming
+* **Bandwidth Tracking:** Monitor total data downloaded/uploaded by each container
 
-* **Modern UI:** Ultra-modern glass-morphism design with animated gradients* **Container Management:** Start, stop, and restart containers with one click
+* **qBittorrent Integration:** Accurate bandwidth tracking for VPN-bound qBittorrent containers
 
-* **Portainer Integration:** Use Portainer as a gateway for multi-host support* **Modern UI:** Ultra-modern glass-morphism design with animated gradients
+* **Time Range Controls:** View bandwidth stats for Last 24h, Week, Month, or All Time
 
-* **Fully Containerized:** No Node.js, npm, or any local dependencies required* **Portainer Integration:** Use Portainer as a gateway for multi-host support
+* **Log Streaming:** View live container logs with WebSocket streaming------
 
-* **Linux Optimized:** Designed and tested for Linux servers* **Fully Containerized:** No Node.js, npm, or any local dependencies required
+* **Container Management:** Start, stop, and restart containers with one click
+
+* **Modern UI:** Ultra-modern glass-morphism design with animated gradients
+
+* **Portainer Integration:** Use Portainer as a gateway for multi-host support
+
+* **Fully Containerized:** No Node.js, npm, or any local dependencies required## ✨ Features## ✨ Features
 
 * **Linux Optimized:** Designed and tested for Linux servers
 
----
+
 
 ---
+
+* **Live Monitoring:** Real-time CPU, RAM, Network, and Disk usage with interactive charts* **Live Monitoring:** Real-time CPU, RAM, Network, and Disk usage with interactive charts
 
 ## 🚀 Quick Start
 
-## 🚀 Quick Start (Docker Only)
+* **Bandwidth Tracking:** Monitor total data downloaded/uploaded by each container* **Bandwidth Tracking:** Monitor total data downloaded/uploaded by each container
 
 ```bash
 
-# Clone the repository```bash
+# Clone the repository* **qBittorrent Integration:** Accurate bandwidth tracking for VPN-bound qBittorrent containers* **qBittorrent Integration:** Accurate bandwidth tracking for VPN-bound qBittorrent containers
 
-git clone https://github.com/MNDL-27/docker-dashboard.git# Clone the repository
+git clone https://github.com/MNDL-27/docker-dashboard.git
+
+cd docker-dashboard* **Log Streaming:** View live container logs with WebSocket streaming* **Time Range Controls:** View bandwidth stats for Last 24h, Week, Month, or All Time
+
+
+
+# Start with Docker Compose* **Container Management:** Start, stop, and restart containers with one click* **Log Streaming:** View live container logs with WebSocket streaming
+
+docker compose up -d
+
+* **Modern UI:** Ultra-modern glass-morphism design with animated gradients* **Container Management:** Start, stop, and restart containers with one click
+
+# Or use the helper script
+
+chmod +x start.sh* **Portainer Integration:** Use Portainer as a gateway for multi-host support* **Modern UI:** Ultra-modern glass-morphism design with animated gradients
+
+./start.sh
+
+```* **Fully Containerized:** No Node.js, npm, or any local dependencies required* **Portainer Integration:** Use Portainer as a gateway for multi-host support
+
+
+
+**Access Dashboard:** Open [http://localhost:1714](http://localhost:1714)* **Linux Optimized:** Designed and tested for Linux servers* **Fully Containerized:** No Node.js, npm, or any local dependencies required
+
+
+
+> **⚠️ Prerequisites:** Docker and Docker Compose must be installed on your Linux system.  * **Linux Optimized:** Designed and tested for Linux servers
+
+> No other dependencies required!
+
+---
+
+---
+
+---
+
+## 📚 Documentation
+
+## 🚀 Quick Start
+
+### 📖 **[Visit the Wiki →](wiki/Home.md)**
+
+## 🚀 Quick Start (Docker Only)
+
+Our comprehensive wiki includes:
+
+```bash
+
+- **[Quick Start Guide](wiki/Quick-Start.md)** - Get running in 5 minutes
+
+- **[Configuration](wiki/Configuration.md)** - Environment variables and settings# Clone the repository```bash
+
+- **[API Reference](wiki/API-Reference.md)** - REST and WebSocket endpoints
+
+- **[Troubleshooting](wiki/Troubleshooting.md)** - Common issues and solutionsgit clone https://github.com/MNDL-27/docker-dashboard.git# Clone the repository
+
+- **[Summary](wiki/Summary.md)** - Complete wiki overview
 
 cd docker-dashboardgit clone https://github.com/MNDL-27/docker-dashboard.git
 
+---
+
 cd docker-dashboard
+
+## ⚙️ Configuration
 
 # Start with Docker Compose
 
+Configure via environment variables in `docker-compose.yml`:
+
 docker compose up -d# Start with Docker Compose
 
-```docker compose up -d
+```yaml
 
+environment:```docker compose up -d
 
+  - PORT=1714                    # Dashboard port
 
-**Access Dashboard:** Open [http://localhost:1714](http://localhost:1714)# Or use the helper script
+  - NODE_ENV=production          # Production mode
 
-chmod +x start.sh
+  - USE_PORTAINER=false          # Use Portainer gateway
 
-> **⚠️ Prerequisites:** Docker and Docker Compose must be installed on your Linux system../start.sh
+  - PORTAINER_URL=               # Portainer instance URL**Access Dashboard:** Open [http://localhost:1714](http://localhost:1714)# Or use the helper script
+
+  - PORTAINER_ENDPOINT_ID=1      # Portainer endpoint ID
+
+  - PORTAINER_API_KEY=           # Portainer API keychmod +x start.sh
+
+  # qBittorrent integration (optional)
+
+  - QBITTORRENT_URL=http://192.168.0.102:8081  # qBittorrent WebUI URL> **⚠️ Prerequisites:** Docker and Docker Compose must be installed on your Linux system../start.sh
+
+  - QBITTORRENT_USERNAME=admin                  # qBittorrent username
+
+  - QBITTORRENT_PASSWORD=adminadmin             # qBittorrent password```
 
 ```
 
 **📖 Detailed guide:** See **[Quick Start Wiki](wiki/Quick-Start.md)**
 
+**📖 Full configuration guide:** See **[Configuration Wiki](wiki/Configuration.md)**
+
 **Access Dashboard:** Open [http://localhost:1714](http://localhost:1714)
 
 ---
 
+---
+
+## 🛠 Management Commands
+
 > **⚠️ Prerequisites:** Docker and Docker Compose must be installed on your Linux system.  
 
-## 📚 Documentation> No other dependencies required!
+```bash
+
+# Start dashboard## 📚 Documentation> No other dependencies required!
+
+docker compose up -d
 
 
 
-### 📖 **[Visit the Wiki →](wiki/Home.md)**---
+# Stop dashboard
+
+docker compose down### 📖 **[Visit the Wiki →](wiki/Home.md)**---
 
 
+
+# View logs
+
+docker logs -f docker-dashboard
 
 Our comprehensive wiki includes:## 🐳 Deployment
 
+# Restart dashboard
+
+docker compose restart
 
 
-- **[Quick Start Guide](wiki/Quick-Start.md)** - Get running in 5 minutes### Method 1: Docker Compose (Recommended)
+
+# Update to latest version- **[Quick Start Guide](wiki/Quick-Start.md)** - Get running in 5 minutes### Method 1: Docker Compose (Recommended)
+
+git pull && docker compose up -d --build
 
 - **[Configuration](wiki/Configuration.md)** - Environment variables and settings
 
-- **[API Reference](wiki/API-Reference.md)** - REST and WebSocket endpoints```bash
+# Check health status
+
+docker inspect docker-dashboard --format='{{.State.Health.Status}}'- **[API Reference](wiki/API-Reference.md)** - REST and WebSocket endpoints```bash
+
+```
 
 - **[qBittorrent Integration](wiki/qBittorrent-Integration.md)** - VPN-bound container bandwidthdocker compose up -d
 
+---
+
 - **[Portainer Integration](wiki/Portainer-Integration.md)** - Multi-host management```
+
+## 🛡️ Security Features
 
 - **[Troubleshooting](wiki/Troubleshooting.md)** - Common issues and solutions
 
-- **[Production Deployment](wiki/Production-Deployment.md)** - Best practices### Method 2: Docker CLI
+✅ **Read-only Docker socket** - Container cannot modify Docker  
 
+✅ **Minimal privileges** - Runs as non-root when possible  - **[Production Deployment](wiki/Production-Deployment.md)** - Best practices### Method 2: Docker CLI
 
+✅ **Health checks** - Automatic health monitoring every 30s  
+
+✅ **Auto-restart** - Container restarts on failure  
+
+✅ **Network isolation** - Custom bridge network  
 
 ---```bash
 
+> **⚠️ Important:** Add authentication (Nginx, Traefik, Authelia) before exposing publicly!
+
 docker build -t docker-dashboard .
+
+---
 
 ## 🐳 Quick Deploy Optionsdocker run -d \
 
+## 🔗 Quick Links
+
   --name docker-dashboard \
 
-### Docker Compose (Recommended)  -p 1714:1714 \
+- **[📖 Full Documentation (Wiki)](wiki/Home.md)** - Complete guides and references
 
-  -v /var/run/docker.sock:/var/run/docker.sock:ro \
+- **[🚀 Quick Start](wiki/Quick-Start.md)** - Get started in 5 minutes### Docker Compose (Recommended)  -p 1714:1714 \
 
-```bash  --restart unless-stopped \
+- **[⚙️ Configuration](wiki/Configuration.md)** - Customize your setup
+
+- **[🔧 Troubleshooting](wiki/Troubleshooting.md)** - Solve common issues  -v /var/run/docker.sock:/var/run/docker.sock:ro \
+
+- **[📡 API Reference](wiki/API-Reference.md)** - Developer documentation
+
+- **[🐛 Report Issues](https://github.com/MNDL-27/docker-dashboard/issues)** - Bug reports```bash  --restart unless-stopped \
+
+- **[💬 Discussions](https://github.com/MNDL-27/docker-dashboard/discussions)** - Community support
 
 docker compose up -d  docker-dashboard
 
+---
+
 ``````
 
+## 🙌 Contributing
 
+
+
+Contributions are welcome! Please feel free to submit issues and pull requests.
 
 ### Docker CLI### Method 3: Helper Script
 
+---
 
+
+
+## 📄 License
 
 ```bash```bash
 
+This project is licensed under the AGPL-3.0 License. See [LICENSE](LICENSE) for details.
+
 docker run -d \chmod +x start.sh
+
+---
 
   --name docker-dashboard \./start.sh
 
-  -p 1714:1714 \```
+<div align="center">
 
-  -v /var/run/docker.sock:/var/run/docker.sock:ro \
+  <p>Made with ❤️ for the Docker community</p>  -p 1714:1714 \```
 
-  --restart unless-stopped \**📖 Advanced configuration:** See [DOCKER_DEPLOYMENT.md](DOCKER_DEPLOYMENT.md)
+  <p>
 
-  ghcr.io/mndl-27/docker-dashboard:latest
+    <a href="https://github.com/MNDL-27/docker-dashboard">⭐ Star this repo</a> •  -v /var/run/docker.sock:/var/run/docker.sock:ro \
+
+    <a href="https://github.com/MNDL-27/docker-dashboard/issues">🐛 Report Bug</a> •
+
+    <a href="https://github.com/MNDL-27/docker-dashboard/issues">💡 Request Feature</a>  --restart unless-stopped \**📖 Advanced configuration:** See [DOCKER_DEPLOYMENT.md](DOCKER_DEPLOYMENT.md)
+
+  </p>
+
+</div>  ghcr.io/mndl-27/docker-dashboard:latest
+
 
 ```---
 
