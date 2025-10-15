@@ -4,6 +4,8 @@ const http = require('http');
 const WebSocket = require('ws');
 const compression = require('compression');
 const session = require('express-session');
+const rateLimit = require('express-rate-limit');
+const cors = require('cors');
 const containersRoute = require('./routes/containers');
 const qbittorrentRoute = require('./routes/qbittorrent');
 const authRoute = require('./routes/auth');
@@ -20,6 +22,22 @@ try {
 }
 const app = express();
 
+// CORS configuration
+const allowedOrigins = process.env.ALLOWED_ORIGINS ? process.env.ALLOWED_ORIGINS.split(',') : '*';
+app.use(cors({
+    origin: allowedOrigins,
+    credentials: true
+}));
+
+// Rate limiting
+const apiLimiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 100, // Limit each IP to 100 requests per window
+    message: { error: 'Too many requests, please try again later.' },
+    standardHeaders: true,
+    legacyHeaders: false,
+});
+
 // Session configuration
 app.use(session({
     secret: process.env.SESSION_SECRET || 'docker-dashboard-secret-change-this-in-production',
@@ -34,10 +52,26 @@ app.use(session({
 
 app.use(compression());
 app.use(express.json());
-// Basic request logging
+
+// Apply rate limiting to API routes
+app.use('/api/', apiLimiter);
+
+// Basic request logging with request ID
 app.use((req, res, next) => {
-    console.log(`[${new Date().toISOString()}] ${req.method} ${req.url}`);
+    req.id = require('crypto').randomUUID();
+    res.setHeader('X-Request-ID', req.id);
+    console.log(`[${req.id}] [${new Date().toISOString()}] ${req.method} ${req.url}`);
     next();
+});
+
+// Health check endpoint (no auth required)
+app.get('/health', (req, res) => {
+    res.json({
+        status: 'healthy',
+        timestamp: new Date().toISOString(),
+        uptime: process.uptime(),
+        version: require('../package.json').version
+    });
 });
 
 // Auth routes (no auth required for these)

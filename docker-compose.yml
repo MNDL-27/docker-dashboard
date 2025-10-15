@@ -21,6 +21,8 @@ services:
       - AUTH_USERNAME=${AUTH_USERNAME:-admin}
       - AUTH_PASSWORD=${AUTH_PASSWORD:-admin}
       - SESSION_SECRET=${SESSION_SECRET:-docker-dashboard-secret-change-in-production}
+      # CORS (comma-separated list of allowed origins, or * for all)
+      - ALLOWED_ORIGINS=${ALLOWED_ORIGINS:-*}
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
     restart: unless-stopped
