@@ -63,6 +63,8 @@ This document provides a quick overview of all available wiki pages and their pu
 - ✅ [API Reference](API-Reference.md) - Complete API documentation
 - ✅ [Troubleshooting](Troubleshooting.md) - Common issues and solutions
 
+---
+
 ## 🚧 Pages To Be Created
 
 ### High Priority (Migrate from existing docs)
