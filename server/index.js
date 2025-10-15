@@ -29,6 +29,11 @@ app.use(cors({
     credentials: true
 }));
 
+// Trust proxy if behind reverse proxy (for rate limiting)
+if (process.env.TRUST_PROXY === 'true') {
+    app.set('trust proxy', 1);
+}
+
 // Rate limiting
 const apiLimiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 minutes
@@ -36,6 +41,8 @@ const apiLimiter = rateLimit({
     message: { error: 'Too many requests, please try again later.' },
     standardHeaders: true,
     legacyHeaders: false,
+    // Skip X-Forwarded-For validation if not behind a proxy
+    validate: false
 });
 
 // Session configuration
