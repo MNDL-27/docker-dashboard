@@ -106,6 +106,24 @@
   </main>
 
   <script>
+    // Check authentication status before loading page
+    async function checkAuthStatus() {
+      try {
+        const res = await fetch('/api/auth/status');
+        const data = await res.json();
+        
+        // If auth is enabled but user is not authenticated, redirect to login
+        if (data.authEnabled && !data.authenticated) {
+          window.location.href = '/login.html';
+          return false;
+        }
+        return true;
+      } catch (error) {
+        console.error('Error checking auth status:', error);
+        return true; // Allow access if check fails
+      }
+    }
+
     // Get tab from URL parameter
     const urlParams = new URLSearchParams(window.location.search);
     let currentTab = urlParams.get('tab') || 'cpu';
@@ -114,6 +132,7 @@
 
     // Set active tab on page load
     window.addEventListener('DOMContentLoaded', () => {
+      checkAuthStatus(); // Check auth first
       switchTab(currentTab);
     });
 

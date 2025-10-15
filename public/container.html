@@ -283,6 +283,24 @@
   </div>
   <!-- Main JS -->
 <script>
+// Check authentication status before loading page
+async function checkAuthStatus() {
+  try {
+    const res = await fetch('/api/auth/status');
+    const data = await res.json();
+    
+    // If auth is enabled but user is not authenticated, redirect to login
+    if (data.authEnabled && !data.authenticated) {
+      window.location.href = '/login.html';
+      return false;
+    }
+    return true;
+  } catch (error) {
+    console.error('Error checking auth status:', error);
+    return true; // Allow access if check fails
+  }
+}
+
 let histLen = 30;
 let cpuH = [], ramH = [], netH = [], diskH = [];
 let cpuChart, ramChart, netChart, diskChart;
@@ -628,6 +646,9 @@ function loadHistoryAndStart() {
 
 fetchAndShowMeta();
 loadHistoryAndStart();
+
+// Check auth on page load
+checkAuthStatus();
 </script>
 
 </body>

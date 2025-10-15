@@ -742,6 +742,12 @@
         const res = await fetch('/api/auth/status');
         const data = await res.json();
         
+        // If auth is enabled but user is not authenticated, redirect to login
+        if (data.authEnabled && !data.authenticated) {
+          window.location.href = '/login.html';
+          return;
+        }
+        
         if (data.authEnabled && data.authenticated) {
           document.getElementById('logoutBtn').style.display = 'flex';
         }
