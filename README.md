@@ -74,6 +74,20 @@ chmod +x start.sh
 
 **📖 Detailed guide:** See **[Quick Start Wiki](wiki/Quick-Start.md)**
 
+### 🔧 Development Mode (Hot-Reloading)
+
+Want to make changes without rebuilding? Use development mode:
+
+```bash
+# Start with hot-reloading enabled
+docker-compose -f docker-compose.dev.yml up
+
+# Your code changes are reflected immediately!
+# Edit files in server/ or public/ and see changes live
+```
+
+**📖 Development guide:** See **[DEVELOPMENT.md](DEVELOPMENT.md)** for full details
+
 ---
 
 ## 📚 Documentation
