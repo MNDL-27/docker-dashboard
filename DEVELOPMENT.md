@@ -2,25 +2,21 @@
 
 This guide explains how to develop the Docker Dashboard with **hot-reloading** - no container rebuilds needed!
 
-## 🚀 Quick Start (Development Mode)
+## 🚀 Quick Start
 
-### First Time Setup
+### Production Mode (Default)
 ```bash
-# Build the container once
-docker-compose -f docker-compose.dev.yml build
-
-# Start in development mode
-docker-compose -f docker-compose.dev.yml up
+# Normal startup - code baked into container
+docker compose up -d
 ```
 
-### Daily Development
+### Development Mode (Hot-Reloading)
 ```bash
-# Just start the container (no rebuild needed)
-docker-compose -f docker-compose.dev.yml up
-
-# Or run in background
-docker-compose -f docker-compose.dev.yml up -d
+# Start with hot-reloading - changes reflect immediately!
+docker compose --profile dev up dashboard-dev
 ```
+
+That's it! One file, two modes. 🎉
 
 ## ✨ Hot-Reloading Features
 
@@ -48,20 +44,20 @@ app.get('/test', (req, res) => {
 
 ### 2. View Logs
 ```bash
-# Watch real-time logs
-docker-compose -f docker-compose.dev.yml logs -f
+# Watch real-time logs in development
+docker compose --profile dev logs -f dashboard-dev
 
-# Just nodemon output
-docker-compose -f docker-compose.dev.yml logs -f dashboard
+# Production logs
+docker compose logs -f dashboard
 ```
 
 ### 3. Restart if Needed
 ```bash
-# Restart without rebuilding
-docker-compose -f docker-compose.dev.yml restart
+# Restart development mode
+docker compose --profile dev restart dashboard-dev
 
-# Stop and remove
-docker-compose -f docker-compose.dev.yml down
+# Stop development mode
+docker compose --profile dev down
 ```
 
 ## 🐛 Debugging
@@ -102,20 +98,26 @@ docker exec -it docker-dashboard-dev npm install <package-name>
 ### Option 3: Rebuild
 ```bash
 # Nuclear option - full rebuild
-docker-compose -f docker-compose.dev.yml down
-docker-compose -f docker-compose.dev.yml up --build
+docker compose --profile dev down
+docker compose --profile dev up --build dashboard-dev
 ```
 
 ## 🏭 Production vs Development
 
-### Development Mode (`docker-compose.dev.yml`)
+### Development Mode
+```bash
+docker compose --profile dev up dashboard-dev
+```
 - ✅ Hot-reloading enabled
 - ✅ Volume mounts for live code sync
 - ✅ Nodemon auto-restart
 - ✅ NODE_ENV=development
 - ⚠️ Don't use in production!
 
-### Production Mode (`docker-compose.yml`)
+### Production Mode
+```bash
+docker compose up -d
+```
 - ✅ Optimized build
 - ✅ No volume mounts (code in image)
 - ✅ Production dependencies only
@@ -127,19 +129,19 @@ docker-compose -f docker-compose.dev.yml up --build
 ### Development → Production
 ```bash
 # Stop dev
-docker-compose -f docker-compose.dev.yml down
+docker compose --profile dev down
 
 # Start production
-docker-compose up -d
+docker compose up -d
 ```
 
 ### Production → Development
 ```bash
 # Stop production
-docker-compose down
+docker compose down
 
 # Start dev
-docker-compose -f docker-compose.dev.yml up
+docker compose --profile dev up dashboard-dev
 ```
 
 ## 💡 Tips & Tricks
@@ -147,7 +149,7 @@ docker-compose -f docker-compose.dev.yml up
 ### 1. Fast Iteration
 ```bash
 # Terminal 1: Keep logs running
-docker-compose -f docker-compose.dev.yml logs -f
+docker compose --profile dev logs -f dashboard-dev
 
 # Terminal 2: Edit code in VS Code
 # Changes appear in Terminal 1 instantly!
@@ -168,7 +170,7 @@ AUTH_PASSWORD=devpass
 If you can't access localhost:1714:
 ```bash
 # Check if port is bound
-docker-compose -f docker-compose.dev.yml ps
+docker compose ps
 netstat -ano | findstr 1714
 
 # Restart Docker Desktop (Windows)
@@ -184,13 +186,13 @@ netstat -ano | findstr 1714
 docker inspect docker-dashboard-dev | grep -A 10 Mounts
 
 # Restart container
-docker-compose -f docker-compose.dev.yml restart
+docker compose --profile dev restart dashboard-dev
 ```
 
 ### Issue: "Cannot find module"
 **Solution**: Rebuild with dependencies
 ```bash
-docker-compose -f docker-compose.dev.yml up --build
+docker compose --profile dev up --build dashboard-dev
 ```
 
 ### Issue: Port 1714 Already in Use
@@ -208,7 +210,7 @@ docker stop docker-dashboard docker-dashboard-dev
 **Solution**: Check nodemon is installed
 ```bash
 docker exec -it docker-dashboard-dev npm list nodemon
-docker-compose -f docker-compose.dev.yml up --build
+docker compose --profile dev up --build dashboard-dev
 ```
 
 ## 📚 Additional Resources

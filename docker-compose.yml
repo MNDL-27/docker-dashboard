@@ -1,11 +1,11 @@
 services:
   dashboard:
     build: .
-    container_name: docker-dashboard
+    container_name: docker-dashboard${DEV_MODE:+-dev}
     ports:
       - "1714:1714"
     environment:
-      - NODE_ENV=production
+      - NODE_ENV=${NODE_ENV:-production}
       - PORT=1714
       - DOCKER_SOCKET=/var/run/docker.sock
       - USE_PORTAINER=${USE_PORTAINER:-false}
@@ -25,6 +25,9 @@ services:
       - ALLOWED_ORIGINS=${ALLOWED_ORIGINS:-*}
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
+      # Development mode: mount code for hot-reloading (only if DEV_MODE=true)
+      # These volumes are ignored in production
+    command: ${DEV_COMMAND:-node server/index.js}
     restart: unless-stopped
     networks:
       - docker-dashboard
@@ -39,6 +42,21 @@ services:
       timeout: 10s
       retries: 3
       start_period: 40s
+  
+  # Override service for development mode only
+  dashboard-dev:
+    extends: dashboard
+    container_name: docker-dashboard-dev
+    environment:
+      - NODE_ENV=development
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./server:/app/server
+      - ./public:/app/public
+      - ./package.json:/app/package.json
+    command: npm run dev
+    profiles:
+      - dev
 
 networks:
   docker-dashboard:

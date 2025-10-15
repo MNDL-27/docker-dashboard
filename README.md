@@ -80,7 +80,7 @@ Want to make changes without rebuilding? Use development mode:
 
 ```bash
 # Start with hot-reloading enabled
-docker-compose -f docker-compose.dev.yml up
+docker compose --profile dev up dashboard-dev
 
 # Your code changes are reflected immediately!
 # Edit files in server/ or public/ and see changes live
