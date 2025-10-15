@@ -4,6 +4,7 @@ const http = require('http');
 const WebSocket = require('ws');
 const compression = require('compression');
 const session = require('express-session');
+const FileStore = require('session-file-store')(session);
 const rateLimit = require('express-rate-limit');
 const cors = require('cors');
 const containersRoute = require('./routes/containers');
@@ -45,8 +46,14 @@ const apiLimiter = rateLimit({
     validate: false
 });
 
-// Session configuration
+// Session configuration with file store
 app.use(session({
+    store: new FileStore({
+        path: path.join(__dirname, '../sessions'),
+        ttl: 24 * 60 * 60, // 24 hours in seconds
+        retries: 0,
+        reapInterval: 3600 // Clean up expired sessions every hour
+    }),
     secret: process.env.SESSION_SECRET || 'docker-dashboard-secret-change-this-in-production',
     resave: false,
     saveUninitialized: false,

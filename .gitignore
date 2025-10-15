@@ -28,6 +28,9 @@ Thumbs.db
 
 # Logs
 logs/
+
+# Sessions
+sessions/
 *.log
 
 # Build outputs
