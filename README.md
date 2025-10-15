@@ -14,16 +14,41 @@
 
 ## ✨ Features
 
-* **Live Monitoring:** Real-time CPU, RAM, Network, and Disk usage with interactive charts
-* **Bandwidth Tracking:** Monitor total data downloaded/uploaded by each container
-* **qBittorrent Integration:** Accurate bandwidth tracking for VPN-bound qBittorrent containers
-* **Time Range Controls:** View bandwidth stats for Last 24h, Week, Month, or All Time
-* **Log Streaming:** View live container logs with WebSocket streaming
-* **Container Management:** Start, stop, and restart containers with one click
-* **Modern UI:** Ultra-modern glass-morphism design with animated gradients
-* **Portainer Integration:** Use Portainer as a gateway for multi-host support
-* **Fully Containerized:** No Node.js, npm, or any local dependencies required
-* **Linux Optimized:** Designed and tested for Linux servers
+* 📊 **Live Monitoring:** Real-time CPU, RAM, Network, and Disk usage with interactive charts
+* 📡 **Bandwidth Tracking:** Monitor total data downloaded/uploaded by each container
+* 🔗 **qBittorrent Integration:** Accurate bandwidth tracking for VPN-bound qBittorrent containers
+* ⏱️ **Time Range Controls:** View bandwidth stats for Last 24h, Week, Month, or All Time
+* 📝 **Log Streaming:** View live container logs with WebSocket streaming
+* 🎛️ **Container Management:** Start, stop, and restart containers with one click
+* 🎨 **Modern UI:** Ultra-modern glass-morphism design with animated gradients
+* 🔐 **Authentication:** Optional login system with bcrypt password hashing
+* 🐳 **Portainer Integration:** Use Portainer as a gateway for multi-host support
+* 📦 **Fully Containerized:** No Node.js, npm, or any local dependencies required
+* 🐧 **Linux Optimized:** Designed and tested for Linux servers
+
+---
+
+## 📸 Screenshots
+
+<div align="center">
+
+### Dashboard Overview
+![Dashboard Overview](.github/screenshots/dashboard.png)
+*Monitor all your containers at a glance with real-time stats*
+
+### Container Details & Live Charts
+![Container Details](.github/screenshots/container-details.png)
+*Detailed metrics with interactive charts and live updates*
+
+### CPU Usage Breakdown
+![CPU Breakdown](.github/screenshots/cpu-breakdown.png)
+*See which containers are using the most CPU*
+
+### Data Usage Analytics
+![Data Usage](.github/screenshots/data-usage.png)
+*Track download and upload for each container*
+
+</div>
 
 ---
 
