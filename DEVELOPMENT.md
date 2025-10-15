@@ -1,221 +1,114 @@
 # 🔧 Development Guide
 
-This guide explains how to develop the Docker Dashboard with **hot-reloading** - no container rebuilds needed!
+Simple production setup with live code mounting - edit and restart!
 
 ## 🚀 Quick Start
 
-### Production Mode (Default)
 ```bash
-# Normal startup - code baked into container
+# Start the dashboard
 docker compose up -d
+
+# Edit any file in server/ or public/
+
+# Restart to see changes (no rebuild needed!)
+docker compose restart
 ```
 
-### Development Mode (Hot-Reloading)
-```bash
-# Start with hot-reloading - changes reflect immediately!
-docker compose --profile dev up dashboard-dev
-```
-
-That's it! One file, two modes. 🎉
-
-## ✨ Hot-Reloading Features
-
-### What Changes Are Detected Automatically?
-- ✅ **Server code** (`server/*.js`) - Auto-restarts via nodemon
-- ✅ **Public files** (`public/*.html`, `public/*.js`) - Refresh browser
-- ✅ **Package.json** - Auto-detected (may need restart for new deps)
-
-### What Requires Container Restart?
-- ❌ **Dependencies** - Run `docker-compose -f docker-compose.dev.yml restart`
-- ❌ **Dockerfile changes** - Run `docker-compose -f docker-compose.dev.yml up --build`
-- ❌ **Environment variables** - Edit `.env` and restart
+That's it! Your code is mounted, so you just edit and restart. No rebuilds! 🎉
 
 ## 📝 Development Workflow
 
 ### 1. Make Code Changes
-Edit any file in `server/` or `public/` - changes reflect **immediately**!
+Edit any file in `server/` or `public/` folders
 
-```javascript
-// server/index.js
-app.get('/test', (req, res) => {
-  res.json({ message: 'Hot reload works!' }); // Save and it's live!
-});
+### 2. Restart Container
+```bash
+docker compose restart
 ```
 
-### 2. View Logs
+Changes are live! No rebuild needed because your code is mounted as a volume.
+
+### 3. View Logs
 ```bash
-# Watch real-time logs in development
-docker compose --profile dev logs -f dashboard-dev
-
-# Production logs
-docker compose logs -f dashboard
-```
-
-### 3. Restart if Needed
-```bash
-# Restart development mode
-docker compose --profile dev restart dashboard-dev
-
-# Stop development mode
-docker compose --profile dev down
+# Watch real-time logs
+docker compose logs -f
 ```
 
 ## 🐛 Debugging
 
-### Check if Nodemon is Running
-```bash
-docker exec -it docker-dashboard-dev ps aux | grep nodemon
-```
-
 ### Check Mounted Volumes
 ```bash
-docker exec -it docker-dashboard-dev ls -la /app/server
-docker exec -it docker-dashboard-dev ls -la /app/public
+docker exec -it docker-dashboard ls -la /app/server
+docker exec -it docker-dashboard ls -la /app/public
 ```
 
 ### Access Container Shell
 ```bash
-docker exec -it docker-dashboard-dev sh
+docker exec -it docker-dashboard sh
 ```
 
 ## 📦 Installing New Dependencies
 
-### Option 1: Install and Restart (Recommended)
 ```bash
-# Add dependency to package.json manually
-# Then restart container
-docker-compose -f docker-compose.dev.yml restart
+# 1. Add dependency to package.json manually
+# 2. Rebuild the container
+docker compose up --build -d
 ```
 
-### Option 2: Install in Container
-```bash
-# Install in running container
-docker exec -it docker-dashboard-dev npm install <package-name>
+## � When You Need to Rebuild
 
-# Then add to package.json manually
-```
+Only rebuild when you change:
+- **package.json** (new dependencies)
+- **Dockerfile** (container configuration)
 
-### Option 3: Rebuild
-```bash
-# Nuclear option - full rebuild
-docker compose --profile dev down
-docker compose --profile dev up --build dashboard-dev
-```
-
-## 🏭 Production vs Development
-
-### Development Mode
-```bash
-docker compose --profile dev up dashboard-dev
-```
-- ✅ Hot-reloading enabled
-- ✅ Volume mounts for live code sync
-- ✅ Nodemon auto-restart
-- ✅ NODE_ENV=development
-- ⚠️ Don't use in production!
-
-### Production Mode
-```bash
-docker compose up -d
-```
-- ✅ Optimized build
-- ✅ No volume mounts (code in image)
-- ✅ Production dependencies only
-- ✅ NODE_ENV=production
-- ✅ Health checks enabled
-
-## 🔄 Switching Between Modes
-
-### Development → Production
-```bash
-# Stop dev
-docker compose --profile dev down
-
-# Start production
-docker compose up -d
-```
-
-### Production → Development
-```bash
-# Stop production
-docker compose down
-
-# Start dev
-docker compose --profile dev up dashboard-dev
-```
+Otherwise, just restart!
 
 ## 💡 Tips & Tricks
 
 ### 1. Fast Iteration
 ```bash
 # Terminal 1: Keep logs running
-docker compose --profile dev logs -f dashboard-dev
+docker compose logs -f
 
 # Terminal 2: Edit code in VS Code
-# Changes appear in Terminal 1 instantly!
+# Terminal 3: Quick restart command
+docker compose restart
 ```
 
 ### 2. Browser Auto-Refresh
-For frontend changes, use a browser extension like "Live Reload" or press `Ctrl+Shift+R` to hard refresh.
+For frontend changes, press `Ctrl+Shift+R` to hard refresh your browser.
 
 ### 3. Environment Variables
 Create a `.env` file for local overrides:
 ```bash
 AUTH_ENABLED=true
-AUTH_USERNAME=devuser
-AUTH_PASSWORD=devpass
-```
-
-### 4. Network Issues
-If you can't access localhost:1714:
-```bash
-# Check if port is bound
-docker compose ps
-netstat -ano | findstr 1714
-
-# Restart Docker Desktop (Windows)
-# Or restart Docker daemon (Linux)
+AUTH_USERNAME=admin
+AUTH_PASSWORD=yourpassword
 ```
 
 ## 🎯 Common Issues
 
 ### Issue: Changes Not Detected
-**Solution**: Check volume mounts are working
+**Solution**: Make sure you restart the container
 ```bash
-# Verify mounts
-docker inspect docker-dashboard-dev | grep -A 10 Mounts
-
-# Restart container
-docker compose --profile dev restart dashboard-dev
+docker compose restart
 ```
 
 ### Issue: "Cannot find module"
 **Solution**: Rebuild with dependencies
 ```bash
-docker compose --profile dev up --build dashboard-dev
+docker compose up --build -d
 ```
 
 ### Issue: Port 1714 Already in Use
-**Solution**: Stop the other container
+**Solution**: Stop the container first
 ```bash
-# Find what's using the port
-docker ps
-netstat -ano | findstr 1714
-
-# Stop all dashboard containers
-docker stop docker-dashboard docker-dashboard-dev
-```
-
-### Issue: Nodemon Not Restarting
-**Solution**: Check nodemon is installed
-```bash
-docker exec -it docker-dashboard-dev npm list nodemon
-docker compose --profile dev up --build dashboard-dev
+docker compose down
+docker compose up -d
 ```
 
 ## 📚 Additional Resources
 
-- [Nodemon Documentation](https://nodemon.io/)
 - [Docker Compose Documentation](https://docs.docker.com/compose/)
 - [Docker Volumes Guide](https://docs.docker.com/storage/volumes/)
 
@@ -223,6 +116,6 @@ docker compose --profile dev up --build dashboard-dev
 
 ## 🎉 You're Ready!
 
-Now you can develop without rebuilding containers. Happy coding! 🚀
+Now you can develop with just **edit → restart**. No rebuilds! Happy coding! 🚀
 
 **Questions?** Check the [Troubleshooting Wiki](wiki/Troubleshooting.md) or open an issue.

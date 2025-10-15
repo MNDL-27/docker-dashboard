@@ -74,16 +74,16 @@ chmod +x start.sh
 
 **📖 Detailed guide:** See **[Quick Start Wiki](wiki/Quick-Start.md)**
 
-### 🔧 Development Mode (Hot-Reloading)
+### 🔧 Making Changes to Code
 
-Want to make changes without rebuilding? Use development mode:
+Your code is mounted as a volume, so you can edit and restart without rebuilding:
 
 ```bash
-# Start with hot-reloading enabled
-docker compose --profile dev up dashboard-dev
+# 1. Edit any file in server/ or public/
+# 2. Restart to see changes
+docker compose restart
 
-# Your code changes are reflected immediately!
-# Edit files in server/ or public/ and see changes live
+# No rebuild needed! 🎉
 ```
 
 **📖 Development guide:** See **[DEVELOPMENT.md](DEVELOPMENT.md)** for full details
