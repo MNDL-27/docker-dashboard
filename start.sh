@@ -9,6 +9,19 @@ echo "🐳 Docker Dashboard - Quick Start"
 echo "=================================="
 echo ""
 
+# Check if docker-compose.yml exists, if not copy from example
+if [ ! -f "docker-compose.yml" ]; then
+    if [ -f "docker-compose.example.yml" ]; then
+        echo "📋 Copying docker-compose.example.yml to docker-compose.yml..."
+        cp docker-compose.example.yml docker-compose.yml
+        echo "✓ Created docker-compose.yml"
+        echo ""
+    else
+        echo "❌ Error: docker-compose.example.yml not found!"
+        exit 1
+    fi
+fi
+
 # Detect Docker Compose command
 if command -v docker-compose &> /dev/null; then
     COMPOSE_CMD="docker-compose"

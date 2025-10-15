@@ -5,6 +5,9 @@ Simple production setup with live code mounting - edit and restart!
 ## 🚀 Quick Start
 
 ```bash
+# Copy the example compose file
+cp docker-compose.example.yml docker-compose.yml
+
 # Start the dashboard
 docker compose up -d
 

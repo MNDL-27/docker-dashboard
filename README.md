@@ -59,6 +59,9 @@
 git clone https://github.com/MNDL-27/docker-dashboard.git
 cd docker-dashboard
 
+# Copy the example compose file
+cp docker-compose.example.yml docker-compose.yml
+
 # Start with Docker Compose
 docker compose up -d
 

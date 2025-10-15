@@ -11,6 +11,10 @@ yarn-error.log*
 .env.test
 .env.production
 
+# Docker Compose (user's custom configuration)
+docker-compose.yml
+docker-compose.override.yml
+
 # IDE
 .vscode/
 .idea/
