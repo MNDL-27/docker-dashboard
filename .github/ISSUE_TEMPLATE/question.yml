@@ -1,0 +1,63 @@
+name: ❓ Question
+description: Ask a question about Docker Dashboard
+title: "[Question]: "
+labels: ["question"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Have a question? We're here to help! Please fill out the form below.
+        
+  - type: textarea
+    id: question
+    attributes:
+      label: ❓ Your Question
+      description: What would you like to know?
+      placeholder: I'm wondering about...
+    validations:
+      required: true
+      
+  - type: dropdown
+    id: category
+    attributes:
+      label: 📦 Question Category
+      description: What is your question about?
+      options:
+        - Installation & Setup
+        - Configuration
+        - Docker Integration
+        - Authentication
+        - Features & Usage
+        - Troubleshooting
+        - Development
+        - Other
+    validations:
+      required: true
+      
+  - type: textarea
+    id: context
+    attributes:
+      label: 📝 Context
+      description: Provide any relevant context or what you've already tried
+      placeholder: I've tried... / I'm working on...
+      
+  - type: textarea
+    id: environment
+    attributes:
+      label: 🖥️ Environment (if relevant)
+      description: Your system details (OS, Docker version, etc.)
+      placeholder: |
+        - OS: Ubuntu 22.04
+        - Docker: 24.0.5
+        - Browser: Chrome 120
+      
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: ✅ Pre-submission Checklist
+      description: Please verify these before submitting
+      options:
+        - label: I have checked the documentation and wiki
+          required: true
+        - label: I have searched existing issues for similar questions
+          required: true

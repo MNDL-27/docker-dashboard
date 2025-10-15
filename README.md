@@ -271,7 +271,23 @@ Use Portainer to manage multiple Docker hosts with RBAC:
 
 ## 🙌 Contributing
 
-Contributions are welcome! Please feel free to submit issues and pull requests.
+Contributions are welcome! We'd love your help to make Docker Dashboard even better.
+
+### How to Contribute
+- 🐛 **Report bugs** using our [bug report template](.github/ISSUE_TEMPLATE/bug_report.yml)
+- ✨ **Suggest features** using our [feature request template](.github/ISSUE_TEMPLATE/feature_request.yml)
+- 💻 **Submit pull requests** following our [PR template](.github/PULL_REQUEST_TEMPLATE.md)
+- 📚 **Improve documentation** in the wiki or README
+
+### Getting Started
+1. Fork the repository
+2. Read our [Contributing Guide](CONTRIBUTING.md)
+3. Create a feature branch
+4. Make your changes
+5. Test thoroughly
+6. Submit a pull request
+
+Please read [CONTRIBUTING.md](CONTRIBUTING.md) for detailed guidelines.
 
 ---
 
