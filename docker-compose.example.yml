@@ -28,6 +28,8 @@ services:
       # Mount code for live editing (changes require container restart)
       - ./server:/app/server
       - ./public:/app/public
+      # Preserve node_modules inside container
+      - /app/node_modules
     restart: unless-stopped
     networks:
       - docker-dashboard
