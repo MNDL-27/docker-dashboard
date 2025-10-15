@@ -54,12 +54,21 @@ router.get('/:id/stats', async (req, res) => {
   try {
     const id = req.params.id;
     const result = await proxy.requestDockerAPI(`/containers/${id}/stats?stream=0`);
-    // Also capture disk info here for richer history
-    const container = docker.getContainer(id);
-    let info;
-    try { info = await container.inspect({ size: true }); } catch { info = null; }
+    
+    // Only fetch disk info if explicitly requested (to reduce load)
+    const includeHistory = req.query.history === 'true';
+    let info = null;
+    if (includeHistory) {
+      const container = docker.getContainer(id);
+      try { info = await container.inspect({ size: true }); } catch { info = null; }
+    }
+    
     const stats = typeof result.data === 'string' ? JSON.parse(result.data) : result.data;
-    saveContainerMetrics(id, stats, info); // <- !!! HISTORY !!!
+    
+    if (includeHistory) {
+      saveContainerMetrics(id, stats, info); // <- !!! HISTORY !!!
+    }
+    
     res.json(stats);
   } catch (err) {
     res.status(500).json({ error: err.message });

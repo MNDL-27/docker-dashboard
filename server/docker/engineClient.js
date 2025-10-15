@@ -3,11 +3,13 @@ const config = require('../config/defaults');
 
 function dockerRequest(path, method = 'GET') {
 	return new Promise((resolve, reject) => {
+		// Increase timeout for stats requests (they can be slow with many containers)
+		const timeout = path.includes('/stats') ? 30000 : 10000;
 		const options = {
 			socketPath: config.DOCKER_SOCKET,
 			path,
 			method,
-			timeout: 10000,
+			timeout,
 		};
 		const req = http.request(options, res => {
 			let data = '';

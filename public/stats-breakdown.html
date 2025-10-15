@@ -185,19 +185,34 @@
           return;
         }
 
-        // Fetch stats for all running containers
+        // Fetch stats for all running containers with timeout and better error handling
         const statsPromises = runningContainers.map(c => 
-          fetch(`/api/containers/${c.Id}/stats`).then(r => r.json()).catch(() => null)
+          fetch(`/api/containers/${c.Id}/stats`, { signal: AbortSignal.timeout(25000) })
+            .then(r => {
+              if (!r.ok) throw new Error(`HTTP ${r.status}`);
+              return r.json();
+            })
+            .catch(err => {
+              console.warn(`Failed to fetch stats for ${c.Names?.[0] || c.Id.substring(0,12)}:`, err.message);
+              return null;
+            })
         );
         const allStats = await Promise.all(statsPromises);
         const validStats = allStats.filter(s => s !== null);
 
-        if (validStats.length === 0) return;
+        // Show error if no stats could be loaded
+        if (validStats.length === 0) {
+          throw new Error('No container stats could be loaded');
+        }
 
         containerStatsData = [];
 
-        validStats.forEach((stat, index) => {
-          const container = runningContainers[index];
+        // Match stats with containers (accounting for nulls)
+        let statsIndex = 0;
+        runningContainers.forEach((container, containerIndex) => {
+          const stat = allStats[containerIndex];
+          if (!stat) return; // Skip failed containers
+          
           const containerId = container.Id;
           const containerName = container.Names ? container.Names[0].replace(/^\//, '') : containerId.substring(0, 12);
           const containerImage = container.Image;
@@ -267,6 +282,13 @@
         document.getElementById('loading').classList.add('hidden');
         document.getElementById('empty-state').classList.add('hidden');
         document.getElementById('content').classList.remove('hidden');
+        
+        // Show warning if some containers failed to load
+        const failedCount = runningContainers.length - validStats.length;
+        if (failedCount > 0) {
+          console.warn(`${failedCount} of ${runningContainers.length} containers failed to load stats`);
+          // Could add a subtle warning banner here if desired
+        }
         
         renderContent();
       } catch (error) {
