@@ -7,6 +7,7 @@
     <meta name="description" content="Interactive demo of Docker Dashboard showing live stats, monitoring, and container management features.">
     <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🚢</text></svg>">
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -23,6 +24,11 @@
             overflow-x: hidden;
             color: white;
         }
+        .glass {
+            background: rgba(45, 55, 72, 0.9);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+        }
         .card {
             background: rgba(45, 55, 72, 0.9);
             border: 1px solid rgba(255, 255, 255, 0.1);
@@ -34,84 +40,19 @@
             box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
             border-color: rgba(255, 255, 255, 0.2);
         }
-        .status-dot {
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-            display: inline-block;
-        }
-        .status-running {
-            background: #48bb78;
-            box-shadow: 0 0 8px #48bb78;
-        }
-        .status-exited {
-            background: #f56565;
-            box-shadow: 0 0 8px #f56565;
-        }
-        .status-paused {
-            background: #ed8936;
-            box-shadow: 0 0 8px #ed8936;
-        }
-        .badge {
-            padding: 4px 12px;
-            border-radius: 6px;
-            font-size: 0.75rem;
-            font-weight: 600;
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-        }
-        .badge-running {
-            background: rgba(72, 187, 120, 0.2);
-            color: #48bb78;
-            border: 1px solid rgba(72, 187, 120, 0.3);
-        }
-        .badge-exited {
-            background: rgba(245, 101, 101, 0.2);
-            color: #f56565;
-            border: 1px solid rgba(245, 101, 101, 0.3);
-        }
-        .badge-paused {
-            background: rgba(237, 137, 54, 0.2);
-            color: #ed8936;
-            border: 1px solid rgba(237, 137, 54, 0.3);
-        }
-        @keyframes pulse-glow {
-            0%, 100% { text-shadow: 0 0 40px rgba(147, 51, 234, 0.6), 0 0 80px rgba(147, 51, 234, 0.3); }
-            50% { text-shadow: 0 0 50px rgba(147, 51, 234, 0.8), 0 0 100px rgba(147, 51, 234, 0.4); }
+        .demo-banner {
+            background: rgba(139, 92, 246, 0.2);
+            border: 1px solid rgba(139, 92, 246, 0.4);
+            backdrop-filter: blur(10px);
         }
         .btn-primary {
             background: linear-gradient(135deg, #8b5cf6 0%, #6366f1 100%);
             transition: all 0.3s ease;
             box-shadow: 0 4px 15px rgba(139, 92, 246, 0.4);
-            position: relative;
-            overflow: hidden;
-        }
-        .btn-primary::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: -100%;
-            width: 100%;
-            height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
-            transition: left 0.5s;
-        }
-        .btn-primary:hover::before {
-            left: 100%;
         }
         .btn-primary:hover {
             box-shadow: 0 6px 20px rgba(139, 92, 246, 0.6);
             transform: translateY(-2px);
-        }
-        @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.7; }
-        }
-        .demo-banner {
-            background: rgba(139, 92, 246, 0.2);
-            border: 1px solid rgba(139, 92, 246, 0.4);
-            backdrop-filter: blur(10px);
         }
     </style>
 </head>
@@ -119,277 +60,206 @@
     <!-- Header -->
     <header class="max-w-7xl mx-auto mb-8">
         <div class="text-center space-y-3">
-            <!-- Logo & Title -->
             <div class="flex items-center justify-center gap-3">
                 <svg class="w-10 h-10 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2m-2-4h.01M17 16h.01"></path>
                 </svg>
                 <h1 class="text-4xl md:text-5xl font-bold text-white">Docker Dashboard</h1>
             </div>
-            
-            <!-- Subtitle -->
             <p class="text-gray-400 text-base">Interactive Demo - Simulated Container Data</p>
-            
-            <!-- Demo Notice -->
             <div class="demo-banner rounded-lg p-4 max-w-3xl mx-auto">
                 <p class="text-sm text-purple-200">
                     💡 <strong>Note:</strong> This demo uses simulated data. 
                     <a href="https://github.com/MNDL-27/docker-dashboard" class="text-white underline hover:text-purple-100">Install the real dashboard</a> to monitor your actual containers!
                 </p>
             </div>
-            
-            <!-- Stats Summary -->
-            <div class="flex justify-center gap-4 mt-6 flex-wrap">
-                <div class="card px-6 py-4 flex items-center gap-3">
-                    <div class="w-12 h-12 rounded-full bg-green-500/20 flex items-center justify-center">
-                        <div class="w-3 h-3 rounded-full bg-green-500 status-dot status-running"></div>
-                    </div>
-                    <div class="text-left">
-                        <div class="text-2xl font-bold text-green-400"><span id="running-count">0</span></div>
-                        <div class="text-sm text-gray-400">Running</div>
-                    </div>
-                </div>
-                
-                <div class="card px-6 py-4 flex items-center gap-3">
-                    <div class="w-12 h-12 rounded-full bg-red-500/20 flex items-center justify-center">
-                        <div class="w-3 h-3 rounded-full bg-red-500 status-dot status-exited"></div>
-                    </div>
-                    <div class="text-left">
-                        <div class="text-2xl font-bold text-red-400"><span id="stopped-count">0</span></div>
-                        <div class="text-sm text-gray-400">Stopped</div>
-                    </div>
-                </div>
-                
-                <div class="card px-6 py-4 flex items-center gap-3">
-                    <div class="w-12 h-12 rounded-full bg-blue-500/20 flex items-center justify-center">
-                        <div class="w-3 h-3 rounded-full bg-blue-500 status-dot"></div>
-                    </div>
-                    <div class="text-left">
-                        <div class="text-2xl font-bold text-blue-400"><span id="total-count">0</span></div>
-                        <div class="text-sm text-gray-400">Total</div>
-                    </div>
-                </div>
-            </div>
         </div>
     </header>
 
-    <!-- Global Stats Section -->
-    <section class="max-w-7xl mx-auto mb-8">
-        <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
-            <!-- CPU Usage -->
-            <div class="card p-6">
-                <div class="flex items-start justify-between mb-3">
-                    <div>
-                        <h3 class="text-sm font-semibold text-gray-400 mb-1">Total CPU Usage</h3>
-                        <div class="text-3xl font-bold text-white"><span id="global-cpu">0.0</span>%</div>
-                    </div>
-                    <div class="w-12 h-12 rounded-full bg-purple-500/20 flex items-center justify-center">
-                        <svg class="w-6 h-6 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z"></path>
-                        </svg>
-                    </div>
-                </div>
-                <div class="w-full bg-gray-700 rounded-full h-2">
-                    <div id="global-cpu-bar" class="bg-gradient-to-r from-purple-500 to-pink-500 h-2 rounded-full transition-all duration-500" style="width: 0%"></div>
-                </div>
-            </div>
-
-            <!-- RAM Usage -->
-            <div class="card p-6">
-                <div class="flex items-start justify-between mb-3">
-                    <div>
-                        <h3 class="text-sm font-semibold text-gray-400 mb-1">Total RAM Usage</h3>
-                        <div class="text-3xl font-bold text-white"><span id="global-ram">0.0</span> GB</div>
-                    </div>
-                    <div class="w-12 h-12 rounded-full bg-blue-500/20 flex items-center justify-center">
-                        <svg class="w-6 h-6 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2m-2-4h.01M17 16h.01"></path>
-                        </svg>
-                    </div>
-                </div>
-                <div class="text-xs text-gray-500">
-                    <span id="global-ram-percent">0.0</span>% of <span id="global-ram-total">8.0</span> GB
-                </div>
-            </div>
-
-            <!-- Network Speed -->
-            <div class="card p-6">
-                <div class="flex items-start justify-between mb-3">
-                    <div class="flex-1">
-                        <h3 class="text-sm font-semibold text-gray-400 mb-1">Network Speed</h3>
-                        <div class="flex items-center gap-2">
-                            <div class="text-2xl font-bold text-green-400">
-                                <span class="text-sm">↓</span><span id="global-download-speed">0 KB/s</span>
-                            </div>
-                        </div>
-                        <div class="flex items-center gap-2 mt-1">
-                            <div class="text-2xl font-bold text-blue-400">
-                                <span class="text-sm">↑</span><span id="global-upload-speed">0 KB/s</span>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="w-12 h-12 rounded-full bg-green-500/20 flex items-center justify-center">
-                        <svg class="w-6 h-6 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4"></path>
-                        </svg>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Containers Count -->
-            <div class="card p-6">
-                <div class="flex items-start justify-between mb-3">
-                    <div>
-                        <h3 class="text-sm font-semibold text-gray-400 mb-1">Containers</h3>
-                        <div class="text-3xl font-bold text-white"><span id="container-count">0</span></div>
-                    </div>
-                    <div class="w-12 h-12 rounded-full bg-indigo-500/20 flex items-center justify-center">
-                        <svg class="w-6 h-6 text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
-                        </svg>
-                    </div>
-                </div>
-                <div class="text-xs text-gray-500">
-                    Total containers
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- Containers Section -->
-    <section class="max-w-7xl mx-auto mb-8">
+    <!-- Containers Grid (EXACT copy from real dashboard) -->
+    <main class="max-w-7xl mx-auto">
         <h2 class="text-2xl font-bold text-white mb-4">Containers</h2>
-        <div id="containerGrid" class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
-            <!-- Containers will be generated here -->
-        </div>
-    </section>
+        <div id="stats" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"></div>
+    </main>
 
-    <!-- Back to Homepage Button -->
-    <section class="max-w-7xl mx-auto mb-12 text-center">
+    <!-- Back Button -->
+    <section class="max-w-7xl mx-auto mt-12 text-center">
         <a href="index.html" class="btn-primary inline-block px-8 py-3 rounded-lg font-semibold text-white">
             ← Back to Homepage
         </a>
     </section>
 
     <script>
-        // Simulated container data
-        const containers = [
-            { name: 'web-server', image: 'nginx:latest', status: 'running', cpu: 0, mem: 0, netDown: 0, netUp: 0 },
-            { name: 'database', image: 'postgres:15', status: 'running', cpu: 0, mem: 0, netDown: 0, netUp: 0 },
-            { name: 'redis-cache', image: 'redis:7', status: 'running', cpu: 0, mem: 0, netDown: 0, netUp: 0 },
-            { name: 'api-gateway', image: 'traefik:latest', status: 'running', cpu: 0, mem: 0, netDown: 0, netUp: 0 },
-            { name: 'monitoring', image: 'prometheus:latest', status: 'running', cpu: 0, mem: 0, netDown: 0, netUp: 0 },
-            { name: 'old-service', image: 'node:14', status: 'stopped', cpu: 0, mem: 0, netDown: 0, netUp: 0 }
+        // Simulated container data (EXACT format from real dashboard API)
+        const mockContainers = [
+            { Id: 'abc123', Names: ['web-server'], Image: 'nginx:latest', Status: 'Up 2 hours (healthy)' },
+            { Id: 'def456', Names: ['database'], Image: 'postgres:15', Status: 'Up 1 day' },
+            { Id: 'ghi789', Names: ['redis-cache'], Image: 'redis:7', Status: 'Up 5 hours' },
+            { Id: 'jkl012', Names: ['api-gateway'], Image: 'traefik:latest', Status: 'Up 3 hours (healthy)' },
+            { Id: 'mno345', Names: ['monitoring'], Image: 'prometheus:latest', Status: 'Up 12 hours' },
+            { Id: 'pqr678', Names: ['old-service'], Image: 'node:14', Status: 'Exited (0) 2 days ago' }
         ];
 
-        // Generate random stats
-        function randomStat(min, max) {
-            return (Math.random() * (max - min) + min).toFixed(1);
+        let expandedContainer = null;
+        let statIntervals = {};
+        let charts = {};
+
+        // EXACT functions from real dashboard (public/app.js)
+        function getStatusColor(status) {
+            if (status && status.includes('Up') && status.includes('healthy')) return 'bg-green-200 text-green-800';
+            if (status && status.includes('Up')) return 'bg-blue-200 text-blue-800';
+            return 'bg-red-200 text-red-800';
         }
 
-        // Update container stats
-        function updateStats() {
-            let totalCpu = 0;
-            let totalMem = 0;
-            let totalDown = 0;
-            let totalUp = 0;
-            let running = 0;
-            let stopped = 0;
-
-            containers.forEach(container => {
-                if (container.status === 'running') {
-                    container.cpu = parseFloat(randomStat(5, 45));
-                    container.mem = parseFloat(randomStat(100, 800));
-                    container.netDown = parseFloat(randomStat(10, 500));
-                    container.netUp = parseFloat(randomStat(5, 200));
-                    totalCpu += container.cpu;
-                    totalMem += container.mem;
-                    totalDown += container.netDown;
-                    totalUp += container.netUp;
-                    running++;
-                } else {
-                    stopped++;
-                }
-            });
-
-            // Update header counts
-            document.getElementById('running-count').textContent = running;
-            document.getElementById('stopped-count').textContent = stopped;
-            document.getElementById('total-count').textContent = containers.length;
-
-            // Update global stats
-            document.getElementById('global-cpu').textContent = totalCpu.toFixed(1);
-            document.getElementById('global-cpu-bar').style.width = `${Math.min(totalCpu, 100)}%`;
-            document.getElementById('global-ram').textContent = (totalMem / 1024).toFixed(2);
-            document.getElementById('global-ram-percent').textContent = ((totalMem / 1024) / 8.0 * 100).toFixed(1);
-            document.getElementById('global-download-speed').textContent = totalDown.toFixed(0) + ' KB/s';
-            document.getElementById('global-upload-speed').textContent = totalUp.toFixed(0) + ' KB/s';
-            document.getElementById('container-count').textContent = containers.length;
-
-            renderContainers();
+        function getStatusText(status) {
+            if (status && status.includes('Up') && status.includes('healthy')) return 'Healthy';
+            if (status && status.includes('Up')) return 'Running';
+            return 'Stopped';
         }
 
-        // Render container cards
-        function renderContainers() {
-            const grid = document.getElementById('containerGrid');
-            grid.innerHTML = containers.map(c => `
-                <div class="card p-6">
-                    <div class="flex items-start justify-between mb-4">
-                        <div class="flex-1">
-                            <h3 class="text-lg font-bold text-white mb-1">${c.name}</h3>
-                            <p class="text-sm text-gray-400 truncate">${c.image}</p>
-                        </div>
-                        <span class="badge badge-${c.status === 'running' ? 'running' : 'exited'}">
-                            <div class="status-dot ${c.status === 'running' ? 'status-running' : 'status-exited'}"></div>
-                            ${c.status}
+        function stopStatsUpdates(id) {
+            if (statIntervals[id]) {
+                clearInterval(statIntervals[id]);
+                delete statIntervals[id];
+            }
+            if (charts[id]) {
+                charts[id].cpu.destroy();
+                charts[id].ram.destroy();
+                charts[id].net.destroy();
+                delete charts[id];
+            }
+        }
+
+        // EXACT render function from real dashboard
+        function fetchStatsAndRender() {
+            const containers = mockContainers;
+            
+            // EXACT HTML structure from public/app.js
+            document.getElementById('stats').innerHTML = containers.map(container => {
+                const isExpanded = expandedContainer === container.Id;
+                return `
+                <div class="glass rounded-2xl p-6 shadow-lg text-white transition relative ${isExpanded ? 'ring-4 ring-indigo-400/40' : ''}">
+                    <div class="flex items-center justify-between mb-1">
+                        <span class="font-bold text-lg truncate">${container.Names ? container.Names.join(', ') : container.Id}</span>
+                        <span class="px-3 py-1 text-xs font-semibold rounded-full ${getStatusColor(container.Status)}">
+                            ${getStatusText(container.Status)}
                         </span>
                     </div>
-                    ${c.status === 'running' ? `
-                    <div class="space-y-3 mb-4">
-                        <div>
-                            <div class="flex justify-between text-sm mb-1">
-                                <span class="text-gray-400">CPU</span>
-                                <span class="text-purple-400 font-semibold">${c.cpu.toFixed(1)}%</span>
+                    <div class="text-xs text-gray-300 mb-2"><span class="font-semibold">Image:</span> ${container.Image}</div>
+                    <div class="flex gap-2 mt-2 mb-1">
+                        <button onclick="expandContainer('${container.Id}')" class="text-xs px-2 py-1 rounded bg-indigo-700 text-white hover:bg-indigo-500 transition">${isExpanded ? "Hide Stats" : "Show Stats"}</button>
+                        <button onclick="alert('Demo mode - actions disabled')" class="text-xs px-2 py-1 rounded bg-green-500 hover:bg-green-700 text-white transition">Start</button>
+                        <button onclick="alert('Demo mode - actions disabled')" class="text-xs px-2 py-1 rounded bg-red-500 hover:bg-red-700 text-white transition">Stop</button>
+                        <button onclick="alert('Demo mode - actions disabled')" class="text-xs px-2 py-1 rounded bg-blue-500 hover:bg-blue-700 text-white transition">Restart</button>
+                    </div>
+                    ${isExpanded ? `
+                    <div id="stats-area-${container.Id}" class="bg-black/20 rounded-xl mt-3 p-4">
+                        <div class="flex flex-col sm:flex-row gap-4">
+                            <div class="flex-1">
+                                <div class="text-xs text-gray-300 font-semibold mb-1">CPU Usage</div>
+                                <span class="block text-xl font-bold mb-1" id="cpu-${container.Id}">--%</span>
+                                <canvas id="cpuChart-${container.Id}" height="40"></canvas>
                             </div>
-                            <div class="w-full bg-gray-700 rounded-full h-2">
-                                <div class="bg-gradient-to-r from-purple-500 to-pink-500 h-2 rounded-full transition-all duration-500" style="width: ${c.cpu}%"></div>
+                            <div class="flex-1">
+                                <div class="text-xs text-gray-300 font-semibold mb-1">RAM Usage</div>
+                                <span class="block text-xl font-bold mb-1" id="ram-${container.Id}">-- / --</span>
+                                <canvas id="ramChart-${container.Id}" height="40"></canvas>
                             </div>
-                        </div>
-                        <div>
-                            <div class="flex justify-between text-sm mb-1">
-                                <span class="text-gray-400">Memory</span>
-                                <span class="text-blue-400 font-semibold">${c.mem.toFixed(0)} MB</span>
-                            </div>
-                            <div class="w-full bg-gray-700 rounded-full h-2">
-                                <div class="bg-gradient-to-r from-blue-500 to-cyan-500 h-2 rounded-full transition-all duration-500" style="width: ${(c.mem / 1024) * 100}%"></div>
-                            </div>
-                        </div>
-                        <div>
-                            <div class="flex justify-between text-sm mb-1">
-                                <span class="text-gray-400">Network</span>
-                                <span class="text-green-400 font-semibold">↓ ${c.netDown} KB/s | ↑ ${c.netUp} KB/s</span>
+                            <div class="flex-1">
+                                <div class="text-xs text-gray-300 font-semibold mb-1">Network RX/TX</div>
+                                <span class="block text-xl font-bold mb-1" id="net-${container.Id}">-- / --</span>
+                                <canvas id="netChart-${container.Id}" height="40"></canvas>
                             </div>
                         </div>
                     </div>
-                    ` : '<div class="text-gray-500 text-center py-6">Container is stopped</div>'}
-                    <div class="flex gap-2">
-                        <button class="flex-1 px-4 py-2 rounded-lg text-sm font-semibold transition-all ${c.status === 'running' ? 'bg-red-600 hover:bg-red-700 text-white' : 'bg-green-600 hover:bg-green-700 text-white'}">
-                            ${c.status === 'running' ? '⏹ Stop' : '▶ Start'}
-                        </button>
-                        <button class="px-4 py-2 rounded-lg text-sm font-semibold bg-blue-600 hover:bg-blue-700 text-white transition-all">
-                            � Restart
-                        </button>
-                    </div>
-                </div>
-            `).join('');
+                    ` : ""}
+                </div>`;
+            }).join('');
+
+            // Start/stop stat updates
+            containers.forEach(container => {
+                if (expandedContainer === container.Id) {
+                    startStatsUpdates(container.Id);
+                } else {
+                    stopStatsUpdates(container.Id);
+                }
+            });
         }
 
-        // Initialize and start updates
-        updateStats();
-        
-        setInterval(() => {
-            updateStats();
-        }, 2000);
+        // EXACT expand function from real dashboard
+        window.expandContainer = function(id) {
+            if (expandedContainer === id) {
+                stopStatsUpdates(id);
+                expandedContainer = null;
+            } else {
+                Object.keys(statIntervals).forEach(stopStatsUpdates);
+                expandedContainer = id;
+            }
+            fetchStatsAndRender();
+        };
+
+        // Simulated stats updates (same logic as real dashboard)
+        function startStatsUpdates(id) {
+            if (statIntervals[id]) return;
+            
+            let cpuH = [], ramH = [], netH = [];
+
+            async function pollStats() {
+                // Generate fake stats (simulating real data)
+                let cpu = Math.random() * 60 + 10;
+                let ram = Math.random() * 3 + 0.5;
+                let ramTotal = 8.0;
+                let rx = Math.random() * 500 + 50;
+                let tx = Math.random() * 200 + 20;
+
+                // Keep short history
+                cpuH.push(cpu); if (cpuH.length > 15) cpuH.shift();
+                ramH.push(ram); if (ramH.length > 15) ramH.shift();
+                netH.push(rx); if (netH.length > 15) netH.shift();
+
+                // Update stats UI
+                const cpuEL = document.getElementById(`cpu-${id}`);
+                const ramEL = document.getElementById(`ram-${id}`);
+                const netEL = document.getElementById(`net-${id}`);
+                if (cpuEL) cpuEL.textContent = `${cpu.toFixed(1)}%`;
+                if (ramEL) ramEL.textContent = `${ram.toFixed(2)} / ${ramTotal.toFixed(2)} GB`;
+                if (netEL) netEL.textContent = `↑ ${rx.toFixed(1)} KB/s ↓ ${tx.toFixed(1)} KB/s`;
+
+                // Render charts (EXACT chart config from real dashboard)
+                if (!charts[id]) {
+                    charts[id] = {
+                        cpu: new Chart(document.getElementById(`cpuChart-${id}`), {
+                            type: 'line',
+                            data: { labels: Array(cpuH.length).fill(''), datasets: [{ label: "CPU", data: cpuH, borderColor: "#3b82f6", backgroundColor: "rgba(59,130,246,.11)", fill: true, tension: .45 }] },
+                            options: { responsive: true, plugins: { legend: { display: false } }, scales: { x: { display: false }, y: { display: false, min: 0, max: 100 } } }
+                        }),
+                        ram: new Chart(document.getElementById(`ramChart-${id}`), {
+                            type: 'line',
+                            data: { labels: Array(ramH.length).fill(''), datasets: [{ label: "RAM", data: ramH, borderColor: "#10b981", backgroundColor: "rgba(16,185,129,.15)", fill: true, tension: .45 }] },
+                            options: { responsive: true, plugins: { legend: { display: false } }, scales: { x: { display: false }, y: { display: false, min: 0 } } }
+                        }),
+                        net: new Chart(document.getElementById(`netChart-${id}`), {
+                            type: 'line',
+                            data: { labels: Array(netH.length).fill(''), datasets: [{ label: "NET", data: netH, borderColor: "#fde047", backgroundColor: "rgba(250,204,21,.09)", fill: true, tension: .45 }] },
+                            options: { responsive: true, plugins: { legend: { display: false } }, scales: { x: { display: false }, y: { display: false, min: 0 } } }
+                        }),
+                    };
+                } else {
+                    charts[id].cpu.data.datasets[0].data = cpuH;
+                    charts[id].cpu.update('none');
+                    charts[id].ram.data.datasets[0].data = ramH;
+                    charts[id].ram.update('none');
+                    charts[id].net.data.datasets[0].data = netH;
+                    charts[id].net.update('none');
+                }
+            }
+
+            pollStats();
+            statIntervals[id] = setInterval(pollStats, 2000);
+        }
+
+        // Initial boot (EXACT same as real dashboard)
+        window.onload = fetchStatsAndRender;
     </script>
 </body>
 </html>
