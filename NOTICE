@@ -1,0 +1,147 @@
+# License Notice
+
+## Docker Dashboard - License Information
+
+**License:** Apache 2.0 with Commons Clause  
+**Copyright:** 2025 MNDL-27  
+**Project:** https://github.com/MNDL-27/docker-dashboard
+
+---
+
+## What You CAN Do ✅
+
+### Personal Use
+- ✅ Use Docker Dashboard for personal projects
+- ✅ Install it on your home server
+- ✅ Monitor your personal containers
+- ✅ Modify the code for your own needs
+
+### Educational Use
+- ✅ Use it for learning and teaching
+- ✅ Study the source code
+- ✅ Use it in academic projects
+- ✅ Share it with students
+
+### Organizational Use
+- ✅ Use it within your company/organization
+- ✅ Deploy it on your internal servers
+- ✅ Customize it for internal use
+- ✅ Install it for your team
+
+### Development & Contribution
+- ✅ Fork the repository
+- ✅ Submit pull requests
+- ✅ Report bugs and issues
+- ✅ Suggest new features
+- ✅ Contribute improvements
+
+### Distribution
+- ✅ Share the software with others
+- ✅ Redistribute the source code
+- ✅ Create derivative works
+- ✅ Must include this license notice
+
+---
+
+## What You CANNOT Do ❌
+
+### Commercial Services (Commons Clause Restrictions)
+- ❌ **Sell Docker Dashboard** as a product
+- ❌ **Offer it as a hosted service** for a fee
+- ❌ **Charge for support/hosting** services based on this software
+- ❌ **Package it as a commercial product**
+- ❌ **Provide it as SaaS** (Software as a Service) for money
+
+### Examples of Prohibited Use:
+- ❌ Selling "Docker Dashboard Pro" as a commercial product
+- ❌ Offering "Managed Docker Dashboard Hosting" as a paid service
+- ❌ Charging customers to access your Docker Dashboard instance
+- ❌ Including it in a paid software bundle
+- ❌ Consulting fees where the primary value is Docker Dashboard
+
+---
+
+## Simplified Explanation
+
+### The Commons Clause Prevents:
+Companies from taking this free software and selling it back to users without contributing to the project.
+
+### You Can Still:
+- Use it for free (personal, educational, internal business use)
+- Modify it however you want
+- Share your modifications
+- Contribute improvements back to the project
+
+### You Just Can't:
+- Turn it into a commercial product
+- Charge people to use your hosted instance
+- Sell support/consulting where Docker Dashboard is the primary value
+
+---
+
+## Why This License?
+
+This software is **free and open source**, but the Commons Clause ensures:
+
+1. **Prevents Exploitation:** Large companies can't just take the software, rebrand it, and sell it
+2. **Encourages Contribution:** If you want to commercialize, contribute back to the project
+3. **Keeps It Free:** Ensures the software remains free for everyone
+4. **Rewards Authors:** Protects the work of the original creators
+
+---
+
+## Frequently Asked Questions
+
+### Q: Can I use this for my company's internal monitoring?
+**A:** ✅ Yes! Internal use is completely fine and free.
+
+### Q: Can I modify the code and use my modified version?
+**A:** ✅ Yes! Modify it however you want for your own use.
+
+### Q: Can I charge my clients for installing/configuring this?
+**A:** ⚠️ Maybe. You can charge for installation/configuration services, but NOT if the primary value is Docker Dashboard itself. Your consulting fee should be for your expertise, not for access to the software.
+
+### Q: Can I fork it and release my own version?
+**A:** ✅ Yes! But your fork must also include the Commons Clause.
+
+### Q: Can I include it in my open-source project?
+**A:** ✅ Yes! As long as your project also doesn't violate the Commons Clause.
+
+### Q: What if I want to commercialize it?
+**A:** Contact the project maintainer (MNDL-27) to discuss commercial licensing options.
+
+---
+
+## Attribution Requirements
+
+When redistributing or using this software, you must:
+
+1. Include a copy of the LICENSE file
+2. Include this NOTICE file
+3. Keep all copyright notices intact
+4. Clearly indicate any modifications you made
+
+---
+
+## Contact for Commercial Licensing
+
+If you need to use Docker Dashboard in a way that conflicts with the Commons Clause (e.g., offering it as a commercial SaaS), please contact:
+
+**GitHub:** https://github.com/MNDL-27  
+**Project:** https://github.com/MNDL-27/docker-dashboard
+
+We may be able to arrange alternative licensing terms.
+
+---
+
+## Full License Text
+
+For the complete legal terms, see the [LICENSE](LICENSE) file in this repository.
+
+**Summary:**
+- Base License: Apache License 2.0
+- Additional Restriction: Commons Clause License Condition v1.0
+
+---
+
+**Last Updated:** October 2025

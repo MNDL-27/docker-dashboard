@@ -293,7 +293,17 @@ Please read [CONTRIBUTING.md](CONTRIBUTING.md) for detailed guidelines.
 
 ## 📄 License
 
-This project is licensed under the AGPL-3.0 License. See [LICENSE](LICENSE) for details.
+This project is licensed under the **Apache 2.0 License with Commons Clause**.
+
+- ✅ **Free to use** for personal and educational purposes
+- ✅ **Open source** - view, modify, and contribute to the code
+- ✅ **Share and redistribute** with proper attribution
+- ❌ **Cannot be sold** or offered as a commercial service
+
+**What is Commons Clause?**  
+Commons Clause prevents companies from selling this software as a product or service without contributing back. You can use it freely, but you cannot monetize it commercially.
+
+See [LICENSE](LICENSE) for full details.
 
 ---
 

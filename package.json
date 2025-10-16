@@ -17,7 +17,7 @@
     "docker-compose"
   ],
   "author": "MNDL-27",
-  "license": "AGPL-3.0",
+  "license": "Apache-2.0 WITH Commons-Clause",
   "repository": {
     "type": "git",
     "url": "https://github.com/MNDL-27/docker-dashboard.git"
