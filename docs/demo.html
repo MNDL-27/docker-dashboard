@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Docker Dashboard - Interactive Demo</title>
+    <meta name="description" content="Interactive demo of Docker Dashboard showing live stats, monitoring, and container management features.">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🚢</text></svg>">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        @keyframes gradient {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+        .animated-gradient {
+            background: linear-gradient(-45deg, #667eea 0%, #764ba2 25%, #f093fb 50%, #4facfe 75%, #00f2fe 100%);
+            background-size: 400% 400%;
+            animation: gradient 15s ease infinite;
+        }
+        .glass {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        .dark-glass {
+            background: rgba(31, 41, 55, 0.8);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(75, 85, 99, 0.3);
+        }
+        .status-running { 
+            background: #10b981; 
+            box-shadow: 0 0 15px rgba(16, 185, 129, 0.5);
+        }
+        .status-stopped { 
+            background: #ef4444;
+            box-shadow: 0 0 15px rgba(239, 68, 68, 0.5);
+        }
+        .pulse {
+            animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: .5; }
+        }
+        .container-card {
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .container-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+    </style>
+</head>
+<body class="bg-gray-900 text-white">
+    <!-- Header -->
+    <div class="animated-gradient py-8">
+        <div class="container mx-auto px-4">
+            <div class="text-center">
+                <div class="text-6xl mb-4">🚢</div>
+                <h1 class="text-5xl font-bold mb-2">Docker Dashboard</h1>
+                <p class="text-xl text-gray-100 mb-4">Interactive Demo</p>
+                <div class="flex justify-center gap-4 flex-wrap">
+                    <a href="index.html" class="glass px-6 py-2 rounded-lg hover:bg-white hover:bg-opacity-20 transition-all">
+                        ← Back to Home
+                    </a>
+                    <a href="https://github.com/MNDL-27/docker-dashboard" class="bg-white bg-opacity-20 px-6 py-2 rounded-lg hover:bg-opacity-30 transition-all">
+                        📦 Install Now
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Demo Notice -->
+    <div class="bg-gray-800 py-6">
+        <div class="container mx-auto px-4">
+            <div class="glass max-w-4xl mx-auto p-4 rounded-lg">
+                <div class="flex items-center gap-3">
+                    <div class="text-3xl">💡</div>
+                    <div>
+                        <p class="text-lg">
+                            <strong>Note:</strong> This is a <strong>simulated demo</strong> with fake data. 
+                            The real dashboard connects to your Docker host and shows actual container stats.
+                            <a href="https://github.com/MNDL-27/docker-dashboard" class="text-blue-400 underline ml-2">Install it to see your real containers!</a>
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Dashboard Demo -->
+    <div class="bg-gray-900 py-12">
+        <div class="container mx-auto px-4">
+            <div class="max-w-7xl mx-auto">
+                <!-- Stats Overview -->
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+                    <div class="dark-glass p-6 rounded-lg">
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="text-gray-400 text-sm">Running</span>
+                            <span class="text-green-400 text-2xl">▲</span>
+                        </div>
+                        <div class="text-4xl font-bold text-green-400" id="runningCount">0</div>
+                        <div class="text-gray-500 text-sm mt-1">Containers</div>
+                    </div>
+
+                    <div class="dark-glass p-6 rounded-lg">
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="text-gray-400 text-sm">Stopped</span>
+                            <span class="text-red-400 text-2xl">■</span>
+                        </div>
+                        <div class="text-4xl font-bold text-red-400" id="stoppedCount">0</div>
+                        <div class="text-gray-500 text-sm mt-1">Containers</div>
+                    </div>
+
+                    <div class="dark-glass p-6 rounded-lg">
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="text-gray-400 text-sm">Total CPU</span>
+                            <span class="text-purple-400 text-2xl">🖥️</span>
+                        </div>
+                        <div class="text-4xl font-bold text-purple-400" id="totalCpu">0%</div>
+                        <div class="text-gray-500 text-sm mt-1">Usage</div>
+                    </div>
+
+                    <div class="dark-glass p-6 rounded-lg">
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="text-gray-400 text-sm">Total RAM</span>
+                            <span class="text-blue-400 text-2xl">💾</span>
+                        </div>
+                        <div class="text-4xl font-bold text-blue-400" id="totalRam">0 GB</div>
+                        <div class="text-gray-500 text-sm mt-1">Used</div>
+                    </div>
+                </div>
+
+                <!-- Container Grid -->
+                <div class="mb-8">
+                    <h2 class="text-3xl font-bold mb-6">Containers</h2>
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="containerGrid">
+                        <!-- Containers will be generated here -->
+                    </div>
+                </div>
+
+                <!-- Live Charts -->
+                <div class="mb-8">
+                    <h2 class="text-3xl font-bold mb-6">Live System Metrics</h2>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="dark-glass p-6 rounded-lg">
+                            <h3 class="text-xl font-semibold mb-4">CPU Usage</h3>
+                            <canvas id="cpuChart"></canvas>
+                        </div>
+                        <div class="dark-glass p-6 rounded-lg">
+                            <h3 class="text-xl font-semibold mb-4">Memory Usage</h3>
+                            <canvas id="memChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Features Showcase -->
+                <div class="mb-8">
+                    <h2 class="text-3xl font-bold mb-6">Features in Action</h2>
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div class="dark-glass p-6 rounded-lg text-center">
+                            <div class="text-5xl mb-4">📊</div>
+                            <h3 class="text-xl font-bold mb-2">Real-Time Stats</h3>
+                            <p class="text-gray-400">Live CPU, RAM, Network monitoring with WebSocket updates</p>
+                        </div>
+                        <div class="dark-glass p-6 rounded-lg text-center">
+                            <div class="text-5xl mb-4">🎛️</div>
+                            <h3 class="text-xl font-bold mb-2">Container Control</h3>
+                            <p class="text-gray-400">Start, stop, restart containers with one click</p>
+                        </div>
+                        <div class="dark-glass p-6 rounded-lg text-center">
+                            <div class="text-5xl mb-4">📝</div>
+                            <h3 class="text-xl font-bold mb-2">Live Logs</h3>
+                            <p class="text-gray-400">Stream container logs in real-time</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- CTA Section -->
+    <div class="animated-gradient py-16">
+        <div class="container mx-auto px-4 text-center">
+            <h2 class="text-4xl font-bold mb-4">Ready to Monitor Your Containers?</h2>
+            <p class="text-xl mb-8 max-w-2xl mx-auto">
+                This demo shows simulated data. Install Docker Dashboard on your server to monitor your real containers!
+            </p>
+            <div class="flex flex-wrap justify-center gap-4">
+                <a href="https://github.com/MNDL-27/docker-dashboard" 
+                   class="bg-white text-gray-900 px-8 py-4 rounded-lg text-xl font-semibold hover:bg-gray-100 transition-all transform hover:scale-105">
+                    🚀 Install Docker Dashboard
+                </a>
+                <a href="index.html#quick-start" 
+                   class="glass px-8 py-4 rounded-lg text-xl font-semibold hover:bg-white hover:bg-opacity-20 transition-all">
+                    📖 Quick Start Guide
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="bg-gray-800 py-8">
+        <div class="container mx-auto px-4 text-center">
+            <p class="text-gray-400">
+                Made with ❤️ by <a href="https://github.com/MNDL-27" class="text-blue-400 hover:underline">MNDL-27</a>
+            </p>
+            <p class="text-gray-500 mt-2">
+                Licensed under <a href="https://github.com/MNDL-27/docker-dashboard/blob/main/LICENSE" class="text-blue-400 hover:underline">Apache 2.0 with Commons Clause</a>
+            </p>
+        </div>
+    </div>
+
+    <script>
+        // Simulated container data
+        const containers = [
+            { name: 'web-server', image: 'nginx:latest', status: 'running', cpu: 0, mem: 0 },
+            { name: 'database', image: 'postgres:15', status: 'running', cpu: 0, mem: 0 },
+            { name: 'redis-cache', image: 'redis:7', status: 'running', cpu: 0, mem: 0 },
+            { name: 'api-gateway', image: 'traefik:latest', status: 'running', cpu: 0, mem: 0 },
+            { name: 'monitoring', image: 'prometheus:latest', status: 'running', cpu: 0, mem: 0 },
+            { name: 'old-service', image: 'node:14', status: 'stopped', cpu: 0, mem: 0 }
+        ];
+
+        // Generate random stats
+        function randomStat(min, max) {
+            return (Math.random() * (max - min) + min).toFixed(1);
+        }
+
+        // Update container stats
+        function updateStats() {
+            let totalCpu = 0;
+            let totalMem = 0;
+            let running = 0;
+            let stopped = 0;
+
+            containers.forEach(container => {
+                if (container.status === 'running') {
+                    container.cpu = parseFloat(randomStat(5, 45));
+                    container.mem = parseFloat(randomStat(100, 800));
+                    totalCpu += container.cpu;
+                    totalMem += container.mem;
+                    running++;
+                } else {
+                    stopped++;
+                }
+            });
+
+            document.getElementById('runningCount').textContent = running;
+            document.getElementById('stoppedCount').textContent = stopped;
+            document.getElementById('totalCpu').textContent = totalCpu.toFixed(1) + '%';
+            document.getElementById('totalRam').textContent = (totalMem / 1024).toFixed(2) + ' GB';
+
+            renderContainers();
+        }
+
+        // Render container cards
+        function renderContainers() {
+            const grid = document.getElementById('containerGrid');
+            grid.innerHTML = containers.map(c => `
+                <div class="dark-glass p-6 rounded-lg container-card">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="flex items-center gap-3">
+                            <div class="w-3 h-3 rounded-full ${c.status === 'running' ? 'status-running pulse' : 'status-stopped'}"></div>
+                            <div>
+                                <div class="font-bold text-lg truncate">${c.name}</div>
+                                <div class="text-gray-500 text-sm truncate">${c.image}</div>
+                            </div>
+                        </div>
+                        <span class="text-xs px-3 py-1 rounded-full ${c.status === 'running' ? 'bg-green-900 text-green-300' : 'bg-red-900 text-red-300'}">
+                            ${c.status}
+                        </span>
+                    </div>
+                    ${c.status === 'running' ? `
+                    <div class="space-y-2">
+                        <div>
+                            <div class="flex justify-between text-sm mb-1">
+                                <span class="text-gray-400">CPU</span>
+                                <span class="text-purple-400">${c.cpu}%</span>
+                            </div>
+                            <div class="w-full bg-gray-700 rounded-full h-2">
+                                <div class="bg-purple-500 h-2 rounded-full" style="width: ${c.cpu}%"></div>
+                            </div>
+                        </div>
+                        <div>
+                            <div class="flex justify-between text-sm mb-1">
+                                <span class="text-gray-400">Memory</span>
+                                <span class="text-blue-400">${c.mem.toFixed(0)} MB</span>
+                            </div>
+                            <div class="w-full bg-gray-700 rounded-full h-2">
+                                <div class="bg-blue-500 h-2 rounded-full" style="width: ${(c.mem / 1024) * 100}%"></div>
+                            </div>
+                        </div>
+                    </div>
+                    ` : '<div class="text-gray-500 text-center py-4">Container is stopped</div>'}
+                    <div class="flex gap-2 mt-4">
+                        <button class="flex-1 px-3 py-2 rounded ${c.status === 'running' ? 'bg-red-600 hover:bg-red-700' : 'bg-green-600 hover:bg-green-700'} text-sm transition-all">
+                            ${c.status === 'running' ? '⏹ Stop' : '▶ Start'}
+                        </button>
+                        <button class="px-3 py-2 rounded bg-blue-600 hover:bg-blue-700 text-sm transition-all">
+                            📊 Details
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Chart data
+        const chartData = {
+            cpu: Array(20).fill(0),
+            mem: Array(20).fill(0)
+        };
+
+        // Create charts
+        const cpuChart = new Chart(document.getElementById('cpuChart'), {
+            type: 'line',
+            data: {
+                labels: Array(20).fill(''),
+                datasets: [{
+                    label: 'CPU %',
+                    data: chartData.cpu,
+                    borderColor: '#a78bfa',
+                    backgroundColor: 'rgba(167, 139, 250, 0.1)',
+                    tension: 0.4,
+                    fill: true
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: { beginAtZero: true, max: 100, ticks: { color: '#9ca3af' }, grid: { color: '#374151' } },
+                    x: { ticks: { color: '#9ca3af' }, grid: { color: '#374151' } }
+                },
+                plugins: {
+                    legend: { labels: { color: '#9ca3af' } }
+                },
+                animation: { duration: 500 }
+            }
+        });
+
+        const memChart = new Chart(document.getElementById('memChart'), {
+            type: 'line',
+            data: {
+                labels: Array(20).fill(''),
+                datasets: [{
+                    label: 'Memory GB',
+                    data: chartData.mem,
+                    borderColor: '#60a5fa',
+                    backgroundColor: 'rgba(96, 165, 250, 0.1)',
+                    tension: 0.4,
+                    fill: true
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: { beginAtZero: true, max: 4, ticks: { color: '#9ca3af' }, grid: { color: '#374151' } },
+                    x: { ticks: { color: '#9ca3af' }, grid: { color: '#374151' } }
+                },
+                plugins: {
+                    legend: { labels: { color: '#9ca3af' } }
+                },
+                animation: { duration: 500 }
+            }
+        });
+
+        // Update charts
+        function updateCharts() {
+            const totalCpu = containers.filter(c => c.status === 'running')
+                .reduce((sum, c) => sum + c.cpu, 0);
+            const totalMem = containers.filter(c => c.status === 'running')
+                .reduce((sum, c) => sum + c.mem, 0) / 1024;
+
+            chartData.cpu.shift();
+            chartData.cpu.push(totalCpu);
+            chartData.mem.shift();
+            chartData.mem.push(totalMem);
+
+            cpuChart.update();
+            memChart.update();
+        }
+
+        // Initialize and start updates
+        updateStats();
+        renderContainers();
+        
+        setInterval(() => {
+            updateStats();
+            updateCharts();
+        }, 2000);
+
+        // Set chart heights
+        document.getElementById('cpuChart').style.height = '250px';
+        document.getElementById('memChart').style.height = '250px';
+    </script>
+</body>
+</html>
