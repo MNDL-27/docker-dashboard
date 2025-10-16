@@ -1,265 +1,847 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Docker Dashboard - Interactive Demo</title>
-    <meta name="description" content="Interactive demo of Docker Dashboard showing live stats, monitoring, and container management features.">
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🚢</text></svg>">
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-    <style>
-        * { 
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; 
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-        body { 
-            background: linear-gradient(to bottom, #1a202c 0%, #2d3748 100%);
-            min-height: 100vh;
-            overflow-x: hidden;
-            color: white;
-        }
-        .glass {
-            background: rgba(45, 55, 72, 0.9);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(10px);
-        }
-        .card {
-            background: rgba(45, 55, 72, 0.9);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 12px;
-            transition: all 0.3s ease;
-        }
-        .card:hover {
-            transform: translateY(-4px);
-            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
-            border-color: rgba(255, 255, 255, 0.2);
-        }
-        .demo-banner {
-            background: rgba(139, 92, 246, 0.2);
-            border: 1px solid rgba(139, 92, 246, 0.4);
-            backdrop-filter: blur(10px);
-        }
-        .btn-primary {
-            background: linear-gradient(135deg, #8b5cf6 0%, #6366f1 100%);
-            transition: all 0.3s ease;
-            box-shadow: 0 4px 15px rgba(139, 92, 246, 0.4);
-        }
-        .btn-primary:hover {
-            box-shadow: 0 6px 20px rgba(139, 92, 246, 0.6);
-            transform: translateY(-2px);
-        }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Docker Dashboard - Interactive Demo</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    * { 
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; 
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    body { 
+      background: linear-gradient(to bottom, #1a202c 0%, #2d3748 100%);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+    .container {
+      position: relative;
+    }
+    .card {
+      background: rgba(45, 55, 72, 0.9);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 12px;
+      transition: all 0.3s ease;
+    }
+    .card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+      border-color: rgba(255, 255, 255, 0.2);
+    }
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      display: inline-block;
+    }
+    .status-running {
+      background: #48bb78;
+      box-shadow: 0 0 8px #48bb78;
+    }
+    .status-exited {
+      background: #f56565;
+      box-shadow: 0 0 8px #f56565;
+    }
+    .status-paused {
+      background: #ed8936;
+      box-shadow: 0 0 8px #ed8936;
+    }
+    .badge {
+      padding: 4px 12px;
+      border-radius: 6px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .badge-running {
+      background: rgba(72, 187, 120, 0.2);
+      color: #48bb78;
+      border: 1px solid rgba(72, 187, 120, 0.3);
+    }
+    .badge-exited {
+      background: rgba(245, 101, 101, 0.2);
+      color: #f56565;
+      border: 1px solid rgba(245, 101, 101, 0.3);
+    }
+    .badge-paused {
+      background: rgba(237, 137, 54, 0.2);
+      color: #ed8936;
+      border: 1px solid rgba(237, 137, 54, 0.3);
+    }
+    @keyframes pulse {
+      0%, 100% { text-shadow: 0 0 40px rgba(147, 51, 234, 0.6), 0 0 80px rgba(147, 51, 234, 0.3); }
+      50% { text-shadow: 0 0 50px rgba(147, 51, 234, 0.8), 0 0 100px rgba(147, 51, 234, 0.4); }
+    }
+    .btn-primary {
+      background: linear-gradient(135deg, #8b5cf6 0%, #6366f1 100%);
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 15px rgba(139, 92, 246, 0.4);
+      position: relative;
+      overflow: hidden;
+    }
+    .btn-primary::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+      transition: left 0.5s;
+    }
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.7; }
+    }
+    .stat-card-clickable {
+      cursor: pointer;
+    }
+    .stat-card-clickable:hover {
+      transform: translateY(-2px);
+      border-color: rgba(139, 92, 246, 0.5);
+    }
+    .modal-overlay {
+      background: rgba(0, 0, 0, 0.7);
+      backdrop-filter: blur(4px);
+    }
+    .modal-content {
+      background: rgba(30, 41, 59, 0.95);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      max-height: 80vh;
+      overflow-y: auto;
+    }
+    .modal-content::-webkit-scrollbar {
+      width: 8px;
+    }
+    .modal-content::-webkit-scrollbar-track {
+      background: rgba(0, 0, 0, 0.2);
+      border-radius: 4px;
+    }
+    .modal-content::-webkit-scrollbar-thumb {
+      background: rgba(139, 92, 246, 0.5);
+      border-radius: 4px;
+    }
+    .modal-content::-webkit-scrollbar-thumb:hover {
+      background: rgba(139, 92, 246, 0.7);
+    }
+  </style>
 </head>
 <body class="p-4 md:p-8">
-    <!-- Header -->
-    <header class="max-w-7xl mx-auto mb-8">
-        <div class="text-center space-y-3">
-            <div class="flex items-center justify-center gap-3">
-                <svg class="w-10 h-10 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2m-2-4h.01M17 16h.01"></path>
-                </svg>
-                <h1 class="text-4xl md:text-5xl font-bold text-white">Docker Dashboard</h1>
-            </div>
-            <p class="text-gray-400 text-base">Interactive Demo - Simulated Container Data</p>
-            <div class="demo-banner rounded-lg p-4 max-w-3xl mx-auto">
-                <p class="text-sm text-purple-200">
-                    💡 <strong>Note:</strong> This demo uses simulated data. 
-                    <a href="https://github.com/MNDL-27/docker-dashboard" class="text-white underline hover:text-purple-100">Install the real dashboard</a> to monitor your actual containers!
-                </p>
-            </div>
+  <!-- Header -->
+  <header class="max-w-7xl mx-auto mb-8">
+    <div class="text-center space-y-3">
+      <!-- Logo & Title -->
+      <div class="flex items-center justify-center gap-3 relative">
+        <svg class="w-10 h-10 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2m-2-4h.01M17 16h.01"></path>
+        </svg>
+        <h1 class="text-4xl md:text-5xl font-bold text-white">Docker Dashboard</h1>
+        
+        <!-- Logout Button (shown only when auth is enabled) -->
+        <button id="logoutBtn" style="display: none;" onclick="handleLogout()" 
+                class="absolute right-0 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors duration-200 flex items-center gap-2">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path>
+          </svg>
+          Logout
+        </button>
+      </div>
+      
+      <!-- Subtitle -->
+      <p class="text-gray-400 text-base">Interactive Demo - Simulated Container Data</p>
+      
+      <!-- Demo Notice Banner -->
+      <div class="card rounded-lg p-4 max-w-3xl mx-auto" style="background: rgba(139, 92, 246, 0.2); border-color: rgba(139, 92, 246, 0.4);">
+        <p class="text-sm text-purple-200">
+          💡 <strong>Note:</strong> This is a demo with simulated data. 
+          <a href="https://github.com/MNDL-27/docker-dashboard" class="text-white underline hover:text-purple-100">Install the real dashboard</a> to monitor your actual containers!
+        </p>
+      </div>
+      
+      <!-- Stats Summary -->
+      <div class="flex justify-center gap-4 mt-6">
+        <div class="card px-6 py-4 flex items-center gap-3">
+          <div class="w-12 h-12 rounded-full bg-green-500/20 flex items-center justify-center">
+            <div class="w-3 h-3 rounded-full bg-green-500 status-dot"></div>
+          </div>
+          <div class="text-left">
+            <div class="text-2xl font-bold text-green-400"><span id="running-count">0</span></div>
+            <div class="text-sm text-gray-400">Running</div>
+          </div>
         </div>
-    </header>
+        
+        <div class="card px-6 py-4 flex items-center gap-3">
+          <div class="w-12 h-12 rounded-full bg-red-500/20 flex items-center justify-center">
+            <div class="w-3 h-3 rounded-full bg-red-500 status-dot"></div>
+          </div>
+          <div class="text-left">
+            <div class="text-2xl font-bold text-red-400"><span id="stopped-count">0</span></div>
+            <div class="text-sm text-gray-400">Stopped</div>
+          </div>
+        </div>
+        
+        <div class="card px-6 py-4 flex items-center gap-3">
+          <div class="w-12 h-12 rounded-full bg-blue-500/20 flex items-center justify-center">
+            <div class="w-3 h-3 rounded-full bg-blue-500 status-dot"></div>
+          </div>
+          <div class="text-left">
+            <div class="text-2xl font-bold text-blue-400"><span id="total-count">0</span></div>
+            <div class="text-sm text-gray-400">Total</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </header>
 
-    <!-- Containers Grid (EXACT copy from real dashboard) -->
-    <main class="max-w-7xl mx-auto">
-        <h2 class="text-2xl font-bold text-white mb-4">Containers</h2>
-        <div id="stats" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"></div>
-    </main>
+  <!-- Global Stats Section -->
+  <section class="max-w-7xl mx-auto mb-8">
+    <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
+      <!-- CPU Usage -->
+      <div class="card p-6 stat-card-clickable block no-underline">
+        <div class="flex items-start justify-between mb-3">
+          <div>
+            <h3 class="text-sm font-semibold text-gray-400 mb-1">Total CPU Usage</h3>
+            <div class="text-3xl font-bold text-white"><span id="global-cpu">0.0</span>%</div>
+          </div>
+          <div class="w-12 h-12 rounded-full bg-purple-500/20 flex items-center justify-center">
+            <svg class="w-6 h-6 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 3v2m6-2v2M9 19v2m6-2v2M5 9H3m2 6H3m18-6h-2m2 6h-2M7 19h10a2 2 0 002-2V7a2 2 0 00-2-2H7a2 2 0 00-2 2v10a2 2 0 002 2zM9 9h6v6H9V9z"></path>
+            </svg>
+          </div>
+        </div>
+        <div class="w-full bg-gray-700 rounded-full h-2">
+          <div id="global-cpu-bar" class="bg-gradient-to-r from-purple-500 to-pink-500 h-2 rounded-full transition-all duration-500" style="width: 0%"></div>
+        </div>
+      </div>
 
-    <!-- Back Button -->
-    <section class="max-w-7xl mx-auto mt-12 text-center">
-        <a href="index.html" class="btn-primary inline-block px-8 py-3 rounded-lg font-semibold text-white">
-            ← Back to Homepage
-        </a>
-    </section>
+      <!-- RAM Usage -->
+      <div class="card p-6 stat-card-clickable block no-underline">
+        <div class="flex items-start justify-between mb-3">
+          <div>
+            <h3 class="text-sm font-semibold text-gray-400 mb-1">Total RAM Usage</h3>
+            <div class="text-3xl font-bold text-white"><span id="global-ram">0.0</span> GB</div>
+          </div>
+          <div class="w-12 h-12 rounded-full bg-blue-500/20 flex items-center justify-center">
+            <svg class="w-6 h-6 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2m-2-4h.01M17 16h.01"></path>
+            </svg>
+          </div>
+        </div>
+        <div class="text-xs text-gray-500">
+          <span id="global-ram-percent">0.0</span>% of <span id="global-ram-total">0</span> GB
+        </div>
+      </div>
 
-    <script>
-        // Simulated container data (EXACT format from real dashboard API)
-        const mockContainers = [
-            { Id: 'abc123', Names: ['web-server'], Image: 'nginx:latest', Status: 'Up 2 hours (healthy)' },
-            { Id: 'def456', Names: ['database'], Image: 'postgres:15', Status: 'Up 1 day' },
-            { Id: 'ghi789', Names: ['redis-cache'], Image: 'redis:7', Status: 'Up 5 hours' },
-            { Id: 'jkl012', Names: ['api-gateway'], Image: 'traefik:latest', Status: 'Up 3 hours (healthy)' },
-            { Id: 'mno345', Names: ['monitoring'], Image: 'prometheus:latest', Status: 'Up 12 hours' },
-            { Id: 'pqr678', Names: ['old-service'], Image: 'node:14', Status: 'Exited (0) 2 days ago' }
-        ];
+      <!-- Network Speed -->
+      <div class="card p-6 stat-card-clickable block no-underline">
+        <div class="flex items-start justify-between mb-3">
+          <div class="flex-1">
+            <h3 class="text-sm font-semibold text-gray-400 mb-1">Network Speed</h3>
+            <div class="flex items-center gap-2">
+              <div class="text-2xl font-bold text-green-400">
+                <span class="text-sm">↓</span><span id="global-download-speed">0</span>
+              </div>
+            </div>
+            <div class="flex items-center gap-2 mt-1">
+              <div class="text-2xl font-bold text-blue-400">
+                <span class="text-sm">↑</span><span id="global-upload-speed">0</span>
+              </div>
+            </div>
+          </div>
+          <div class="w-12 h-12 rounded-full bg-green-500/20 flex items-center justify-center">
+            <svg class="w-6 h-6 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+            </svg>
+          </div>
+        </div>
+      </div>
 
-        let expandedContainer = null;
-        let statIntervals = {};
-        let charts = {};
+      <!-- Total Data Usage -->
+      <div class="card p-6 stat-card-clickable block no-underline">
+        <div class="flex items-start justify-between mb-3">
+          <div class="flex-1">
+            <h3 class="text-sm font-semibold text-gray-400 mb-1">Total Data Usage</h3>
+            <div class="text-2xl font-bold text-green-400 flex items-center gap-1">
+              <span class="text-sm">↓</span><span id="global-download-total">0 B</span>
+            </div>
+            <div class="text-2xl font-bold text-blue-400 flex items-center gap-1 mt-1">
+              <span class="text-sm">↑</span><span id="global-upload-total">0 B</span>
+            </div>
+          </div>
+          <div class="w-12 h-12 rounded-full bg-cyan-500/20 flex items-center justify-center">
+            <svg class="w-6 h-6 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path>
+            </svg>
+          </div>
+        </div>
+        <div class="text-xs text-gray-500">
+          Combined: <span id="global-combined-total" class="text-gray-300 font-semibold">0 B</span>
+        </div>
+      </div>
+    </div>
+  </section>
 
-        // EXACT functions from real dashboard (public/app.js)
-        function getStatusColor(status) {
-            if (status && status.includes('Up') && status.includes('healthy')) return 'bg-green-200 text-green-800';
-            if (status && status.includes('Up')) return 'bg-blue-200 text-blue-800';
-            return 'bg-red-200 text-red-800';
+  <!-- Modal for stats breakdown -->
+  <div id="stats-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 modal-overlay" onclick="closeStatsModal(event)">
+    <div class="modal-content rounded-2xl p-6 w-full max-w-2xl" onclick="event.stopPropagation()">
+      <div class="flex items-center justify-between mb-6">
+        <h2 id="modal-title" class="text-2xl font-bold text-white"></h2>
+        <button onclick="closeStatsModal()" class="text-gray-400 hover:text-white transition">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+          </svg>
+        </button>
+      </div>
+      <div id="modal-body" class="space-y-3">
+        <!-- Container stats will be inserted here -->
+      </div>
+    </div>
+  </div>
+
+  <!-- Loading State -->
+  <div id="loading" class="text-center py-20">
+    <div class="loading inline-block w-16 h-16 border-4 border-purple-500 border-t-transparent rounded-full"></div>
+    <p class="text-gray-400 mt-4 text-lg">Loading containers...</p>
+  </div>
+
+  <!-- Containers Grid -->
+  <main class="max-w-7xl mx-auto">
+    <div id="stats" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"></div>
+    <div id="empty-state" class="hidden text-center py-20">
+      <svg class="w-24 h-24 mx-auto text-gray-600 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"></path>
+      </svg>
+      <h3 class="text-2xl font-bold text-gray-400 mb-2">No containers found</h3>
+      <p class="text-gray-500">Start some Docker containers to see them here</p>
+    </div>
+  </main>
+
+  <!-- Back to Homepage Button -->
+  <footer class="max-w-7xl mx-auto mt-12 text-center">
+    <a href="index.html" class="btn-primary inline-block px-8 py-3 rounded-lg font-semibold text-white">
+      ← Back to Homepage
+    </a>
+  </footer>
+
+  <script>
+    // Format bytes to human readable
+    function formatBytes(bytes) {
+      if (bytes === 0) return '0 B';
+      const k = 1024;
+      const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
+      const i = Math.floor(Math.log(bytes) / Math.log(k));
+      return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    }
+
+    // Format speed (bytes/sec)
+    function formatSpeed(bytesPerSec) {
+      if (bytesPerSec === 0) return '0 B/s';
+      const k = 1024;
+      const sizes = ['B/s', 'KB/s', 'MB/s', 'GB/s'];
+      const i = Math.floor(Math.log(bytesPerSec) / Math.log(k));
+      return parseFloat((bytesPerSec / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    }
+
+    // Store container stats with their metadata
+    let containerStatsData = [];
+    let previousNetworkStats = new Map(); // Track previous network bytes for speed calculation
+
+    // Modal functions
+    function showStatsModal(type) {
+      const modal = document.getElementById('stats-modal');
+      const title = document.getElementById('modal-title');
+      const body = document.getElementById('modal-body');
+      
+      let titleText = '';
+      let content = '';
+
+      const sortedData = [...containerStatsData].sort((a, b) => {
+        if (type === 'cpu') return b.cpuPercent - a.cpuPercent;
+        if (type === 'ram') return b.memoryUsage - a.memoryUsage;
+        if (type === 'network') return (b.downloadSpeed + b.uploadSpeed) - (a.downloadSpeed + a.uploadSpeed);
+        if (type === 'data') return (b.downloadBytes + b.uploadBytes) - (a.downloadBytes + a.uploadBytes);
+        return 0;
+      });
+
+      if (type === 'cpu') {
+        titleText = '📊 CPU Usage by Container';
+        content = sortedData.map(c => `
+          <div class="card p-4 flex items-center justify-between">
+            <div class="flex-1">
+              <div class="font-semibold text-white">${c.name}</div>
+              <div class="text-xs text-gray-400">${c.id.substring(0, 12)}</div>
+            </div>
+            <div class="text-right">
+              <div class="text-2xl font-bold text-purple-400">${c.cpuPercent.toFixed(1)}%</div>
+              <div class="w-32 bg-gray-700 rounded-full h-2 mt-1">
+                <div class="bg-gradient-to-r from-purple-500 to-pink-500 h-2 rounded-full" style="width: ${Math.min(c.cpuPercent, 100)}%"></div>
+              </div>
+            </div>
+          </div>
+        `).join('');
+      } else if (type === 'ram') {
+        titleText = '💾 RAM Usage by Container';
+        content = sortedData.map(c => `
+          <div class="card p-4 flex items-center justify-between">
+            <div class="flex-1">
+              <div class="font-semibold text-white">${c.name}</div>
+              <div class="text-xs text-gray-400">${c.id.substring(0, 12)}</div>
+            </div>
+            <div class="text-right">
+              <div class="text-2xl font-bold text-blue-400">${(c.memoryUsage / (1024 ** 3)).toFixed(2)} GB</div>
+              <div class="text-xs text-gray-400">${c.memoryPercent.toFixed(1)}% of ${(c.memoryLimit / (1024 ** 3)).toFixed(1)} GB</div>
+            </div>
+          </div>
+        `).join('');
+      } else if (type === 'network') {
+        titleText = '⚡ Network Speed by Container';
+        content = sortedData.map(c => `
+          <div class="card p-4">
+            <div class="flex items-center justify-between mb-2">
+              <div class="flex-1">
+                <div class="font-semibold text-white">${c.name}</div>
+                <div class="text-xs text-gray-400">${c.id.substring(0, 12)}</div>
+              </div>
+            </div>
+            <div class="flex justify-between text-sm">
+              <div class="flex items-center gap-2">
+                <span class="text-green-400">↓</span>
+                <span class="text-green-400 font-semibold">${formatSpeed(c.downloadSpeed)}</span>
+              </div>
+              <div class="flex items-center gap-2">
+                <span class="text-blue-400">↑</span>
+                <span class="text-blue-400 font-semibold">${formatSpeed(c.uploadSpeed)}</span>
+              </div>
+            </div>
+          </div>
+        `).join('');
+      } else if (type === 'data') {
+        titleText = '📈 Total Data Usage by Container';
+        content = sortedData.map(c => `
+          <div class="card p-4">
+            <div class="flex items-center justify-between mb-2">
+              <div class="flex-1">
+                <div class="font-semibold text-white">${c.name}</div>
+                <div class="text-xs text-gray-400">${c.id.substring(0, 12)}</div>
+              </div>
+              <div class="text-xs text-gray-400">Total: ${formatBytes(c.downloadBytes + c.uploadBytes)}</div>
+            </div>
+            <div class="flex justify-between text-sm">
+              <div class="flex items-center gap-2">
+                <span class="text-green-400">↓</span>
+                <span class="text-green-400 font-semibold">${formatBytes(c.downloadBytes)}</span>
+              </div>
+              <div class="flex items-center gap-2">
+                <span class="text-blue-400">↑</span>
+                <span class="text-blue-400 font-semibold">${formatBytes(c.uploadBytes)}</span>
+              </div>
+            </div>
+          </div>
+        `).join('');
+      }
+
+      if (sortedData.length === 0) {
+        content = '<div class="text-center text-gray-400 py-8">No running containers</div>';
+      }
+
+      title.textContent = titleText;
+      body.innerHTML = content;
+      modal.classList.remove('hidden');
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeStatsModal(event) {
+      if (!event || event.target.id === 'stats-modal') {
+        document.getElementById('stats-modal').classList.add('hidden');
+        document.body.style.overflow = 'auto';
+      }
+    }
+
+    // Close modal with Escape key
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') closeStatsModal();
+    });
+
+    // Update global stats
+    async function updateGlobalStats() {
+      try {
+        // DEMO: Use fake data instead of API call
+        // const res = await fetch('/api/containers');
+        // const containers = await res.json();
+        const containers = mockContainers;
+        
+        const runningContainers = containers.filter(c => c.State === 'running');
+        
+        if (runningContainers.length === 0) {
+          // Reset stats if no running containers
+          document.getElementById('global-cpu').textContent = '0.0';
+          document.getElementById('global-cpu-bar').style.width = '0%';
+          document.getElementById('global-ram').textContent = '0.0';
+          document.getElementById('global-ram-percent').textContent = '0.0';
+          document.getElementById('global-ram-total').textContent = '0';
+          document.getElementById('global-download-speed').textContent = '0 B/s';
+          document.getElementById('global-upload-speed').textContent = '0 B/s';
+          document.getElementById('global-download-total').textContent = '0 B';
+          document.getElementById('global-upload-total').textContent = '0 B';
+          document.getElementById('global-combined-total').textContent = '0 B';
+          return;
         }
 
-        function getStatusText(status) {
-            if (status && status.includes('Up') && status.includes('healthy')) return 'Healthy';
-            if (status && status.includes('Up')) return 'Running';
-            return 'Stopped';
-        }
-
-        function stopStatsUpdates(id) {
-            if (statIntervals[id]) {
-                clearInterval(statIntervals[id]);
-                delete statIntervals[id];
+        // Fetch stats for all running containers
+        // DEMO: Generate fake stats instead of API calls
+        const allStats = runningContainers.map(() => ({
+          cpu_stats: {
+            cpu_usage: { total_usage: Math.random() * 1000000000 + 5000000000 },
+            system_cpu_usage: 10000000000,
+            online_cpus: 8
+          },
+          precpu_stats: {
+            cpu_usage: { total_usage: Math.random() * 1000000000 + 4000000000 },
+            system_cpu_usage: 9500000000
+          },
+          memory_stats: {
+            usage: Math.random() * 3000000000 + 500000000, // 0.5-3.5 GB
+            limit: 8000000000 // 8 GB
+          },
+          networks: {
+            eth0: {
+              rx_bytes: Math.floor(Math.random() * 50000000000 + 10000000000), // 10-60 GB
+              tx_bytes: Math.floor(Math.random() * 20000000000 + 5000000000)  // 5-25 GB
             }
-            if (charts[id]) {
-                charts[id].cpu.destroy();
-                charts[id].ram.destroy();
-                charts[id].net.destroy();
-                delete charts[id];
+          }
+        }));
+        const validStats = allStats;
+
+        if (validStats.length === 0) return;
+
+        // Calculate totals and store per-container data
+        let totalCpuPercent = 0;
+        let totalMemoryUsage = 0;
+        let totalMemoryLimit = 0;
+        let totalDownloadSpeed = 0;
+        let totalUploadSpeed = 0;
+        let totalDownloadBytes = 0;
+        let totalUploadBytes = 0;
+
+        containerStatsData = [];
+
+        validStats.forEach((stat, index) => {
+          const container = runningContainers[index];
+          const containerId = container.Id;
+          const containerName = container.Names ? container.Names[0].replace(/^\//, '') : containerId.substring(0, 12);
+
+          let cpuPercent = 0;
+          let memoryUsage = 0;
+          let memoryLimit = 1;
+          let downloadSpeed = 0;
+          let uploadSpeed = 0;
+          let downloadBytes = 0;
+          let uploadBytes = 0;
+
+          // CPU
+          if (stat.cpu_stats && stat.precpu_stats) {
+            const cpuDelta = stat.cpu_stats.cpu_usage.total_usage - stat.precpu_stats.cpu_usage.total_usage;
+            const systemDelta = stat.cpu_stats.system_cpu_usage - stat.precpu_stats.system_cpu_usage;
+            const cpuCount = stat.cpu_stats.online_cpus || 1;
+            if (systemDelta > 0 && cpuDelta > 0) {
+              cpuPercent = (cpuDelta / systemDelta) * cpuCount * 100;
+              totalCpuPercent += cpuPercent;
             }
-        }
+          }
 
-        // EXACT render function from real dashboard
-        function fetchStatsAndRender() {
-            const containers = mockContainers;
-            
-            // EXACT HTML structure from public/app.js
-            document.getElementById('stats').innerHTML = containers.map(container => {
-                const isExpanded = expandedContainer === container.Id;
-                return `
-                <div class="glass rounded-2xl p-6 shadow-lg text-white transition relative ${isExpanded ? 'ring-4 ring-indigo-400/40' : ''}">
-                    <div class="flex items-center justify-between mb-1">
-                        <span class="font-bold text-lg truncate">${container.Names ? container.Names.join(', ') : container.Id}</span>
-                        <span class="px-3 py-1 text-xs font-semibold rounded-full ${getStatusColor(container.Status)}">
-                            ${getStatusText(container.Status)}
-                        </span>
-                    </div>
-                    <div class="text-xs text-gray-300 mb-2"><span class="font-semibold">Image:</span> ${container.Image}</div>
-                    <div class="flex gap-2 mt-2 mb-1">
-                        <button onclick="expandContainer('${container.Id}')" class="text-xs px-2 py-1 rounded bg-indigo-700 text-white hover:bg-indigo-500 transition">${isExpanded ? "Hide Stats" : "Show Stats"}</button>
-                        <button onclick="alert('Demo mode - actions disabled')" class="text-xs px-2 py-1 rounded bg-green-500 hover:bg-green-700 text-white transition">Start</button>
-                        <button onclick="alert('Demo mode - actions disabled')" class="text-xs px-2 py-1 rounded bg-red-500 hover:bg-red-700 text-white transition">Stop</button>
-                        <button onclick="alert('Demo mode - actions disabled')" class="text-xs px-2 py-1 rounded bg-blue-500 hover:bg-blue-700 text-white transition">Restart</button>
-                    </div>
-                    ${isExpanded ? `
-                    <div id="stats-area-${container.Id}" class="bg-black/20 rounded-xl mt-3 p-4">
-                        <div class="flex flex-col sm:flex-row gap-4">
-                            <div class="flex-1">
-                                <div class="text-xs text-gray-300 font-semibold mb-1">CPU Usage</div>
-                                <span class="block text-xl font-bold mb-1" id="cpu-${container.Id}">--%</span>
-                                <canvas id="cpuChart-${container.Id}" height="40"></canvas>
-                            </div>
-                            <div class="flex-1">
-                                <div class="text-xs text-gray-300 font-semibold mb-1">RAM Usage</div>
-                                <span class="block text-xl font-bold mb-1" id="ram-${container.Id}">-- / --</span>
-                                <canvas id="ramChart-${container.Id}" height="40"></canvas>
-                            </div>
-                            <div class="flex-1">
-                                <div class="text-xs text-gray-300 font-semibold mb-1">Network RX/TX</div>
-                                <span class="block text-xl font-bold mb-1" id="net-${container.Id}">-- / --</span>
-                                <canvas id="netChart-${container.Id}" height="40"></canvas>
-                            </div>
-                        </div>
-                    </div>
-                    ` : ""}
-                </div>`;
-            }).join('');
+          // Memory
+          if (stat.memory_stats) {
+            memoryUsage = stat.memory_stats.usage || 0;
+            memoryLimit = stat.memory_stats.limit || 1;
+            totalMemoryUsage += memoryUsage;
+            totalMemoryLimit += memoryLimit;
+          }
 
-            // Start/stop stat updates
-            containers.forEach(container => {
-                if (expandedContainer === container.Id) {
-                    startStatsUpdates(container.Id);
-                } else {
-                    stopStatsUpdates(container.Id);
-                }
+          // Network - Calculate speed based on difference from previous reading
+          if (stat.networks) {
+            Object.values(stat.networks).forEach(network => {
+              downloadBytes += network.rx_bytes || 0;
+              uploadBytes += network.tx_bytes || 0;
             });
-        }
 
-        // EXACT expand function from real dashboard
-        window.expandContainer = function(id) {
-            if (expandedContainer === id) {
-                stopStatsUpdates(id);
-                expandedContainer = null;
-            } else {
-                Object.keys(statIntervals).forEach(stopStatsUpdates);
-                expandedContainer = id;
+            // Calculate speed if we have previous data
+            const prevStats = previousNetworkStats.get(containerId);
+            if (prevStats) {
+              const timeDiff = (Date.now() - prevStats.timestamp) / 1000; // seconds
+              if (timeDiff > 0) {
+                downloadSpeed = (downloadBytes - prevStats.downloadBytes) / timeDiff;
+                uploadSpeed = (uploadBytes - prevStats.uploadBytes) / timeDiff;
+              }
             }
-            fetchStatsAndRender();
+
+            // Store current stats for next calculation
+            previousNetworkStats.set(containerId, {
+              downloadBytes,
+              uploadBytes,
+              timestamp: Date.now()
+            });
+
+            totalDownloadBytes += downloadBytes;
+            totalUploadBytes += uploadBytes;
+            totalDownloadSpeed += downloadSpeed;
+            totalUploadSpeed += uploadSpeed;
+          }
+
+          // Store container data for modal
+          containerStatsData.push({
+            id: containerId,
+            name: containerName,
+            cpuPercent,
+            memoryUsage,
+            memoryLimit,
+            memoryPercent: (memoryUsage / memoryLimit) * 100,
+            downloadSpeed,
+            uploadSpeed,
+            downloadBytes,
+            uploadBytes
+          });
+        });
+
+        // Update CPU
+        const cpuPercent = Math.min(totalCpuPercent, 100);
+        document.getElementById('global-cpu').textContent = cpuPercent.toFixed(1);
+        document.getElementById('global-cpu-bar').style.width = cpuPercent + '%';
+
+        // Update RAM
+        const ramGB = (totalMemoryUsage / (1024 ** 3)).toFixed(1);
+        const ramTotalGB = (totalMemoryLimit / (1024 ** 3)).toFixed(1);
+        const ramPercent = totalMemoryLimit > 0 ? ((totalMemoryUsage / totalMemoryLimit) * 100).toFixed(1) : 0;
+        document.getElementById('global-ram').textContent = ramGB;
+        document.getElementById('global-ram-percent').textContent = ramPercent;
+        document.getElementById('global-ram-total').textContent = ramTotalGB;
+
+        // Update Network Speed
+        document.getElementById('global-download-speed').textContent = formatSpeed(totalDownloadSpeed);
+        document.getElementById('global-upload-speed').textContent = formatSpeed(totalUploadSpeed);
+
+        // Update Total Data Usage
+        document.getElementById('global-download-total').textContent = formatBytes(totalDownloadBytes);
+        document.getElementById('global-upload-total').textContent = formatBytes(totalUploadBytes);
+        document.getElementById('global-combined-total').textContent = formatBytes(totalDownloadBytes + totalUploadBytes);
+
+      } catch (error) {
+        console.error('Error updating global stats:', error);
+      }
+    }
+
+    function getStatusInfo(status, state) {
+      if (state === 'running') {
+        return {
+          color: 'bg-green-500',
+          text: 'Running',
+          icon: '●',
+          badge: 'bg-green-500/20 text-green-400 border border-green-500/30'
         };
+      } else if (state === 'paused') {
+        return {
+          color: 'bg-yellow-500',
+          text: 'Paused',
+          icon: '❚❚',
+          badge: 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/30'
+        };
+      } else if (state === 'restarting') {
+        return {
+          color: 'bg-blue-500',
+          text: 'Restarting',
+          icon: '↻',
+          badge: 'bg-blue-500/20 text-blue-400 border border-blue-500/30'
+        };
+      } else {
+        return {
+          color: 'bg-red-500',
+          text: 'Stopped',
+          icon: '■',
+          badge: 'bg-red-500/20 text-red-400 border border-red-500/30'
+        };
+      }
+    }
 
-        // Simulated stats updates (same logic as real dashboard)
-        function startStatsUpdates(id) {
-            if (statIntervals[id]) return;
-            
-            let cpuH = [], ramH = [], netH = [];
+    function formatUptime(status) {
+      if (!status) return '';
+      const match = status.match(/Up\s+(.+?)(\s+\(|$)/);
+      return match ? match[1] : '';
+    }
 
-            async function pollStats() {
-                // Generate fake stats (simulating real data)
-                let cpu = Math.random() * 60 + 10;
-                let ram = Math.random() * 3 + 0.5;
-                let ramTotal = 8.0;
-                let rx = Math.random() * 500 + 50;
-                let tx = Math.random() * 200 + 20;
+    function renderContainers(containers) {
+      const loading = document.getElementById('loading');
+      const statsDiv = document.getElementById('stats');
+      const emptyState = document.getElementById('empty-state');
+      
+      loading.classList.add('hidden');
 
-                // Keep short history
-                cpuH.push(cpu); if (cpuH.length > 15) cpuH.shift();
-                ramH.push(ram); if (ramH.length > 15) ramH.shift();
-                netH.push(rx); if (netH.length > 15) netH.shift();
+      if (!containers || containers.length === 0) {
+        emptyState.classList.remove('hidden');
+        return;
+      }
 
-                // Update stats UI
-                const cpuEL = document.getElementById(`cpu-${id}`);
-                const ramEL = document.getElementById(`ram-${id}`);
-                const netEL = document.getElementById(`net-${id}`);
-                if (cpuEL) cpuEL.textContent = `${cpu.toFixed(1)}%`;
-                if (ramEL) ramEL.textContent = `${ram.toFixed(2)} / ${ramTotal.toFixed(2)} GB`;
-                if (netEL) netEL.textContent = `↑ ${rx.toFixed(1)} KB/s ↓ ${tx.toFixed(1)} KB/s`;
+      emptyState.classList.add('hidden');
 
-                // Render charts (EXACT chart config from real dashboard)
-                if (!charts[id]) {
-                    charts[id] = {
-                        cpu: new Chart(document.getElementById(`cpuChart-${id}`), {
-                            type: 'line',
-                            data: { labels: Array(cpuH.length).fill(''), datasets: [{ label: "CPU", data: cpuH, borderColor: "#3b82f6", backgroundColor: "rgba(59,130,246,.11)", fill: true, tension: .45 }] },
-                            options: { responsive: true, plugins: { legend: { display: false } }, scales: { x: { display: false }, y: { display: false, min: 0, max: 100 } } }
-                        }),
-                        ram: new Chart(document.getElementById(`ramChart-${id}`), {
-                            type: 'line',
-                            data: { labels: Array(ramH.length).fill(''), datasets: [{ label: "RAM", data: ramH, borderColor: "#10b981", backgroundColor: "rgba(16,185,129,.15)", fill: true, tension: .45 }] },
-                            options: { responsive: true, plugins: { legend: { display: false } }, scales: { x: { display: false }, y: { display: false, min: 0 } } }
-                        }),
-                        net: new Chart(document.getElementById(`netChart-${id}`), {
-                            type: 'line',
-                            data: { labels: Array(netH.length).fill(''), datasets: [{ label: "NET", data: netH, borderColor: "#fde047", backgroundColor: "rgba(250,204,21,.09)", fill: true, tension: .45 }] },
-                            options: { responsive: true, plugins: { legend: { display: false } }, scales: { x: { display: false }, y: { display: false, min: 0 } } }
-                        }),
-                    };
-                } else {
-                    charts[id].cpu.data.datasets[0].data = cpuH;
-                    charts[id].cpu.update('none');
-                    charts[id].ram.data.datasets[0].data = ramH;
-                    charts[id].ram.update('none');
-                    charts[id].net.data.datasets[0].data = netH;
-                    charts[id].net.update('none');
-                }
-            }
+      // Update summary stats
+      const running = containers.filter(c => c.State === 'running').length;
+      const stopped = containers.filter(c => c.State !== 'running').length;
+      document.getElementById('running-count').textContent = running;
+      document.getElementById('stopped-count').textContent = stopped;
+      document.getElementById('total-count').textContent = containers.length;
 
-            pollStats();
-            statIntervals[id] = setInterval(pollStats, 2000);
+      statsDiv.innerHTML = containers.map(container => {
+        const name = container.Names ? container.Names[0].replace(/^\//, '') : container.Id.substring(0, 12);
+        const statusInfo = getStatusInfo(container.Status, container.State);
+        const uptime = formatUptime(container.Status);
+        
+        return `
+          <div class="card rounded-2xl p-6 group">
+            <!-- Header -->
+            <div class="flex items-start justify-between mb-4">
+              <div class="flex-1 min-w-0">
+                <h3 class="text-xl font-bold text-white truncate mb-1 group-hover:text-purple-400 transition">${name}</h3>
+                <p class="text-xs text-gray-400 truncate">${container.Image}</p>
+              </div>
+              <div class="status-dot ${statusInfo.color} ml-2 mt-2"></div>
+            </div>
+
+            <!-- Status Badge -->
+            <div class="flex items-center justify-between mb-4">
+              <span class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold ${statusInfo.badge}">
+                <span>${statusInfo.icon}</span>
+                <span>${statusInfo.text}</span>
+              </span>
+              ${uptime ? `<span class="text-xs text-gray-500">${uptime}</span>` : ''}
+            </div>
+
+            <!-- Container Info -->
+            <div class="space-y-2 mb-4 text-xs">
+              <div class="flex justify-between text-gray-400">
+                <span>ID:</span>
+                <span class="font-mono text-gray-300">${container.Id.substring(0, 12)}</span>
+              </div>
+              ${container.Ports && container.Ports.length > 0 ? `
+                <div class="flex justify-between text-gray-400">
+                  <span>Ports:</span>
+                  <span class="text-blue-400">${container.Ports.map(p => p.PublicPort ? `${p.PublicPort}→${p.PrivatePort}` : p.PrivatePort).slice(0, 2).join(', ')}</span>
+                </div>
+              ` : ''}
+            </div>
+
+            <!-- Action Button -->
+            <button onclick="alert('Demo mode - Install the real dashboard to manage containers!')" class="btn-primary w-full py-2.5 rounded-lg text-sm font-semibold text-white shadow-lg">
+              Demo Mode - Click to Install Real Dashboard
+            </button>
+          </div>
+        `;
+      }).join('');
+    }
+
+    // DEMO: Fake container data (instead of Docker API)
+    const mockContainers = [
+      { Id: 'abc123def456', Names: ['/web-server'], Image: 'nginx:latest', Status: 'Up 2 hours (healthy)', State: 'running', Ports: [{PublicPort: 8080, PrivatePort: 80}] },
+      { Id: 'def456ghi789', Names: ['/database'], Image: 'postgres:15', Status: 'Up 1 day', State: 'running', Ports: [{PrivatePort: 5432}] },
+      { Id: 'ghi789jkl012', Names: ['/redis-cache'], Image: 'redis:7', Status: 'Up 5 hours', State: 'running', Ports: [{PrivatePort: 6379}] },
+      { Id: 'jkl012mno345', Names: ['/api-gateway'], Image: 'traefik:latest', Status: 'Up 3 hours (healthy)', State: 'running', Ports: [{PublicPort: 80, PrivatePort: 80}, {PublicPort: 443, PrivatePort: 443}] },
+      { Id: 'mno345pqr678', Names: ['/monitoring'], Image: 'prometheus:latest', Status: 'Up 12 hours', State: 'running', Ports: [{PublicPort: 9090, PrivatePort: 9090}] },
+      { Id: 'pqr678stu901', Names: ['/old-service'], Image: 'node:14', Status: 'Exited (0) 2 days ago', State: 'exited', Ports: [] }
+    ];
+
+    // Fetch and render containers
+    async function init() {
+      try {
+        // DEMO: Use fake data instead of API call
+        // const res = await fetch('/api/containers');
+        // const containers = await res.json();
+        const containers = mockContainers;
+        renderContainers(containers);
+        await updateGlobalStats();
+      } catch (error) {
+        console.error('Error fetching containers:', error);
+        document.getElementById('loading').innerHTML = `
+          <div class="text-red-400">
+            <svg class="w-16 h-16 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
+            <p class="text-lg font-semibold">Failed to load containers</p>
+            <p class="text-sm text-gray-500 mt-2">Please check if Docker is running</p>
+          </div>
+        `;
+      }
+    }
+
+    // Initial load
+    init();
+
+    // Check auth status and show logout button if authenticated
+    async function checkAuthStatus() {
+      // DEMO: Disable auth check
+      return;
+      /*
+      try {
+        const res = await fetch('/api/auth/status');
+        const data = await res.json();
+        
+        // If auth is enabled but user is not authenticated, redirect to login
+        if (data.authEnabled && !data.authenticated) {
+          window.location.href = '/login.html';
+          return;
         }
+        
+        if (data.authEnabled && data.authenticated) {
+          document.getElementById('logoutBtn').style.display = 'flex';
+        }
+      } catch (error) {
+        console.error('Error checking auth status:', error);
+      }
+      */
+    }
 
-        // Initial boot (EXACT same as real dashboard)
-        window.onload = fetchStatsAndRender;
-    </script>
+    // Handle logout
+    async function handleLogout() {
+      if (!confirm('Are you sure you want to logout?')) {
+        return;
+      }
+
+      try {
+        const res = await fetch('/api/auth/logout', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' }
+        });
+
+        if (res.ok) {
+          window.location.href = '/login.html';
+        } else {
+          alert('Logout failed. Please try again.');
+        }
+      } catch (error) {
+        console.error('Logout error:', error);
+        alert('Logout failed. Please try again.');
+      }
+    }
+
+    // Check auth status on page load
+    checkAuthStatus();
+
+    // Auto-refresh every 5 seconds
+    setInterval(async () => {
+      try {
+        // DEMO: Use fake data instead of API call
+        // const res = await fetch('/api/containers');
+        // const containers = await res.json();
+        const containers = mockContainers;
+        renderContainers(containers);
+        await updateGlobalStats();
+      } catch (error) {
+        console.error('Error during refresh:', error);
+      }
+    }, 5000);
+  </script>
 </body>
 </html>
