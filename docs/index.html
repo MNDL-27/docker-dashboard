@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Docker Dashboard - Modern Container Monitoring</title>
+    <meta name="description" content="A fully containerized web app to monitor, manage, and view live stats/logs for all your Docker containers. No local dependencies required.">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🚢</text></svg>">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @keyframes gradient {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+        .animated-gradient {
+            background: linear-gradient(-45deg, #667eea 0%, #764ba2 25%, #f093fb 50%, #4facfe 75%, #00f2fe 100%);
+            background-size: 400% 400%;
+            animation: gradient 15s ease infinite;
+        }
+        .glass {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+    </style>
+</head>
+<body class="bg-gray-900 text-white">
+    <!-- Hero Section -->
+    <div class="animated-gradient min-h-screen">
+        <div class="container mx-auto px-4 py-20">
+            <!-- Header -->
+            <div class="text-center mb-16">
+                <div class="text-8xl mb-6">🚢</div>
+                <h1 class="text-6xl font-bold mb-4">Docker Dashboard</h1>
+                <p class="text-2xl mb-8 text-gray-100">A modern dashboard for your containers</p>
+                <p class="text-xl text-gray-200 max-w-3xl mx-auto mb-8">
+                    Fully containerized web app to monitor, manage, and view live stats/logs for all your Docker containers.
+                    <br>
+                    <strong>100% Docker-based | No local dependencies | Linux optimized</strong>
+                </p>
+                
+                <!-- Badges -->
+                <div class="flex flex-wrap justify-center gap-3 mb-8">
+                    <img src="https://img.shields.io/badge/docker-required-2496ED?style=for-the-badge&logo=docker" alt="Docker">
+                    <img src="https://img.shields.io/badge/platform-linux-FCC624?style=for-the-badge&logo=linux&logoColor=black" alt="Linux">
+                    <img src="https://img.shields.io/github/license/MNDL-27/docker-dashboard?style=for-the-badge" alt="License">
+                    <img src="https://img.shields.io/github/last-commit/MNDL-27/docker-dashboard?style=for-the-badge" alt="Last Commit">
+                </div>
+
+                <!-- CTA Buttons -->
+                <div class="flex flex-wrap justify-center gap-4">
+                    <a href="https://github.com/MNDL-27/docker-dashboard" 
+                       class="glass px-8 py-4 rounded-lg text-xl font-semibold hover:bg-white hover:bg-opacity-20 transition-all transform hover:scale-105">
+                        📦 View on GitHub
+                    </a>
+                    <a href="#quick-start" 
+                       class="bg-white bg-opacity-20 px-8 py-4 rounded-lg text-xl font-semibold hover:bg-opacity-30 transition-all transform hover:scale-105">
+                        🚀 Quick Start
+                    </a>
+                    <a href="https://github.com/MNDL-27/docker-dashboard/wiki" 
+                       class="glass px-8 py-4 rounded-lg text-xl font-semibold hover:bg-white hover:bg-opacity-20 transition-all transform hover:scale-105">
+                        📚 Documentation
+                    </a>
+                </div>
+            </div>
+
+            <!-- Important Note -->
+            <div class="glass max-w-4xl mx-auto p-6 rounded-lg mb-12">
+                <div class="flex items-start gap-4">
+                    <div class="text-4xl">ℹ️</div>
+                    <div>
+                        <h3 class="text-2xl font-bold mb-2">This is a Docker Application</h3>
+                        <p class="text-lg text-gray-200">
+                            Docker Dashboard is a <strong>server-side application</strong> that needs to run on your Docker host.
+                            This GitHub Pages site shows screenshots and documentation.
+                            To use the dashboard, install it on your server using the instructions below.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Features Section -->
+    <div class="bg-gray-900 py-20">
+        <div class="container mx-auto px-4">
+            <h2 class="text-5xl font-bold text-center mb-16">✨ Features</h2>
+            
+            <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-6xl mx-auto">
+                <!-- Feature Cards -->
+                <div class="glass p-6 rounded-lg">
+                    <div class="text-4xl mb-4">📊</div>
+                    <h3 class="text-2xl font-bold mb-2">Live Monitoring</h3>
+                    <p class="text-gray-300">Real-time CPU, RAM, Network, and Disk usage with interactive charts</p>
+                </div>
+
+                <div class="glass p-6 rounded-lg">
+                    <div class="text-4xl mb-4">📡</div>
+                    <h3 class="text-2xl font-bold mb-2">Bandwidth Tracking</h3>
+                    <p class="text-gray-300">Monitor total data downloaded/uploaded by each container</p>
+                </div>
+
+                <div class="glass p-6 rounded-lg">
+                    <div class="text-4xl mb-4">🔗</div>
+                    <h3 class="text-2xl font-bold mb-2">qBittorrent Integration</h3>
+                    <p class="text-gray-300">Accurate bandwidth tracking for VPN-bound qBittorrent containers</p>
+                </div>
+
+                <div class="glass p-6 rounded-lg">
+                    <div class="text-4xl mb-4">📝</div>
+                    <h3 class="text-2xl font-bold mb-2">Log Streaming</h3>
+                    <p class="text-gray-300">View live container logs with WebSocket streaming</p>
+                </div>
+
+                <div class="glass p-6 rounded-lg">
+                    <div class="text-4xl mb-4">🎛️</div>
+                    <h3 class="text-2xl font-bold mb-2">Container Management</h3>
+                    <p class="text-gray-300">Start, stop, and restart containers with one click</p>
+                </div>
+
+                <div class="glass p-6 rounded-lg">
+                    <div class="text-4xl mb-4">🎨</div>
+                    <h3 class="text-2xl font-bold mb-2">Modern UI</h3>
+                    <p class="text-gray-300">Ultra-modern glass-morphism design with animated gradients</p>
+                </div>
+
+                <div class="glass p-6 rounded-lg">
+                    <div class="text-4xl mb-4">🔐</div>
+                    <h3 class="text-2xl font-bold mb-2">Authentication</h3>
+                    <p class="text-gray-300">Optional login system with bcrypt password hashing</p>
+                </div>
+
+                <div class="glass p-6 rounded-lg">
+                    <div class="text-4xl mb-4">📦</div>
+                    <h3 class="text-2xl font-bold mb-2">Fully Containerized</h3>
+                    <p class="text-gray-300">No Node.js, npm, or any local dependencies required</p>
+                </div>
+
+                <div class="glass p-6 rounded-lg">
+                    <div class="text-4xl mb-4">🐧</div>
+                    <h3 class="text-2xl font-bold mb-2">Linux Optimized</h3>
+                    <p class="text-gray-300">Designed and tested for Linux servers</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Screenshots Section -->
+    <div class="bg-gray-800 py-20">
+        <div class="container mx-auto px-4">
+            <h2 class="text-5xl font-bold text-center mb-16">📸 Screenshots</h2>
+            
+            <div class="max-w-6xl mx-auto space-y-12">
+                <!-- Dashboard Overview -->
+                <div class="glass p-6 rounded-lg">
+                    <h3 class="text-3xl font-bold mb-4">Dashboard Overview</h3>
+                    <img src="https://raw.githubusercontent.com/MNDL-27/docker-dashboard/main/.github/screenshots/dashboard.png" 
+                         alt="Dashboard Overview" 
+                         class="rounded-lg w-full shadow-2xl">
+                    <p class="text-gray-300 mt-4 text-center">Monitor all your containers at a glance with real-time stats</p>
+                </div>
+
+                <!-- Container Details -->
+                <div class="glass p-6 rounded-lg">
+                    <h3 class="text-3xl font-bold mb-4">Container Details & Live Charts</h3>
+                    <img src="https://raw.githubusercontent.com/MNDL-27/docker-dashboard/main/.github/screenshots/container-details.png" 
+                         alt="Container Details" 
+                         class="rounded-lg w-full shadow-2xl">
+                    <p class="text-gray-300 mt-4 text-center">Detailed metrics with interactive charts and live updates</p>
+                </div>
+
+                <!-- CPU Breakdown -->
+                <div class="glass p-6 rounded-lg">
+                    <h3 class="text-3xl font-bold mb-4">CPU Usage Breakdown</h3>
+                    <img src="https://raw.githubusercontent.com/MNDL-27/docker-dashboard/main/.github/screenshots/cpu-breakdown.png" 
+                         alt="CPU Breakdown" 
+                         class="rounded-lg w-full shadow-2xl">
+                    <p class="text-gray-300 mt-4 text-center">See which containers are using the most CPU</p>
+                </div>
+
+                <!-- Data Usage -->
+                <div class="glass p-6 rounded-lg">
+                    <h3 class="text-3xl font-bold mb-4">Data Usage Analytics</h3>
+                    <img src="https://raw.githubusercontent.com/MNDL-27/docker-dashboard/main/.github/screenshots/data-usage.png" 
+                         alt="Data Usage" 
+                         class="rounded-lg w-full shadow-2xl">
+                    <p class="text-gray-300 mt-4 text-center">Track download and upload for each container</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Start Section -->
+    <div class="animated-gradient py-20" id="quick-start">
+        <div class="container mx-auto px-4">
+            <h2 class="text-5xl font-bold text-center mb-16">🚀 Quick Start</h2>
+            
+            <div class="max-w-4xl mx-auto">
+                <!-- Step 1 -->
+                <div class="glass p-8 rounded-lg mb-8">
+                    <h3 class="text-3xl font-bold mb-4">1️⃣ Clone the Repository</h3>
+                    <pre class="bg-black bg-opacity-50 p-4 rounded-lg text-green-400 overflow-x-auto"><code>git clone https://github.com/MNDL-27/docker-dashboard.git
+cd docker-dashboard</code></pre>
+                </div>
+
+                <!-- Step 2 -->
+                <div class="glass p-8 rounded-lg mb-8">
+                    <h3 class="text-3xl font-bold mb-4">2️⃣ Copy Configuration</h3>
+                    <pre class="bg-black bg-opacity-50 p-4 rounded-lg text-green-400 overflow-x-auto"><code>cp docker-compose.example.yml docker-compose.yml</code></pre>
+                </div>
+
+                <!-- Step 3 -->
+                <div class="glass p-8 rounded-lg mb-8">
+                    <h3 class="text-3xl font-bold mb-4">3️⃣ Start the Dashboard</h3>
+                    <pre class="bg-black bg-opacity-50 p-4 rounded-lg text-green-400 overflow-x-auto"><code>docker compose up -d</code></pre>
+                </div>
+
+                <!-- Step 4 -->
+                <div class="glass p-8 rounded-lg">
+                    <h3 class="text-3xl font-bold mb-4">4️⃣ Access the Dashboard</h3>
+                    <p class="text-xl mb-4">Open your browser and navigate to:</p>
+                    <pre class="bg-black bg-opacity-50 p-4 rounded-lg text-blue-400 overflow-x-auto"><code>http://localhost:1714</code></pre>
+                </div>
+
+                <!-- Optional Auth -->
+                <div class="glass p-8 rounded-lg mt-8">
+                    <h3 class="text-3xl font-bold mb-4">🔐 Optional: Enable Authentication</h3>
+                    <p class="text-xl mb-4">Edit your <code class="bg-black bg-opacity-50 px-2 py-1 rounded">docker-compose.yml</code> and add:</p>
+                    <pre class="bg-black bg-opacity-50 p-4 rounded-lg text-green-400 overflow-x-auto"><code>environment:
+  - ENABLE_AUTH=true
+  - AUTH_USERNAME=admin
+  - AUTH_PASSWORD=your-secure-password</code></pre>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Links Section -->
+    <div class="bg-gray-900 py-20">
+        <div class="container mx-auto px-4">
+            <h2 class="text-5xl font-bold text-center mb-16">📚 Resources</h2>
+            
+            <div class="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+                <a href="https://github.com/MNDL-27/docker-dashboard" 
+                   class="glass p-8 rounded-lg hover:bg-white hover:bg-opacity-10 transition-all transform hover:scale-105">
+                    <div class="text-5xl mb-4">📦</div>
+                    <h3 class="text-3xl font-bold mb-2">GitHub Repository</h3>
+                    <p class="text-gray-300">View source code, report issues, and contribute</p>
+                </a>
+
+                <a href="https://github.com/MNDL-27/docker-dashboard/wiki" 
+                   class="glass p-8 rounded-lg hover:bg-white hover:bg-opacity-10 transition-all transform hover:scale-105">
+                    <div class="text-5xl mb-4">📖</div>
+                    <h3 class="text-3xl font-bold mb-2">Documentation</h3>
+                    <p class="text-gray-300">Complete setup guides and API reference</p>
+                </a>
+
+                <a href="https://github.com/MNDL-27/docker-dashboard/issues" 
+                   class="glass p-8 rounded-lg hover:bg-white hover:bg-opacity-10 transition-all transform hover:scale-105">
+                    <div class="text-5xl mb-4">🐛</div>
+                    <h3 class="text-3xl font-bold mb-2">Report Issues</h3>
+                    <p class="text-gray-300">Found a bug? Let us know!</p>
+                </a>
+
+                <a href="https://github.com/MNDL-27/docker-dashboard/blob/main/CONTRIBUTING.md" 
+                   class="glass p-8 rounded-lg hover:bg-white hover:bg-opacity-10 transition-all transform hover:scale-105">
+                    <div class="text-5xl mb-4">🤝</div>
+                    <h3 class="text-3xl font-bold mb-2">Contributing</h3>
+                    <p class="text-gray-300">Help make Docker Dashboard better</p>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="bg-gray-800 py-8">
+        <div class="container mx-auto px-4 text-center">
+            <p class="text-gray-400">
+                Made with ❤️ by <a href="https://github.com/MNDL-27" class="text-blue-400 hover:underline">MNDL-27</a>
+            </p>
+            <p class="text-gray-500 mt-2">
+                Licensed under <a href="https://github.com/MNDL-27/docker-dashboard/blob/main/LICENSE" class="text-blue-400 hover:underline">AGPL-3.0</a>
+            </p>
+        </div>
+    </div>
+</body>
+</html>
