@@ -1,13 +1,28 @@
 <div align="center">
-  <h1>🚢 Docker Dashboard</h1>
-  <p>A fully containerized web app to monitor, manage, and view live stats/logs for all your Docker containers.<br>
-  <b>100% Docker-based | No local dependencies | Linux optimized</b></p>
-  <p>
-    <img src="https://img.shields.io/badge/docker-required-2496ED?style=flat-square&logo=docker" alt="Docker">
-    <img src="https://img.shields.io/badge/platform-linux-FCC624?style=flat-square&logo=linux&logoColor=black" alt="Linux">
-    <img src="https://img.shields.io/github/license/MNDL-27/docker-dashboard?style=flat-square" alt="License">
-    <img src="https://img.shields.io/github/last-commit/MNDL-27/docker-dashboard?style=flat-square" alt="Last Commit">
-  </p>
+
+# 🚢 Docker Dashboard
+
+![GitHub stars](https://img.shields.io/github/stars/MNDL-27/docker-dashboard?style=flat-square)
+![GitHub forks](https://img.shields.io/github/forks/MNDL-27/docker-dashboard?style=flat-square)
+![GitHub watchers](https://img.shields.io/github/watchers/MNDL-27/docker-dashboard?style=flat-square)
+
+<a href="https://github.com/MNDL-27/docker-dashboard/graphs/contributors">
+  <img src="https://contrib.rocks/image?repo=MNDL-27/docker-dashboard" alt="Contributors" />
+</a>
+
+<p>
+A fully containerized web app to monitor, manage, and view live stats/logs for all your Docker containers.
+<br>
+<b>100% Docker-based | No local dependencies | Linux optimized</b>
+</p>
+
+<p>
+  <img src="https://img.shields.io/badge/docker-required-2496ED?style=flat-square&logo=docker" alt="Docker">
+  <img src="https://img.shields.io/badge/platform-linux-FCC624?style=flat-square&logo=linux&logoColor=black" alt="Linux">
+  <img src="https://img.shields.io/github/license/MNDL-27/docker-dashboard?style=flat-square" alt="License">
+  <img src="https://img.shields.io/github/last-commit/MNDL-27/docker-dashboard?style=flat-square" alt="Last Commit">
+</p>
+
 </div>
 
 ---
@@ -62,209 +77,192 @@ cd docker-dashboard
 # Copy the example compose file
 cp docker-compose.example.yml docker-compose.yml
 
-# Start with Docker Compose
-docker compose up -d
+# Edit docker-compose.yml if needed (optional authentication, port changes, etc.)
+nano docker-compose.yml
 
-# Or use the helper script
-chmod +x start.sh
-./start.sh
+# Build and start
+docker compose up -d --build
 ```
 
-**Access Dashboard:** Open [http://localhost:1714](http://localhost:1714)
-
-> **⚠️ Prerequisites:** Docker and Docker Compose must be installed on your Linux system.  
-> No other dependencies required!
-
-**📖 Detailed guide:** See **[Quick Start Wiki](wiki/Quick-Start.md)**
-
-### 🔧 Making Changes to Code
-
-Your code is mounted as a volume, so you can edit and restart without rebuilding:
-
-```bash
-# 1. Edit any file in server/ or public/
-# 2. Restart to see changes
-docker compose restart
-
-# No rebuild needed! 🎉
-```
-
-**📖 Development guide:** See **[DEVELOPMENT.md](DEVELOPMENT.md)** for full details
-
----
-
-## 📚 Documentation
-
-### 📖 **[Visit the Wiki →](wiki/Home.md)**
-
-Our comprehensive wiki includes:
-
-- **[Quick Start Guide](wiki/Quick-Start.md)** - Get running in 5 minutes
-- **[Configuration](wiki/Configuration.md)** - Environment variables and settings
-- **[API Reference](wiki/API-Reference.md)** - REST and WebSocket endpoints
-- **[Troubleshooting](wiki/Troubleshooting.md)** - Common issues and solutions
-- **[Summary](wiki/Summary.md)** - Complete wiki overview
-
----
-
-## 🐳 Deployment
-
-### Method 1: Docker Compose (Recommended)
-
-```bash
-docker compose up -d
-```
-
-### Method 2: Docker CLI
-
-```bash
-docker build -t docker-dashboard .
-docker run -d \
-  --name docker-dashboard \
-  -p 1714:1714 \
-  -v /var/run/docker.sock:/var/run/docker.sock:ro \
-  --restart unless-stopped \
-  docker-dashboard
-```
-
-### Method 3: Helper Script
-
-```bash
-chmod +x start.sh
-./start.sh
-```
-
-**📖 Advanced configuration:** See [DOCKER_DEPLOYMENT.md](DOCKER_DEPLOYMENT.md)
+That's it! 🎉 Access the dashboard at [http://localhost:3002](http://localhost:3002)
 
 ---
 
 ## ⚙️ Configuration
 
-Configure via environment variables in `docker-compose.yml`:
+### Authentication (Optional)
 
-```yaml
-environment:
-  - PORT=1714                    # Dashboard port
-  - NODE_ENV=production          # Production mode
-  - USE_PORTAINER=false          # Use Portainer gateway
-  - PORTAINER_URL=               # Portainer instance URL
-  - PORTAINER_ENDPOINT_ID=1      # Portainer endpoint ID
-  - PORTAINER_API_KEY=           # Portainer API key
-  # qBittorrent integration (optional)
-  - QBITTORRENT_URL=http://192.168.0.102:8081  # qBittorrent WebUI URL
-  - QBITTORRENT_USERNAME=admin                  # qBittorrent username
-  - QBITTORRENT_PASSWORD=adminadmin             # qBittorrent password
-```
+By default, authentication is **disabled**. To enable it:
 
-### 🌐 qBittorrent Integration Setup
-
-If your qBittorrent container uses a VPN (like WireGuard) and shows 0 B bandwidth in Docker stats, you can enable direct API integration:
-
-1. **Create a `.env` file** in the project root:
-   ```env
-   QBITTORRENT_URL=http://192.168.0.102:8081
-   QBITTORRENT_USERNAME=your_username
-   QBITTORRENT_PASSWORD=your_password
-   ```
-
-2. **Configure qBittorrent WebUI Security:**
-   - Open qBittorrent WebUI → Settings (⚙️) → Web UI
-   - Find **"Bypass authentication for clients in whitelisted IP subnets"**
-   - Add your Docker network subnet (e.g., `192.168.16.0/24` or `192.168.0.0/16`)
-   - **Disable** "Enable Host header validation" (or add your dashboard IP to allowed hosts)
-   - Click **Save**
-
-3. **Find your Docker network subnet:**
-   ```bash
-   docker inspect docker-dashboard -f '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}'
-   # Example output: 192.168.16.2
-   # Subnet: 192.168.16.0/24
-   ```
-
-4. **Restart the dashboard:**
-   ```bash
-   docker compose restart
-   ```
-
-5. **Verify the integration:**
-   ```bash
-   # Test API connection
-   docker exec docker-dashboard wget -qO- http://192.168.0.102:8081/api/v2/app/version
-   
-   # Check logs for any errors
-   docker logs docker-dashboard --tail 20
-   ```
-
-**✅ Features:**
-- Automatic detection when viewing qBittorrent containers
-- Real-time bandwidth stats (updates every 2 seconds)
-- Total downloaded/uploaded data from qBittorrent's session
-- Bypasses Docker network stats limitations for VPN-bound containers
-
-**📖 Detailed guide:** See [QBITTORRENT_INTEGRATION.md](QBITTORRENT_INTEGRATION.md)
-
-**📖 Full configuration guide:** See [INSTALL.md](INSTALL.md)
-
----
-
-## � Management Commands
-
-```bash
-# Start dashboard
-docker compose up -d
-
-# Stop dashboard
-docker compose down
-
-# View logs
-docker logs -f docker-dashboard
-
-# Restart dashboard
-docker compose restart
-
-# Update to latest version
-git pull && docker compose up -d --build
-
-# Check health status
-docker inspect docker-dashboard --format='{{.State.Health.Status}}'
-```
-
----
-
-## 🛡️ Security Features
-
-✅ **Read-only Docker socket** - Container cannot modify Docker  
-✅ **Minimal privileges** - Runs as non-root when possible  
-✅ **Health checks** - Automatic health monitoring every 30s  
-✅ **Auto-restart** - Container restarts on failure  
-✅ **Network isolation** - Custom bridge network  
-
-> **⚠️ Important:** Add authentication (Nginx, Traefik, Authelia) before exposing publicly!
-
----
-
-## 🔗 Portainer Gateway
-
-Use Portainer to manage multiple Docker hosts with RBAC:
-
-1. Set up Portainer and create an API key
-2. Edit `docker-compose.yml`:
+1. Set `AUTH_ENABLED=true` in `docker-compose.yml`
+2. Add user credentials:
    ```yaml
    environment:
-     - USE_PORTAINER=true
-     - PORTAINER_URL=https://portainer.example.com:9443
-     - PORTAINER_ENDPOINT_ID=1
-     - PORTAINER_API_KEY=your_api_key_here
+     - AUTH_ENABLED=true
+     - AUTH_USER=admin
+     - AUTH_PASSWORD=yourpassword
    ```
-3. Restart: `docker compose up -d --force-recreate`
+3. Restart: `docker compose restart dashboard`
+
+### qBittorrent Integration
+
+For accurate bandwidth tracking of VPN-bound qBittorrent containers:
+
+1. Ensure your qBittorrent WebUI is accessible from the Dashboard container
+2. Add these environment variables to `docker-compose.yml`:
+   ```yaml
+   environment:
+     - QBITTORRENT_URL=http://qbittorrent:8080
+     - QBITTORRENT_USERNAME=admin
+     - QBITTORRENT_PASSWORD=adminpass
+   ```
+3. Restart: `docker compose restart dashboard`
+
+### Portainer Integration (Optional)
+
+To manage containers across multiple Docker hosts:
+
+1. Ensure you have Portainer running
+2. Add these environment variables:
+   ```yaml
+   environment:
+     - PORTAINER_ENABLED=true
+     - PORTAINER_URL=http://portainer:9000
+     - PORTAINER_API_KEY=your_api_key
+   ```
+3. Restart: `docker compose restart dashboard`
 
 ---
 
-## 📚 Documentation
+## 🛠️ How It Works
 
-- [INSTALL.md](INSTALL.md) - Detailed installation guide
-- [DOCKER_DEPLOYMENT.md](DOCKER_DEPLOYMENT.md) - Advanced deployment options
-- [QBITTORRENT_INTEGRATION.md](QBITTORRENT_INTEGRATION.md) - qBittorrent API integration guide
+### Architecture
+
+```
+┌─────────────────────────────────────────┐
+│         Docker Dashboard Container       │
+│  ┌─────────────────────────────────┐    │
+│  │     Node.js Backend (Express)    │    │
+│  │  - WebSocket for live updates    │    │
+│  │  - Docker API integration        │    │
+│  └─────────────────────────────────┘    │
+│  ┌─────────────────────────────────┐    │
+│  │     Frontend (HTML/CSS/JS)       │    │
+│  │  - Chart.js for visualizations   │    │
+│  │  - Modern glass-morphism UI      │    │
+│  └─────────────────────────────────┘    │
+└─────────────────────────────────────────┘
+         ↓ Docker Socket (Mounted)
+┌─────────────────────────────────────────┐
+│          Host Docker Daemon              │
+│    (monitors all containers)             │
+└─────────────────────────────────────────┘
+```
+
+### Data Collection
+
+1. **Container Stats**: Fetched via Docker API using `/var/run/docker.sock`
+2. **Network Bandwidth**: Calculated from container network interface stats
+3. **qBittorrent Stats**: Retrieved from qBittorrent WebUI API (if configured)
+4. **Real-time Updates**: Pushed to frontend via WebSocket every second
+
+---
+
+## 📋 Requirements
+
+- 🐳 **Docker** with Compose V2
+- 🐧 **Linux host** (Ubuntu, Debian, etc.)
+- 💾 **50MB disk space**
+- 🔌 **Port 3002** available (or customizable)
+
+> **Note:** This dashboard is designed for Linux servers. Some features may not work correctly on macOS or Windows due to Docker networking differences.
+
+---
+
+## 🔧 Advanced Usage
+
+### Custom Port
+
+Edit `docker-compose.yml`:
+```yaml
+ports:
+  - "8080:3002"  # Access at localhost:8080
+```
+
+### Data Persistence
+
+Bandwidth stats are stored in `/app/data/bandwidth.db` (SQLite). Mount a volume to persist data:
+
+```yaml
+volumes:
+  - ./data:/app/data
+  - /var/run/docker.sock:/var/run/docker.sock:ro
+```
+
+### Reverse Proxy (Nginx/Caddy)
+
+For WebSocket support, ensure your proxy passes upgrade headers:
+
+**Nginx:**
+```nginx
+location / {
+    proxy_pass http://localhost:3002;
+    proxy_http_version 1.1;
+    proxy_set_header Upgrade $http_upgrade;
+    proxy_set_header Connection "upgrade";
+}
+```
+
+**Caddy:**
+```
+dashboard.example.com {
+    reverse_proxy localhost:3002
+}
+```
+
+---
+
+## 🐛 Troubleshooting
+
+### Container stats not updating
+- Ensure `/var/run/docker.sock` is mounted correctly
+- Check container logs: `docker compose logs dashboard`
+
+### qBittorrent stats not showing
+- Verify WebUI is accessible from the Dashboard container
+- Test: `docker exec dashboard curl http://qbittorrent:8080`
+- Check credentials in environment variables
+
+### WebSocket connection fails
+- If behind a reverse proxy, ensure WebSocket upgrade headers are passed
+- Check firewall rules
+
+---
+
+## 📚 Project Structure
+
+```
+docker-dashboard/
+├── src/
+│   ├── server.js           # Main Express server
+│   ├── public/             # Frontend files
+│   │   ├── index.html
+│   │   ├── styles.css
+│   │   └── script.js
+│   └── utils/
+│       ├── dockerStats.js  # Docker API wrapper
+│       └── bandwidthDB.js  # SQLite database handler
+├── docker-compose.example.yml
+├── Dockerfile
+└── README.md
+```
+
+---
+
+## 📦 Related Files
+
+- [docker-compose.example.yml](docker-compose.example.yml) - Example Docker Compose configuration
+- [Dockerfile](Dockerfile) - Container build instructions
 - [start.sh](start.sh) - Interactive helper script
 
 ---
@@ -274,12 +272,14 @@ Use Portainer to manage multiple Docker hosts with RBAC:
 Contributions are welcome! We'd love your help to make Docker Dashboard even better.
 
 ### How to Contribute
+
 - 🐛 **Report bugs** using our [bug report template](.github/ISSUE_TEMPLATE/bug_report.yml)
 - ✨ **Suggest features** using our [feature request template](.github/ISSUE_TEMPLATE/feature_request.yml)
 - 💻 **Submit pull requests** following our [PR template](.github/PULL_REQUEST_TEMPLATE.md)
 - 📚 **Improve documentation** in the wiki or README
 
 ### Getting Started
+
 1. Fork the repository
 2. Read our [Contributing Guide](CONTRIBUTING.md)
 3. Create a feature branch
@@ -308,10 +308,13 @@ See [LICENSE](LICENSE) for full details.
 ---
 
 <div align="center">
-  <p>Made with ❤️ for the Docker community</p>
-  <p>
-    <a href="https://github.com/MNDL-27/docker-dashboard">⭐ Star this repo</a> •
-    <a href="https://github.com/MNDL-27/docker-dashboard/issues">🐛 Report Bug</a> •
-    <a href="https://github.com/MNDL-27/docker-dashboard/issues">💡 Request Feature</a>
-  </p>
+
+<p>Made with ❤️ for the Docker community</p>
+
+<p>
+  <a href="https://github.com/MNDL-27/docker-dashboard">⭐ Star this repo</a> •
+  <a href="https://github.com/MNDL-27/docker-dashboard/issues">🐛 Report Bug</a> •
+  <a href="https://github.com/MNDL-27/docker-dashboard/issues">💡 Request Feature</a>
+</p>
+
 </div>
