@@ -7,6 +7,7 @@ const docker = new Docker({ socketPath: process.env.DOCKER_SOCKET || '/var/run/d
 
 // --- METRICS HISTORY SUPPORT ---
 const METRICS_WINDOW = 300; // e.g. 300 points = 10 minutes if polled every 2s
+const BYTES_TO_GB = 1024 * 1024 * 1024; // Constant for byte to GB conversion
 const metricsHistory = {};  // { [containerId]: [{ time, cpu, ram, rx, tx, disk, ramTotal }, ...] }
 
 function saveContainerMetrics(id, stats, info) {
@@ -14,8 +15,8 @@ function saveContainerMetrics(id, stats, info) {
   try {
     cpu = calculateCPUPercent(stats);
     if(stats.memory_stats && stats.memory_stats.usage) {
-      ram = stats.memory_stats.usage / (1024 * 1024 * 1024);
-      ramTotal = stats.memory_stats.limit / (1024 * 1024 * 1024);
+      ram = stats.memory_stats.usage / BYTES_TO_GB;
+      ramTotal = stats.memory_stats.limit / BYTES_TO_GB;
     }
     if(stats.networks) {
       for (const nw of Object.values(stats.networks)) {
@@ -23,7 +24,7 @@ function saveContainerMetrics(id, stats, info) {
         tx += nw.tx_bytes || 0;
       }
     }
-    if(info && info.SizeRw) disk = info.SizeRw / (1024 * 1024 * 1024);
+    if(info && info.SizeRw) disk = info.SizeRw / BYTES_TO_GB;
   } catch(e) {}
   if(!metricsHistory[id]) metricsHistory[id] = [];
   metricsHistory[id].push({
