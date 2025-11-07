@@ -13,6 +13,7 @@ const authRoute = require('./routes/auth');
 const { requireAuth, isAuthEnabled } = require('./middleware/auth');
 const wsHandlers = require('./sockets');
 const path = require('path');
+const crypto = require('crypto');
 const config = require('./config/defaults');
 const { validateEnv } = require('./config/schema');
 try {
@@ -72,7 +73,7 @@ app.use('/api/', apiLimiter);
 
 // Basic request logging with request ID
 app.use((req, res, next) => {
-    req.id = require('crypto').randomUUID();
+    req.id = crypto.randomUUID();
     res.setHeader('X-Request-ID', req.id);
     console.log(`[${req.id}] [${new Date().toISOString()}] ${req.method} ${req.url}`);
     next();

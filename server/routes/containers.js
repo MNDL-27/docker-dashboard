@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const proxy = require('../docker/proxy');
+const { calculateCPUPercent } = require('../utils/cpu');
 const Docker = require('dockerode');
 const docker = new Docker({ socketPath: process.env.DOCKER_SOCKET || '/var/run/docker.sock' });
 
@@ -11,15 +12,10 @@ const metricsHistory = {};  // { [containerId]: [{ time, cpu, ram, rx, tx, disk,
 function saveContainerMetrics(id, stats, info) {
   let cpu=0, ram=0, rx=0, tx=0, disk=0, ramTotal=1;
   try {
-    if(stats.cpu_stats && stats.precpu_stats) {
-      const cpuDelta = stats.cpu_stats.cpu_usage.total_usage - stats.precpu_stats.cpu_usage.total_usage;
-      const sysDelta = stats.cpu_stats.system_cpu_usage - stats.precpu_stats.system_cpu_usage;
-      const cpuCount = stats.cpu_stats.online_cpus||1;
-      if(cpuDelta > 0 && sysDelta > 0) cpu = ((cpuDelta/sysDelta)*cpuCount*100);
-    }
+    cpu = calculateCPUPercent(stats);
     if(stats.memory_stats && stats.memory_stats.usage) {
-      ram = stats.memory_stats.usage / 1024 / 1024 / 1024;
-      ramTotal = stats.memory_stats.limit / 1024 / 1024 / 1024;
+      ram = stats.memory_stats.usage / (1024 * 1024 * 1024);
+      ramTotal = stats.memory_stats.limit / (1024 * 1024 * 1024);
     }
     if(stats.networks) {
       for (const nw of Object.values(stats.networks)) {
@@ -27,7 +23,7 @@ function saveContainerMetrics(id, stats, info) {
         tx += nw.tx_bytes || 0;
       }
     }
-    if(info && info.SizeRw) disk = info.SizeRw / 1024 / 1024 / 1024;
+    if(info && info.SizeRw) disk = info.SizeRw / (1024 * 1024 * 1024);
   } catch(e) {}
   if(!metricsHistory[id]) metricsHistory[id] = [];
   metricsHistory[id].push({
