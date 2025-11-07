@@ -27,11 +27,19 @@ function streamLogs(ws, id) {
 					for (let i = 0; i < lines.length; i++) {
 						const line = lines[i];
 						if (line && line.trim()) {
-							ws.send(JSON.stringify({ log: line }));
+							try {
+								ws.send(JSON.stringify({ log: line }));
+							} catch (sendErr) {
+								// Connection closed, ignore
+							}
 						}
 					}
 				} catch (e) {
-					ws.send(JSON.stringify({ error: 'Failed to process log chunk' }));
+					try {
+						ws.send(JSON.stringify({ error: 'Failed to process log chunk' }));
+					} catch (sendErr) {
+						// Connection closed, ignore
+					}
 				}
 			},
 			onEnd: () => { 
@@ -63,14 +71,30 @@ function streamLogs(ws, id) {
 					for (let i = 0; i < lines.length; i++) {
 						const line = lines[i];
 						if (!closed && line.trim()) {
-							ws.send(JSON.stringify({ log: line }));
+							try {
+								ws.send(JSON.stringify({ log: line }));
+							} catch (sendErr) {
+								// Connection closed, ignore
+							}
 						}
 					}
 				} else {
-					if (!closed) ws.send(JSON.stringify({ log: result.data }));
+					if (!closed) {
+						try {
+							ws.send(JSON.stringify({ log: result.data }));
+						} catch (sendErr) {
+							// Connection closed, ignore
+						}
+					}
 				}
 			} catch (err2) {
-				if (!closed) ws.send(JSON.stringify({ error: err2.message }));
+				if (!closed) {
+					try {
+						ws.send(JSON.stringify({ error: err2.message }));
+					} catch (sendErr) {
+						// Connection closed, ignore
+					}
+				}
 			}
 		})();
 	}
