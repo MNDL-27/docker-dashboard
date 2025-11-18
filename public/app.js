@@ -1,6 +1,7 @@
 let expandedContainer = null;       // Only one expanded at a time
 let statIntervals = {};            // Track intervals for live updates per container
 let charts = {};
+let actionInProgress = false;      // Prevent multiple simultaneous actions
 
 function getStatusColor(status) {
   if (status && status.includes('Up') && status.includes('healthy')) return 'bg-green-200 text-green-800';
@@ -11,6 +12,40 @@ function getStatusText(status) {
   if (status && status.includes('Up') && status.includes('healthy')) return 'Healthy';
   if (status && status.includes('Up')) return 'Running';
   return 'Stopped';
+}
+
+// Helper function to parse Docker stats
+function parseDockerStats(stats) {
+  let cpu = 0, ram = 0, ramTotal = 1, rx = 0, tx = 0;
+  
+  // CPU calculation
+  if (stats.cpu_stats && stats.precpu_stats) {
+    const cpuDelta = stats.cpu_stats.cpu_usage.total_usage - stats.precpu_stats.cpu_usage.total_usage;
+    const sysDelta = stats.cpu_stats.system_cpu_usage - stats.precpu_stats.system_cpu_usage;
+    const cpuCount = stats.cpu_stats.online_cpus || 1;
+    if (cpuDelta > 0 && sysDelta > 0) {
+      cpu = ((cpuDelta / sysDelta) * cpuCount * 100);
+    }
+  }
+  
+  // Memory calculation
+  if (stats.memory_stats && stats.memory_stats.usage) {
+    ram = stats.memory_stats.usage / (1024 * 1024 * 1024);
+    ramTotal = stats.memory_stats.limit / (1024 * 1024 * 1024);
+  }
+  
+  // Network calculation
+  if (stats.networks) {
+    let totalRx = 0, totalTx = 0;
+    Object.values(stats.networks).forEach(nw => {
+      totalRx += nw.rx_bytes || 0;
+      totalTx += nw.tx_bytes || 0;
+    });
+    rx = totalRx / 1024;
+    tx = totalTx / 1024;
+  }
+  
+  return { cpu, ram, ramTotal, rx, tx };
 }
 
 function stopStatsUpdates(id) {
@@ -96,13 +131,20 @@ window.expandContainer = function(id) {
 };
 
 window.containerAction = function(id, action) {
+  if (actionInProgress) {
+    return; // Prevent multiple simultaneous actions
+  }
+  actionInProgress = true;
   fetch(`/api/containers/${id}/${action}`, { method: 'POST' })
     .then(res => res.json())
     .then(() => {
       fetchStatsAndRender();
       alert(`Action ${action} on container ${id} successful!`);
     })
-    .catch(err => alert(`Failed to ${action}: ${err}`));
+    .catch(err => alert(`Failed to ${action}: ${err}`))
+    .finally(() => {
+      actionInProgress = false;
+    });
 };
 
 function startStatsUpdates(id) {
@@ -111,74 +153,56 @@ function startStatsUpdates(id) {
   // history for chart
   let cpuH=[], ramH=[], netH=[];
   async function pollStats() {
-    // poll stats
-    const res = await fetch(`/api/containers/${id}/stats`);
-    const stats = await res.json();
-    // Parse stats (your Docker parse logic as before)
-    let cpu = 0, ram=0, ramTotal=1, rx=0, tx=0;
     try {
-      if (stats.cpu_stats && stats.precpu_stats) {
-        const cpuDelta = stats.cpu_stats.cpu_usage.total_usage - stats.precpu_stats.cpu_usage.total_usage;
-        const sysDelta = stats.cpu_stats.system_cpu_usage - stats.precpu_stats.system_cpu_usage;
-        const cpuCount = stats.cpu_stats.online_cpus || 1;
-        if (cpuDelta > 0 && sysDelta > 0) {
-          cpu = ((cpuDelta / sysDelta) * cpuCount * 100);
-        }
-      }
-      if (stats.memory_stats && stats.memory_stats.usage) {
-        ram = stats.memory_stats.usage / 1024 / 1024 / 1024;
-        ramTotal = stats.memory_stats.limit / 1024 / 1024 / 1024;
-      }
-      if (stats.networks) {
-        let totalRx = 0, totalTx = 0;
-        Object.values(stats.networks).forEach(nw => {
-          totalRx += nw.rx_bytes || 0;
-          totalTx += nw.tx_bytes || 0;
-        });
-        rx = totalRx / 1024;
-        tx = totalTx / 1024;
-      }
-    } catch(e) {}
+      // poll stats
+      const res = await fetch(`/api/containers/${id}/stats`);
+      const stats = await res.json();
+      
+      // Parse stats using helper function
+      const { cpu, ram, ramTotal, rx, tx } = parseDockerStats(stats);
 
-    // keep short history
-    cpuH.push(cpu); if (cpuH.length>15) cpuH.shift();
-    ramH.push(ram); if (ramH.length>15) ramH.shift();
-    netH.push(rx); if (netH.length>15) netH.shift();
+      // keep short history
+      cpuH.push(cpu); if (cpuH.length>15) cpuH.shift();
+      ramH.push(ram); if (ramH.length>15) ramH.shift();
+      netH.push(rx); if (netH.length>15) netH.shift();
 
-    // Update stats UI
-    const cpuEL = document.getElementById(`cpu-${id}`);
-    const ramEL = document.getElementById(`ram-${id}`);
-    const netEL = document.getElementById(`net-${id}`);
-    if(cpuEL) cpuEL.textContent = `${cpu.toFixed(1)}%`;
-    if(ramEL) ramEL.textContent = `${ram.toFixed(2)} / ${ramTotal.toFixed(2)} GB`;
-    if(netEL) netEL.textContent = `↑ ${rx.toFixed(1)} KB/s ↓ ${tx.toFixed(1)} KB/s`;
+      // Update stats UI
+      const cpuEL = document.getElementById(`cpu-${id}`);
+      const ramEL = document.getElementById(`ram-${id}`);
+      const netEL = document.getElementById(`net-${id}`);
+      if(cpuEL) cpuEL.textContent = `${cpu.toFixed(1)}%`;
+      if(ramEL) ramEL.textContent = `${ram.toFixed(2)} / ${ramTotal.toFixed(2)} GB`;
+      if(netEL) netEL.textContent = `↑ ${rx.toFixed(1)} KB/s ↓ ${tx.toFixed(1)} KB/s`;
 
-    // Render charts (handle repeated creation)
-    if(!charts[id]) {
-      charts[id] = {
-        cpu: new Chart(document.getElementById(`cpuChart-${id}`), {
-          type: 'line',
-          data: { labels:Array(cpuH.length).fill(''), datasets:[{label:"CPU",data:cpuH,borderColor:"#3b82f6",backgroundColor:"rgba(59,130,246,.11)",fill:true,tension:.45}] },
-          options: {responsive:true, plugins:{legend:{display:false}}, scales:{x:{display:false},y:{display:false,min:0,max:100}}}
-        }),
-        ram: new Chart(document.getElementById(`ramChart-${id}`), {
-          type: 'line',
-          data: { labels:Array(ramH.length).fill(''), datasets:[{label:"RAM",data:ramH,borderColor:"#10b981",backgroundColor:"rgba(16,185,129,.15)",fill:true,tension:.45}] },
-          options:{responsive:true,plugins:{legend:{display:false}},scales:{x:{display:false},y:{display:false,min:0}}}
-        }),
-        net: new Chart(document.getElementById(`netChart-${id}`), {
-          type: 'line',
-          data:{labels:Array(netH.length).fill(''),datasets:[{label:"NET",data:netH,borderColor:"#fde047",backgroundColor:"rgba(250,204,21,.09)",fill:true,tension:.45}]},
-          options:{responsive:true,plugins:{legend:{display:false}},scales:{x:{display:false},y:{display:false,min:0}}}
-        }),
-      };
-    } else {
-      charts[id].cpu.data.datasets[0].data = cpuH;
-      charts[id].cpu.update('none');
-      charts[id].ram.data.datasets[0].data = ramH;
-      charts[id].ram.update('none');
-      charts[id].net.data.datasets[0].data = netH;
-      charts[id].net.update('none');
+      // Render charts (handle repeated creation)
+      if(!charts[id]) {
+        charts[id] = {
+          cpu: new Chart(document.getElementById(`cpuChart-${id}`), {
+            type: 'line',
+            data: { labels:Array(cpuH.length).fill(''), datasets:[{label:"CPU",data:cpuH,borderColor:"#3b82f6",backgroundColor:"rgba(59,130,246,.11)",fill:true,tension:.45}] },
+            options: {responsive:true, plugins:{legend:{display:false}}, scales:{x:{display:false},y:{display:false,min:0,max:100}}}
+          }),
+          ram: new Chart(document.getElementById(`ramChart-${id}`), {
+            type: 'line',
+            data: { labels:Array(ramH.length).fill(''), datasets:[{label:"RAM",data:ramH,borderColor:"#10b981",backgroundColor:"rgba(16,185,129,.15)",fill:true,tension:.45}] },
+            options:{responsive:true,plugins:{legend:{display:false}},scales:{x:{display:false},y:{display:false,min:0}}}
+          }),
+          net: new Chart(document.getElementById(`netChart-${id}`), {
+            type: 'line',
+            data:{labels:Array(netH.length).fill(''),datasets:[{label:"NET",data:netH,borderColor:"#fde047",backgroundColor:"rgba(250,204,21,.09)",fill:true,tension:.45}]},
+            options:{responsive:true,plugins:{legend:{display:false}},scales:{x:{display:false},y:{display:false,min:0}}}
+          }),
+        };
+      } else {
+        charts[id].cpu.data.datasets[0].data = cpuH;
+        charts[id].cpu.update('none');
+        charts[id].ram.data.datasets[0].data = ramH;
+        charts[id].ram.update('none');
+        charts[id].net.data.datasets[0].data = netH;
+        charts[id].net.update('none');
+      }
+    } catch(e) {
+      console.error('Error polling stats:', e);
     }
   }
   pollStats(); // initial
