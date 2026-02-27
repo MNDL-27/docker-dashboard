@@ -7,12 +7,12 @@
 
 ### Identity & Tenancy
 
-- [ ] **IDTY-01**: User can sign up with email and password
-- [ ] **IDTY-02**: User can log in and stay logged in via JWT tokens
-- [ ] **IDTY-03**: User can create an Organization (tenant)
-- [ ] **IDTY-04**: User can create Projects within an Organization
-- [ ] **IDTY-05**: User can invite other users to Organization
-- [ ] **IDTY-06**: User can have RBAC roles: Owner, Admin, Operator, Viewer
+- [x] **IDTY-01**: User can sign up with email and password
+- [x] **IDTY-02**: User can log in and stay logged in via JWT tokens
+- [x] **IDTY-03**: User can create an Organization (tenant)
+- [x] **IDTY-04**: User can create Projects within an Organization
+- [x] **IDTY-05**: User can invite other users to Organization
+- [x] **IDTY-06**: User can have RBAC roles: Owner, Admin, Operator, Viewer
 
 ### Host Enrollment
 
@@ -78,9 +78,9 @@
 
 ### Local Development
 
-- [ ] **DEV-01**: Local dev environment via docker-compose.dev.yml
-- [ ] **DEV-02**: Postgres available in local dev
-- [ ] **DEV-03**: Redis available in local dev
+- [x] **DEV-01**: Local dev environment via docker-compose.dev.yml
+- [x] **DEV-02**: Postgres available in local dev
+- [x] **DEV-03**: Redis available in local dev
 - [ ] **DEV-04**: cloud-api runs locally
 - [ ] **DEV-05**: cloud-web runs locally
 - [ ] **DEV-06**: Agent can run against local Docker
@@ -126,12 +126,12 @@
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| IDTY-01 | Phase 1 | Pending |
-| IDTY-02 | Phase 1 | Pending |
-| IDTY-03 | Phase 1 | Pending |
-| IDTY-04 | Phase 1 | Pending |
-| IDTY-05 | Phase 1 | Pending |
-| IDTY-06 | Phase 1 | Pending |
+| IDTY-01 | Phase 1 | Complete |
+| IDTY-02 | Phase 1 | Complete |
+| IDTY-03 | Phase 1 | Complete |
+| IDTY-04 | Phase 1 | Complete |
+| IDTY-05 | Phase 1 | Complete |
+| IDTY-06 | Phase 1 | Complete |
 | HOST-01 | Phase 2 | Pending |
 | HOST-02 | Phase 2 | Pending |
 | HOST-03 | Phase 2 | Pending |
@@ -173,9 +173,9 @@
 | ALRT-05 | Phase 4 | Pending |
 | ALRT-06 | Phase 4 | Pending |
 | ALRT-07 | Phase 4 | Pending |
-| DEV-01 | Phase 1 | Pending |
-| DEV-02 | Phase 1 | Pending |
-| DEV-03 | Phase 1 | Pending |
+| DEV-01 | Phase 1 | Complete |
+| DEV-02 | Phase 1 | Complete |
+| DEV-03 | Phase 1 | Complete |
 | DEV-04 | Phase 1 | Pending |
 | DEV-05 | Phase 1 | Pending |
 | DEV-06 | Phase 1 | Pending |
