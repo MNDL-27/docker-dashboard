@@ -100,7 +100,7 @@
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Foundation & Identity | 0/8 | Not started | - |
+| 1. Foundation & Identity | 8/8 | Planned | - |
 | 2. Host Enrollment & Inventory | 0/1 | Not started | - |
 | 3. Observability & Actions | 0/1 | Not started | - |
 | 4. Alerting | 0/1 | Not started | - |
