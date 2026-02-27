@@ -10,8 +10,11 @@ import hostRoutes from './routes/hosts';
 import agentRoutes from './routes/agent';
 import actionRoutes from './routes/actions';
 import auditRoutes from './routes/audit';
+import webhookRoutes from './routes/webhooks';
+import alertRoutes from './routes/alerts';
 import { requireAuth } from './middleware/auth';
 import { handleUpgrade } from './websocket/server';
+import { startAlertEngine } from './services/alertEngine';
 
 dotenv.config();
 
@@ -35,6 +38,8 @@ app.use('/hosts', hostRoutes);
 app.use('/agent', agentRoutes);
 app.use('/api/containers', actionRoutes);
 app.use('/api/audit', auditRoutes);
+app.use('/api/webhooks', webhookRoutes);
+app.use('/api/alerts', alertRoutes);
 
 // Protected route example
 app.get('/api/me', requireAuth, (req, res) => {
@@ -55,6 +60,7 @@ app.use((err: Error, _req: express.Request, res: express.Response, _next: expres
 // Start server
 const server = app.listen(PORT, () => {
   console.log(`API server running on port ${PORT}`);
+  startAlertEngine();
 });
 
 server.on('upgrade', (request, socket, head) => {
