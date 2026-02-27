@@ -50,8 +50,10 @@ model Organization {
   projects   Project[]
   invites    OrganizationInvite[]
   hosts      Host[]
-  hostTokens HostToken[]
-  auditLogs  AuditLog[]
+  hostTokens  HostToken[]
+  auditLogs   AuditLog[]
+  alertRules  AlertRule[]
+  webhooks    Webhook[]
 
   @@index([slug])
 }
@@ -204,6 +206,7 @@ model Container {
   host    Host              @relation(fields: [hostId], references: [id], onDelete: Cascade)
   metrics ContainerMetric[]
   logs    ContainerLog[]
+  alerts  Alert[]
 
   @@unique([hostId, dockerId])
   @@index([hostId])
@@ -260,4 +263,54 @@ model AuditLog {
   @@index([organizationId])
   @@index([targetType, targetId])
   @@index([createdAt(sort: Desc)])
+}
+
+// Phase 4: Alerting
+
+model AlertRule {
+  id             String   @id @default(cuid())
+  organizationId String
+  name           String
+  condition      String // "CONTAINER_DOWN", "RESTART_LOOP", "CPU_USAGE", "MEMORY_USAGE"
+  threshold      Float? // Value to exceed (e.g. 80 for CPU%)
+  duration       Int // Minutes the condition must persist before firing
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  alerts       Alert[]
+
+  @@index([organizationId])
+}
+
+model Alert {
+  id          String    @id @default(cuid())
+  ruleId      String
+  containerId String
+  status      String // "FIRING" or "RESOLVED"
+  startedAt   DateTime  @default(now())
+  resolvedAt  DateTime?
+  createdAt   DateTime  @default(now())
+
+  rule      AlertRule @relation(fields: [ruleId], references: [id], onDelete: Cascade)
+  container Container @relation(fields: [containerId], references: [id], onDelete: Cascade)
+
+  @@index([ruleId])
+  @@index([containerId])
+  @@index([status])
+  @@unique([ruleId, containerId, status]) // Deduplication: only one FIRING alert per rule+container
+}
+
+model Webhook {
+  id             String   @id @default(cuid())
+  organizationId String
+  url            String
+  secret         String? // Optional HMAC secret for payload signatures
+  isActive       Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId])
 }

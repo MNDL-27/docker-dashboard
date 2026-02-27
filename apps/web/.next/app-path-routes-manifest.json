@@ -1,8 +1,10 @@
 {
   "/_not-found/page": "/_not-found",
-  "/(dashboard)/fleet/page": "/fleet",
+  "/(dashboard)/audit/page": "/audit",
+  "/(dashboard)/fleet/[hostId]/[containerId]/page": "/fleet/[hostId]/[containerId]",
   "/(dashboard)/fleet/[hostId]/page": "/fleet/[hostId]",
+  "/login/page": "/login",
   "/page": "/",
-  "/register/page": "/register",
-  "/login/page": "/login"
+  "/(dashboard)/fleet/page": "/fleet",
+  "/register/page": "/register"
 }

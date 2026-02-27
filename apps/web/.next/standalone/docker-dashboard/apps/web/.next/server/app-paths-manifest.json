@@ -1,8 +1,10 @@
 {
   "/_not-found/page": "app/_not-found/page.js",
-  "/(dashboard)/fleet/page": "app/(dashboard)/fleet/page.js",
+  "/(dashboard)/audit/page": "app/(dashboard)/audit/page.js",
+  "/(dashboard)/fleet/[hostId]/[containerId]/page": "app/(dashboard)/fleet/[hostId]/[containerId]/page.js",
   "/(dashboard)/fleet/[hostId]/page": "app/(dashboard)/fleet/[hostId]/page.js",
+  "/login/page": "app/login/page.js",
   "/page": "app/page.js",
-  "/register/page": "app/register/page.js",
-  "/login/page": "app/login/page.js"
+  "/(dashboard)/fleet/page": "app/(dashboard)/fleet/page.js",
+  "/register/page": "app/register/page.js"
 }
