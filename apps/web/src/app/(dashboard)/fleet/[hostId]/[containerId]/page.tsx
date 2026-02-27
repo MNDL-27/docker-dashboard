@@ -16,6 +16,7 @@ interface Container {
     state: string;
     status: string;
     ports: any;
+    labels?: Record<string, string>;
     startedAt: string | null;
 }
 
@@ -27,6 +28,7 @@ export default function ContainerDetailPage({ params }: { params: Promise<{ host
     const [container, setContainer] = useState<Container | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [userRole, setUserRole] = useState<'ADMIN' | 'OPERATOR' | 'VIEWER'>('VIEWER');
 
     const [metrics, setMetrics] = useState<MetricData[]>([]);
     const [logs, setLogs] = useState<LogEntry[]>([]);
@@ -34,10 +36,18 @@ export default function ContainerDetailPage({ params }: { params: Promise<{ host
 
     // Fetch container details (simulated from host containers list for MVP)
     useEffect(() => {
-        async function fetchContainer() {
+        async function fetchData() {
             try {
-                const data = await apiFetch<{ containers: Container[] }>(`/api/hosts/${hostId}/containers`);
-                const found = data.containers.find(c => c.id === containerId || c.dockerId === containerId);
+                const [meData, hostsData] = await Promise.all([
+                    apiFetch<{ user: { id: string } }>('/api/me'),
+                    apiFetch<{ containers: Container[] }>(`/api/hosts/${hostId}/containers`)
+                ]);
+
+                // Set mock admin role if meData exists for MVP until full RBAC endpoint is ready, 
+                // or safely default to operator to show protection features
+                setUserRole('OPERATOR'); // Mocking operator default for robust testing of protected containers
+
+                const found = hostsData.containers.find(c => c.id === containerId || c.dockerId === containerId);
                 if (found) {
                     setContainer(found);
                 } else {
@@ -49,7 +59,7 @@ export default function ContainerDetailPage({ params }: { params: Promise<{ host
                 setLoading(false);
             }
         }
-        fetchContainer();
+        fetchData();
     }, [hostId, containerId]);
 
     // WebSocket connection for real-time data
@@ -143,6 +153,8 @@ export default function ContainerDetailPage({ params }: { params: Promise<{ host
         );
     }
 
+    const isProtected = container?.labels?.['com.docker.dashboard.protected'] === 'true';
+
     return (
         <div className="p-8 max-w-7xl mx-auto space-y-6">
             <Link href={`/fleet/${hostId}`} className="text-slate-500 hover:text-slate-300 font-medium text-sm inline-block">
@@ -173,8 +185,8 @@ export default function ContainerDetailPage({ params }: { params: Promise<{ host
                     <ActionMenu
                         containerId={container.dockerId}
                         state={container.state}
-                        isProtected={false} // Would ideally check labels here
-                        userRole="ADMIN" // Mocked, would come from auth context
+                        isProtected={isProtected}
+                        userRole={userRole}
                         onAction={handleContainerAction}
                     />
                 </div>

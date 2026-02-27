@@ -18,7 +18,7 @@ router.get('/', requireAuth, async (req, res) => {
                 organizationId: orgId
             },
             orderBy: {
-                timestamp: 'desc'
+                createdAt: 'desc'
             },
             take: 100, // Limit to 100 for MVP
             include: {

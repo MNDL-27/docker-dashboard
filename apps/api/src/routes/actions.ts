@@ -16,7 +16,8 @@ router.post('/:containerId/actions', requireAuth, async (req, res) => {
         }
 
         const container = await prisma.container.findFirst({
-            where: { dockerId: containerId } // assuming UI sends dockerId
+            where: { dockerId: containerId }, // assuming UI sends dockerId
+            include: { host: true }
         });
 
         if (!container) {
@@ -27,7 +28,7 @@ router.post('/:containerId/actions', requireAuth, async (req, res) => {
         // Ensure we have user and org from auth middleware
         const userId = req.user?.id;
         const orgId = req.headers['x-organization-id'] as string; // or however org is resolved in your app
-        const organizationId = orgId || container.organizationId;
+        const organizationId = orgId || container.host.organizationId;
 
         if (!userId) {
             res.status(401).json({ error: 'Unauthorized' });

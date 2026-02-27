@@ -67,8 +67,20 @@ export function handleUpgrade(req: IncomingMessage, socket: any, head: Buffer, s
                         const payload = JSON.parse(data.toString());
                         if (payload.type === 'metrics') {
                             saveMetricsBatch(hostId, payload.metrics).catch(console.error);
+                            // Relay to web clients
+                            webClients.forEach(client => {
+                                if (client.readyState === WebSocket.OPEN) {
+                                    client.send(data.toString());
+                                }
+                            });
                         } else if (payload.type === 'logs') {
                             saveLogsBatch(hostId, payload.logs).catch(console.error);
+                            // Relay to web clients
+                            webClients.forEach(client => {
+                                if (client.readyState === WebSocket.OPEN) {
+                                    client.send(data.toString());
+                                }
+                            });
                         } else if (payload.type === 'action_result') {
                             // Phase 3: Action result from agent
                             const resFn = actionResolvers.get(payload.action_id);
