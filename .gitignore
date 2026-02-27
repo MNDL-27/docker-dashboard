@@ -51,4 +51,16 @@ repo_dump.txt
 .agent/
 .gsd/
 .gemini/
+adapters/
 docs/verification/
+docs/model-selection-playbook.md
+docs/token-optimization-guide.md
+docs/runbook.md
+GSD-STYLE.md
+PROJECT_RULES.md
+PROJECT_STRUCTURE.md
+QBITTORRENT_INTEGRATION.md
+DOCKER_DEPLOYMENT.md
+INSTALL.md
+DEVELOPMENT.md
+idea.md
