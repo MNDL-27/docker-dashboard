@@ -65,7 +65,33 @@ func main() {
 	log.Printf("Successfully enrolled. Host ID: %s", enrollResp.HostId)
 
 	// ====== Phase 3: Connect WebSocket ======
-	wsClient := client.NewAgentWSClient(apiURL, enrollResp.AgentToken)
+	var wsClient *client.AgentWSClient
+	actionHandler := func(actionId, containerId, action string) {
+		log.Printf("Received action %s for container %s (ID: %s)", action, containerId, actionId)
+		var err error
+		switch action {
+		case "START":
+			err = dockerCli.StartContainer(ctx, containerId)
+		case "STOP":
+			err = dockerCli.StopContainer(ctx, containerId)
+		case "RESTART":
+			err = dockerCli.RestartContainer(ctx, containerId)
+		default:
+			err = fmt.Errorf("unknown action: %s", action)
+		}
+
+		if wsClient != nil {
+			if err != nil {
+				log.Printf("Action failed: %v", err)
+				wsClient.SendActionResult(actionId, "FAILURE", err.Error())
+			} else {
+				log.Printf("Action succeeded")
+				wsClient.SendActionResult(actionId, "SUCCESS", "")
+			}
+		}
+	}
+
+	wsClient = client.NewAgentWSClient(apiURL, enrollResp.AgentToken, actionHandler)
 	if err := wsClient.Connect(); err != nil {
 		log.Printf("Failed to connect to WebSocket: %v", err)
 		// Usually we'd retry, but for simulation we just log

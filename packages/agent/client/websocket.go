@@ -11,20 +11,22 @@ import (
 )
 
 type AgentWSClient struct {
-	BaseURL string
-	Token   string
-	Conn    *websocket.Conn
-	SendCh  chan interface{}
+	BaseURL       string
+	Token         string
+	Conn          *websocket.Conn
+	SendCh        chan interface{}
+	ActionHandler func(actionId, containerId, action string)
 }
 
-func NewAgentWSClient(baseURL, token string) *AgentWSClient {
+func NewAgentWSClient(baseURL, token string, handler func(actionId, containerId, action string)) *AgentWSClient {
 	wsURL := strings.Replace(baseURL, "http://", "ws://", 1)
 	wsURL = strings.Replace(wsURL, "https://", "wss://", 1)
 	
 	return &AgentWSClient{
-		BaseURL: wsURL,
-		Token:   token,
-		SendCh:  make(chan interface{}, 100),
+		BaseURL:       wsURL,
+		Token:         token,
+		SendCh:        make(chan interface{}, 100),
+		ActionHandler: handler,
 	}
 }
 
@@ -75,14 +77,20 @@ func (c *AgentWSClient) readLoop() {
 		return nil
 	})
 	for {
-		_, _, err := c.Conn.ReadMessage()
+		var raw map[string]interface{}
+		err := c.Conn.ReadJSON(&raw)
 		if err != nil {
 			if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
 				log.Printf("WebSocket read error: %v", err)
 			}
 			break
 		}
-		// Messages from cloud ignored for now (Will handle Actions later)
+		if raw["type"] == "action" && c.ActionHandler != nil {
+			actionId, _ := raw["action_id"].(string)
+			containerId, _ := raw["containerId"].(string)
+			action, _ := raw["action"].(string)
+			go c.ActionHandler(actionId, containerId, action)
+		}
 	}
 }
 
@@ -125,5 +133,14 @@ func (c *AgentWSClient) SendLogs(hostId string, logs []LogItem) {
 		Type:   "logs",
 		HostId: hostId,
 		Logs:   logs,
+	}
+}
+
+func (c *AgentWSClient) SendActionResult(actionId, status, errorMsg string) {
+	c.SendCh <- map[string]string{
+		"type":      "action_result",
+		"action_id": actionId,
+		"status":    status,
+		"error":     errorMsg,
 	}
 }

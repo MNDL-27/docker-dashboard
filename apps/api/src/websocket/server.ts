@@ -15,6 +15,32 @@ export function addWebClient(userId: string, ws: WebSocket) {
     webClients.set(userId, ws);
 }
 
+// Added for Phase 3: Action Relay
+const actionResolvers = new Map<string, { resolve: (val: boolean) => void, reject: (err: any) => void }>();
+
+export function sendActionToAgent(hostId: string, payload: any): Promise<boolean> {
+    return new Promise((resolve, reject) => {
+        const ws = agentClients.get(hostId);
+        if (!ws || ws.readyState !== WebSocket.OPEN) {
+            return resolve(false); // Agent offline
+        }
+
+        // Register promise
+        const actionId = payload.action_id;
+        actionResolvers.set(actionId, { resolve, reject });
+
+        ws.send(JSON.stringify({ type: 'action', ...payload }));
+
+        // Timeout 15 seconds
+        setTimeout(() => {
+            if (actionResolvers.has(actionId)) {
+                actionResolvers.delete(actionId);
+                resolve(false); // Timeout
+            }
+        }, 15000);
+    });
+}
+
 export function handleUpgrade(req: IncomingMessage, socket: any, head: Buffer, sessionMiddleware: any) {
     const pathname = req.url ? req.url.split('?')[0] : '';
 
@@ -43,6 +69,13 @@ export function handleUpgrade(req: IncomingMessage, socket: any, head: Buffer, s
                             saveMetricsBatch(hostId, payload.metrics).catch(console.error);
                         } else if (payload.type === 'logs') {
                             saveLogsBatch(hostId, payload.logs).catch(console.error);
+                        } else if (payload.type === 'action_result') {
+                            // Phase 3: Action result from agent
+                            const resFn = actionResolvers.get(payload.action_id);
+                            if (resFn) {
+                                actionResolvers.delete(payload.action_id);
+                                resFn.resolve(payload.status === 'SUCCESS');
+                            }
                         }
                     } catch (err) {
                         console.error('Failed to parse WS message from agent:', err);

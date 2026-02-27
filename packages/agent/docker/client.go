@@ -176,3 +176,17 @@ func (c *Client) StreamContainerLogs(ctx context.Context, containerID string, lo
 		}
 	}
 }
+
+func (c *Client) StartContainer(ctx context.Context, containerID string) error {
+	return c.dockerCli.ContainerStart(ctx, containerID, types.ContainerStartOptions{})
+}
+
+func (c *Client) StopContainer(ctx context.Context, containerID string) error {
+	timeout := 10 // 10 seconds before kill
+	return c.dockerCli.ContainerStop(ctx, containerID, container.StopOptions{Timeout: &timeout})
+}
+
+func (c *Client) RestartContainer(ctx context.Context, containerID string) error {
+	timeout := 10
+	return c.dockerCli.ContainerRestart(ctx, containerID, container.StopOptions{Timeout: &timeout})
+}
