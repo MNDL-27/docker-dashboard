@@ -23,6 +23,7 @@ model User {
   projectMembers          ProjectMember[]
   createdHostTokens       HostToken[]
   organizationInvites     OrganizationInvite[]
+  auditLogs               AuditLog[]
 
   @@index([email])
 }
@@ -50,6 +51,7 @@ model Organization {
   invites    OrganizationInvite[]
   hosts      Host[]
   hostTokens HostToken[]
+  auditLogs  AuditLog[]
 
   @@index([slug])
 }
@@ -199,7 +201,9 @@ model Container {
   updatedAt DateTime  @updatedAt
 
   // Relations
-  host Host @relation(fields: [hostId], references: [id], onDelete: Cascade)
+  host    Host              @relation(fields: [hostId], references: [id], onDelete: Cascade)
+  metrics ContainerMetric[]
+  logs    ContainerLog[]
 
   @@unique([hostId, dockerId])
   @@index([hostId])
@@ -208,4 +212,52 @@ model Container {
 enum HostStatus {
   ONLINE
   OFFLINE
+}
+
+// Phase 3: Observability & Actions
+
+model ContainerMetric {
+  id               String   @id @default(cuid())
+  containerId      String
+  timestamp        DateTime @default(now())
+  cpuUsagePercent  Float
+  memoryUsageBytes BigInt
+  networkRxBytes   BigInt
+  networkTxBytes   BigInt
+
+  container Container @relation(fields: [containerId], references: [id], onDelete: Cascade)
+
+  @@index([containerId, timestamp(sort: Desc)])
+}
+
+model ContainerLog {
+  id          String   @id @default(cuid())
+  containerId String
+  timestamp   DateTime @default(now())
+  stream      String // "stdout" or "stderr"
+  message     String
+
+  container Container @relation(fields: [containerId], references: [id], onDelete: Cascade)
+
+  @@index([containerId, timestamp(sort: Desc)])
+}
+
+model AuditLog {
+  id             String   @id @default(cuid())
+  organizationId String
+  userId         String? // Optional if system-initiated
+  targetType     String // e.g., "CONTAINER"
+  targetId       String
+  action         String // e.g., "START", "STOP", "RESTART"
+  status         String // e.g., "SUCCESS", "FAILURE"
+  reason         String?
+  errorDetails   String?
+  createdAt      DateTime @default(now())
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  user         User?        @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([organizationId])
+  @@index([targetType, targetId])
+  @@index([createdAt(sort: Desc)])
 }
