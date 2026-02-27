@@ -74,7 +74,17 @@
 4. Cloud sends action requests to agent via WebSocket; agent executes the action and returns success/failure result
 5. User can view audit log showing all actions with actor_user_id, action type, target container, timestamp, and result (success/fail)
 
-**Plans:** TBD
+**Plans:** 8 plans drafted
+
+**Plan list:**
+- [ ] 03-01-PLAN.md — Metrics & Logs Database Schema
+- [ ] 03-02-PLAN.md — Real-time Communication Infrastructure
+- [ ] 03-03-PLAN.md — Agent Metrics & Logs Collection
+- [ ] 03-04-PLAN.md — Cloud API Metrics/Logs Ingestion
+- [ ] 03-05-PLAN.md — Web UI - Observability Dashboard
+- [ ] 03-06-PLAN.md — Container Actions API & Agent Execution
+- [ ] 03-07-PLAN.md — Web UI - Container Actions
+- [ ] 03-08-PLAN.md — Audit Logging Implementation
 
 ---
 
@@ -101,8 +111,8 @@
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Foundation & Identity | 8/8 | ✅ Complete | 2026-02-27 |
-| 2. Host Enrollment & Inventory | 0/1 | Not started | - |
-| 3. Observability & Actions | 0/1 | Not started | - |
+| 2. Host Enrollment & Inventory | 7/7 | ✅ Complete | 2026-02-27 |
+| 3. Observability & Actions | 0/8 | Ready for execution | - |
 | 4. Alerting | 0/1 | Not started | - |
 
 ---
