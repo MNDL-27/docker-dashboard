@@ -3,6 +3,8 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import { sessionMiddleware } from './config/session';
 import authRoutes from './routes/auth';
+import organizationRoutes from './routes/organizations';
+import projectRoutes from './routes/projects';
 import { requireAuth } from './middleware/auth';
 
 dotenv.config();
@@ -20,6 +22,8 @@ app.use(sessionMiddleware);
 
 // Routes
 app.use('/auth', authRoutes);
+app.use('/organizations', organizationRoutes);
+app.use('/organizations', projectRoutes);
 
 // Protected route example
 app.get('/api/me', requireAuth, (req, res) => {
