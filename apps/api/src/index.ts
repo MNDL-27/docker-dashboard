@@ -9,6 +9,7 @@ import inviteRoutes from './routes/invites';
 import hostRoutes from './routes/hosts';
 import agentRoutes from './routes/agent';
 import actionRoutes from './routes/actions';
+import auditRoutes from './routes/audit';
 import { requireAuth } from './middleware/auth';
 import { handleUpgrade } from './websocket/server';
 
@@ -33,6 +34,7 @@ app.use('/', inviteRoutes);
 app.use('/hosts', hostRoutes);
 app.use('/agent', agentRoutes);
 app.use('/api/containers', actionRoutes);
+app.use('/api/audit', auditRoutes);
 
 // Protected route example
 app.get('/api/me', requireAuth, (req, res) => {

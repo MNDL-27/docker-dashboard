@@ -24,6 +24,16 @@ router.post('/:containerId/actions', requireAuth, async (req, res) => {
             return;
         }
 
+        // Ensure we have user and org from auth middleware
+        const userId = req.user?.id;
+        const orgId = req.headers['x-organization-id'] as string; // or however org is resolved in your app
+        const organizationId = orgId || container.organizationId;
+
+        if (!userId) {
+            res.status(401).json({ error: 'Unauthorized' });
+            return;
+        }
+
         // Ideally do RBAC check here if the user has permission to stop protected containers
 
         // Send to agent
@@ -36,11 +46,34 @@ router.post('/:containerId/actions', requireAuth, async (req, res) => {
         });
 
         if (!success) {
+            await prisma.auditLog.create({
+                data: {
+                    userId,
+                    organizationId,
+                    action,
+                    targetType: 'CONTAINER',
+                    targetId: container.dockerId,
+                    status: 'FAILURE',
+                    reason: reason || 'Action failed or agent offline',
+                }
+            });
             res.status(503).json({ error: 'Agent is not connected or timed out processing request' });
             return;
         }
 
         // The agent executed it successfully
+        await prisma.auditLog.create({
+            data: {
+                userId,
+                organizationId,
+                action,
+                targetType: 'CONTAINER',
+                targetId: container.dockerId,
+                status: 'SUCCESS',
+                reason: reason || 'Action executed successfully',
+            }
+        });
+
         res.status(200).json({ status: 'SUCCESS', action_id: actionId });
     } catch (err: any) {
         console.error('Action error:', err);
