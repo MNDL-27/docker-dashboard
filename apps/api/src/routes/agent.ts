@@ -109,4 +109,36 @@ router.post('/heartbeat', requireAgentAuth, async (req: Request, res: Response):
     }
 });
 
+import { syncContainers, ContainerPayload } from '../services/container';
+
+// POST /agent/containers - Sync container snapshots
+router.post('/containers', requireAgentAuth, async (req: Request, res: Response): Promise<void> => {
+    try {
+        const { hostId } = req.agent!;
+        const containers: ContainerPayload[] = req.body;
+
+        if (!Array.isArray(containers)) {
+            res.status(400).json({ error: 'Expected an array of containers' });
+            return;
+        }
+
+        const { added, updated, removed } = await syncContainers(hostId, containers);
+
+        // Also update host lastSeen
+        await prisma.host.update({
+            where: { id: hostId },
+            data: { lastSeen: new Date(), status: 'ONLINE' },
+            select: { id: true },
+        });
+
+        res.status(200).json({
+            status: 'ok',
+            summary: { added, updated, removed }
+        });
+    } catch (error) {
+        console.error('Agent container sync error:', error);
+        res.status(500).json({ error: 'Failed to sync containers' });
+    }
+});
+
 export default router;
