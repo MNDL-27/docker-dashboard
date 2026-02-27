@@ -81,8 +81,8 @@
 - [x] **DEV-01**: Local dev environment via docker-compose.dev.yml
 - [x] **DEV-02**: Postgres available in local dev
 - [x] **DEV-03**: Redis available in local dev
-- [ ] **DEV-04**: cloud-api runs locally
-- [ ] **DEV-05**: cloud-web runs locally
+- [x] **DEV-04**: cloud-api runs locally
+- [x] **DEV-05**: cloud-web runs locally
 - [ ] **DEV-06**: Agent can run against local Docker
 - [ ] **DEV-07**: Seeded dev user for testing
 
@@ -176,8 +176,8 @@
 | DEV-01 | Phase 1 | Complete |
 | DEV-02 | Phase 1 | Complete |
 | DEV-03 | Phase 1 | Complete |
-| DEV-04 | Phase 1 | Pending |
-| DEV-05 | Phase 1 | Pending |
+| DEV-04 | Phase 1 | Complete |
+| DEV-05 | Phase 1 | Complete |
 | DEV-06 | Phase 1 | Pending |
 | DEV-07 | Phase 1 | Pending |
 
