@@ -102,12 +102,12 @@
 3. Alerts support deduplication by rule_id + target to prevent alert storms from repeated conditions
 4. System sends alert notifications via webhook to configured endpoints
 
-**Plans:** 3/3 plans mapped
+**Plans:** 3/3 plans executed
 
 **Plan list:**
-- [ ] 04-01-PLAN.md — Alerting Database Schema
-- [ ] 04-02-PLAN.md — Alert Evaluation Engine & Webhooks
-- [ ] 04-03-PLAN.md — Alerting Web UI
+- [x] 04-01-PLAN.md — Alerting Database Schema
+- [x] 04-02-PLAN.md — Alert Evaluation Engine & Webhooks
+- [x] 04-03-PLAN.md — Alerting Web UI
 
 ---
 
@@ -118,7 +118,7 @@
 | 1. Foundation & Identity | 8/8 | ✅ Complete | 2026-02-27 |
 | 2. Host Enrollment & Inventory | 7/7 | ✅ Complete | 2026-02-27 |
 | 3. Observability & Actions | 8/8 | ✅ Complete | 2026-02-27 |
-| 4. Alerting | 3/3 | 📝 Planning Complete | - |
+| 4. Alerting | 3/3 | ✅ Complete | 2026-02-28 |
 
 ---
 
