@@ -3,11 +3,11 @@ package main
 import (
 	"context"
 	"flag"
-	"fmt"
 	"log"
 	"os"
 	"os/signal"
 	"runtime"
+	"sync"
 	"syscall"
 	"time"
 
@@ -17,7 +17,7 @@ import (
 
 func main() {
 	enrollPtr := flag.String("enroll", "", "Enrollment token to register this agent")
-	apiUrlPtr := flag.String("api-url", "http://localhost:3000", "Base URL of the Cloud API")
+	apiUrlPtr := flag.String("api-url", "http://localhost:3001", "Base URL of the Cloud API")
 	flag.Parse()
 
 	apiURL := os.Getenv("AGENT_API_URL")
@@ -29,10 +29,6 @@ func main() {
 	if enrollToken == "" {
 		enrollToken = *enrollPtr
 	}
-
-	// In a real agent, we would read/write the identity token to a local config file.
-	// For this phase, we'll keep it simple and just use memory, assuming the agent is run persistently.
-	// If it restarts, it would need a new enrollment token or load the saved identity token.
 
 	if enrollToken == "" {
 		log.Fatal("AGENT_TOKEN environment variable or --enroll flag is required for first run")
@@ -67,17 +63,28 @@ func main() {
 	}
 
 	log.Printf("Successfully enrolled. Host ID: %s", enrollResp.HostId)
+
+	// ====== Phase 3: Connect WebSocket ======
+	wsClient := client.NewAgentWSClient(apiURL, enrollResp.AgentToken)
+	if err := wsClient.Connect(); err != nil {
+		log.Printf("Failed to connect to WebSocket: %v", err)
+		// Usually we'd retry, but for simulation we just log
+	} else {
+		log.Printf("Successfully connected to Cloud WS.")
+	}
+
 	log.Printf("Starting agent loops...")
 
-	// Setup graceful shutdown
 	stop := make(chan os.Signal, 1)
 	signal.Notify(stop, os.Interrupt, syscall.SIGTERM)
 
-	// Tickers
 	heartbeatTicker := time.NewTicker(30 * time.Second)
 	syncTicker := time.NewTicker(10 * time.Second)
+	statsTicker := time.NewTicker(5 * time.Second)
 
-	// Initial sync immediately
+	logStreams := make(map[string]context.CancelFunc)
+	var logStreamsMu sync.Mutex
+
 	doSync(ctx, api, dockerCli)
 
 	for {
@@ -85,15 +92,53 @@ func main() {
 		case <-heartbeatTicker.C:
 			if err := api.Heartbeat(); err != nil {
 				log.Printf("Heartbeat failed: %v", err)
-			} else {
-				log.Println("Heartbeat sent.")
 			}
 		case <-syncTicker.C:
 			doSync(ctx, api, dockerCli)
+
+			// Manage log streams
+			containers, _ := dockerCli.ListContainers(ctx)
+			logStreamsMu.Lock()
+			currentIds := make(map[string]bool)
+			for _, c := range containers {
+				if c.State == "running" {
+					currentIds[c.DockerId] = true
+					if _, exists := logStreams[c.DockerId]; !exists {
+						streamCtx, cancel := context.WithCancel(context.Background())
+						logStreams[c.DockerId] = cancel
+						go streamLogsRoutine(streamCtx, c.DockerId, enrollResp.HostId, wsClient, dockerCli)
+					}
+				}
+			}
+			// Cancel stopped ones
+			for id, cancel := range logStreams {
+				if !currentIds[id] {
+					cancel()
+					delete(logStreams, id)
+				}
+			}
+			logStreamsMu.Unlock()
+
+		case <-statsTicker.C:
+			// Collect and send stats
+			containers, _ := dockerCli.ListContainers(ctx)
+			var metrics []client.MetricItem
+			for _, c := range containers {
+				if c.State == "running" {
+					statCtx, cancel := context.WithTimeout(ctx, 2*time.Second)
+					stats, err := dockerCli.GetContainerStats(statCtx, c.DockerId)
+					cancel()
+					if err == nil && stats != nil {
+						metrics = append(metrics, *stats)
+					}
+				}
+			}
+			if len(metrics) > 0 && wsClient.Conn != nil {
+				wsClient.SendMetrics(enrollResp.HostId, metrics)
+			}
+
 		case <-stop:
 			log.Println("Agent shutting down...")
-			heartbeatTicker.Stop()
-			syncTicker.Stop()
 			os.Exit(0)
 		}
 	}
@@ -105,10 +150,41 @@ func doSync(ctx context.Context, api *client.APIClient, dockerCli *docker.Client
 		log.Printf("Failed to list containers: %v", err)
 		return
 	}
+	_ = api.SyncContainers(containers)
+}
 
-	if err := api.SyncContainers(containers); err != nil {
-		log.Printf("Failed to sync containers: %v", err)
-	} else {
-		log.Printf("Synced %d containers.", len(containers))
+func streamLogsRoutine(ctx context.Context, containerId string, hostId string, ws *client.AgentWSClient, dockerCli *docker.Client) {
+	logChan := make(chan client.LogItem, 100)
+	errChan := make(chan error, 1)
+
+	go func() {
+		errChan <- dockerCli.StreamContainerLogs(ctx, containerId, logChan)
+	}()
+
+	var batch []client.LogItem
+	ticker := time.NewTicker(1 * time.Second)
+	defer ticker.Stop()
+
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case err := <-errChan:
+			if err != nil {
+				log.Printf("Stream error for container %s: %v", containerId, err)
+			}
+			return
+		case item := <-logChan:
+			batch = append(batch, item)
+			if len(batch) >= 50 {
+				ws.SendLogs(hostId, batch)
+				batch = nil
+			}
+		case <-ticker.C:
+			if len(batch) > 0 {
+				ws.SendLogs(hostId, batch)
+				batch = nil
+			}
+		}
 	}
 }

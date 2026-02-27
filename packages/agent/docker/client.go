@@ -6,9 +6,12 @@ import (
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/client"
+	"encoding/json"
 	apiclient "docker-dashboard-agent/client"
 	"strings"
 	"time"
+	"io"
+	"encoding/binary"
 )
 
 type Client struct {
@@ -88,4 +91,88 @@ func (c *Client) ListContainers(ctx context.Context) ([]apiclient.ContainerSnaps
 	}
 
 	return snapshots, nil
+}
+
+func (c *Client) GetContainerStats(ctx context.Context, containerID string) (*apiclient.MetricItem, error) {
+	stats, err := c.dockerCli.ContainerStats(ctx, containerID, false)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get stats: %w", err)
+	}
+	defer stats.Body.Close()
+
+	var v types.StatsJSON
+	if err := json.NewDecoder(stats.Body).Decode(&v); err != nil {
+		return nil, fmt.Errorf("failed to decode stats: %w", err)
+	}
+
+	// Calculate CPU usage percent
+	cpuDelta := float64(v.CPUStats.CPUUsage.TotalUsage) - float64(v.PreCPUStats.CPUUsage.TotalUsage)
+	systemDelta := float64(v.CPUStats.SystemUsage) - float64(v.PreCPUStats.SystemUsage)
+	cpuUsage := 0.0
+	if systemDelta > 0.0 && cpuDelta > 0.0 {
+		cpuUsage = (cpuDelta / systemDelta) * float64(len(v.CPUStats.CPUUsage.PercpuUsage)) * 100.0
+	}
+
+	// Calculate memory usage
+	memUsage := v.MemoryStats.Usage - v.MemoryStats.Stats["cache"]
+
+	// Calculate network I/O
+	var rx, tx uint64
+	for _, network := range v.Networks {
+		rx += network.RxBytes
+		tx += network.TxBytes
+	}
+
+	return &apiclient.MetricItem{
+		ContainerId:      containerID,
+		CpuUsagePercent:  cpuUsage,
+		MemoryUsageBytes: int64(memUsage),
+		NetworkRxBytes:   int64(rx),
+		NetworkTxBytes:   int64(tx),
+	}, nil
+}
+
+func (c *Client) StreamContainerLogs(ctx context.Context, containerID string, logChan chan<- apiclient.LogItem) error {
+	options := container.LogsOptions{
+		ShowStdout: true,
+		ShowStderr: true,
+		Follow:     true,
+		Tail:       "50",
+	}
+
+	logs, err := c.dockerCli.ContainerLogs(ctx, containerID, options)
+	if err != nil {
+		return fmt.Errorf("failed to attach logs: %w", err)
+	}
+	defer logs.Close()
+
+	// Docker log streams are multiplexed. The first 8 bytes of each frame contain the stream type and size.
+	hdr := make([]byte, 8)
+	for {
+		_, err := io.ReadFull(logs, hdr)
+		if err != nil {
+			if err == io.EOF {
+				return nil
+			}
+			return err
+		}
+
+		streamType := "stdout"
+		if hdr[0] == 2 {
+			streamType = "stderr"
+		}
+
+		count := binary.BigEndian.Uint32(hdr[4:8])
+		dat := make([]byte, count)
+		_, err = io.ReadFull(logs, dat)
+		if err != nil {
+			return err
+		}
+
+		logChan <- apiclient.LogItem{
+			ContainerId: containerID,
+			Stream:      streamType,
+			Message:     strings.TrimSuffix(string(dat), "\n"),
+		}
+	}
 }

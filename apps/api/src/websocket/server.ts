@@ -1,6 +1,8 @@
 import { WebSocketServer, WebSocket } from 'ws';
 import { IncomingMessage } from 'http';
 import { authenticateAgentWS } from './auth';
+import { saveMetricsBatch } from '../services/metrics';
+import { saveLogsBatch } from '../services/logs';
 
 export const wss = new WebSocketServer({ noServer: true });
 
@@ -32,6 +34,20 @@ export function handleUpgrade(req: IncomingMessage, socket: any, head: Buffer, s
                         ws.ping();
                     }
                 }, 30000);
+
+                ws.on('message', (data, isBinary) => {
+                    if (isBinary) return;
+                    try {
+                        const payload = JSON.parse(data.toString());
+                        if (payload.type === 'metrics') {
+                            saveMetricsBatch(hostId, payload.metrics).catch(console.error);
+                        } else if (payload.type === 'logs') {
+                            saveLogsBatch(hostId, payload.logs).catch(console.error);
+                        }
+                    } catch (err) {
+                        console.error('Failed to parse WS message from agent:', err);
+                    }
+                });
 
                 ws.on('close', () => {
                     clearInterval(interval);
