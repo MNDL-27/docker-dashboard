@@ -45,6 +45,7 @@ model Organization {
   // Relations
   members  OrganizationMember[]
   projects Project[]
+  invites  OrganizationInvite[]
 
   @@index([slug])
 }
@@ -112,4 +113,23 @@ enum ProjectRole {
   ADMIN
   OPERATOR
   VIEWER
+}
+
+// Organization invitation model
+model OrganizationInvite {
+  id             String   @id @default(uuid())
+  email          String
+  organizationId String
+  role           OrgRole  @default(VIEWER)
+  token          String   @unique
+  inviterUserId  String
+  expiresAt      DateTime
+  acceptedAt     DateTime?
+  createdAt      DateTime @default(now())
+
+  // Relations
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@index([email, organizationId])
+  @@index([token])
 }
