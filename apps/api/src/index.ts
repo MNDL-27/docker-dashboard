@@ -6,6 +6,8 @@ import authRoutes from './routes/auth';
 import organizationRoutes from './routes/organizations';
 import projectRoutes from './routes/projects';
 import inviteRoutes from './routes/invites';
+import hostRoutes from './routes/hosts';
+import agentRoutes from './routes/agent';
 import { requireAuth } from './middleware/auth';
 
 dotenv.config();
@@ -26,6 +28,8 @@ app.use('/auth', authRoutes);
 app.use('/organizations', organizationRoutes);
 app.use('/organizations', projectRoutes);
 app.use('/', inviteRoutes);
+app.use('/hosts', hostRoutes);
+app.use('/agent', agentRoutes);
 
 // Protected route example
 app.get('/api/me', requireAuth, (req, res) => {

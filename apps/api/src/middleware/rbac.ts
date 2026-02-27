@@ -5,22 +5,7 @@ import { prisma } from '../lib/prisma';
 export type OrgRole = 'OWNER' | 'ADMIN' | 'OPERATOR' | 'VIEWER';
 export type ProjectRole = 'OWNER' | 'ADMIN' | 'OPERATOR' | 'VIEWER';
 
-// Extended Express Request with role info
-declare global {
-  namespace Express {
-    interface Request {
-      user?: {
-        id: string;
-        email: string;
-        name: string | null;
-        orgRole?: OrgRole;
-        projectRole?: ProjectRole;
-        organizationId?: string;
-        projectId?: string;
-      };
-    }
-  }
-}
+// Extended Express Request with role info from auth.ts
 
 /**
  * requireOrgRole - Middleware to check user's organization role
@@ -71,9 +56,11 @@ export function requireOrgRole(...allowedRoles: OrgRole[]) {
 
       // Attach role info to request
       req.user = {
-        ...req.user,
+        id: req.user!.id,
+        email: req.user!.email,
+        name: req.user!.name,
         orgRole: membership.role,
-        organizationId: orgId,
+        organizationId: orgId as string,
       };
 
       next();
@@ -164,10 +151,12 @@ export function requireProjectRole(...allowedRoles: ProjectRole[]) {
 
       // Attach role info to request
       req.user = {
-        ...req.user,
+        id: req.user!.id,
+        email: req.user!.email,
+        name: req.user!.name,
         projectRole: effectiveRole,
         organizationId: project.organizationId,
-        projectId,
+        projectId: projectId as string,
       };
 
       next();

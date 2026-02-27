@@ -22,6 +22,7 @@ model User {
   organizationMemberships OrganizationMember[]
   projectMembers          ProjectMember[]
   createdHostTokens       HostToken[]
+  organizationInvites     OrganizationInvite[]
 
   @@index([email])
 }
@@ -132,6 +133,7 @@ model OrganizationInvite {
 
   // Relations
   organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  inviter      User         @relation(fields: [inviterUserId], references: [id], onDelete: Cascade)
 
   @@index([email, organizationId])
   @@index([token])

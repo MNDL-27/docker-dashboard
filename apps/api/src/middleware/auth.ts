@@ -9,6 +9,10 @@ declare global {
         id: string;
         email: string;
         name: string | null;
+        orgRole?: 'OWNER' | 'ADMIN' | 'OPERATOR' | 'VIEWER';
+        projectRole?: 'OWNER' | 'ADMIN' | 'OPERATOR' | 'VIEWER';
+        organizationId?: string;
+        projectId?: string;
       };
     }
   }
