@@ -172,5 +172,46 @@ router.post('/tokens', async (req: Request, res: Response): Promise<void> => {
         res.status(500).json({ error: 'Failed to generate token' });
     }
 });
+// GET /hosts/:id/containers - List containers for a host
+router.get('/:id/containers', async (req: Request, res: Response): Promise<void> => {
+    try {
+        const userId = req.user!.id;
+        const { id } = req.params;
+
+        const host = await prisma.host.findUnique({
+            where: { id },
+        });
+
+        if (!host) {
+            res.status(404).json({ error: 'Host not found' });
+            return;
+        }
+
+        // Check membership
+        const membership = await prisma.organizationMember.findUnique({
+            where: {
+                userId_organizationId: {
+                    userId,
+                    organizationId: host.organizationId,
+                },
+            },
+        });
+
+        if (!membership) {
+            res.status(403).json({ error: 'Not a member of this organization' });
+            return;
+        }
+
+        const containers = await prisma.container.findMany({
+            where: { hostId: id },
+            orderBy: { name: 'asc' },
+        });
+
+        res.json({ containers });
+    } catch (error) {
+        console.error('List containers error:', error);
+        res.status(500).json({ error: 'Failed to list containers' });
+    }
+});
 
 export default router;

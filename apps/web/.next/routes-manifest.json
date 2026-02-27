@@ -24,7 +24,16 @@
     ],
     "fallback": []
   },
-  "dynamicRoutes": [],
+  "dynamicRoutes": [
+    {
+      "page": "/fleet/[hostId]",
+      "regex": "^/fleet/([^/]+?)(?:/)?$",
+      "routeKeys": {
+        "nxtPhostId": "nxtPhostId"
+      },
+      "namedRegex": "^/fleet/(?<nxtPhostId>[^/]+?)(?:/)?$"
+    }
+  ],
   "staticRoutes": [
     {
       "page": "/",
