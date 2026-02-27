@@ -1,0 +1,53 @@
+# Agent Development Configuration
+# Used for local development with Docker Desktop
+
+docker:
+  # Use Docker socket for local development
+  # Windows: named pipe (tcp://localhost:2375) or Docker Desktop socket
+  host: "unix:///var/run/docker.sock"
+  
+  # Alternative for Windows with Docker Desktop:
+  # host: "tcp://localhost:2375"
+  
+  # Connection settings
+  timeout: 30s
+  api_version: "1.43"
+
+api:
+  # Backend API endpoint
+  url: "http://localhost:3001"
+  
+  # Agent registration
+  register_path: "/api/agent/register"
+  heartbeat_path: "/api/agent/heartbeat"
+  
+  # Timeout settings
+  timeout: 10s
+  retry_attempts: 3
+  retry_delay: 5s
+
+# Agent mode
+mode: development
+
+# Logging
+log_level: debug
+
+# Heartbeat
+heartbeat_interval: 30s
+
+# Agent identification
+agent:
+  name: "local-dev-agent"
+  # Unique ID will be generated on first run
+  id_file: "./agent.id"
+
+# Container management
+containers:
+  # Labels to manage
+  managed_label: "docker-dashboard.managed"
+  
+  # Polling interval
+  poll_interval: 5s
+  
+  # Auto-restart settings
+  auto_restart: false
