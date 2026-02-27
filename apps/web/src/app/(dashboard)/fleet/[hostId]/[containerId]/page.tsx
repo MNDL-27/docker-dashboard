@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import MetricsChart, { MetricData } from '@/components/observability/MetricsChart';
 import LogStream, { LogEntry } from '@/components/observability/LogStream';
+import ActionMenu from '@/components/observability/ActionMenu';
 import { apiFetch } from '@/lib/api';
 
 interface Container {
@@ -104,6 +105,29 @@ export default function ContainerDetailPage({ params }: { params: Promise<{ host
         };
     }, [container]);
 
+    const handleContainerAction = async (action: 'START' | 'STOP' | 'RESTART', reason: string) => {
+        if (!container) return;
+
+        try {
+            await apiFetch(`/api/containers/${container.dockerId}/actions`, {
+                method: 'POST',
+                body: JSON.stringify({ action, reason })
+            });
+
+            // Optimistically update status - actual update will come from next polling interval
+            setContainer(prev => {
+                if (!prev) return prev;
+                if (action === 'STOP') return { ...prev, state: 'exited' };
+                if (action === 'START' || action === 'RESTART') return { ...prev, state: 'running' };
+                return prev;
+            });
+
+            // Could add a success toast here
+        } catch (err: any) {
+            throw new Error(err.message || `Failed to ${action.toLowerCase()} container`);
+        }
+    };
+
     if (loading) return <div className="p-8 text-slate-400">Loading container...</div>;
 
     if (error || !container) {
@@ -135,8 +159,8 @@ export default function ContainerDetailPage({ params }: { params: Promise<{ host
                             {container.state.toUpperCase()}
                         </span>
                         <span className={`px-2.5 py-0.5 rounded-full text-xs font-semibold ${wsStatus === 'connected' ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' :
-                                wsStatus === 'connecting' ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20' :
-                                    'bg-red-500/10 text-red-400 border border-red-500/20'
+                            wsStatus === 'connecting' ? 'bg-amber-500/10 text-amber-400 border border-amber-500/20' :
+                                'bg-red-500/10 text-red-400 border border-red-500/20'
                             }`}>
                             WS: {wsStatus.toUpperCase()}
                         </span>
@@ -145,11 +169,14 @@ export default function ContainerDetailPage({ params }: { params: Promise<{ host
                         {container.image} • ID: {container.dockerId.substring(0, 12)}
                     </div>
                 </div>
-                {/* Actions placeholder - will be filled in Plan 03-07 */}
                 <div className="flex gap-2">
-                    <button className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-md text-sm font-medium transition-colors border border-slate-700">
-                        Action Menu (Coming Soon)
-                    </button>
+                    <ActionMenu
+                        containerId={container.dockerId}
+                        state={container.state}
+                        isProtected={false} // Would ideally check labels here
+                        userRole="ADMIN" // Mocked, would come from auth context
+                        onAction={handleContainerAction}
+                    />
                 </div>
             </header>
 
