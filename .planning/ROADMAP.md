@@ -27,7 +27,17 @@
 4. Local development environment runs via docker-compose.dev.yml with Postgres, Redis, cloud-api, cloud-web, and Agent all connected
 5. Seeded dev user exists for immediate testing without manual sign-up
 
-**Plans:** TBD
+**Plans:** 8 plans
+
+**Plan list:**
+- [ ] 01-01-PLAN.md — Database Schema (User, Org, Project, Session models)
+- [ ] 01-02-PLAN.md — Docker Compose Dev Environment (PostgreSQL, Redis, LocalStack)
+- [ ] 01-03-PLAN.md — Agent Local Setup
+- [ ] 01-04-PLAN.md — Authentication API (register, login, logout)
+- [ ] 01-05-PLAN.md — Organizations & Projects API
+- [ ] 01-06-PLAN.md — RBAC & Invitations
+- [ ] 01-07-PLAN.md — Cloud API Service
+- [ ] 01-08-PLAN.md — Cloud Web UI
 
 ---
 
@@ -90,7 +100,7 @@
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Foundation & Identity | 0/1 | Not started | - |
+| 1. Foundation & Identity | 0/8 | Not started | - |
 | 2. Host Enrollment & Inventory | 0/1 | Not started | - |
 | 3. Observability & Actions | 0/1 | Not started | - |
 | 4. Alerting | 0/1 | Not started | - |
