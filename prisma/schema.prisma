@@ -1,0 +1,115 @@
+// Prisma schema for Docker Dashboard Cloud
+// Phase 1: Foundation & Identity
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// User model for authentication
+model User {
+  id           String    @id @default(uuid())
+  email        String    @unique
+  passwordHash String
+  name         String?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  // Relations
+  organizationMemberships OrganizationMember[]
+  projectMembers       ProjectMember[]
+
+  @@index([email])
+}
+
+// Session model for connect-pg-simple
+model Session {
+  sid    String   @id
+  sess   Json
+  expire DateTime
+
+  @@index([expire])
+}
+
+// Organization model for multi-tenancy
+model Organization {
+  id        String   @id @default(uuid())
+  name      String
+  slug      String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  members  OrganizationMember[]
+  projects Project[]
+
+  @@index([slug])
+}
+
+// Organization member with RBAC roles
+model OrganizationMember {
+  id             String   @id @default(uuid())
+  userId         String
+  organizationId String
+  role           OrgRole  @default(VIEWER)
+  createdAt      DateTime @default(now())
+
+  // Relations
+  user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, organizationId])
+  @@index([userId])
+  @@index([organizationId])
+}
+
+// Project model within an organization
+model Project {
+  id             String   @id @default(uuid())
+  name           String
+  organizationId String
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  // Relations
+  organization Organization   @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  members     ProjectMember[]
+
+  @@index([organizationId])
+}
+
+// Project member with optional role inheritance from org
+model ProjectMember {
+  id              String   @id @default(uuid())
+  userId          String
+  projectId       String
+  role            ProjectRole @default(VIEWER)
+  inheritedFromOrg Boolean  @default(true)
+  createdAt       DateTime @default(now())
+
+  // Relations
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, projectId])
+  @@index([userId])
+  @@index([projectId])
+}
+
+// RBAC enums
+enum OrgRole {
+  OWNER
+  ADMIN
+  OPERATOR
+  VIEWER
+}
+
+enum ProjectRole {
+  OWNER
+  ADMIN
+  OPERATOR
+  VIEWER
+}
