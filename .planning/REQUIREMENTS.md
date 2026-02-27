@@ -182,10 +182,10 @@
 | DEV-07 | Phase 1 | Pending |
 
 **Coverage:**
-- v1 requirements: 46 total
-- Mapped to phases: 46
+- v1 requirements: 54 total
+- Mapped to phases: 54
 - Unmapped: 0 ✓
 
 ---
 *Requirements defined: 2026-02-27*
-*Last updated: 2026-02-27 after initial definition*
+*Last updated: 2026-02-27 after roadmap creation*
