@@ -9,6 +9,7 @@ import inviteRoutes from './routes/invites';
 import hostRoutes from './routes/hosts';
 import agentRoutes from './routes/agent';
 import { requireAuth } from './middleware/auth';
+import { handleUpgrade } from './websocket/server';
 
 dotenv.config();
 
@@ -48,8 +49,12 @@ app.use((err: Error, _req: express.Request, res: express.Response, _next: expres
 });
 
 // Start server
-app.listen(PORT, () => {
+const server = app.listen(PORT, () => {
   console.log(`API server running on port ${PORT}`);
+});
+
+server.on('upgrade', (request, socket, head) => {
+  handleUpgrade(request, socket, head, sessionMiddleware);
 });
 
 export default app;
