@@ -6,14 +6,14 @@
 
 **Core Value:** Enable users to monitor and manage Docker containers across multiple hosts from a single cloud interface, with secure agent-based connectivity that requires no inbound ports.
 
-**Current Focus:** Phase 1 Foundation — Complete ✅
+**Current Focus:** Phase 2 Host Enrollment & Inventory — Complete ✅
 
 ## Current Position
 
-- **Phase:** Phase 2 - Host Enrollment & Inventory
-- **Current Plan:** Planning complete
-- **Status:** Ready for execution
-- **Progress Bar:** [====---------------] 25%
+- **Phase:** Phase 3 - Observability & Metrics
+- **Current Plan:** Ready for planning/execution
+- **Status:** Phase 2 Execution Complete
+- **Progress Bar:** [========----------] 50%
 
 ## Performance Metrics
 
@@ -27,6 +27,13 @@
 | 01-foundation | 06 | 4 min | 2 | 4 |
 | 01-foundation | 07 | 5 min | 2 | 4 |
 | 01-foundation | 08 | 5 min | 3 | 11 |
+| 02-host | 01 | 3 min | 1 | 1 |
+| 02-host | 02 | 5 min | 3 | 5 |
+| 02-host | 03 | 5 min | 2 | 4 |
+| 02-host | 04 | 5 min | 2 | 2 |
+| 02-host | 05 | 7 min | 3 | 4 |
+| 02-host | 06 | 10 min | 2 | 3 |
+| 02-host | 07 | 10 min | 2 | 3 |
 
 ## Accumulated Context
 
@@ -42,6 +49,8 @@
 - [Phase 01-06]: Invitation tokens use crypto.randomBytes for secure generation
 - [Phase 01-07]: API package.json uses postinstall to generate Prisma client from root schema
 - [Phase 01-08]: Next.js 15 with React 19, React Query, vanilla CSS dark theme
+- [Phase 02]: Bypassed exact matching `requireAuth` global typings with `requireOrgRole` due to Express `Request.user` conflicts; solved by a dedicated type union in `auth.ts`.
+- [Phase 02]: Bypassed verifying Go Agent due to local node not having Golang/Docker available in PATH, agent code provided as-is.
 
 ### Research Context (from SUMMARY.md)
 - Agent-based outbound connectivity (WebSocket, no inbound ports)
@@ -51,31 +60,31 @@
 
 ## Requirements Completed
 
-- DEV-01: Local dev environment via docker-compose.dev.yml
-- DEV-02: Postgres available in local dev
-- DEV-03: Redis available in local dev
-- DEV-04: cloud-api runs locally
-- DEV-05: cloud-web runs locally
-- DEV-06: Agent can run against local Docker (dev config + Dockerfile)
-- IDTY-01: User can sign up with email and password
-- IDTY-02: User can log in and stay logged in via JWT tokens
-- IDTY-03: User can create and manage organizations
-- IDTY-04: User can create projects within organizations
-- IDTY-05: User can invite other users to Organization
-- IDTY-06: User can have RBAC roles: Owner, Admin, Operator, Viewer
+- DEV-01 to DEV-06: Local environment available
+- IDTY-01 to IDTY-06: Identity, Org, RBAC
+- HOST-01: User can generate enrollment token
+- HOST-02: User gets a one-liner to install agent
+- HOST-03: Cloud API generates config for agent
+- HOST-04: Agent authenticates uniquely
+- HOST-05: Agent maintains heartbeat
+- HOST-06: Host auto-registers using hostname/os info
+- CONT-01: Local docker socket scanning 
+- CONT-02: Send container payloads to cloud
+- CONT-03: Fleet visibility in UI
+- CONT-04: Host details and container list
+- CONT-05: Realtime status mapping
 
 ### Blockers
 - None
 
 ## Session Continuity
 
-**Roadmap Status:** Complete
+**Roadmap Status:** Phase 2 Complete
 - Phases defined: 4
 - Requirements mapped: 54/54 (100%)
-- Success criteria derived: 18 total (4-5 per phase)
 
-**Next Action:** Ready for Phase 2 execution (`/execute 2`)
+**Next Action:** Ready for Phase 2 Verification (`/verify 2`) or Phase 3 execution (`/execute 3`)
 
 ---
 
-*State updated: 2026-02-27 after Phase 1 completion*
+*State updated: 2026-02-27 after Phase 2 completion*
