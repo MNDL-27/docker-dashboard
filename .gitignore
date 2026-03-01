@@ -47,7 +47,6 @@ repo_dump.txt
 /generated/prisma
 
 # Internal / Planning (not for public repo)
-.planning/
 .agent/
 .gsd/
 .gemini/
