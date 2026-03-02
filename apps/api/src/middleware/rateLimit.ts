@@ -8,6 +8,7 @@ const DEFAULT_WINDOW_MS = 60_000;
 const DEFAULT_ENROLL_BOOTSTRAP_LIMIT = 10;
 const DEFAULT_HEARTBEAT_LIMIT = 180;
 const DEFAULT_CONTAINER_INGEST_LIMIT = 60;
+const DEFAULT_UI_API_LIMIT = 120;
 
 function parsePositiveInteger(rawValue: string | undefined, fallback: number): number {
   if (!rawValue) {
@@ -146,5 +147,35 @@ export function createAgentRateLimiters(config: AgentRateLimiterConfig = {}): Ag
     enrollBootstrap,
     heartbeat,
     containerIngest,
+  };
+}
+
+export interface UiApiRateLimiters {
+  api: RequestHandler;
+}
+
+export interface UiApiRateLimiterConfig {
+  windowMs?: number;
+  max?: number;
+  store?: Store;
+}
+
+export function createUiApiRateLimiters(config: UiApiRateLimiterConfig = {}): UiApiRateLimiters {
+  const store = config.store ?? resolveRedisStore();
+  const windowMs = config.windowMs ?? parsePositiveInteger(process.env.UI_API_RATE_LIMIT_WINDOW_MS, DEFAULT_WINDOW_MS);
+  const max = config.max ?? parsePositiveInteger(process.env.UI_API_RATE_LIMIT_MAX, DEFAULT_UI_API_LIMIT);
+
+  const api = buildLimiter({
+    max,
+    windowMs,
+    store,
+    message: 'Too many requests from this IP, please try again later',
+    keyGenerator: (request) => {
+      return `ui-api:${requestIp(request)}`;
+    },
+  });
+
+  return {
+    api,
   };
 }

@@ -13,7 +13,7 @@ import auditRoutes from './routes/audit';
 import webhookRoutes from './routes/webhooks';
 import alertRoutes from './routes/alerts';
 import { requireAuth } from './middleware/auth';
-import { createAgentRateLimiters } from './middleware/rateLimit';
+import { createAgentRateLimiters, createUiApiRateLimiters } from './middleware/rateLimit';
 import { handleUpgrade } from './websocket/server';
 import { startAlertEngine } from './services/alertEngine';
 import { assertProdTransport } from './config/transport';
@@ -24,6 +24,7 @@ assertProdTransport();
 const app = express();
 const PORT = process.env.PORT || 3001;
 const agentRateLimiters = createAgentRateLimiters();
+const uiApiRateLimiters = createUiApiRateLimiters();
 
 // Middleware
 app.use(cors({
@@ -43,10 +44,10 @@ app.use('/agent/enroll', agentRateLimiters.enrollBootstrap);
 app.use('/agent/heartbeat', agentRateLimiters.heartbeat);
 app.use('/agent/containers', agentRateLimiters.containerIngest);
 app.use('/agent', agentRoutes);
-app.use('/api/containers', actionRoutes);
-app.use('/api/audit', auditRoutes);
-app.use('/api/webhooks', webhookRoutes);
-app.use('/api/alerts', alertRoutes);
+app.use('/api/containers', uiApiRateLimiters.api, actionRoutes);
+app.use('/api/audit', uiApiRateLimiters.api, auditRoutes);
+app.use('/api/webhooks', uiApiRateLimiters.api, webhookRoutes);
+app.use('/api/alerts', uiApiRateLimiters.api, alertRoutes);
 
 // Protected route example
 app.get('/api/me', requireAuth, (req, res) => {

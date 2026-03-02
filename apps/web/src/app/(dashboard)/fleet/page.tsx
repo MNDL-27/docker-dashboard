@@ -10,6 +10,7 @@ import {
     setSelectedOrganizationId,
 } from '@/lib/api';
 import { AddHostDialog } from '@/components/fleet/AddHostDialog';
+import { HostList } from '@/components/fleet/HostList';
 
 interface ProjectSummary {
     id: string;
@@ -252,6 +253,9 @@ export default function FleetPage() {
                     </button>
                 </div>
             )}
+
+            {/* Host List - Fleet Inventory */}
+            <HostList organizationId={orgId} />
 
             {showAddHost && (
                 <AddHostDialog
