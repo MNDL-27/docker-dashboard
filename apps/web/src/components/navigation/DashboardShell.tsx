@@ -1,11 +1,12 @@
 'use client';
 
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
+import { useState } from 'react';
+import { clearSelectedOrganizationId, logout } from '@/lib/api';
 
 type DashboardShellProps = {
     children: React.ReactNode;
-    onSignOut?: () => void;
 };
 
 const NAV_LINKS = [
@@ -19,8 +20,27 @@ function isActivePath(pathname: string, href: string): boolean {
     return pathname === href || pathname.startsWith(`${href}/`);
 }
 
-export function DashboardShell({ children, onSignOut }: DashboardShellProps) {
+export function DashboardShell({ children }: DashboardShellProps) {
     const pathname = usePathname();
+    const router = useRouter();
+    const [isSigningOut, setIsSigningOut] = useState(false);
+
+    async function handleSignOut() {
+        if (isSigningOut) {
+            return;
+        }
+
+        setIsSigningOut(true);
+
+        try {
+            await logout();
+        } catch {
+            // Continue with local cleanup and redirect even if API logout fails.
+        } finally {
+            clearSelectedOrganizationId();
+            router.replace('/login');
+        }
+    }
 
     return (
         <div className="min-h-screen bg-slate-950 text-slate-100">
@@ -53,10 +73,11 @@ export function DashboardShell({ children, onSignOut }: DashboardShellProps) {
 
                     <button
                         type="button"
-                        onClick={onSignOut}
+                        onClick={handleSignOut}
+                        disabled={isSigningOut}
                         className="rounded-md border border-slate-700 px-3 py-2 text-sm text-slate-200 transition-colors hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
                     >
-                        Sign out
+                        {isSigningOut ? 'Signing out...' : 'Sign out'}
                     </button>
                 </div>
             </header>
