@@ -10,7 +10,7 @@ This roadmap delivers a secure outbound-agent Docker control plane in capability
 - Integer phases (1, 2, 3): Planned milestone work
 - Decimal phases (2.1, 2.2): Urgent insertions (marked with INSERTED)
 
-- [ ] **Phase 1: Dual-Mode Foundation and Local DX** - Keep self-hosted mode working while enabling reproducible local SaaS+agent workflows and secure transport defaults.
+- [x] **Phase 1: Dual-Mode Foundation and Local DX** - Keep self-hosted mode working while enabling reproducible local SaaS+agent workflows and secure transport defaults.
 - [ ] **Phase 2: Identity, Access, and Tenant Isolation** - Deliver accounts, organization/project boundaries, role assignment, and strict tenant-scoped access.
 - [ ] **Phase 3: Host Enrollment and Trusted Connectivity** - Establish one-time enrollment, durable agent credentials, heartbeat freshness, and protected ingest.
 - [ ] **Phase 4: Fleet Inventory Views** - Deliver fleet and host container visibility with practical filtering and search.
@@ -32,9 +32,9 @@ This roadmap delivers a secure outbound-agent Docker control plane in capability
   4. Production configuration accepts only HTTPS/WSS transport for UI/API/agent communication paths.
 **Plans**: 3 plans
 Plans:
-- [ ] 01-01-PLAN.md - Add deterministic one-command SaaS-local bootstrap with seeded setup while preserving self-hosted lane.
-- [ ] 01-02-PLAN.md - Enforce production HTTPS/WSS-only transport guardrails across API, web, and agent runtimes.
-- [ ] 01-03-PLAN.md - Split and clarify documentation for self-hosted vs SaaS-local modes with verification checklists.
+- [x] 01-01-PLAN.md - Add deterministic one-command SaaS-local bootstrap with seeded setup while preserving self-hosted lane.
+- [x] 01-02-PLAN.md - Enforce production HTTPS/WSS-only transport guardrails across API, web, and agent runtimes.
+- [x] 01-03-PLAN.md - Split and clarify documentation for self-hosted vs SaaS-local modes with verification checklists.
 
 ### Phase 2: Identity, Access, and Tenant Isolation
 **Goal**: Users can authenticate, collaborate, and operate within strict organization/project boundaries.
@@ -46,7 +46,12 @@ Plans:
   3. Owner/Admin can assign Owner/Admin/Operator/Viewer roles and members observe role-appropriate access.
   4. User can access only organizations and projects they belong to across all primary UI and API paths.
   5. Cross-tenant data access attempts are denied and out-of-scope tenant data is never visible.
-**Plans**: TBD
+**Plans**: 4 plans
+Plans:
+- [ ] 02-01-PLAN.md - Harden account/session auth lifecycle and align web authentication flows.
+- [ ] 02-02-PLAN.md - Implement centralized organization/project scope enforcement and onboarding creation paths.
+- [ ] 02-03-PLAN.md - Deliver invitation and role-management API/UI with deterministic Owner/Admin policy controls.
+- [ ] 02-04-PLAN.md - Enforce fail-closed tenant isolation across non-identity routes and add cross-tenant regression tests.
 
 ### Phase 3: Host Enrollment and Trusted Connectivity
 **Goal**: Operators can enroll hosts through secure one-time bootstrap and trust fleet presence status.
@@ -114,8 +119,8 @@ Plans:
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Dual-Mode Foundation and Local DX | 0/3 | Not started | - |
-| 2. Identity, Access, and Tenant Isolation | 0/TBD | Not started | - |
+| 1. Dual-Mode Foundation and Local DX | 3/3 | Complete | 2026-03-02 |
+| 2. Identity, Access, and Tenant Isolation | 0/4 | Not started | - |
 | 3. Host Enrollment and Trusted Connectivity | 0/TBD | Not started | - |
 | 4. Fleet Inventory Views | 0/TBD | Not started | - |
 | 5. Metrics Telemetry Core | 0/TBD | Not started | - |
