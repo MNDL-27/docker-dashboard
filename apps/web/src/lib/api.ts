@@ -50,6 +50,15 @@ export interface OrganizationInvite {
     inviteUrl: string;
 }
 
+export interface HostEnrollmentTokenResponse {
+    token: string;
+    command: string;
+    cloudUrl: string;
+    expiresAt: string;
+    projectId: string;
+    projectName: string;
+}
+
 const SELECTED_ORGANIZATION_KEY = 'docker-dashboard:selected-organization-id';
 
 async function extractErrorMessage(res: Response): Promise<string> {
@@ -135,6 +144,16 @@ export async function updateOrganizationMemberRole(
 export async function removeOrganizationMember(organizationId: string, memberId: string): Promise<void> {
     await apiFetch(`/api/organizations/${organizationId}/members/${memberId}`, {
         method: 'DELETE',
+    });
+}
+
+export async function issueHostEnrollmentToken(
+    organizationId: string,
+    projectId: string
+): Promise<HostEnrollmentTokenResponse> {
+    return apiFetch<HostEnrollmentTokenResponse>('/api/hosts/tokens', {
+        method: 'POST',
+        body: { organizationId, projectId },
     });
 }
 
