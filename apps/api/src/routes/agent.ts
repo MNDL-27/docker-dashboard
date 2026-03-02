@@ -2,7 +2,12 @@ import { Router, Request, Response } from 'express';
 import { prisma } from '../lib/prisma';
 import jwt from 'jsonwebtoken';
 import { z } from 'zod';
-import { requireAgentAuth } from '../middleware/agentAuth';
+import {
+    AGENT_JWT_ALGORITHMS,
+    AGENT_JWT_AUDIENCE,
+    AGENT_JWT_ISSUER,
+    requireAgentAuth,
+} from '../middleware/agentAuth';
 import { resolveAgentScope } from '../services/scopedAccess';
 import { consumeEnrollmentToken } from '../services/enrollment';
 
@@ -44,7 +49,12 @@ router.post('/enroll', async (req: Request, res: Response): Promise<void> => {
                 projectId: host.projectId,
             },
             JWT_SECRET,
-            { expiresIn: '30d' }
+            {
+                algorithm: AGENT_JWT_ALGORITHMS[0],
+                issuer: AGENT_JWT_ISSUER,
+                audience: AGENT_JWT_AUDIENCE,
+                expiresIn: '30d',
+            }
         );
 
         res.status(200).json({

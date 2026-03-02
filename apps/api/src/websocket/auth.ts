@@ -2,6 +2,11 @@ import { IncomingMessage } from 'http';
 import jwt from 'jsonwebtoken';
 import { resolveAgentScope } from '../services/scopedAccess';
 import url from 'url';
+import {
+    AGENT_JWT_ALGORITHMS,
+    AGENT_JWT_AUDIENCE,
+    AGENT_JWT_ISSUER,
+} from '../middleware/agentAuth';
 
 const JWT_SECRET = process.env.AGENT_JWT_SECRET || process.env.SESSION_SECRET || 'fallback_agent_secret';
 
@@ -16,7 +21,11 @@ export async function authenticateAgentWS(req: IncomingMessage): Promise<string 
     if (!token) return null;
 
     try {
-        const decoded = jwt.verify(token, JWT_SECRET) as {
+        const decoded = jwt.verify(token, JWT_SECRET, {
+            algorithms: AGENT_JWT_ALGORITHMS,
+            issuer: AGENT_JWT_ISSUER,
+            audience: AGENT_JWT_AUDIENCE,
+        }) as {
             hostId: string;
             organizationId: string;
             projectId: string;

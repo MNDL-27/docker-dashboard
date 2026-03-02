@@ -92,6 +92,9 @@ vi.mock('../middleware/auth', () => ({
 }));
 
 vi.mock('../middleware/agentAuth', () => ({
+  AGENT_JWT_ALGORITHMS: ['HS256'],
+  AGENT_JWT_AUDIENCE: 'docker-dashboard-agent',
+  AGENT_JWT_ISSUER: 'docker-dashboard-cloud',
   requireAgentAuth: (req: any, _res: any, next: any) => {
     req.agent = {
       hostId: 'host-a',
@@ -170,7 +173,12 @@ describe('tenant isolation regression coverage', () => {
     const secret = process.env.AGENT_JWT_SECRET || process.env.SESSION_SECRET || 'fallback_agent_secret';
     const invalidScopeToken = jwt.sign(
       { hostId: 'host-a', organizationId: 'org-a', projectId: 'proj-b' },
-      secret
+      secret,
+      {
+        algorithm: 'HS256',
+        issuer: 'docker-dashboard-cloud',
+        audience: 'docker-dashboard-agent',
+      }
     );
 
     const authenticatedHost = await authenticateAgentWS({
@@ -185,7 +193,12 @@ describe('tenant isolation regression coverage', () => {
     const secret = process.env.AGENT_JWT_SECRET || process.env.SESSION_SECRET || 'fallback_agent_secret';
     const validToken = jwt.sign(
       { hostId: 'host-a', organizationId: 'org-a', projectId: 'proj-a' },
-      secret
+      secret,
+      {
+        algorithm: 'HS256',
+        issuer: 'docker-dashboard-cloud',
+        audience: 'docker-dashboard-agent',
+      }
     );
 
     const authenticatedHost = await authenticateAgentWS({

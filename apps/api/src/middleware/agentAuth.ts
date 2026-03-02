@@ -15,6 +15,15 @@ declare global {
 }
 
 const JWT_SECRET = process.env.AGENT_JWT_SECRET || process.env.SESSION_SECRET || 'fallback_agent_secret';
+export const AGENT_JWT_ISSUER = 'docker-dashboard-cloud';
+export const AGENT_JWT_AUDIENCE = 'docker-dashboard-agent';
+export const AGENT_JWT_ALGORITHMS: jwt.Algorithm[] = ['HS256'];
+
+interface AgentTokenClaims extends jwt.JwtPayload {
+    hostId: string;
+    organizationId: string;
+    projectId: string;
+}
 
 export async function requireAgentAuth(
     req: Request,
@@ -31,11 +40,11 @@ export async function requireAgentAuth(
         const token = authHeader.split(' ')[1];
 
         try {
-            const decoded = jwt.verify(token, JWT_SECRET) as {
-                hostId: string;
-                organizationId: string;
-                projectId: string;
-            };
+            const decoded = jwt.verify(token, JWT_SECRET, {
+                algorithms: AGENT_JWT_ALGORITHMS,
+                issuer: AGENT_JWT_ISSUER,
+                audience: AGENT_JWT_AUDIENCE,
+            }) as AgentTokenClaims;
 
             // Verify host still exists and is not deleted/deauthorized
             const host = await prisma.host.findUnique({

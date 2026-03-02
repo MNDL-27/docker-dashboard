@@ -1,4 +1,5 @@
 import express from 'express';
+import jwt from 'jsonwebtoken';
 import request from 'supertest';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -96,6 +97,12 @@ vi.mock('../lib/prisma', () => ({
 }));
 
 import agentRoutes from '../routes/agent';
+import {
+  AGENT_JWT_ALGORITHMS,
+  AGENT_JWT_AUDIENCE,
+  AGENT_JWT_ISSUER,
+} from '../middleware/agentAuth';
+import { authenticateAgentWS } from '../websocket/auth';
 
 const app = express();
 app.use(express.json());
@@ -111,6 +118,8 @@ function seedToken(overrides: Partial<HostTokenRecord> = {}): void {
     ...overrides,
   });
 }
+
+const JWT_SECRET = process.env.AGENT_JWT_SECRET || process.env.SESSION_SECRET || 'fallback_agent_secret';
 
 describe('agent enrollment exchange and durable auth policy', () => {
   beforeEach(() => {
@@ -175,6 +184,91 @@ describe('agent enrollment exchange and durable auth policy', () => {
       .send({ ...payload, token: fixtures.bootstrapToken });
     expect(replayRes.status).toBe(401);
     expect(replayRes.body.error).toBe('Invalid enrollment token');
+  });
+
+  it('enforces matching JWT policy and scope binding for HTTP and websocket auth', async () => {
+    seedToken();
+
+    const enrollRes = await request(app).post('/agent/enroll').send({
+      token: fixtures.bootstrapToken,
+      name: 'host one',
+      hostname: 'host-one.local',
+      os: 'linux',
+      architecture: 'x64',
+      dockerVersion: '25.0.0',
+    });
+
+    expect(enrollRes.status).toBe(200);
+    const { agentToken, hostId } = enrollRes.body as { agentToken: string; hostId: string };
+
+    const heartbeatRes = await request(app)
+      .post('/agent/heartbeat')
+      .set('authorization', `Bearer ${agentToken}`)
+      .send({});
+    expect(heartbeatRes.status).toBe(200);
+
+    const mismatchedScopeToken = jwt.sign(
+      { hostId, organizationId: fixtures.organizationId, projectId: 'proj-2' },
+      JWT_SECRET,
+      {
+        algorithm: AGENT_JWT_ALGORITHMS[0],
+        issuer: AGENT_JWT_ISSUER,
+        audience: AGENT_JWT_AUDIENCE,
+        expiresIn: '5m',
+      }
+    );
+
+    const outOfScopeHeartbeatRes = await request(app)
+      .post('/agent/heartbeat')
+      .set('authorization', `Bearer ${mismatchedScopeToken}`)
+      .send({});
+    expect(outOfScopeHeartbeatRes.status).toBe(401);
+
+    const wrongAudienceToken = jwt.sign(
+      { hostId, organizationId: fixtures.organizationId, projectId: fixtures.projectId },
+      JWT_SECRET,
+      {
+        algorithm: AGENT_JWT_ALGORITHMS[0],
+        issuer: AGENT_JWT_ISSUER,
+        audience: 'dashboard-ui',
+        expiresIn: '5m',
+      }
+    );
+
+    const wrongAlgorithmToken = jwt.sign(
+      { hostId, organizationId: fixtures.organizationId, projectId: fixtures.projectId },
+      JWT_SECRET,
+      {
+        algorithm: 'HS384',
+        issuer: AGENT_JWT_ISSUER,
+        audience: AGENT_JWT_AUDIENCE,
+        expiresIn: '5m',
+      }
+    );
+
+    const badAudienceHeartbeatRes = await request(app)
+      .post('/agent/heartbeat')
+      .set('authorization', `Bearer ${wrongAudienceToken}`)
+      .send({});
+    expect(badAudienceHeartbeatRes.status).toBe(401);
+
+    const wsValidHost = await authenticateAgentWS({
+      url: `/ws/agent?token=${agentToken}`,
+      headers: {},
+    } as any);
+    expect(wsValidHost).toBe(hostId);
+
+    const wsWrongAudience = await authenticateAgentWS({
+      url: `/ws/agent?token=${wrongAudienceToken}`,
+      headers: {},
+    } as any);
+    expect(wsWrongAudience).toBeNull();
+
+    const wsWrongAlgorithm = await authenticateAgentWS({
+      url: `/ws/agent?token=${wrongAlgorithmToken}`,
+      headers: {},
+    } as any);
+    expect(wsWrongAlgorithm).toBeNull();
   });
 
 });
