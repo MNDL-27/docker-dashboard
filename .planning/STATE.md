@@ -10,33 +10,33 @@ See: `.planning/PROJECT.md` (updated 2026-03-01)
 ## Current Position
 
 Phase: 2 of 8 (Identity, Access, and Tenant Isolation)
-Plan: 5 of 5 in current phase
+Plan: 6 of 6 in current phase
 Status: Phase 2 complete
-Last activity: 2026-03-02 - Completed 02-05 realtime/notification tenant isolation hardening plan.
+Last activity: 2026-03-02 - Completed 02-06 dashboard logout shell plan.
 
-Progress: [█████░░░░░] 50.0%
+Progress: [██████░░░░] 56.3%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 8
+- Total plans completed: 9
 - Average duration: 4 min
-- Total execution time: 0.5 hours
+- Total execution time: 0.6 hours
 
 **By Phase:**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
 | 1 | 3 | 0 min | 0 min |
-| 2 | 5 | 32 min | 6 min |
+| 2 | 6 | 35 min | 6 min |
 | 3-8 | 0 | 0 min | 0 min |
 
 **Recent Trend:**
-- Last 5 plans: 02-01, 02-02, 02-03, 02-04, 02-05
+- Last 5 plans: 02-02, 02-03, 02-04, 02-05, 02-06
 - Trend: Improving
 
 *Updated after each plan completion*
-- Latest execution: Phase 02 Plan 05 | 7 min | 2 tasks | 7 files
+- Latest execution: Phase 02 Plan 06 | 3 min | 2 tasks | 2 files
 
 ## Accumulated Context
 
@@ -61,6 +61,8 @@ Recent decisions affecting current work:
 - [Phase 02]: Require explicit tenant context and scope-bound primary queries for hosts/actions/audit to prevent cross-tenant leakage.
 - [Phase 02]: Standardize alerts/webhooks on requireOrgScope/requireOrgPermission with scope-constrained primary lookups to prevent authorization drift.
 - [Phase 02]: Gate SECU-01 non-identity paths with a deterministic apps/api tenant-isolation vitest suite executed via npm test.
+- [Phase 02]: Use a shared (dashboard) route-group layout to keep primary nav and sign-out mounted across authenticated pages.
+- [Phase 02]: Execute logout cleanup in finally: clear selected organization scope and redirect to /login even when logout API errors.
 
 ### Pending Todos
 
@@ -74,6 +76,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-02 16:15
-Stopped at: Completed 02-05-PLAN.md
+Last session: 2026-03-02 16:38
+Stopped at: Completed 02-06-PLAN.md
 Resume file: None

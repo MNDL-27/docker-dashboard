@@ -46,13 +46,14 @@ Plans:
   3. Owner/Admin can assign Owner/Admin/Operator/Viewer roles and members observe role-appropriate access.
   4. User can access only organizations and projects they belong to across all primary UI and API paths.
   5. Cross-tenant data access attempts are denied and out-of-scope tenant data is never visible.
-**Plans**: 5 plans
+**Plans**: 6 plans
 Plans:
 - [x] 02-01-PLAN.md - Harden account/session auth lifecycle and align web authentication flows.
 - [x] 02-02-PLAN.md - Implement centralized organization/project scope enforcement and onboarding creation paths.
 - [x] 02-03-PLAN.md - Deliver invitation and role-management API/UI with deterministic Owner/Admin policy controls.
 - [x] 02-04-PLAN.md - Enforce fail-closed tenant isolation across core non-identity HTTP and ingest routes.
 - [x] 02-05-PLAN.md - Harden remaining realtime/notification paths and add tenant-isolation regression tests.
+- [x] 02-06-PLAN.md - Add shared dashboard shell logout flow to close AUTH-04 UX verification gap.
 
 ### Phase 3: Host Enrollment and Trusted Connectivity
 **Goal**: Operators can enroll hosts through secure one-time bootstrap and trust fleet presence status.
@@ -121,7 +122,7 @@ Plans:
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Dual-Mode Foundation and Local DX | 3/3 | Complete | 2026-03-02 |
-| 2. Identity, Access, and Tenant Isolation | 5/5 | Complete   | 2026-03-02 |
+| 2. Identity, Access, and Tenant Isolation | 6/6 | Complete   | 2026-03-02 |
 | 3. Host Enrollment and Trusted Connectivity | 0/TBD | Not started | - |
 | 4. Fleet Inventory Views | 0/TBD | Not started | - |
 | 5. Metrics Telemetry Core | 0/TBD | Not started | - |
