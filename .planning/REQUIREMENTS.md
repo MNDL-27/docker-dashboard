@@ -17,10 +17,10 @@ Requirements for initial release. Each maps to exactly one roadmap phase.
 
 ### Authentication and Sessions
 
-- [ ] **AUTH-01**: User can create an account with email and password.
-- [ ] **AUTH-02**: User can log in with email and password.
-- [ ] **AUTH-03**: User can refresh or continue an authenticated session without re-entering credentials.
-- [ ] **AUTH-04**: User can log out and invalidate active session state.
+- [x] **AUTH-01**: User can create an account with email and password.
+- [x] **AUTH-02**: User can log in with email and password.
+- [x] **AUTH-03**: User can refresh or continue an authenticated session without re-entering credentials.
+- [x] **AUTH-04**: User can log out and invalidate active session state.
 
 ### Host Enrollment and Agent Lifecycle
 
@@ -121,10 +121,10 @@ Which phases cover which requirements. Populated during roadmap creation.
 | TEN-03 | Phase 2 | Pending |
 | TEN-04 | Phase 2 | Pending |
 | TEN-05 | Phase 2 | Pending |
-| AUTH-01 | Phase 2 | Pending |
-| AUTH-02 | Phase 2 | Pending |
-| AUTH-03 | Phase 2 | Pending |
-| AUTH-04 | Phase 2 | Pending |
+| AUTH-01 | Phase 2 | Complete |
+| AUTH-02 | Phase 2 | Complete |
+| AUTH-03 | Phase 2 | Complete |
+| AUTH-04 | Phase 2 | Complete |
 | ENRL-01 | Phase 3 | Pending |
 | ENRL-02 | Phase 3 | Pending |
 | ENRL-03 | Phase 3 | Pending |
