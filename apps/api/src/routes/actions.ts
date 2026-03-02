@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { prisma } from '../lib/prisma';
 import { requireAuth } from '../middleware/auth';
 import { sendActionToAgent } from '../websocket/server';
+import { resolveUserScope, scopedContainerWhere } from '../services/scopedAccess';
 
 const router = Router();
 
@@ -9,14 +10,33 @@ router.post('/:containerId/actions', requireAuth, async (req, res) => {
     try {
         const { containerId } = req.params;
         const { action, reason } = req.body;
+        const organizationId = (req.headers['x-organization-id'] as string) || (req.body?.organizationId as string) || (req.query.organizationId as string);
+        const projectId = (req.headers['x-project-id'] as string | undefined) || (req.body?.projectId as string | undefined) || (req.query.projectId as string | undefined);
 
         if (!['START', 'STOP', 'RESTART'].includes(action)) {
             res.status(400).json({ error: 'Invalid action line' });
             return;
         }
 
+        if (!organizationId) {
+            res.status(400).json({ error: 'Organization ID is required' });
+            return;
+        }
+
+        const userId = req.user?.id;
+        if (!userId) {
+            res.status(401).json({ error: 'Unauthorized' });
+            return;
+        }
+
+        const scope = await resolveUserScope({ userId, organizationId, projectId });
+        if (!scope) {
+            res.status(403).json({ error: 'Not a member of this organization' });
+            return;
+        }
+
         const container = await prisma.container.findFirst({
-            where: { dockerId: containerId }, // assuming UI sends dockerId
+            where: scopedContainerWhere(scope, { dockerId: containerId }),
             include: { host: true }
         });
 
@@ -24,18 +44,6 @@ router.post('/:containerId/actions', requireAuth, async (req, res) => {
             res.status(404).json({ error: 'Container not found' });
             return;
         }
-
-        // Ensure we have user and org from auth middleware
-        const userId = req.user?.id;
-        const orgId = req.headers['x-organization-id'] as string; // or however org is resolved in your app
-        const organizationId = orgId || container.host.organizationId;
-
-        if (!userId) {
-            res.status(401).json({ error: 'Unauthorized' });
-            return;
-        }
-
-        // Ideally do RBAC check here if the user has permission to stop protected containers
 
         // Send to agent
         const actionId = crypto.randomUUID();
@@ -50,7 +58,7 @@ router.post('/:containerId/actions', requireAuth, async (req, res) => {
             await prisma.auditLog.create({
                 data: {
                     userId,
-                    organizationId,
+                    organizationId: scope.organizationId,
                     action,
                     targetType: 'CONTAINER',
                     targetId: container.dockerId,
@@ -66,7 +74,7 @@ router.post('/:containerId/actions', requireAuth, async (req, res) => {
         await prisma.auditLog.create({
             data: {
                 userId,
-                organizationId,
+                organizationId: scope.organizationId,
                 action,
                 targetType: 'CONTAINER',
                 targetId: container.dockerId,

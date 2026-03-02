@@ -1,11 +1,12 @@
 import type { NextFunction, Request, Response } from 'express';
 import type { OrgRole } from '@prisma/client';
-import { prisma } from '../lib/prisma';
 import { hasMinimumRole } from '../authz/roleMatrix';
+import { resolveUserScope } from '../services/scopedAccess';
 
 export interface OrganizationScope {
   userId: string;
   organizationId: string;
+  projectId?: string;
   role: OrgRole;
 }
 
@@ -21,6 +22,11 @@ interface RequireOrgScopeOptions {
   paramKey?: string;
   bodyKey?: string;
   queryKey?: string;
+  headerKey?: string;
+  projectParamKey?: string;
+  projectBodyKey?: string;
+  projectQueryKey?: string;
+  projectHeaderKey?: string;
 }
 
 interface RequireOrgPermissionOptions extends RequireOrgScopeOptions {
@@ -33,13 +39,32 @@ function resolveOrganizationId(req: Request, options: RequireOrgScopeOptions): s
   const paramKey = options.paramKey ?? 'orgId';
   const bodyKey = options.bodyKey ?? 'organizationId';
   const queryKey = options.queryKey ?? 'organizationId';
+  const headerKey = options.headerKey ?? 'x-organization-id';
 
   const fromParams = req.params[paramKey] ?? (paramKey !== 'id' ? req.params.id : undefined);
   const fromBody = typeof req.body?.[bodyKey] === 'string' ? req.body[bodyKey] : undefined;
   const queryValue = req.query?.[queryKey];
   const fromQuery = typeof queryValue === 'string' ? queryValue : undefined;
+  const headerValue = req.headers[headerKey];
+  const fromHeader = typeof headerValue === 'string' ? headerValue : undefined;
 
-  return fromParams ?? fromBody ?? fromQuery;
+  return fromParams ?? fromBody ?? fromQuery ?? fromHeader;
+}
+
+function resolveProjectId(req: Request, options: RequireOrgScopeOptions): string | undefined {
+  const projectParamKey = options.projectParamKey ?? 'projectId';
+  const projectBodyKey = options.projectBodyKey ?? 'projectId';
+  const projectQueryKey = options.projectQueryKey ?? 'projectId';
+  const projectHeaderKey = options.projectHeaderKey ?? 'x-project-id';
+
+  const fromParams = req.params[projectParamKey];
+  const fromBody = typeof req.body?.[projectBodyKey] === 'string' ? req.body[projectBodyKey] : undefined;
+  const queryValue = req.query?.[projectQueryKey];
+  const fromQuery = typeof queryValue === 'string' ? queryValue : undefined;
+  const headerValue = req.headers[projectHeaderKey];
+  const fromHeader = typeof headerValue === 'string' ? headerValue : undefined;
+
+  return fromParams ?? fromBody ?? fromQuery ?? fromHeader;
 }
 
 export function requireOrgScope(options: RequireOrgScopeOptions = {}) {
@@ -57,24 +82,24 @@ export function requireOrgScope(options: RequireOrgScopeOptions = {}) {
         return;
       }
 
-      const membership = await prisma.organizationMember.findUnique({
-        where: {
-          userId_organizationId: {
-            userId,
-            organizationId,
-          },
-        },
+      const projectId = resolveProjectId(req, options);
+
+      const scope = await resolveUserScope({
+        userId,
+        organizationId,
+        projectId,
       });
 
-      if (!membership) {
+      if (!scope) {
         res.status(403).json({ error: 'Not a member of this organization' });
         return;
       }
 
       req.scope = {
-        userId,
-        organizationId,
-        role: membership.role,
+        userId: scope.userId,
+        organizationId: scope.organizationId,
+        projectId: scope.projectId,
+        role: scope.role,
       };
 
       next();

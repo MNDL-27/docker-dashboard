@@ -1,6 +1,8 @@
 import { Router, Request, Response } from 'express';
 import { prisma } from '../lib/prisma';
 import { requireAuth } from '../middleware/auth';
+import { getPublicApiUrl } from '../config/transport';
+import { resolveUserScope, scopedHostWhere, scopedContainerWhere } from '../services/scopedAccess';
 
 const router = Router();
 
@@ -12,30 +14,25 @@ router.get('/', async (req: Request, res: Response): Promise<void> => {
     try {
         const userId = req.user!.id;
         const organizationId = req.query.organizationId as string;
+        const projectId = req.query.projectId as string | undefined;
 
         if (!organizationId) {
             res.status(400).json({ error: 'organizationId query parameter is required' });
             return;
         }
 
-        // Check membership
-        const membership = await prisma.organizationMember.findUnique({
-            where: {
-                userId_organizationId: {
-                    userId,
-                    organizationId,
-                },
-            },
-        });
-
-        if (!membership) {
+        const scope = await resolveUserScope({ userId, organizationId, projectId });
+        if (!scope) {
             res.status(403).json({ error: 'Not a member of this organization' });
             return;
         }
 
         const hosts = await prisma.host.findMany({
-            where: { organizationId },
+            where: scopedHostWhere(scope),
             include: {
+                project: {
+                    select: { id: true, name: true },
+                },
                 _count: {
                     select: { containers: true },
                 },
@@ -78,28 +75,26 @@ router.get('/:id', async (req: Request, res: Response): Promise<void> => {
     try {
         const userId = req.user!.id;
         const { id } = req.params;
+        const organizationId = (req.query.organizationId as string) || (req.headers['x-organization-id'] as string);
+        const projectId = (req.query.projectId as string | undefined) || (req.headers['x-project-id'] as string | undefined);
 
-        const host = await prisma.host.findUnique({
-            where: { id },
+        if (!organizationId) {
+            res.status(400).json({ error: 'organizationId query parameter or x-organization-id header is required' });
+            return;
+        }
+
+        const scope = await resolveUserScope({ userId, organizationId, projectId });
+        if (!scope) {
+            res.status(403).json({ error: 'Not a member of this organization' });
+            return;
+        }
+
+        const host = await prisma.host.findFirst({
+            where: scopedHostWhere(scope, { id }),
         });
 
         if (!host) {
             res.status(404).json({ error: 'Host not found' });
-            return;
-        }
-
-        // Check membership
-        const membership = await prisma.organizationMember.findUnique({
-            where: {
-                userId_organizationId: {
-                    userId,
-                    organizationId: host.organizationId,
-                },
-            },
-        });
-
-        if (!membership) {
-            res.status(403).json({ error: 'Not a member of this organization' });
             return;
         }
 
@@ -114,30 +109,35 @@ router.get('/:id', async (req: Request, res: Response): Promise<void> => {
 router.post('/tokens', async (req: Request, res: Response): Promise<void> => {
     try {
         const userId = req.user!.id;
-        const { organizationId } = req.body;
+        const { organizationId, projectId } = req.body;
 
         if (!organizationId) {
             res.status(400).json({ error: 'organizationId is required' });
             return;
         }
 
-        // Check ownership or admin
-        const membership = await prisma.organizationMember.findUnique({
-            where: {
-                userId_organizationId: {
-                    userId,
-                    organizationId,
-                },
-            },
-        });
+        if (!projectId) {
+            res.status(400).json({ error: 'projectId is required' });
+            return;
+        }
 
-        if (!membership) {
+        const scope = await resolveUserScope({ userId, organizationId, projectId });
+        if (!scope) {
             res.status(403).json({ error: 'Not a member of this organization' });
             return;
         }
 
-        if (membership.role !== 'OWNER' && membership.role !== 'ADMIN') {
-            res.status(403).json({ error: 'Insufficient permissions. Must be OWNER or ADMIN.' });
+        if (scope.role !== 'OWNER' && scope.role !== 'ADMIN' && scope.role !== 'OPERATOR') {
+            res.status(403).json({ error: 'Insufficient permissions. Must be OWNER, ADMIN, or OPERATOR.' });
+            return;
+        }
+
+        const project = await prisma.project.findFirst({
+            where: { id: projectId, organizationId: scope.organizationId },
+        });
+
+        if (!project) {
+            res.status(400).json({ error: 'Project not found in this organization' });
             return;
         }
 
@@ -147,13 +147,14 @@ router.post('/tokens', async (req: Request, res: Response): Promise<void> => {
 
         const hostToken = await prisma.hostToken.create({
             data: {
-                organizationId,
+                organizationId: scope.organizationId,
+                projectId: scope.projectId!,
                 createdBy: userId,
                 expiresAt,
             },
         });
 
-        const apiUrl = process.env.PUBLIC_API_URL || 'http://localhost:3001';
+        const apiUrl = getPublicApiUrl();
 
         // Command for starting the agent
         const command = `docker run -d --name docker-dashboard-agent \\
@@ -165,6 +166,8 @@ router.post('/tokens', async (req: Request, res: Response): Promise<void> => {
         res.status(201).json({
             token: hostToken.token,
             expiresAt: hostToken.expiresAt,
+            projectId: project.id,
+            projectName: project.name,
             command
         });
     } catch (error) {
@@ -177,9 +180,22 @@ router.get('/:id/containers', async (req: Request, res: Response): Promise<void>
     try {
         const userId = req.user!.id;
         const { id } = req.params;
+        const organizationId = (req.query.organizationId as string) || (req.headers['x-organization-id'] as string);
+        const projectId = (req.query.projectId as string | undefined) || (req.headers['x-project-id'] as string | undefined);
 
-        const host = await prisma.host.findUnique({
-            where: { id },
+        if (!organizationId) {
+            res.status(400).json({ error: 'organizationId query parameter or x-organization-id header is required' });
+            return;
+        }
+
+        const scope = await resolveUserScope({ userId, organizationId, projectId });
+        if (!scope) {
+            res.status(403).json({ error: 'Not a member of this organization' });
+            return;
+        }
+
+        const host = await prisma.host.findFirst({
+            where: scopedHostWhere(scope, { id }),
         });
 
         if (!host) {
@@ -187,23 +203,8 @@ router.get('/:id/containers', async (req: Request, res: Response): Promise<void>
             return;
         }
 
-        // Check membership
-        const membership = await prisma.organizationMember.findUnique({
-            where: {
-                userId_organizationId: {
-                    userId,
-                    organizationId: host.organizationId,
-                },
-            },
-        });
-
-        if (!membership) {
-            res.status(403).json({ error: 'Not a member of this organization' });
-            return;
-        }
-
         const containers = await prisma.container.findMany({
-            where: { hostId: id },
+            where: scopedContainerWhere(scope, { hostId: id }),
             orderBy: { name: 'asc' },
         });
 
