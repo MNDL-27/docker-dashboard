@@ -13,7 +13,7 @@ Requirements for initial release. Each maps to exactly one roadmap phase.
 - [x] **TEN-02**: User can create projects within an organization to segment environments.
 - [x] **TEN-03**: User can invite another user to an organization.
 - [x] **TEN-04**: User can assign membership roles (Owner, Admin, Operator, Viewer).
-- [ ] **TEN-05**: User can access only data for organizations and projects they belong to.
+- [x] **TEN-05**: User can access only data for organizations and projects they belong to.
 
 ### Authentication and Sessions
 
@@ -120,7 +120,7 @@ Which phases cover which requirements. Populated during roadmap creation.
 | TEN-02 | Phase 2 | Complete |
 | TEN-03 | Phase 2 | Complete |
 | TEN-04 | Phase 2 | Complete |
-| TEN-05 | Phase 2 | Pending |
+| TEN-05 | Phase 2 | Complete |
 | AUTH-01 | Phase 2 | Complete |
 | AUTH-02 | Phase 2 | Complete |
 | AUTH-03 | Phase 2 | Complete |

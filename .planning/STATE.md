@@ -10,16 +10,16 @@ See: `.planning/PROJECT.md` (updated 2026-03-01)
 ## Current Position
 
 Phase: 2 of 8 (Identity, Access, and Tenant Isolation)
-Plan: 3 of 5 in current phase
+Plan: 4 of 5 in current phase
 Status: Executing Phase 2 plans
-Last activity: 2026-03-02 - Completed 02-03 collaboration role lifecycle plan.
+Last activity: 2026-03-02 - Completed 02-04 tenant isolation enforcement plan.
 
-Progress: [███░░░░░░░] 30.0%
+Progress: [████░░░░░░] 40.0%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 6
+- Total plans completed: 7
 - Average duration: 4 min
 - Total execution time: 0.4 hours
 
@@ -28,15 +28,15 @@ Progress: [███░░░░░░░] 30.0%
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
 | 1 | 3 | 0 min | 0 min |
-| 2 | 3 | 24 min | 8 min |
+| 2 | 4 | 25 min | 6 min |
 | 3-8 | 0 | 0 min | 0 min |
 
 **Recent Trend:**
-- Last 5 plans: 01-02, 01-03, 02-01, 02-02, 02-03
+- Last 5 plans: 01-03, 02-01, 02-02, 02-03, 02-04
 - Trend: Improving
 
 *Updated after each plan completion*
-- Latest execution: Phase 02 Plan 03 | 7 min | 2 tasks | 7 files
+- Latest execution: Phase 02 Plan 04 | 1 min | 2 tasks | 7 files
 
 ## Accumulated Context
 
@@ -57,6 +57,8 @@ Recent decisions affecting current work:
 - [Phase 02-identity-access-and-tenant-isolation]: Persist selected organization on the client and require explicit org context in fleet interactions.
 - [Phase 02]: Enforce invite/member mutation constraints through shared roleMatrix helpers instead of route-specific branching.
 - [Phase 02]: Use scoped middleware (requireOrgPermission) to keep owner/admin gates consistent before mutation handlers run.
+- [Phase 02]: Use shared scopedAccess service as single org/project boundary enforcement layer.
+- [Phase 02]: Require explicit tenant context and scope-bound primary queries for hosts/actions/audit to prevent cross-tenant leakage.
 
 ### Pending Todos
 
@@ -70,6 +72,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-02 15:57
-Stopped at: Completed 02-03-PLAN.md
+Last session: 2026-03-02 16:06
+Stopped at: Completed 02-04-PLAN.md
 Resume file: None
