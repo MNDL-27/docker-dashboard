@@ -70,7 +70,7 @@ Each task was committed atomically:
 1. **Task 1: Create tenant-scoped enrollment intent issuance with protected bootstrap secrets** - `680285a` (feat)
 2. **Task 2: Update fleet enrollment dialog to show deterministic install snippet** - `5887565` (feat)
 
-**Plan metadata:** pending
+**Plan metadata:** `3f6c1bd` (docs)
 
 ## Files Created/Modified
 - `apps/api/src/services/enrollment.ts` - Enrollment token generation, hashing, TTL handling, and command builder helpers.
