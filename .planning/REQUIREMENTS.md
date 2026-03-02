@@ -9,8 +9,8 @@ Requirements for initial release. Each maps to exactly one roadmap phase.
 
 ### Identity and Tenancy
 
-- [ ] **TEN-01**: User can create an organization tenant.
-- [ ] **TEN-02**: User can create projects within an organization to segment environments.
+- [x] **TEN-01**: User can create an organization tenant.
+- [x] **TEN-02**: User can create projects within an organization to segment environments.
 - [ ] **TEN-03**: User can invite another user to an organization.
 - [ ] **TEN-04**: User can assign membership roles (Owner, Admin, Operator, Viewer).
 - [ ] **TEN-05**: User can access only data for organizations and projects they belong to.
@@ -116,8 +116,8 @@ Which phases cover which requirements. Populated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| TEN-01 | Phase 2 | Pending |
-| TEN-02 | Phase 2 | Pending |
+| TEN-01 | Phase 2 | Complete |
+| TEN-02 | Phase 2 | Complete |
 | TEN-03 | Phase 2 | Pending |
 | TEN-04 | Phase 2 | Pending |
 | TEN-05 | Phase 2 | Pending |

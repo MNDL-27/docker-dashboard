@@ -10,33 +10,33 @@ See: `.planning/PROJECT.md` (updated 2026-03-01)
 ## Current Position
 
 Phase: 2 of 8 (Identity, Access, and Tenant Isolation)
-Plan: 1 of 5 in current phase
+Plan: 2 of 5 in current phase
 Status: Executing Phase 2 plans
-Last activity: 2026-03-02 - Completed 02-01 auth/session hardening plan.
+Last activity: 2026-03-02 - Completed 02-02 organization/project scope foundation plan.
 
-Progress: [██░░░░░░░░] 20.0%
+Progress: [███░░░░░░░] 25.0%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 4
+- Total plans completed: 5
 - Average duration: 3 min
-- Total execution time: 0.2 hours
+- Total execution time: 0.3 hours
 
 **By Phase:**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
 | 1 | 3 | 0 min | 0 min |
-| 2 | 1 | 11 min | 11 min |
+| 2 | 2 | 17 min | 9 min |
 | 3-8 | 0 | 0 min | 0 min |
 
 **Recent Trend:**
-- Last 5 plans: 01-01, 01-02, 01-03, 02-01
+- Last 5 plans: 01-01, 01-02, 01-03, 02-01, 02-02
 - Trend: Improving
 
 *Updated after each plan completion*
-- Latest execution: Phase 02 Plan 01 | 11 min | 2 tasks | 8 files
+- Latest execution: Phase 02 Plan 02 | 6 min | 2 tasks | 8 files
 
 ## Accumulated Context
 
@@ -52,6 +52,9 @@ Recent decisions affecting current work:
 - [Phase 02]: Use shared zod schemas for login/register payload parsing to keep API contracts deterministic.
 - [Phase 02]: Regenerate and explicitly save server sessions on register/login to mitigate session fixation risk.
 - [Phase 02]: Use /auth/me as the web session-restore source of truth and clear UI state on logout before redirect.
+- [Phase 02-identity-access-and-tenant-isolation]: Resolve org authorization context once in middleware (req.scope) so handlers stay fail-closed and policy-consistent.
+- [Phase 02-identity-access-and-tenant-isolation]: Use a shared role matrix helper for organization/project checks instead of inline role branching.
+- [Phase 02-identity-access-and-tenant-isolation]: Persist selected organization on the client and require explicit org context in fleet interactions.
 
 ### Pending Todos
 
@@ -65,6 +68,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-02 15:36
-Stopped at: Completed 02-01-PLAN.md
+Last session: 2026-03-02 15:46
+Stopped at: Completed 02-02-PLAN.md
 Resume file: None
