@@ -30,7 +30,11 @@ This roadmap delivers a secure outbound-agent Docker control plane in capability
   2. Documentation clearly distinguishes self-hosted and SaaS operating modes and expected workflows.
   3. Developer can start cloud-api, cloud-web, data services, and a local agent with one documented command and complete seeded local setup.
   4. Production configuration accepts only HTTPS/WSS transport for UI/API/agent communication paths.
-**Plans**: TBD
+**Plans**: 3 plans
+Plans:
+- [ ] 01-01-PLAN.md - Add deterministic one-command SaaS-local bootstrap with seeded setup while preserving self-hosted lane.
+- [ ] 01-02-PLAN.md - Enforce production HTTPS/WSS-only transport guardrails across API, web, and agent runtimes.
+- [ ] 01-03-PLAN.md - Split and clarify documentation for self-hosted vs SaaS-local modes with verification checklists.
 
 ### Phase 2: Identity, Access, and Tenant Isolation
 **Goal**: Users can authenticate, collaborate, and operate within strict organization/project boundaries.
@@ -110,7 +114,7 @@ This roadmap delivers a secure outbound-agent Docker control plane in capability
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Dual-Mode Foundation and Local DX | 0/TBD | Not started | - |
+| 1. Dual-Mode Foundation and Local DX | 0/3 | Not started | - |
 | 2. Identity, Access, and Tenant Isolation | 0/TBD | Not started | - |
 | 3. Host Enrollment and Trusted Connectivity | 0/TBD | Not started | - |
 | 4. Fleet Inventory Views | 0/TBD | Not started | - |
