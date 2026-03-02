@@ -1,6 +1,8 @@
 import { Router, Request, Response } from 'express';
 import { prisma } from '../lib/prisma';
 import { requireAuth } from '../middleware/auth';
+import { requireOrgScope } from '../middleware/scope';
+import { canDeleteOrganization, canManageOrganization } from '../authz/roleMatrix';
 
 const router = Router();
 
@@ -94,27 +96,19 @@ router.post('/', async (req: Request, res: Response) => {
 });
 
 // GET /organizations/:id - Get single organization
-router.get('/:id', async (req: Request, res: Response) => {
+router.get('/:id', requireOrgScope({ paramKey: 'id' }), async (req: Request, res: Response) => {
   try {
-    const userId = req.user!.id;
     const { id } = req.params;
 
-    // Check membership
-    const membership = await prisma.organizationMember.findUnique({
+    const organization = await prisma.organization.findFirst({
       where: {
-        userId_organizationId: {
-          userId,
-          organizationId: id,
+        id,
+        members: {
+          some: {
+            userId: req.scope!.userId,
+          },
         },
       },
-    });
-
-    if (!membership) {
-      return res.status(403).json({ error: 'Not a member of this organization' });
-    }
-
-    const organization = await prisma.organization.findUnique({
-      where: { id },
       include: {
         members: {
           include: {
@@ -130,7 +124,7 @@ router.get('/:id', async (req: Request, res: Response) => {
       return res.status(404).json({ error: 'Organization not found' });
     }
 
-    res.json({ organization, role: membership.role });
+    res.json({ organization, role: req.scope!.role });
   } catch (error) {
     console.error('Get organization error:', error);
     res.status(500).json({ error: 'Failed to get organization' });
@@ -138,27 +132,12 @@ router.get('/:id', async (req: Request, res: Response) => {
 });
 
 // PATCH /organizations/:id - Update organization
-router.patch('/:id', async (req: Request, res: Response) => {
+router.patch('/:id', requireOrgScope({ paramKey: 'id' }), async (req: Request, res: Response) => {
   try {
-    const userId = req.user!.id;
     const { id } = req.params;
     const { name } = req.body;
 
-    // Check ownership or admin
-    const membership = await prisma.organizationMember.findUnique({
-      where: {
-        userId_organizationId: {
-          userId,
-          organizationId: id,
-        },
-      },
-    });
-
-    if (!membership) {
-      return res.status(403).json({ error: 'Not a member of this organization' });
-    }
-
-    if (membership.role !== 'OWNER' && membership.role !== 'ADMIN') {
+    if (!canManageOrganization(req.scope!.role)) {
       return res.status(403).json({ error: 'Insufficient permissions' });
     }
 
@@ -184,26 +163,11 @@ router.patch('/:id', async (req: Request, res: Response) => {
 });
 
 // DELETE /organizations/:id - Delete organization (OWNER only)
-router.delete('/:id', async (req: Request, res: Response) => {
+router.delete('/:id', requireOrgScope({ paramKey: 'id' }), async (req: Request, res: Response) => {
   try {
-    const userId = req.user!.id;
     const { id } = req.params;
 
-    // Check ownership
-    const membership = await prisma.organizationMember.findUnique({
-      where: {
-        userId_organizationId: {
-          userId,
-          organizationId: id,
-        },
-      },
-    });
-
-    if (!membership) {
-      return res.status(403).json({ error: 'Not a member of this organization' });
-    }
-
-    if (membership.role !== 'OWNER') {
+    if (!canDeleteOrganization(req.scope!.role)) {
       return res.status(403).json({ error: 'Only owners can delete organizations' });
     }
 
