@@ -26,7 +26,7 @@ Requirements for initial release. Each maps to exactly one roadmap phase.
 
 - [x] **ENRL-01**: User can create a host record and generate a one-time enrollment token.
 - [x] **ENRL-02**: User can view an install command/snippet for enrolling an agent with cloud URL and token.
-- [ ] **ENRL-03**: Platform can validate enrollment token and issue durable agent credentials on first connect.
+- [x] **ENRL-03**: Platform can validate enrollment token and issue durable agent credentials on first connect.
 - [ ] **ENRL-04**: Platform can mark host online/offline from heartbeat freshness.
 - [ ] **ENRL-05**: User can see host connectivity status and last-seen timestamp.
 
@@ -127,7 +127,7 @@ Which phases cover which requirements. Populated during roadmap creation.
 | AUTH-04 | Phase 2 | Complete |
 | ENRL-01 | Phase 3 | Complete |
 | ENRL-02 | Phase 3 | Complete |
-| ENRL-03 | Phase 3 | Pending |
+| ENRL-03 | Phase 3 | Complete |
 | ENRL-04 | Phase 3 | Pending |
 | ENRL-05 | Phase 3 | Pending |
 | INVT-01 | Phase 4 | Pending |
