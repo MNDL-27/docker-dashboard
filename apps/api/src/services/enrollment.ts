@@ -1,4 +1,6 @@
+import type { HostStatus } from '@prisma/client';
 import { createHash, randomBytes } from 'node:crypto';
+import { recordHeartbeat } from './presence';
 
 const DEFAULT_TOKEN_TTL_MINUTES = 15;
 
@@ -53,7 +55,7 @@ interface EnrollmentConsumeClient {
         architecture: string;
         dockerVersion: string;
         lastSeen: Date;
-        status: 'ONLINE';
+        status: HostStatus;
       };
       select: {
         id: true;
@@ -180,6 +182,8 @@ export async function consumeEnrollmentToken(
       return null;
     }
 
+    const heartbeat = recordHeartbeat(now);
+
     const host = await tx.host.create({
       data: {
         organizationId: consumedToken.organizationId,
@@ -189,8 +193,8 @@ export async function consumeEnrollmentToken(
         os: input.os,
         architecture: input.architecture,
         dockerVersion: input.dockerVersion,
-        lastSeen: now,
-        status: 'ONLINE',
+        lastSeen: heartbeat.lastSeen,
+        status: heartbeat.status,
       },
       select: {
         id: true,

@@ -10,6 +10,7 @@ import {
 } from '../middleware/agentAuth';
 import { resolveAgentScope } from '../services/scopedAccess';
 import { consumeEnrollmentToken } from '../services/enrollment';
+import { recordHeartbeat } from '../services/presence';
 
 const router = Router();
 const JWT_SECRET = process.env.AGENT_JWT_SECRET || process.env.SESSION_SECRET || 'fallback_agent_secret';
@@ -82,10 +83,7 @@ router.post('/heartbeat', requireAgentAuth, async (req: Request, res: Response):
 
         await prisma.host.update({
             where: { id: hostId },
-            data: {
-                lastSeen: new Date(),
-                status: 'ONLINE',
-            },
+            data: recordHeartbeat(),
             select: { id: true } // Minimal return
         });
 
@@ -120,7 +118,7 @@ router.post('/containers', requireAgentAuth, async (req: Request, res: Response)
         // Also update host lastSeen
         await prisma.host.update({
             where: { id: hostId },
-            data: { lastSeen: new Date(), status: 'ONLINE' },
+            data: recordHeartbeat(),
             select: { id: true },
         });
 

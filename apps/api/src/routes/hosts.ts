@@ -4,6 +4,7 @@ import { requireAuth } from '../middleware/auth';
 import { getPublicApiUrl } from '../config/transport';
 import { resolveUserScope, scopedHostWhere, scopedContainerWhere } from '../services/scopedAccess';
 import { buildEnrollmentInstallCommand, issueEnrollmentToken } from '../services/enrollment';
+import { deriveHostConnectivity } from '../services/presence';
 
 const router = Router();
 const TOKEN_CREATOR_ROLES = new Set(['OWNER', 'ADMIN', 'OPERATOR']);
@@ -42,24 +43,13 @@ router.get('/', async (req: Request, res: Response): Promise<void> => {
             orderBy: { name: 'asc' },
         });
 
-        // Compute online status if not updated in DB
-        const now = new Date().getTime();
         const formattedHosts = hosts.map(host => {
-            let isOnline = host.status === 'ONLINE';
-            if (host.lastSeen) {
-                const lastSeenTime = new Date(host.lastSeen).getTime();
-                if (now - lastSeenTime > 60000) { // 1 minute threshold
-                    isOnline = false;
-                } else {
-                    isOnline = true;
-                }
-            } else {
-                isOnline = false;
-            }
+            const presence = deriveHostConnectivity(host.lastSeen);
 
             return {
                 ...host,
-                status: isOnline ? 'ONLINE' : 'OFFLINE',
+                status: presence.status,
+                lastSeen: presence.lastSeen,
                 containerCount: host._count.containers,
                 _count: undefined,
             };
@@ -100,7 +90,14 @@ router.get('/:id', async (req: Request, res: Response): Promise<void> => {
             return;
         }
 
-        res.json({ host });
+        const presence = deriveHostConnectivity(host.lastSeen);
+        res.json({
+            host: {
+                ...host,
+                status: presence.status,
+                lastSeen: presence.lastSeen,
+            },
+        });
     } catch (error) {
         console.error('Get host error:', error);
         res.status(500).json({ error: 'Failed to get host' });
