@@ -20,6 +20,54 @@ interface HostTokenCreateClient {
   };
 }
 
+interface EnrollmentConsumeClient {
+  hostToken: {
+    updateMany: (args: {
+      where: {
+        tokenHash: string;
+        usedAt: null;
+        expiresAt: { gt: Date };
+      };
+      data: {
+        usedAt: Date;
+      };
+    }) => Promise<{ count: number }>;
+    findUnique: (args: {
+      where: {
+        tokenHash: string;
+      };
+      select: {
+        organizationId: true;
+        projectId: true;
+      };
+    }) => Promise<{ organizationId: string; projectId: string } | null>;
+  };
+  host: {
+    create: (args: {
+      data: {
+        organizationId: string;
+        projectId: string;
+        name: string;
+        hostname: string;
+        os: string;
+        architecture: string;
+        dockerVersion: string;
+        lastSeen: Date;
+        status: 'ONLINE';
+      };
+      select: {
+        id: true;
+        organizationId: true;
+        projectId: true;
+      };
+    }) => Promise<{ id: string; organizationId: string; projectId: string }>;
+  };
+}
+
+interface EnrollmentTransactionClient {
+  $transaction: <T>(operation: (tx: EnrollmentConsumeClient) => Promise<T>) => Promise<T>;
+}
+
 export interface IssueEnrollmentTokenInput {
   organizationId: string;
   projectId: string;
@@ -30,6 +78,21 @@ export interface IssuedEnrollmentToken {
   id: string;
   token: string;
   expiresAt: Date;
+}
+
+export interface ConsumeEnrollmentTokenInput {
+  token: string;
+  name: string;
+  hostname: string;
+  os: string;
+  architecture: string;
+  dockerVersion: string;
+}
+
+export interface EnrolledHostCredentialScope {
+  hostId: string;
+  organizationId: string;
+  projectId: string;
 }
 
 export function hashEnrollmentToken(token: string): string {
@@ -82,6 +145,66 @@ export async function issueEnrollmentToken(
     token,
     expiresAt: createdToken.expiresAt,
   };
+}
+
+export async function consumeEnrollmentToken(
+  db: EnrollmentTransactionClient,
+  input: ConsumeEnrollmentTokenInput
+): Promise<EnrolledHostCredentialScope | null> {
+  const tokenHash = hashEnrollmentToken(input.token);
+  const now = new Date();
+
+  return db.$transaction(async (tx) => {
+    const consumed = await tx.hostToken.updateMany({
+      where: {
+        tokenHash,
+        usedAt: null,
+        expiresAt: { gt: now },
+      },
+      data: { usedAt: now },
+    });
+
+    if (consumed.count !== 1) {
+      return null;
+    }
+
+    const consumedToken = await tx.hostToken.findUnique({
+      where: { tokenHash },
+      select: {
+        organizationId: true,
+        projectId: true,
+      },
+    });
+
+    if (!consumedToken) {
+      return null;
+    }
+
+    const host = await tx.host.create({
+      data: {
+        organizationId: consumedToken.organizationId,
+        projectId: consumedToken.projectId,
+        name: input.name,
+        hostname: input.hostname,
+        os: input.os,
+        architecture: input.architecture,
+        dockerVersion: input.dockerVersion,
+        lastSeen: now,
+        status: 'ONLINE',
+      },
+      select: {
+        id: true,
+        organizationId: true,
+        projectId: true,
+      },
+    });
+
+    return {
+      hostId: host.id,
+      organizationId: host.organizationId,
+      projectId: host.projectId,
+    };
+  });
 }
 
 export function buildEnrollmentInstallCommand(apiUrl: string, token: string): string {
