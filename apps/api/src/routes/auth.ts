@@ -1,22 +1,55 @@
 import { Router, Request, Response } from 'express';
 import bcrypt from 'bcrypt';
 import { prisma } from '../lib/prisma';
+import { getValidationErrorMessage, loginSchema, registerSchema } from '../lib/validation/auth';
 
 const router = Router();
+
+function regenerateSession(req: Request): Promise<void> {
+  return new Promise((resolve, reject) => {
+    req.session.regenerate((error) => {
+      if (error) {
+        reject(error);
+        return;
+      }
+      resolve();
+    });
+  });
+}
+
+function saveSession(req: Request): Promise<void> {
+  return new Promise((resolve, reject) => {
+    req.session.save((error) => {
+      if (error) {
+        reject(error);
+        return;
+      }
+      resolve();
+    });
+  });
+}
+
+function destroySession(req: Request): Promise<void> {
+  return new Promise((resolve, reject) => {
+    req.session.destroy((error) => {
+      if (error) {
+        reject(error);
+        return;
+      }
+      resolve();
+    });
+  });
+}
 
 // POST /register - Create new user account
 router.post('/register', async (req: Request, res: Response) => {
   try {
-    const { email, password, name } = req.body;
-
-    // Validate input
-    if (!email || !password) {
-      return res.status(400).json({ error: 'Email and password are required' });
+    const parseResult = registerSchema.safeParse(req.body);
+    if (!parseResult.success) {
+      return res.status(400).json({ error: getValidationErrorMessage(parseResult.error) });
     }
 
-    if (password.length < 8) {
-      return res.status(400).json({ error: 'Password must be at least 8 characters' });
-    }
+    const { email, password, name } = parseResult.data;
 
     // Check if user already exists
     const existingUser = await prisma.user.findUnique({
@@ -35,12 +68,13 @@ router.post('/register', async (req: Request, res: Response) => {
       data: {
         email,
         passwordHash,
-        name,
+        name: name ?? null,
       },
     });
 
-    // Set session
+    await regenerateSession(req);
     req.session.userId = user.id;
+    await saveSession(req);
 
     // Return user without passwordHash
     res.status(201).json({
@@ -59,12 +93,12 @@ router.post('/register', async (req: Request, res: Response) => {
 // POST /login - Authenticate user
 router.post('/login', async (req: Request, res: Response) => {
   try {
-    const { email, password } = req.body;
-
-    // Validate input
-    if (!email || !password) {
-      return res.status(400).json({ error: 'Email and password are required' });
+    const parseResult = loginSchema.safeParse(req.body);
+    if (!parseResult.success) {
+      return res.status(400).json({ error: getValidationErrorMessage(parseResult.error) });
     }
+
+    const { email, password } = parseResult.data;
 
     // Find user
     const user = await prisma.user.findUnique({
@@ -82,8 +116,9 @@ router.post('/login', async (req: Request, res: Response) => {
       return res.status(401).json({ error: 'Invalid credentials' });
     }
 
-    // Set session
+    await regenerateSession(req);
     req.session.userId = user.id;
+    await saveSession(req);
 
     // Return user without passwordHash
     res.json({
@@ -100,15 +135,15 @@ router.post('/login', async (req: Request, res: Response) => {
 });
 
 // POST /logout - End session
-router.post('/logout', (req: Request, res: Response) => {
-  req.session.destroy((err) => {
-    if (err) {
-      console.error('Logout error:', err);
-      return res.status(500).json({ error: 'Failed to logout' });
-    }
+router.post('/logout', async (req: Request, res: Response) => {
+  try {
+    await destroySession(req);
     res.clearCookie('connect.sid');
     res.json({ success: true });
-  });
+  } catch (error) {
+    console.error('Logout error:', error);
+    res.status(500).json({ error: 'Failed to logout' });
+  }
 });
 
 // GET /me - Get current user
@@ -123,7 +158,8 @@ router.get('/me', async (req: Request, res: Response) => {
     });
 
     if (!user) {
-      return res.status(401).json({ error: 'User not found' });
+      res.clearCookie('connect.sid');
+      return res.status(401).json({ error: 'Not authenticated' });
     }
 
     res.json({

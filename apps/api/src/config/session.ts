@@ -1,9 +1,9 @@
 import session from 'express-session';
 import connectPgSimple from 'connect-pg-simple';
 import { Pool } from 'pg';
-import { prisma } from '../lib/prisma';
 
 const PgSession = connectPgSimple(session);
+const isProduction = process.env.NODE_ENV === 'production';
 
 // Create a PostgreSQL pool using the DATABASE_URL from environment
 const pool = new Pool({
@@ -19,10 +19,12 @@ export const sessionMiddleware = session({
   secret: process.env.SESSION_SECRET || 'change-me-in-production',
   resave: false,
   saveUninitialized: false,
+  rolling: true,
+  proxy: isProduction,
   cookie: {
     maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
     httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
+    secure: isProduction,
     sameSite: 'lax',
   },
 });

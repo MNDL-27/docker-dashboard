@@ -35,6 +35,7 @@ export async function requireAuth(
     });
 
     if (!user) {
+      req.session.destroy(() => undefined);
       res.status(401).json({ error: 'User not found' });
       return;
     }
