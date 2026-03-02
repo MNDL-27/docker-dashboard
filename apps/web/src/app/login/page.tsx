@@ -25,9 +25,10 @@ export default function LoginPage() {
         try {
             await apiFetch('/auth/login', {
                 method: 'POST',
-                body: { email, password },
+                body: { email: email.trim().toLowerCase(), password },
             });
-            router.push('/');
+            router.replace('/');
+            router.refresh();
         } catch (err) {
             setError(err instanceof Error ? err.message : 'Login failed');
         } finally {

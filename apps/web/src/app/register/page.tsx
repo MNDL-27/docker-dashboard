@@ -30,9 +30,14 @@ export default function RegisterPage() {
         try {
             await apiFetch('/auth/register', {
                 method: 'POST',
-                body: { email, password, name: name || undefined },
+                body: {
+                    email: email.trim().toLowerCase(),
+                    password,
+                    name: name.trim() || undefined,
+                },
             });
-            router.push('/');
+            router.replace('/');
+            router.refresh();
         } catch (err) {
             setError(err instanceof Error ? err.message : 'Registration failed');
         } finally {

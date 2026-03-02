@@ -2,35 +2,45 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { apiFetch } from '@/lib/api';
-
-interface User {
-    id: string;
-    email: string;
-    name: string | null;
-}
+import { fetchCurrentUser, logout, AuthUser } from '@/lib/api';
 
 export default function HomePage() {
     const router = useRouter();
-    const [user, setUser] = useState<User | null>(null);
+    const [user, setUser] = useState<AuthUser | null>(null);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        apiFetch<{ user: User }>('/api/me')
-            .then((data) => {
-                setUser(data.user);
+        let active = true;
+
+        fetchCurrentUser()
+            .then((currentUser) => {
+                if (!active) {
+                    return;
+                }
+                setUser(currentUser);
                 setLoading(false);
             })
             .catch(() => {
+                if (!active) {
+                    return;
+                }
+                setUser(null);
+                setLoading(false);
                 router.replace('/login');
             });
+
+        return () => {
+            active = false;
+        };
     }, [router]);
 
     async function handleLogout() {
         try {
-            await apiFetch('/auth/logout', { method: 'POST' });
+            await logout();
         } finally {
+            setUser(null);
             router.replace('/login');
+            router.refresh();
         }
     }
 
