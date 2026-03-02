@@ -14,6 +14,18 @@ interface Host {
     containerCount: number;
 }
 
+function formatLastSeen(lastSeen: string | null): string {
+    if (!lastSeen) {
+        return 'Never reported';
+    }
+
+    return new Date(lastSeen).toLocaleString();
+}
+
+function formatConnectivityStatus(status: Host['status']): string {
+    return status === 'ONLINE' ? 'Online' : 'Offline';
+}
+
 export function HostList({ organizationId }: { organizationId: string }) {
     const [hosts, setHosts] = useState<Host[]>([]);
     const [loading, setLoading] = useState(true);
@@ -79,12 +91,12 @@ export function HostList({ organizationId }: { organizationId: string }) {
                                     </td>
                                     <td>
                                         <span className={`status-badge ${host.status.toLowerCase()}`}>
-                                            {host.status}
+                                            {formatConnectivityStatus(host.status)}
                                         </span>
                                     </td>
                                     <td>{host.containerCount}</td>
                                     <td>
-                                        {host.lastSeen ? new Date(host.lastSeen).toLocaleString() : 'Never'}
+                                        {formatLastSeen(host.lastSeen)}
                                     </td>
                                 </tr>
                             ))}
