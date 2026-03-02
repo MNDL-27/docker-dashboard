@@ -27,8 +27,8 @@ Requirements for initial release. Each maps to exactly one roadmap phase.
 - [x] **ENRL-01**: User can create a host record and generate a one-time enrollment token.
 - [x] **ENRL-02**: User can view an install command/snippet for enrolling an agent with cloud URL and token.
 - [x] **ENRL-03**: Platform can validate enrollment token and issue durable agent credentials on first connect.
-- [ ] **ENRL-04**: Platform can mark host online/offline from heartbeat freshness.
-- [ ] **ENRL-05**: User can see host connectivity status and last-seen timestamp.
+- [x] **ENRL-04**: Platform can mark host online/offline from heartbeat freshness.
+- [x] **ENRL-05**: User can see host connectivity status and last-seen timestamp.
 
 ### Inventory and Fleet Views
 
@@ -69,7 +69,7 @@ Requirements for initial release. Each maps to exactly one roadmap phase.
 
 - [x] **SECU-01**: Platform enforces tenant isolation on all API and data access paths.
 - [ ] **SECU-02**: Platform supports HTTPS/WSS-only transport in production configuration.
-- [ ] **SECU-03**: Platform can rate-limit UI API traffic and agent ingest traffic per host.
+- [x] **SECU-03**: Platform can rate-limit UI API traffic and agent ingest traffic per host.
 - [ ] **SECU-04**: User can configure monitor-only agent mode that disables action execution.
 
 ### Developer Experience and Local Environment
@@ -128,8 +128,8 @@ Which phases cover which requirements. Populated during roadmap creation.
 | ENRL-01 | Phase 3 | Complete |
 | ENRL-02 | Phase 3 | Complete |
 | ENRL-03 | Phase 3 | Complete |
-| ENRL-04 | Phase 3 | Pending |
-| ENRL-05 | Phase 3 | Pending |
+| ENRL-04 | Phase 3 | Complete |
+| ENRL-05 | Phase 3 | Complete |
 | INVT-01 | Phase 4 | Pending |
 | INVT-02 | Phase 4 | Pending |
 | INVT-03 | Phase 4 | Pending |
@@ -152,7 +152,7 @@ Which phases cover which requirements. Populated during roadmap creation.
 | ALRT-05 | Phase 8 | Pending |
 | SECU-01 | Phase 2 | Complete |
 | SECU-02 | Phase 1 | Pending |
-| SECU-03 | Phase 3 | Pending |
+| SECU-03 | Phase 3 | Complete |
 | SECU-04 | Phase 7 | Pending |
 | DEVX-01 | Phase 1 | Pending |
 | DEVX-02 | Phase 1 | Pending |

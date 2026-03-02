@@ -12,7 +12,7 @@ This roadmap delivers a secure outbound-agent Docker control plane in capability
 
 - [x] **Phase 1: Dual-Mode Foundation and Local DX** - Keep self-hosted mode working while enabling reproducible local SaaS+agent workflows and secure transport defaults.
 - [x] **Phase 2: Identity, Access, and Tenant Isolation** - Deliver accounts, organization/project boundaries, role assignment, and strict tenant-scoped access. (completed 2026-03-02)
-- [ ] **Phase 3: Host Enrollment and Trusted Connectivity** - Establish one-time enrollment, durable agent credentials, heartbeat freshness, and protected ingest.
+- [x] **Phase 3: Host Enrollment and Trusted Connectivity** - Establish one-time enrollment, durable agent credentials, heartbeat freshness, and protected ingest. (completed 2026-03-02)
 - [ ] **Phase 4: Fleet Inventory Views** - Deliver fleet and host container visibility with practical filtering and search.
 - [ ] **Phase 5: Metrics Telemetry Core** - Provide live container metrics and bounded historical windows.
 - [ ] **Phase 6: Live Logs and Retention** - Provide live tailing, stream controls, downloads, and bounded log retention behavior.
@@ -68,7 +68,7 @@ Plans:
 Plans:
 - [x] 03-01-PLAN.md - Add secure tenant-scoped host enrollment token issuance and copy-ready install snippet flow.
 - [x] 03-02-PLAN.md - Implement atomic first-connect token exchange and durable tenant-bound agent credential validation.
-- [ ] 03-03-PLAN.md - Centralize heartbeat-derived presence and enforce per-host API/ingest rate limiting with fleet status visibility.
+- [x] 03-03-PLAN.md - Centralize heartbeat-derived presence and enforce per-host API/ingest rate limiting with fleet status visibility.
 
 ### Phase 4: Fleet Inventory Views
 **Goal**: Users can inspect fleet composition and host-level container state quickly.
@@ -127,7 +127,7 @@ Plans:
 |-------|----------------|--------|-----------|
 | 1. Dual-Mode Foundation and Local DX | 3/3 | Complete | 2026-03-02 |
 | 2. Identity, Access, and Tenant Isolation | 6/6 | Complete   | 2026-03-02 |
-| 3. Host Enrollment and Trusted Connectivity | 2/3 | In Progress | - |
+| 3. Host Enrollment and Trusted Connectivity | 3/3 | Complete | 2026-03-02 |
 | 4. Fleet Inventory Views | 0/TBD | Not started | - |
 | 5. Metrics Telemetry Core | 0/TBD | Not started | - |
 | 6. Live Logs and Retention | 0/TBD | Not started | - |

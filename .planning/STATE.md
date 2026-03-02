@@ -10,18 +10,18 @@ See: `.planning/PROJECT.md` (updated 2026-03-01)
 ## Current Position
 
 Phase: 3 of 8 (Host Enrollment and Trusted Connectivity)
-Plan: 2 of 3 in current phase
-Status: Phase 3 plan execution in progress
-Last activity: 2026-03-02 - Completed 03-02 atomic first-connect enrollment exchange and durable agent credential validation.
+Plan: 3 of 3 in current phase
+Status: Phase 3 complete
+Last activity: 2026-03-02 - Completed 03-03 deterministic host presence and host-keyed API/ingest rate limiting.
 
-Progress: [███████░░░] 68.8%
+Progress: [████████░░] 75.0%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 11
+- Total plans completed: 12
 - Average duration: 4 min
-- Total execution time: 0.8 hours
+- Total execution time: 0.9 hours
 
 **By Phase:**
 
@@ -29,15 +29,15 @@ Progress: [███████░░░] 68.8%
 |-------|-------|-------|----------|
 | 1 | 3 | 0 min | 0 min |
 | 2 | 6 | 35 min | 6 min |
-| 3 | 2 | 9 min | 5 min |
+| 3 | 3 | 14 min | 5 min |
 | 4-8 | 0 | 0 min | 0 min |
 
 **Recent Trend:**
-- Last 5 plans: 02-04, 02-05, 02-06, 03-01, 03-02
+- Last 5 plans: 02-05, 02-06, 03-01, 03-02, 03-03
 - Trend: Stable
 
 *Updated after each plan completion*
-- Latest execution: Phase 03 Plan 02 | 4 min | 2 tasks | 6 files
+- Latest execution: Phase 03 Plan 03 | 5 min | 3 tasks | 10 files
 
 ## Accumulated Context
 
@@ -69,6 +69,9 @@ Recent decisions affecting current work:
 - [Phase 03]: Return cloud URL from API and render one copy-ready install command in fleet UI.
 - [Phase 03]: Kept JWT durable credentials and enforced explicit issuer/audience/algorithm constraints for agent auth.
 - [Phase 03]: Centralized first-connect enrollment in consumeEnrollmentToken and require updateMany count===1 before host creation.
+- [Phase 03]: Use HOST_ONLINE_THRESHOLD_MS in one shared presence service as the single connectivity policy.
+- [Phase 03]: Apply rate limiting at mount points in index.ts and key agent buckets by req.agent.hostId.
+- [Phase 03]: Hash pre-auth enrollment tokens for limiter keys so abusive bootstrap traffic is isolated without storing plaintext.
 
 ### Pending Todos
 
@@ -82,6 +85,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-02 23:17
-Stopped at: Completed 03-02-PLAN.md
+Last session: 2026-03-02 23:57
+Stopped at: Completed 03-03-PLAN.md
 Resume file: None
