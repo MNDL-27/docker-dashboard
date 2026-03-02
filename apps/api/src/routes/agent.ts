@@ -3,6 +3,7 @@ import { prisma } from '../lib/prisma';
 import jwt from 'jsonwebtoken';
 import { z } from 'zod';
 import { requireAgentAuth } from '../middleware/agentAuth';
+import { resolveAgentScope } from '../services/scopedAccess';
 
 const router = Router();
 const JWT_SECRET = process.env.AGENT_JWT_SECRET || process.env.SESSION_SECRET || 'fallback_agent_secret';
@@ -56,6 +57,7 @@ router.post('/enroll', async (req: Request, res: Response): Promise<void> => {
             prisma.host.create({
                 data: {
                     organizationId: hostToken.organizationId,
+                    projectId: hostToken.projectId,
                     name: payload.name,
                     hostname: payload.hostname,
                     os: payload.os,
@@ -72,6 +74,7 @@ router.post('/enroll', async (req: Request, res: Response): Promise<void> => {
             {
                 hostId: host.id,
                 organizationId: host.organizationId,
+                projectId: host.projectId,
             },
             JWT_SECRET,
             { expiresIn: '10y' } // Agent tokens are long-lived, revocation happens by deleting the Host record
@@ -81,6 +84,7 @@ router.post('/enroll', async (req: Request, res: Response): Promise<void> => {
             agentToken,
             hostId: host.id,
             organizationId: host.organizationId,
+            projectId: host.projectId,
         });
     } catch (error) {
         console.error('Agent enrollment error:', error);
@@ -91,7 +95,13 @@ router.post('/enroll', async (req: Request, res: Response): Promise<void> => {
 // POST /agent/heartbeat - Agent heartbeat
 router.post('/heartbeat', requireAgentAuth, async (req: Request, res: Response): Promise<void> => {
     try {
-        const { hostId } = req.agent!;
+        const { hostId, organizationId, projectId } = req.agent!;
+
+        const validScope = await resolveAgentScope({ hostId, organizationId, projectId });
+        if (!validScope) {
+            res.status(403).json({ error: 'Out-of-scope agent context' });
+            return;
+        }
 
         await prisma.host.update({
             where: { id: hostId },
@@ -114,8 +124,14 @@ import { syncContainers, ContainerPayload } from '../services/container';
 // POST /agent/containers - Sync container snapshots
 router.post('/containers', requireAgentAuth, async (req: Request, res: Response): Promise<void> => {
     try {
-        const { hostId } = req.agent!;
+        const { hostId, organizationId, projectId } = req.agent!;
         const containers: ContainerPayload[] = req.body;
+
+        const validScope = await resolveAgentScope({ hostId, organizationId, projectId });
+        if (!validScope) {
+            res.status(403).json({ error: 'Out-of-scope agent context' });
+            return;
+        }
 
         if (!Array.isArray(containers)) {
             res.status(400).json({ error: 'Expected an array of containers' });

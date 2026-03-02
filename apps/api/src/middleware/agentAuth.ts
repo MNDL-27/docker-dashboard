@@ -8,6 +8,7 @@ declare global {
             agent?: {
                 hostId: string;
                 organizationId: string;
+                projectId: string;
             };
         }
     }
@@ -30,15 +31,19 @@ export async function requireAgentAuth(
         const token = authHeader.split(' ')[1];
 
         try {
-            const decoded = jwt.verify(token, JWT_SECRET) as { hostId: string; organizationId: string };
+            const decoded = jwt.verify(token, JWT_SECRET) as {
+                hostId: string;
+                organizationId: string;
+                projectId: string;
+            };
 
             // Verify host still exists and is not deleted/deauthorized
             const host = await prisma.host.findUnique({
                 where: { id: decoded.hostId },
-                select: { id: true, organizationId: true }
+                select: { id: true, organizationId: true, projectId: true }
             });
 
-            if (!host || host.organizationId !== decoded.organizationId) {
+            if (!host || host.organizationId !== decoded.organizationId || host.projectId !== decoded.projectId) {
                 res.status(401).json({ error: 'Invalid agent identity' });
                 return;
             }
@@ -46,6 +51,7 @@ export async function requireAgentAuth(
             req.agent = {
                 hostId: decoded.hostId,
                 organizationId: decoded.organizationId,
+                projectId: decoded.projectId,
             };
 
             next();
