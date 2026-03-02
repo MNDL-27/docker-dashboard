@@ -6,6 +6,8 @@
     "scripts": {
         "dev": "npx ts-node --transpile-only src/index.ts",
         "build": "tsc",
+        "test": "npm run test:tenant-isolation",
+        "test:tenant-isolation": "vitest run src/__tests__/tenant-isolation.test.ts",
         "start": "node dist/index.js",
         "postinstall": "prisma generate --schema=../../prisma/schema.prisma"
     },
@@ -31,9 +33,12 @@
         "@types/jsonwebtoken": "^9.0.10",
         "@types/node": "^22.0.0",
         "@types/pg": "^8.11.0",
+        "@types/supertest": "^7.2.0",
         "@types/ws": "^8.18.1",
         "prisma": "^7.4.1",
+        "supertest": "^7.2.2",
         "ts-node": "^10.9.2",
-        "typescript": "^5.7.0"
+        "typescript": "^5.7.0",
+        "vitest": "^4.0.18"
     }
 }
