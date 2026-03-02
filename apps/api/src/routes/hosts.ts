@@ -3,8 +3,10 @@ import { prisma } from '../lib/prisma';
 import { requireAuth } from '../middleware/auth';
 import { getPublicApiUrl } from '../config/transport';
 import { resolveUserScope, scopedHostWhere, scopedContainerWhere } from '../services/scopedAccess';
+import { buildEnrollmentInstallCommand, issueEnrollmentToken } from '../services/enrollment';
 
 const router = Router();
+const TOKEN_CREATOR_ROLES = new Set(['OWNER', 'ADMIN', 'OPERATOR']);
 
 // Apply requireAuth to all host routes
 router.use(requireAuth);
@@ -127,45 +129,44 @@ router.post('/tokens', async (req: Request, res: Response): Promise<void> => {
             return;
         }
 
-        if (scope.role !== 'OWNER' && scope.role !== 'ADMIN' && scope.role !== 'OPERATOR') {
+        if (!TOKEN_CREATOR_ROLES.has(scope.role)) {
             res.status(403).json({ error: 'Insufficient permissions. Must be OWNER, ADMIN, or OPERATOR.' });
             return;
         }
 
-        const project = await prisma.project.findFirst({
-            where: { id: projectId, organizationId: scope.organizationId },
+        const enrollmentResult = await prisma.$transaction(async (tx) => {
+            const project = await tx.project.findFirst({
+                where: { id: projectId, organizationId: scope.organizationId },
+                select: { id: true, name: true },
+            });
+
+            if (!project) {
+                return null;
+            }
+
+            const issuedToken = await issueEnrollmentToken(tx, {
+                organizationId: scope.organizationId,
+                projectId: scope.projectId!,
+                createdBy: userId,
+            });
+
+            return { project, issuedToken };
         });
 
-        if (!project) {
+        if (!enrollmentResult) {
             res.status(400).json({ error: 'Project not found in this organization' });
             return;
         }
 
-        // Generate token (Prisma will use gen_random_uuid())
-        const expiresAt = new Date();
-        expiresAt.setHours(expiresAt.getHours() + 24); // 24 hour expiration
-
-        const hostToken = await prisma.hostToken.create({
-            data: {
-                organizationId: scope.organizationId,
-                projectId: scope.projectId!,
-                createdBy: userId,
-                expiresAt,
-            },
-        });
+        const { project, issuedToken } = enrollmentResult;
 
         const apiUrl = getPublicApiUrl();
-
-        // Command for starting the agent
-        const command = `docker run -d --name docker-dashboard-agent \\
-  -v /var/run/docker.sock:/var/run/docker.sock \\
-  -e AGENT_API_URL="${apiUrl}" \\
-  -e AGENT_TOKEN="${hostToken.token}" \\
-  docker-dashboard-agent:latest`;
+        const command = buildEnrollmentInstallCommand(apiUrl, issuedToken.token);
 
         res.status(201).json({
-            token: hostToken.token,
-            expiresAt: hostToken.expiresAt,
+            token: issuedToken.token,
+            expiresAt: issuedToken.expiresAt,
+            cloudUrl: apiUrl,
             projectId: project.id,
             projectName: project.name,
             command

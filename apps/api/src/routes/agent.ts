@@ -4,6 +4,7 @@ import jwt from 'jsonwebtoken';
 import { z } from 'zod';
 import { requireAgentAuth } from '../middleware/agentAuth';
 import { resolveAgentScope } from '../services/scopedAccess';
+import { hashEnrollmentToken } from '../services/enrollment';
 
 const router = Router();
 const JWT_SECRET = process.env.AGENT_JWT_SECRET || process.env.SESSION_SECRET || 'fallback_agent_secret';
@@ -28,33 +29,41 @@ router.post('/enroll', async (req: Request, res: Response): Promise<void> => {
 
         const payload = result.data;
 
-        // Validate enrollment token
-        const hostToken = await prisma.hostToken.findUnique({
-            where: { token: payload.token },
-        });
+        const tokenHash = hashEnrollmentToken(payload.token);
+        const now = new Date();
 
-        if (!hostToken) {
-            res.status(401).json({ error: 'Invalid enrollment token' });
-            return;
-        }
+        const host = await prisma.$transaction(async (tx) => {
+            const hostToken = await tx.hostToken.findFirst({
+                where: {
+                    tokenHash,
+                    usedAt: null,
+                    expiresAt: { gt: now },
+                },
+                select: {
+                    id: true,
+                    organizationId: true,
+                    projectId: true,
+                },
+            });
 
-        if (hostToken.usedAt) {
-            res.status(401).json({ error: 'Enrollment token has already been used' });
-            return;
-        }
+            if (!hostToken) {
+                return null;
+            }
 
-        if (hostToken.expiresAt < new Date()) {
-            res.status(401).json({ error: 'Enrollment token has expired' });
-            return;
-        }
+            const consumed = await tx.hostToken.updateMany({
+                where: {
+                    id: hostToken.id,
+                    usedAt: null,
+                    expiresAt: { gt: now },
+                },
+                data: { usedAt: now },
+            });
 
-        // Use transaction to mark token used and create Host
-        const [_, host] = await prisma.$transaction([
-            prisma.hostToken.update({
-                where: { id: hostToken.id },
-                data: { usedAt: new Date() },
-            }),
-            prisma.host.create({
+            if (consumed.count !== 1) {
+                return null;
+            }
+
+            return tx.host.create({
                 data: {
                     organizationId: hostToken.organizationId,
                     projectId: hostToken.projectId,
@@ -63,11 +72,16 @@ router.post('/enroll', async (req: Request, res: Response): Promise<void> => {
                     os: payload.os,
                     architecture: payload.architecture,
                     dockerVersion: payload.dockerVersion,
-                    lastSeen: new Date(),
+                    lastSeen: now,
                     status: 'ONLINE',
                 },
-            }),
-        ]);
+            });
+        });
+
+        if (!host) {
+            res.status(401).json({ error: 'Invalid enrollment token' });
+            return;
+        }
 
         // Generate Agent JWT
         const agentToken = jwt.sign(

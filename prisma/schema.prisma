@@ -75,7 +75,7 @@ model OrganizationMember {
   @@index([organizationId])
 }
 
-// Project model within an organization
+// Project model within an organization (= Client Workspace)
 model Project {
   id             String   @id @default(uuid())
   name           String
@@ -86,6 +86,10 @@ model Project {
   // Relations
   organization Organization    @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   members      ProjectMember[]
+  hosts        Host[]
+  hostTokens   HostToken[]
+  webhooks     Webhook[]
+  alertRules   AlertRule[]
 
   @@index([organizationId])
 }
@@ -149,6 +153,7 @@ model OrganizationInvite {
 model Host {
   id             String     @id @default(uuid())
   organizationId String
+  projectId      String
   name           String
   hostname       String
   os             String
@@ -161,17 +166,21 @@ model Host {
 
   // Relations
   organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  project      Project      @relation(fields: [projectId], references: [id], onDelete: Cascade)
   containers   Container[]
 
   @@index([organizationId])
+  @@index([projectId])
+  @@index([organizationId, projectId])
   @@index([status])
 }
 
 // Host enrollment token
 model HostToken {
   id             String    @id @default(uuid())
-  token          String    @unique @default(dbgenerated("gen_random_uuid()"))
+  tokenHash      String    @unique
   organizationId String
+  projectId      String
   createdBy      String
   expiresAt      DateTime
   usedAt         DateTime?
@@ -179,10 +188,12 @@ model HostToken {
 
   // Relations
   organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  project      Project      @relation(fields: [projectId], references: [id], onDelete: Cascade)
   user         User         @relation(fields: [createdBy], references: [id], onDelete: Cascade)
 
   @@index([organizationId])
-  @@index([token])
+  @@index([projectId])
+  @@index([tokenHash])
 }
 
 // Container snapshot
@@ -270,6 +281,7 @@ model AuditLog {
 model AlertRule {
   id             String   @id @default(cuid())
   organizationId String
+  projectId      String?  // null = applies to all projects in org
   name           String
   condition      String // "CONTAINER_DOWN", "RESTART_LOOP", "CPU_USAGE", "MEMORY_USAGE"
   threshold      Float? // Value to exceed (e.g. 80 for CPU%)
@@ -278,9 +290,11 @@ model AlertRule {
   updatedAt      DateTime @updatedAt
 
   organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  project      Project?     @relation(fields: [projectId], references: [id], onDelete: SetNull)
   alerts       Alert[]
 
   @@index([organizationId])
+  @@index([projectId])
 }
 
 model Alert {
@@ -304,6 +318,7 @@ model Alert {
 model Webhook {
   id             String   @id @default(cuid())
   organizationId String
+  projectId      String?  // null = org-wide webhook; set = project-scoped
   url            String
   secret         String? // Optional HMAC secret for payload signatures
   isActive       Boolean  @default(true)
@@ -311,6 +326,8 @@ model Webhook {
   updatedAt      DateTime @updatedAt
 
   organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  project      Project?     @relation(fields: [projectId], references: [id], onDelete: SetNull)
 
   @@index([organizationId])
+  @@index([projectId])
 }
