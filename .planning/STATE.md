@@ -10,33 +10,33 @@ See: `.planning/PROJECT.md` (updated 2026-03-01)
 ## Current Position
 
 Phase: 2 of 8 (Identity, Access, and Tenant Isolation)
-Plan: 4 of 5 in current phase
-Status: Executing Phase 2 plans
-Last activity: 2026-03-02 - Completed 02-04 tenant isolation enforcement plan.
+Plan: 5 of 5 in current phase
+Status: Phase 2 complete
+Last activity: 2026-03-02 - Completed 02-05 realtime/notification tenant isolation hardening plan.
 
-Progress: [████░░░░░░] 40.0%
+Progress: [█████░░░░░] 50.0%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 7
+- Total plans completed: 8
 - Average duration: 4 min
-- Total execution time: 0.4 hours
+- Total execution time: 0.5 hours
 
 **By Phase:**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
 | 1 | 3 | 0 min | 0 min |
-| 2 | 4 | 25 min | 6 min |
+| 2 | 5 | 32 min | 6 min |
 | 3-8 | 0 | 0 min | 0 min |
 
 **Recent Trend:**
-- Last 5 plans: 01-03, 02-01, 02-02, 02-03, 02-04
+- Last 5 plans: 02-01, 02-02, 02-03, 02-04, 02-05
 - Trend: Improving
 
 *Updated after each plan completion*
-- Latest execution: Phase 02 Plan 04 | 1 min | 2 tasks | 7 files
+- Latest execution: Phase 02 Plan 05 | 7 min | 2 tasks | 7 files
 
 ## Accumulated Context
 
@@ -59,6 +59,8 @@ Recent decisions affecting current work:
 - [Phase 02]: Use scoped middleware (requireOrgPermission) to keep owner/admin gates consistent before mutation handlers run.
 - [Phase 02]: Use shared scopedAccess service as single org/project boundary enforcement layer.
 - [Phase 02]: Require explicit tenant context and scope-bound primary queries for hosts/actions/audit to prevent cross-tenant leakage.
+- [Phase 02]: Standardize alerts/webhooks on requireOrgScope/requireOrgPermission with scope-constrained primary lookups to prevent authorization drift.
+- [Phase 02]: Gate SECU-01 non-identity paths with a deterministic apps/api tenant-isolation vitest suite executed via npm test.
 
 ### Pending Todos
 
@@ -72,6 +74,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-02 16:06
-Stopped at: Completed 02-04-PLAN.md
+Last session: 2026-03-02 16:15
+Stopped at: Completed 02-05-PLAN.md
 Resume file: None

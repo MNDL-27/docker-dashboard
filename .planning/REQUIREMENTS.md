@@ -67,7 +67,7 @@ Requirements for initial release. Each maps to exactly one roadmap phase.
 
 ### Security and Guardrails
 
-- [ ] **SECU-01**: Platform enforces tenant isolation on all API and data access paths.
+- [x] **SECU-01**: Platform enforces tenant isolation on all API and data access paths.
 - [ ] **SECU-02**: Platform supports HTTPS/WSS-only transport in production configuration.
 - [ ] **SECU-03**: Platform can rate-limit UI API traffic and agent ingest traffic per host.
 - [ ] **SECU-04**: User can configure monitor-only agent mode that disables action execution.
@@ -150,7 +150,7 @@ Which phases cover which requirements. Populated during roadmap creation.
 | ALRT-03 | Phase 8 | Pending |
 | ALRT-04 | Phase 8 | Pending |
 | ALRT-05 | Phase 8 | Pending |
-| SECU-01 | Phase 2 | Pending |
+| SECU-01 | Phase 2 | Complete |
 | SECU-02 | Phase 1 | Pending |
 | SECU-03 | Phase 3 | Pending |
 | SECU-04 | Phase 7 | Pending |
