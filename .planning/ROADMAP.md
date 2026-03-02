@@ -64,7 +64,11 @@ Plans:
   2. Platform exchanges valid first-connect enrollment tokens for durable agent credentials and rejects invalid/reused enrollment attempts.
   3. User can see online/offline host status and last-seen timestamps based on heartbeat freshness.
   4. Per-host API and ingest rate limits throttle abusive traffic while healthy hosts continue operating.
-**Plans**: TBD
+**Plans**: 3 plans
+Plans:
+- [x] 03-01-PLAN.md - Add secure tenant-scoped host enrollment token issuance and copy-ready install snippet flow.
+- [ ] 03-02-PLAN.md - Implement atomic first-connect token exchange and durable tenant-bound agent credential validation.
+- [ ] 03-03-PLAN.md - Centralize heartbeat-derived presence and enforce per-host API/ingest rate limiting with fleet status visibility.
 
 ### Phase 4: Fleet Inventory Views
 **Goal**: Users can inspect fleet composition and host-level container state quickly.
@@ -123,7 +127,7 @@ Plans:
 |-------|----------------|--------|-----------|
 | 1. Dual-Mode Foundation and Local DX | 3/3 | Complete | 2026-03-02 |
 | 2. Identity, Access, and Tenant Isolation | 6/6 | Complete   | 2026-03-02 |
-| 3. Host Enrollment and Trusted Connectivity | 0/TBD | Not started | - |
+| 3. Host Enrollment and Trusted Connectivity | 1/3 | In Progress | - |
 | 4. Fleet Inventory Views | 0/TBD | Not started | - |
 | 5. Metrics Telemetry Core | 0/TBD | Not started | - |
 | 6. Live Logs and Retention | 0/TBD | Not started | - |
