@@ -50,7 +50,7 @@ Plans:
 Plans:
 - [x] 02-01-PLAN.md - Harden account/session auth lifecycle and align web authentication flows.
 - [x] 02-02-PLAN.md - Implement centralized organization/project scope enforcement and onboarding creation paths.
-- [ ] 02-03-PLAN.md - Deliver invitation and role-management API/UI with deterministic Owner/Admin policy controls.
+- [x] 02-03-PLAN.md - Deliver invitation and role-management API/UI with deterministic Owner/Admin policy controls.
 - [ ] 02-04-PLAN.md - Enforce fail-closed tenant isolation across core non-identity HTTP and ingest routes.
 - [ ] 02-05-PLAN.md - Harden remaining realtime/notification paths and add tenant-isolation regression tests.
 
@@ -121,7 +121,7 @@ Plans:
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Dual-Mode Foundation and Local DX | 3/3 | Complete | 2026-03-02 |
-| 2. Identity, Access, and Tenant Isolation | 2/5 | In Progress | - |
+| 2. Identity, Access, and Tenant Isolation | 3/5 | In Progress | - |
 | 3. Host Enrollment and Trusted Connectivity | 0/TBD | Not started | - |
 | 4. Fleet Inventory Views | 0/TBD | Not started | - |
 | 5. Metrics Telemetry Core | 0/TBD | Not started | - |
