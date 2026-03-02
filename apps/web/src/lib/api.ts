@@ -28,6 +28,28 @@ export interface OrganizationSummary {
     role?: 'OWNER' | 'ADMIN' | 'OPERATOR' | 'VIEWER';
 }
 
+export type OrganizationRole = 'OWNER' | 'ADMIN' | 'OPERATOR' | 'VIEWER';
+
+export interface OrganizationMember {
+    id: string;
+    role: OrganizationRole;
+    joinedAt: string;
+    user: {
+        id: string;
+        email: string;
+        name: string | null;
+        createdAt?: string;
+    };
+}
+
+export interface OrganizationInvite {
+    id: string;
+    email: string;
+    role: OrganizationRole;
+    expiresAt: string;
+    inviteUrl: string;
+}
+
 const SELECTED_ORGANIZATION_KEY = 'docker-dashboard:selected-organization-id';
 
 async function extractErrorMessage(res: Response): Promise<string> {
@@ -76,6 +98,44 @@ export async function createOrganization(name: string, slug?: string): Promise<O
         body: { name, ...(slug ? { slug } : {}) },
     });
     return response.organization;
+}
+
+export async function fetchOrganizationMembers(organizationId: string): Promise<OrganizationMember[]> {
+    const response = await apiFetch<{ members: OrganizationMember[] }>(`/api/organizations/${organizationId}/members`);
+    return response.members;
+}
+
+export async function createOrganizationInvite(
+    organizationId: string,
+    email: string,
+    role: OrganizationRole
+): Promise<OrganizationInvite> {
+    const response = await apiFetch<{ invite: OrganizationInvite }>(`/api/organizations/${organizationId}/invite`, {
+        method: 'POST',
+        body: { email, role },
+    });
+    return response.invite;
+}
+
+export async function updateOrganizationMemberRole(
+    organizationId: string,
+    memberId: string,
+    role: OrganizationRole
+): Promise<OrganizationMember> {
+    const response = await apiFetch<{ member: OrganizationMember }>(
+        `/api/organizations/${organizationId}/members/${memberId}`,
+        {
+            method: 'PATCH',
+            body: { role },
+        }
+    );
+    return response.member;
+}
+
+export async function removeOrganizationMember(organizationId: string, memberId: string): Promise<void> {
+    await apiFetch(`/api/organizations/${organizationId}/members/${memberId}`, {
+        method: 'DELETE',
+    });
 }
 
 export function getSelectedOrganizationId(): string | null {
