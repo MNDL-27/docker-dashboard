@@ -13,13 +13,17 @@ import auditRoutes from './routes/audit';
 import webhookRoutes from './routes/webhooks';
 import alertRoutes from './routes/alerts';
 import { requireAuth } from './middleware/auth';
+import { createAgentRateLimiters } from './middleware/rateLimit';
 import { handleUpgrade } from './websocket/server';
 import { startAlertEngine } from './services/alertEngine';
+import { assertProdTransport } from './config/transport';
 
 dotenv.config();
+assertProdTransport();
 
 const app = express();
 const PORT = process.env.PORT || 3001;
+const agentRateLimiters = createAgentRateLimiters();
 
 // Middleware
 app.use(cors({
@@ -35,6 +39,9 @@ app.use('/organizations', organizationRoutes);
 app.use('/organizations', projectRoutes);
 app.use('/', inviteRoutes);
 app.use('/hosts', hostRoutes);
+app.use('/agent/enroll', agentRateLimiters.enrollBootstrap);
+app.use('/agent/heartbeat', agentRateLimiters.heartbeat);
+app.use('/agent/containers', agentRateLimiters.containerIngest);
 app.use('/agent', agentRoutes);
 app.use('/api/containers', actionRoutes);
 app.use('/api/audit', auditRoutes);
