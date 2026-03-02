@@ -64,7 +64,12 @@ function resolveProjectId(req: Request, options: RequireOrgScopeOptions): string
   const headerValue = req.headers[projectHeaderKey];
   const fromHeader = typeof headerValue === 'string' ? headerValue : undefined;
 
-  return fromParams ?? fromBody ?? fromQuery ?? fromHeader;
+  const resolved = fromParams ?? fromBody ?? fromQuery ?? fromHeader;
+  if (resolved === 'null' || resolved === '') {
+    return undefined;
+  }
+
+  return resolved;
 }
 
 export function requireOrgScope(options: RequireOrgScopeOptions = {}) {

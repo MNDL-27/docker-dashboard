@@ -1,42 +1,33 @@
 import { Router, Request, Response } from 'express';
 import { prisma } from '../lib/prisma';
 import { requireAuth } from '../middleware/auth';
+import { requireOrgPermission, requireOrgScope } from '../middleware/scope';
+import { scopedContainerWhere } from '../services/scopedAccess';
 
 const router = Router();
 
 // Apply requireAuth to all alert routes
 router.use(requireAuth);
 
-// GET /api/alerts - List alerts for an organization
-router.get('/', async (req: Request, res: Response): Promise<void> => {
+// GET /api/alerts - List alerts for an organization (optional projectId filter)
+router.get('/', requireOrgScope(), async (req: Request, res: Response): Promise<void> => {
     try {
-        const orgId = req.headers['x-organization-id'] as string;
-
-        if (!orgId) {
-            res.status(400).json({ error: 'Organization ID is required' });
-            return;
-        }
-
-        // Check membership
-        const membership = await prisma.organizationMember.findUnique({
-            where: {
-                userId_organizationId: {
-                    userId: req.user!.id,
-                    organizationId: orgId,
-                },
-            },
-        });
-
-        if (!membership) {
-            res.status(403).json({ error: 'Not a member of this organization' });
-            return;
-        }
+        const { organizationId, projectId } = req.scope!;
+        const status = req.query.status as string | undefined;
+        const hostId = req.query.hostId as string | undefined;
+        const containerId = req.query.containerId as string | undefined;
 
         const alerts = await prisma.alert.findMany({
             where: {
                 rule: {
-                    organizationId: orgId,
+                    organizationId,
+                    ...(projectId ? { projectId } : {}),
                 },
+                ...(status ? { status } : {}),
+                ...(containerId ? { containerId } : {}),
+                container: scopedContainerWhere(req.scope!, {
+                    ...(hostId ? { hostId } : {}),
+                }),
             },
             include: {
                 rule: {
@@ -55,6 +46,7 @@ router.get('/', async (req: Request, res: Response): Promise<void> => {
                         host: {
                             select: {
                                 name: true,
+                                projectId: true,
                             },
                         },
                     },
@@ -71,33 +63,26 @@ router.get('/', async (req: Request, res: Response): Promise<void> => {
     }
 });
 
-// GET /api/alerts/rules - List alert rules for an organization
-router.get('/rules', async (req: Request, res: Response): Promise<void> => {
+// GET /api/alerts/rules - List alert rules for an organization (optional projectId filter)
+router.get('/rules', requireOrgScope(), async (req: Request, res: Response): Promise<void> => {
     try {
-        const orgId = req.headers['x-organization-id'] as string;
+        const { organizationId, projectId: scopedProjectId } = req.scope!;
+        const projectId = req.query.projectId as string | undefined;
 
-        if (!orgId) {
-            res.status(400).json({ error: 'Organization ID is required' });
-            return;
-        }
-
-        const membership = await prisma.organizationMember.findUnique({
-            where: {
-                userId_organizationId: {
-                    userId: req.user!.id,
-                    organizationId: orgId,
-                },
-            },
-        });
-
-        if (!membership) {
-            res.status(403).json({ error: 'Not a member of this organization' });
-            return;
+        const whereClause: any = {
+            organizationId,
+            ...(scopedProjectId ? { projectId: scopedProjectId } : {}),
+        };
+        if (projectId !== undefined) {
+            whereClause.projectId = projectId === 'null' ? null : projectId;
         }
 
         const rules = await prisma.alertRule.findMany({
-            where: { organizationId: orgId },
+            where: whereClause,
             include: {
+                project: {
+                    select: { id: true, name: true },
+                },
                 _count: {
                     select: { alerts: true },
                 },
@@ -112,16 +97,11 @@ router.get('/rules', async (req: Request, res: Response): Promise<void> => {
     }
 });
 
-// POST /api/alerts/rules - Create an alert rule
-router.post('/rules', async (req: Request, res: Response): Promise<void> => {
+// POST /api/alerts/rules - Create an alert rule (optional projectId for project-scoped)
+router.post('/rules', requireOrgPermission({ minimumRole: 'ADMIN' }), async (req: Request, res: Response): Promise<void> => {
     try {
-        const orgId = req.headers['x-organization-id'] as string;
-        const { name, condition, threshold, duration } = req.body;
-
-        if (!orgId) {
-            res.status(400).json({ error: 'Organization ID is required' });
-            return;
-        }
+        const { organizationId } = req.scope!;
+        const { name, condition, threshold, duration, projectId } = req.body;
 
         if (!name || !condition || duration === undefined) {
             res.status(400).json({ error: 'name, condition, and duration are required' });
@@ -134,29 +114,21 @@ router.post('/rules', async (req: Request, res: Response): Promise<void> => {
             return;
         }
 
-        // Check ADMIN+ membership
-        const membership = await prisma.organizationMember.findUnique({
-            where: {
-                userId_organizationId: {
-                    userId: req.user!.id,
-                    organizationId: orgId,
-                },
-            },
-        });
-
-        if (!membership) {
-            res.status(403).json({ error: 'Not a member of this organization' });
-            return;
-        }
-
-        if (!['OWNER', 'ADMIN'].includes(membership.role)) {
-            res.status(403).json({ error: 'Insufficient permissions. Must be OWNER or ADMIN.' });
-            return;
+        // If projectId is provided, validate it
+        if (projectId) {
+            const project = await prisma.project.findFirst({
+                where: { id: projectId, organizationId },
+            });
+            if (!project) {
+                res.status(400).json({ error: 'Project not found in this organization' });
+                return;
+            }
         }
 
         const rule = await prisma.alertRule.create({
             data: {
-                organizationId: orgId,
+                organizationId,
+                projectId: projectId || null,
                 name,
                 condition,
                 threshold: threshold !== undefined ? parseFloat(threshold) : null,
@@ -172,33 +144,14 @@ router.post('/rules', async (req: Request, res: Response): Promise<void> => {
 });
 
 // PUT /api/alerts/rules/:id - Update an alert rule
-router.put('/rules/:id', async (req: Request, res: Response): Promise<void> => {
+router.put('/rules/:id', requireOrgPermission({ minimumRole: 'ADMIN' }), async (req: Request, res: Response): Promise<void> => {
     try {
-        const orgId = req.headers['x-organization-id'] as string;
+        const { organizationId } = req.scope!;
         const { id } = req.params;
         const { name, condition, threshold, duration } = req.body;
 
-        if (!orgId) {
-            res.status(400).json({ error: 'Organization ID is required' });
-            return;
-        }
-
-        const membership = await prisma.organizationMember.findUnique({
-            where: {
-                userId_organizationId: {
-                    userId: req.user!.id,
-                    organizationId: orgId,
-                },
-            },
-        });
-
-        if (!membership || !['OWNER', 'ADMIN'].includes(membership.role)) {
-            res.status(403).json({ error: 'Insufficient permissions' });
-            return;
-        }
-
-        const existing = await prisma.alertRule.findUnique({ where: { id } });
-        if (!existing || existing.organizationId !== orgId) {
+        const existing = await prisma.alertRule.findFirst({ where: { id, organizationId } });
+        if (!existing) {
             res.status(404).json({ error: 'Alert rule not found' });
             return;
         }
@@ -229,32 +182,13 @@ router.put('/rules/:id', async (req: Request, res: Response): Promise<void> => {
 });
 
 // DELETE /api/alerts/rules/:id - Delete an alert rule (cascades alerts)
-router.delete('/rules/:id', async (req: Request, res: Response): Promise<void> => {
+router.delete('/rules/:id', requireOrgPermission({ minimumRole: 'ADMIN' }), async (req: Request, res: Response): Promise<void> => {
     try {
-        const orgId = req.headers['x-organization-id'] as string;
+        const { organizationId } = req.scope!;
         const { id } = req.params;
 
-        if (!orgId) {
-            res.status(400).json({ error: 'Organization ID is required' });
-            return;
-        }
-
-        const membership = await prisma.organizationMember.findUnique({
-            where: {
-                userId_organizationId: {
-                    userId: req.user!.id,
-                    organizationId: orgId,
-                },
-            },
-        });
-
-        if (!membership || !['OWNER', 'ADMIN'].includes(membership.role)) {
-            res.status(403).json({ error: 'Insufficient permissions' });
-            return;
-        }
-
-        const existing = await prisma.alertRule.findUnique({ where: { id } });
-        if (!existing || existing.organizationId !== orgId) {
+        const existing = await prisma.alertRule.findFirst({ where: { id, organizationId } });
+        if (!existing) {
             res.status(404).json({ error: 'Alert rule not found' });
             return;
         }

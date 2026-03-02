@@ -1,6 +1,6 @@
 import { IncomingMessage } from 'http';
 import jwt from 'jsonwebtoken';
-import { prisma } from '../lib/prisma';
+import { resolveAgentScope } from '../services/scopedAccess';
 import url from 'url';
 
 const JWT_SECRET = process.env.AGENT_JWT_SECRET || process.env.SESSION_SECRET || 'fallback_agent_secret';
@@ -16,14 +16,19 @@ export async function authenticateAgentWS(req: IncomingMessage): Promise<string 
     if (!token) return null;
 
     try {
-        const decoded = jwt.verify(token, JWT_SECRET) as { hostId: string; organizationId: string };
+        const decoded = jwt.verify(token, JWT_SECRET) as {
+            hostId: string;
+            organizationId: string;
+            projectId: string;
+        };
 
-        const host = await prisma.host.findUnique({
-            where: { id: decoded.hostId },
-            select: { id: true, organizationId: true }
+        const isInScope = await resolveAgentScope({
+            hostId: decoded.hostId,
+            organizationId: decoded.organizationId,
+            projectId: decoded.projectId,
         });
 
-        if (!host || host.organizationId !== decoded.organizationId) {
+        if (!isInScope) {
             return null;
         }
 
