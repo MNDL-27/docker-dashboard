@@ -1,73 +1,54 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { fetchCurrentUser, logout, AuthUser } from '@/lib/api';
+import { fetchCurrentUser, fetchOrganizations, getSelectedOrganizationId, setSelectedOrganizationId } from '@/lib/api';
 
 export default function HomePage() {
     const router = useRouter();
-    const [user, setUser] = useState<AuthUser | null>(null);
-    const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        let active = true;
+        let cancelled = false;
 
-        fetchCurrentUser()
-            .then((currentUser) => {
-                if (!active) {
+        const bootstrap = async () => {
+            try {
+                await fetchCurrentUser();
+                const organizations = await fetchOrganizations();
+
+                if (cancelled) {
                     return;
                 }
-                setUser(currentUser);
-                setLoading(false);
-            })
-            .catch(() => {
-                if (!active) {
+
+                if (organizations.length === 0) {
+                    router.replace('/onboarding/organization');
                     return;
                 }
-                setUser(null);
-                setLoading(false);
+
+                const selectedOrganizationId = getSelectedOrganizationId();
+                const selectedOrganizationStillAccessible = selectedOrganizationId
+                    ? organizations.some((organization) => organization.id === selectedOrganizationId)
+                    : false;
+
+                if (!selectedOrganizationStillAccessible) {
+                    setSelectedOrganizationId(organizations[0].id);
+                }
+
+                router.replace('/fleet');
+            } catch {
                 router.replace('/login');
-            });
+            }
+        };
+
+        bootstrap();
 
         return () => {
-            active = false;
+            cancelled = true;
         };
     }, [router]);
 
-    async function handleLogout() {
-        try {
-            await logout();
-        } finally {
-            setUser(null);
-            router.replace('/login');
-            router.refresh();
-        }
-    }
-
-    if (loading) {
-        return (
-            <div className="auth-container">
-                <span className="spinner" />
-            </div>
-        );
-    }
-
     return (
-        <div className="dashboard-container">
-            <div className="dashboard-header">
-                <h1>Docker Dashboard Cloud</h1>
-                <button className="btn-logout" onClick={handleLogout}>
-                    Sign out
-                </button>
-            </div>
-
-            <div className="welcome-card">
-                <h2>Welcome{user?.name ? `, ${user.name}` : ''}!</h2>
-                <p>
-                    Your cloud dashboard is ready. Organizations and container management
-                    coming soon.
-                </p>
-            </div>
+        <div className="auth-container">
+            <span className="spinner" />
         </div>
     );
 }

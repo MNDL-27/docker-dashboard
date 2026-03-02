@@ -21,6 +21,15 @@ export interface AuthUser {
     name: string | null;
 }
 
+export interface OrganizationSummary {
+    id: string;
+    name: string;
+    slug: string;
+    role?: 'OWNER' | 'ADMIN' | 'OPERATOR' | 'VIEWER';
+}
+
+const SELECTED_ORGANIZATION_KEY = 'docker-dashboard:selected-organization-id';
+
 async function extractErrorMessage(res: Response): Promise<string> {
     const fallback = res.status === 401 ? 'Invalid credentials' : `HTTP ${res.status}`;
     const payload = await res.json().catch(() => null) as ApiErrorPayload | null;
@@ -54,4 +63,38 @@ export async function fetchCurrentUser(): Promise<AuthUser> {
 
 export async function logout(): Promise<void> {
     await apiFetch('/auth/logout', { method: 'POST' });
+}
+
+export async function fetchOrganizations(): Promise<OrganizationSummary[]> {
+    const response = await apiFetch<{ organizations: OrganizationSummary[] }>('/organizations');
+    return response.organizations;
+}
+
+export async function createOrganization(name: string, slug?: string): Promise<OrganizationSummary> {
+    const response = await apiFetch<{ organization: OrganizationSummary }>('/organizations', {
+        method: 'POST',
+        body: { name, ...(slug ? { slug } : {}) },
+    });
+    return response.organization;
+}
+
+export function getSelectedOrganizationId(): string | null {
+    if (typeof window === 'undefined') {
+        return null;
+    }
+    return window.localStorage.getItem(SELECTED_ORGANIZATION_KEY);
+}
+
+export function setSelectedOrganizationId(organizationId: string): void {
+    if (typeof window === 'undefined') {
+        return;
+    }
+    window.localStorage.setItem(SELECTED_ORGANIZATION_KEY, organizationId);
+}
+
+export function clearSelectedOrganizationId(): void {
+    if (typeof window === 'undefined') {
+        return;
+    }
+    window.localStorage.removeItem(SELECTED_ORGANIZATION_KEY);
 }
