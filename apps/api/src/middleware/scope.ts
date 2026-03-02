@@ -1,6 +1,7 @@
 import type { NextFunction, Request, Response } from 'express';
 import type { OrgRole } from '@prisma/client';
 import { prisma } from '../lib/prisma';
+import { hasMinimumRole } from '../authz/roleMatrix';
 
 export interface OrganizationScope {
   userId: string;
@@ -20,6 +21,12 @@ interface RequireOrgScopeOptions {
   paramKey?: string;
   bodyKey?: string;
   queryKey?: string;
+}
+
+interface RequireOrgPermissionOptions extends RequireOrgScopeOptions {
+  minimumRole?: OrgRole;
+  allowedRoles?: OrgRole[];
+  denialMessage?: string;
 }
 
 function resolveOrganizationId(req: Request, options: RequireOrgScopeOptions): string | undefined {
@@ -75,5 +82,38 @@ export function requireOrgScope(options: RequireOrgScopeOptions = {}) {
       console.error('Organization scope resolution error:', error);
       res.status(500).json({ error: 'Authorization error' });
     }
+  };
+}
+
+export function requireOrgPermission(options: RequireOrgPermissionOptions = {}) {
+  const {
+    minimumRole,
+    allowedRoles,
+    denialMessage = 'Insufficient permissions',
+    ...scopeOptions
+  } = options;
+
+  const resolveScope = requireOrgScope(scopeOptions);
+
+  return async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    await resolveScope(req, res, () => {
+      const scope = req.scope;
+      if (!scope) {
+        res.status(500).json({ error: 'Authorization scope not resolved' });
+        return;
+      }
+
+      if (allowedRoles && !allowedRoles.includes(scope.role)) {
+        res.status(403).json({ error: denialMessage });
+        return;
+      }
+
+      if (minimumRole && !hasMinimumRole(scope.role, minimumRole)) {
+        res.status(403).json({ error: denialMessage });
+        return;
+      }
+
+      next();
+    });
   };
 }

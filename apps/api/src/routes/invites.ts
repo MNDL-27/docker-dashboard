@@ -1,62 +1,83 @@
+import { randomBytes } from 'crypto';
+import type { OrgRole } from '@prisma/client';
 import { Router, Request, Response } from 'express';
+import {
+  canInviteMember,
+  canRemoveMember,
+  canUpdateMemberRole,
+} from '../authz/roleMatrix';
 import { prisma } from '../lib/prisma';
 import { requireAuth } from '../middleware/auth';
-import { requireOrgRole, OrgRole } from '../middleware/rbac';
-import { randomBytes } from 'crypto';
+import { requireOrgPermission, requireOrgScope } from '../middleware/scope';
 
 const router = Router();
+const INVITE_EXPIRATION_DAYS = 7;
+const ASSIGNABLE_ROLES: OrgRole[] = ['ADMIN', 'OPERATOR', 'VIEWER'];
+const INVITABLE_ROLES: OrgRole[] = ['ADMIN', 'OPERATOR', 'VIEWER'];
 
-// Apply requireAuth to all invitation routes
-router.use(requireAuth);
+class InviteFlowError extends Error {
+  status: number;
+  payload?: Record<string, unknown>;
 
-/**
- * POST /organizations/:orgId/invite
- * 
- * Create an invitation to join an organization
- * Requires: OWNER or ADMIN role
- */
+  constructor(status: number, message: string, payload?: Record<string, unknown>) {
+    super(message);
+    this.status = status;
+    this.payload = payload;
+  }
+}
+
+function normalizeEmail(email: string): string {
+  return email.trim().toLowerCase();
+}
+
 router.post(
   '/organizations/:orgId/invite',
-  requireOrgRole('OWNER', 'ADMIN'),
+  requireAuth,
+  requireOrgPermission({ minimumRole: 'ADMIN' }),
   async (req: Request, res: Response) => {
     try {
-      const { orgId } = req.params;
-      const { email, role = 'VIEWER' } = req.body;
+      const { organizationId, role: actorRole } = req.scope!;
       const inviterUserId = req.user!.id;
+      const emailInput = req.body?.email;
+      const requestedRole = req.body?.role as OrgRole | undefined;
 
-      // Validate email
-      if (!email || typeof email !== 'string') {
+      if (!emailInput || typeof emailInput !== 'string') {
         res.status(400).json({ error: 'Email is required' });
         return;
       }
 
-      // Validate role
-      const validRoles: OrgRole[] = ['OWNER', 'ADMIN', 'OPERATOR', 'VIEWER'];
-      if (!validRoles.includes(role)) {
-        res.status(400).json({ error: 'Invalid role' });
+      const inviteRole = requestedRole ?? 'VIEWER';
+      if (!INVITABLE_ROLES.includes(inviteRole)) {
+        res.status(400).json({ error: 'Invalid role. Must be ADMIN, OPERATOR, or VIEWER' });
         return;
       }
 
-      // Check if user is already a member
+      const invitePermission = canInviteMember(actorRole, inviteRole);
+      if (!invitePermission.allowed) {
+        res.status(403).json({ error: invitePermission.reason ?? 'Insufficient permissions' });
+        return;
+      }
+
+      const normalizedEmail = normalizeEmail(emailInput);
+
       const existingMember = await prisma.organizationMember.findFirst({
         where: {
-          organizationId: orgId,
+          organizationId,
           user: {
-            email: email.toLowerCase(),
+            email: normalizedEmail,
           },
         },
       });
 
       if (existingMember) {
-        res.status(400).json({ error: 'User is already a member of this organization' });
+        res.status(409).json({ error: 'User is already a member of this organization' });
         return;
       }
 
-      // Check for pending invite
       const existingInvite = await prisma.organizationInvite.findFirst({
         where: {
-          organizationId: orgId,
-          email: email.toLowerCase(),
+          organizationId,
+          email: normalizedEmail,
           acceptedAt: null,
           expiresAt: {
             gt: new Date(),
@@ -65,20 +86,18 @@ router.post(
       });
 
       if (existingInvite) {
-        res.status(400).json({ error: 'Invitation already sent to this email' });
+        res.status(409).json({ error: 'Invitation already sent to this email' });
         return;
       }
 
-      // Generate secure token
       const token = randomBytes(32).toString('hex');
-      const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000); // 7 days
+      const expiresAt = new Date(Date.now() + INVITE_EXPIRATION_DAYS * 24 * 60 * 60 * 1000);
 
-      // Create invitation
       const invite = await prisma.organizationInvite.create({
         data: {
-          email: email.toLowerCase(),
-          organizationId: orgId,
-          role: role as OrgRole,
+          email: normalizedEmail,
+          organizationId,
+          role: inviteRole,
           inviterUserId,
           token,
           expiresAt,
@@ -90,11 +109,6 @@ router.post(
         },
       });
 
-      // TODO: Send invitation email (stub)
-      console.log(`[EMAIL STUB] Invitation sent to ${email} for org ${invite.organization.name}`);
-      console.log(`[EMAIL STUB] Invitation token: ${token}`);
-      console.log(`[EMAIL STUB] Accept at: /invites/${token}`);
-
       res.status(201).json({
         invite: {
           id: invite.id,
@@ -102,7 +116,6 @@ router.post(
           role: invite.role,
           organization: invite.organization,
           expiresAt: invite.expiresAt,
-          // In production, don't return the raw token - send via email instead
           inviteUrl: `/invites/${token}`,
         },
         message: 'Invitation created successfully',
@@ -114,12 +127,6 @@ router.post(
   }
 );
 
-/**
- * GET /invites/:token
- * 
- * Get invitation details (public endpoint)
- * Does not require authentication
- */
 router.get('/invites/:token', async (req: Request, res: Response) => {
   try {
     const { token } = req.params;
@@ -142,12 +149,12 @@ router.get('/invites/:token', async (req: Request, res: Response) => {
     }
 
     if (invite.acceptedAt) {
-      res.status(400).json({ error: 'Invitation has already been used' });
+      res.status(409).json({ error: 'Invitation has already been used' });
       return;
     }
 
     if (invite.expiresAt < new Date()) {
-      res.status(400).json({ error: 'Invitation has expired' });
+      res.status(410).json({ error: 'Invitation has expired' });
       return;
     }
 
@@ -167,75 +174,54 @@ router.get('/invites/:token', async (req: Request, res: Response) => {
   }
 });
 
-/**
- * POST /invites/:token/accept
- * 
- * Accept an invitation and join the organization
- * Requires: Authentication, must be logged in as the invited email
- */
-router.post('/invites/:token/accept', async (req: Request, res: Response) => {
+router.post('/invites/:token/accept', requireAuth, async (req: Request, res: Response) => {
   try {
     const { token } = req.params;
-    const userId = req.user?.id;
-    const userEmail = req.user?.email;
+    const userId = req.user!.id;
+    const userEmail = normalizeEmail(req.user!.email);
 
-    if (!userId) {
-      res.status(401).json({ error: 'Authentication required to accept invitation' });
-      return;
-    }
-
-    // Find the invitation
-    const invite = await prisma.organizationInvite.findUnique({
-      where: { token },
-      include: {
-        organization: {
-          select: { id: true, name: true, slug: true },
+    const accepted = await prisma.$transaction(async (tx) => {
+      const invite = await tx.organizationInvite.findUnique({
+        where: { token },
+        include: {
+          organization: {
+            select: { id: true, name: true, slug: true },
+          },
         },
-      },
-    });
-
-    if (!invite) {
-      res.status(404).json({ error: 'Invitation not found' });
-      return;
-    }
-
-    if (invite.acceptedAt) {
-      res.status(400).json({ error: 'Invitation has already been used' });
-      return;
-    }
-
-    if (invite.expiresAt < new Date()) {
-      res.status(400).json({ error: 'Invitation has expired' });
-      return;
-    }
-
-    // Verify the logged-in user matches the invited email
-    if (userEmail?.toLowerCase() !== invite.email.toLowerCase()) {
-      res.status(403).json({ 
-        error: 'You can only accept invitations sent to your email address',
-        invitedEmail: invite.email,
       });
-      return;
-    }
 
-    // Check if user is already a member
-    const existingMember = await prisma.organizationMember.findUnique({
-      where: {
-        userId_organizationId: {
-          userId,
-          organizationId: invite.organizationId,
+      if (!invite) {
+        throw new InviteFlowError(404, 'Invitation not found');
+      }
+
+      if (invite.acceptedAt) {
+        throw new InviteFlowError(409, 'Invitation has already been used');
+      }
+
+      if (invite.expiresAt < new Date()) {
+        throw new InviteFlowError(410, 'Invitation has expired');
+      }
+
+      if (userEmail !== normalizeEmail(invite.email)) {
+        throw new InviteFlowError(403, 'You can only accept invitations sent to your email address', {
+          invitedEmail: invite.email,
+        });
+      }
+
+      const existingMember = await tx.organizationMember.findUnique({
+        where: {
+          userId_organizationId: {
+            userId,
+            organizationId: invite.organizationId,
+          },
         },
-      },
-    });
+      });
 
-    if (existingMember) {
-      res.status(400).json({ error: 'You are already a member of this organization' });
-      return;
-    }
+      if (existingMember) {
+        throw new InviteFlowError(409, 'You are already a member of this organization');
+      }
 
-    // Accept invitation: create membership and mark invite as accepted
-    const [membership] = await prisma.$transaction([
-      prisma.organizationMember.create({
+      const membership = await tx.organizationMember.create({
         data: {
           userId,
           organizationId: invite.organizationId,
@@ -249,93 +235,90 @@ router.post('/invites/:token/accept', async (req: Request, res: Response) => {
             select: { id: true, name: true, slug: true },
           },
         },
-      }),
-      prisma.organizationInvite.update({
-        where: { id: invite.id },
+      });
+
+      const consumeInvite = await tx.organizationInvite.updateMany({
+        where: {
+          id: invite.id,
+          acceptedAt: null,
+        },
         data: { acceptedAt: new Date() },
-      }),
-    ]);
+      });
+
+      if (consumeInvite.count !== 1) {
+        throw new InviteFlowError(409, 'Invitation has already been used');
+      }
+
+      return {
+        membership,
+        organizationName: invite.organization.name,
+      };
+    });
 
     res.status(201).json({
-      membership,
-      message: `Successfully joined ${invite.organization.name}`,
+      membership: accepted.membership,
+      message: `Successfully joined ${accepted.organizationName}`,
     });
   } catch (error) {
+    if (error instanceof InviteFlowError) {
+      res.status(error.status).json({ error: error.message, ...error.payload });
+      return;
+    }
+
     console.error('Accept invitation error:', error);
     res.status(500).json({ error: 'Failed to accept invitation' });
   }
 });
 
-/**
- * GET /organizations/:orgId/members
- * 
- * List all members of an organization
- * Requires: Authentication and org membership
- */
-router.get('/organizations/:orgId/members', async (req: Request, res: Response) => {
-  try {
-    const { orgId } = req.params;
-    const userId = req.user!.id;
-
-    // Check membership
-    const membership = await prisma.organizationMember.findUnique({
-      where: {
-        userId_organizationId: {
-          userId,
-          organizationId: orgId,
-        },
-      },
-    });
-
-    if (!membership) {
-      res.status(403).json({ error: 'Not a member of this organization' });
-      return;
-    }
-
-    // Get all members
-    const members = await prisma.organizationMember.findMany({
-      where: { organizationId: orgId },
-      include: {
-        user: {
-          select: { id: true, email: true, name: true, createdAt: true },
-        },
-      },
-      orderBy: {
-        createdAt: 'asc',
-      },
-    });
-
-    res.json({
-      members: members.map((m) => ({
-        id: m.id,
-        role: m.role,
-        joinedAt: m.createdAt,
-        user: m.user,
-      })),
-    });
-  } catch (error) {
-    console.error('List members error:', error);
-    res.status(500).json({ error: 'Failed to list members' });
-  }
-});
-
-/**
- * DELETE /organizations/:orgId/members/:memberId
- * 
- * Remove a member from an organization
- * Requires: OWNER or ADMIN role
- */
-router.delete(
-  '/organizations/:orgId/members/:memberId',
-  requireOrgRole('OWNER', 'ADMIN'),
+router.get(
+  '/organizations/:orgId/members',
+  requireAuth,
+  requireOrgScope(),
   async (req: Request, res: Response) => {
     try {
-      const { orgId, memberId } = req.params;
-      const currentUserId = req.user!.id;
+      const { organizationId } = req.scope!;
 
-      // Get the member to be removed
-      const memberToRemove = await prisma.organizationMember.findUnique({
-        where: { id: memberId },
+      const members = await prisma.organizationMember.findMany({
+        where: { organizationId },
+        include: {
+          user: {
+            select: { id: true, email: true, name: true, createdAt: true },
+          },
+        },
+        orderBy: {
+          createdAt: 'asc',
+        },
+      });
+
+      res.json({
+        members: members.map((member) => ({
+          id: member.id,
+          role: member.role,
+          joinedAt: member.createdAt,
+          user: member.user,
+        })),
+      });
+    } catch (error) {
+      console.error('List members error:', error);
+      res.status(500).json({ error: 'Failed to list members' });
+    }
+  }
+);
+
+router.delete(
+  '/organizations/:orgId/members/:memberId',
+  requireAuth,
+  requireOrgPermission({ minimumRole: 'ADMIN' }),
+  async (req: Request, res: Response) => {
+    try {
+      const { memberId } = req.params;
+      const { organizationId, role: actorRole, userId: actorUserId } = req.scope!;
+
+      const memberToRemove = await prisma.organizationMember.findFirst({
+        where: {
+          id: memberId,
+          organizationId,
+        },
       });
 
       if (!memberToRemove) {
@@ -343,54 +326,30 @@ router.delete(
         return;
       }
 
-      if (memberToRemove.organizationId !== orgId) {
-        res.status(400).json({ error: 'Member does not belong to this organization' });
+      const removalCheck = canRemoveMember(
+        actorRole,
+        memberToRemove.role,
+        memberToRemove.userId === actorUserId
+      );
+
+      if (!removalCheck.allowed) {
+        res.status(403).json({ error: removalCheck.reason ?? 'Insufficient permissions' });
         return;
       }
 
-      // Cannot remove the owner
-      if (memberToRemove.role === 'OWNER') {
-        res.status(400).json({ error: 'Cannot remove the organization owner' });
-        return;
-      }
-
-      // Check if current user can remove this member
-      const currentUserMembership = await prisma.organizationMember.findUnique({
-        where: {
-          userId_organizationId: {
-            userId: currentUserId,
-            organizationId: orgId,
+      await prisma.$transaction([
+        prisma.organizationMember.delete({
+          where: { id: memberId },
+        }),
+        prisma.projectMember.deleteMany({
+          where: {
+            userId: memberToRemove.userId,
+            project: {
+              organizationId,
+            },
           },
-        },
-      });
-
-      // OWNER can remove anyone except other OWNERs
-      // ADMIN can remove OPERATORs and VIEWERs
-      if (currentUserMembership?.role === 'ADMIN' && memberToRemove.role !== 'VIEWER' && memberToRemove.role !== 'OPERATOR') {
-        res.status(403).json({ error: 'Admins can only remove Operators and Viewers' });
-        return;
-      }
-
-      // Cannot remove yourself
-      if (memberToRemove.userId === currentUserId) {
-        res.status(400).json({ error: 'Cannot remove yourself from the organization' });
-        return;
-      }
-
-      // Remove member
-      await prisma.organizationMember.delete({
-        where: { id: memberId },
-      });
-
-      // Also remove from all projects in the org
-      await prisma.projectMember.deleteMany({
-        where: {
-          userId: memberToRemove.userId,
-          project: {
-            organizationId: orgId,
-          },
-        },
-      });
+        }),
+      ]);
 
       res.json({ success: true, message: 'Member removed successfully' });
     } catch (error) {
@@ -400,31 +359,26 @@ router.delete(
   }
 );
 
-/**
- * PATCH /organizations/:orgId/members/:memberId
- * 
- * Update a member's role in an organization
- * Requires: OWNER or ADMIN role
- */
 router.patch(
   '/organizations/:orgId/members/:memberId',
-  requireOrgRole('OWNER', 'ADMIN'),
+  requireAuth,
+  requireOrgPermission({ minimumRole: 'ADMIN' }),
   async (req: Request, res: Response) => {
     try {
-      const { orgId, memberId } = req.params;
-      const { role } = req.body;
-      const currentUserId = req.user!.id;
+      const { memberId } = req.params;
+      const { role: actorRole, userId: actorUserId, organizationId } = req.scope!;
+      const requestedRole = req.body?.role as OrgRole | undefined;
 
-      // Validate role
-      const validRoles: OrgRole[] = ['ADMIN', 'OPERATOR', 'VIEWER'];
-      if (!role || !validRoles.includes(role)) {
+      if (!requestedRole || !ASSIGNABLE_ROLES.includes(requestedRole)) {
         res.status(400).json({ error: 'Invalid role. Must be ADMIN, OPERATOR, or VIEWER' });
         return;
       }
 
-      // Get the member to be updated
-      const memberToUpdate = await prisma.organizationMember.findUnique({
-        where: { id: memberId },
+      const memberToUpdate = await prisma.organizationMember.findFirst({
+        where: {
+          id: memberId,
+          organizationId,
+        },
       });
 
       if (!memberToUpdate) {
@@ -432,37 +386,21 @@ router.patch(
         return;
       }
 
-      if (memberToUpdate.organizationId !== orgId) {
-        res.status(400).json({ error: 'Member does not belong to this organization' });
+      const roleUpdateCheck = canUpdateMemberRole(
+        actorRole,
+        memberToUpdate.role,
+        requestedRole,
+        memberToUpdate.userId === actorUserId
+      );
+
+      if (!roleUpdateCheck.allowed) {
+        res.status(403).json({ error: roleUpdateCheck.reason ?? 'Insufficient permissions' });
         return;
       }
 
-      // Cannot change the owner's role
-      if (memberToUpdate.role === 'OWNER') {
-        res.status(400).json({ error: 'Cannot change the organization owner role' });
-        return;
-      }
-
-      // Get current user's membership
-      const currentUserMembership = await prisma.organizationMember.findUnique({
-        where: {
-          userId_organizationId: {
-            userId: currentUserId,
-            organizationId: orgId,
-          },
-        },
-      });
-
-      // Only OWNER can assign ADMIN role
-      if (role === 'ADMIN' && currentUserMembership?.role !== 'OWNER') {
-        res.status(403).json({ error: 'Only owners can assign Admin role' });
-        return;
-      }
-
-      // Update the member's role
       const updatedMember = await prisma.organizationMember.update({
         where: { id: memberId },
-        data: { role },
+        data: { role: requestedRole },
         include: {
           user: {
             select: { id: true, email: true, name: true },
