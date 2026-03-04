@@ -177,6 +177,37 @@ export function shouldDeliverLogLineToState(state: LogsClientState, line: LiveSc
     return state.scope.hostId === line.hostId && state.scope.containerId === line.containerId;
 }
 
+export function buildLogsSubscribeAck(state: LogsClientState) {
+    return {
+        type: 'logs.subscribe.ack' as const,
+        scope: state.scope,
+        mode: state.reconnectMode,
+        status: state.status,
+        pending: state.pendingCount,
+        pendingBadge: state.pendingBadge,
+    };
+}
+
+export function buildLogsControlAck(state: LogsClientState) {
+    return {
+        type: 'logs.control.ack' as const,
+        paused: state.paused,
+        mode: state.reconnectMode,
+        status: state.status,
+        pending: state.pendingCount,
+        pendingBadge: state.pendingBadge,
+    };
+}
+
+export function buildLogsStatus(state: LogsClientState) {
+    return {
+        type: 'logs.status' as const,
+        status: state.status,
+        pending: state.pendingCount,
+        pendingBadge: state.pendingBadge,
+    };
+}
+
 function isTelemetrySpeedPreset(value: unknown): value is TelemetrySpeedPreset {
     return typeof value === 'string' && TELEMETRY_SPEED_PRESETS.includes(value as TelemetrySpeedPreset);
 }
@@ -457,10 +488,7 @@ export function handleUpgrade(req: IncomingMessage, socket: any, head: Buffer, s
                                     );
                                     logsClientStates.set(client, queuedState);
                                     client.send(JSON.stringify({
-                                        type: 'logs.status',
-                                        status: queuedState.status,
-                                        pending: queuedState.pendingCount,
-                                        pendingBadge: queuedState.pendingBadge,
+                                        ...buildLogsStatus(queuedState),
                                     }));
                                     continue;
                                 }
@@ -557,10 +585,7 @@ export function handleUpgrade(req: IncomingMessage, socket: any, head: Buffer, s
                                 logsClientStates.set(ws, nextLogsState);
 
                                 ws.send(JSON.stringify({
-                                    type: 'logs.status',
-                                    status: 'Reconnecting',
-                                    pending: nextLogsState.pendingCount,
-                                    pendingBadge: nextLogsState.pendingBadge,
+                                    ...buildLogsStatus(nextLogsState),
                                 }));
 
                                 const replay = await getLogsRange({
@@ -589,19 +614,11 @@ export function handleUpgrade(req: IncomingMessage, socket: any, head: Buffer, s
                             logsClientStates.set(ws, nextLogsState);
 
                             ws.send(JSON.stringify({
-                                type: 'logs.subscribe.ack',
-                                scope: logsScope,
-                                mode: nextLogsState.reconnectMode,
-                                status: nextLogsState.status,
-                                pending: nextLogsState.pendingCount,
-                                pendingBadge: nextLogsState.pendingBadge,
+                                ...buildLogsSubscribeAck(nextLogsState),
                             }));
 
                             ws.send(JSON.stringify({
-                                type: 'logs.status',
-                                status: nextLogsState.status,
-                                pending: nextLogsState.pendingCount,
-                                pendingBadge: nextLogsState.pendingBadge,
+                                ...buildLogsStatus(nextLogsState),
                             }));
                             return;
                         }
@@ -631,19 +648,11 @@ export function handleUpgrade(req: IncomingMessage, socket: any, head: Buffer, s
                             }
 
                             ws.send(JSON.stringify({
-                                type: 'logs.control.ack',
-                                paused: nextLogsState.paused,
-                                mode: nextLogsState.reconnectMode,
-                                status: nextLogsState.status,
-                                pending: nextLogsState.pendingCount,
-                                pendingBadge: nextLogsState.pendingBadge,
+                                ...buildLogsControlAck(nextLogsState),
                             }));
 
                             ws.send(JSON.stringify({
-                                type: 'logs.status',
-                                status: nextLogsState.status,
-                                pending: nextLogsState.pendingCount,
-                                pendingBadge: nextLogsState.pendingBadge,
+                                ...buildLogsStatus(nextLogsState),
                             }));
                             return;
                         }
