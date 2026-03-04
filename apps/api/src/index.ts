@@ -13,6 +13,7 @@ import auditRoutes from './routes/audit';
 import webhookRoutes from './routes/webhooks';
 import alertRoutes from './routes/alerts';
 import metricsRoutes from './routes/metrics';
+import logsRoutes from './routes/logs';
 import { requireAuth } from './middleware/auth';
 import { createAgentRateLimiters, createUiApiRateLimiters } from './middleware/rateLimit';
 import { handleUpgrade } from './websocket/server';
@@ -50,6 +51,7 @@ app.use('/api/audit', uiApiRateLimiters.api, auditRoutes);
 app.use('/api/webhooks', uiApiRateLimiters.api, webhookRoutes);
 app.use('/api/alerts', uiApiRateLimiters.api, alertRoutes);
 app.use('/api/metrics', uiApiRateLimiters.api, metricsRoutes);
+app.use('/api/logs', uiApiRateLimiters.api, logsRoutes);
 
 // Protected route example
 app.get('/api/me', requireAuth, (req, res) => {
