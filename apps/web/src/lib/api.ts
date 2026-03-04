@@ -1,4 +1,31 @@
-import { deriveWebSocketBaseUrl, resolveApiBaseUrl } from './transport';
+const DEFAULT_API_BASE = 'http://localhost:3001';
+
+function normalizeBaseUrl(value: string): string {
+    const trimmed = value.trim();
+    if (!trimmed) {
+        return DEFAULT_API_BASE;
+    }
+
+    return trimmed.endsWith('/') ? trimmed.slice(0, -1) : trimmed;
+}
+
+function resolveApiBaseUrl(): string {
+    return normalizeBaseUrl(process.env.NEXT_PUBLIC_API_URL ?? DEFAULT_API_BASE);
+}
+
+function deriveWebSocketBaseUrl(apiBase: string): string {
+    if (apiBase.startsWith('https://')) {
+        return `wss://${apiBase.slice('https://'.length)}`;
+    }
+    if (apiBase.startsWith('http://')) {
+        return `ws://${apiBase.slice('http://'.length)}`;
+    }
+    if (apiBase.startsWith('wss://') || apiBase.startsWith('ws://')) {
+        return apiBase;
+    }
+
+    return `ws://${apiBase}`;
+}
 
 const API_BASE = resolveApiBaseUrl();
 
