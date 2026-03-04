@@ -320,6 +320,65 @@ describe('fleet inventory route contracts', () => {
     expect(res.body.containers[0]).toMatchObject({ name: 'worker', restartCount: 5, state: 'restarting' });
   });
 
+  it('keeps full-search semantics for name, image, and labels under scoped multi-select filters', async () => {
+    const byName = await request(app)
+      .get('/hosts/host-a/containers')
+      .query({
+        organizationId: 'org-a',
+        search: 'api-service',
+        statuses: 'running,restarting',
+        projectIds: 'proj-a',
+        hostIds: 'host-a',
+      });
+
+    expect(byName.status).toBe(200);
+    expect(byName.body.containers).toHaveLength(1);
+    expect(byName.body.containers[0]).toMatchObject({ name: 'api-service' });
+
+    const byImage = await request(app)
+      .get('/hosts/host-a/containers')
+      .query({
+        organizationId: 'org-a',
+        search: 'worker:2.1',
+        statuses: 'running,restarting',
+        projectIds: 'proj-a',
+        hostIds: 'host-a',
+      });
+
+    expect(byImage.status).toBe(200);
+    expect(byImage.body.containers).toHaveLength(1);
+    expect(byImage.body.containers[0]).toMatchObject({ name: 'worker' });
+
+    const byLabel = await request(app)
+      .get('/hosts/host-a/containers')
+      .query({
+        organizationId: 'org-a',
+        search: 'tier:backend',
+        statuses: 'running,restarting',
+        projectIds: 'proj-a',
+        hostIds: 'host-a',
+      });
+
+    expect(byLabel.status).toBe(200);
+    expect(byLabel.body.containers).toHaveLength(1);
+    expect(byLabel.body.containers[0]).toMatchObject({ name: 'api-service' });
+  });
+
+  it('returns deterministic zero-result payloads for combined search and multi-select filters', async () => {
+    const res = await request(app)
+      .get('/hosts/host-a/containers')
+      .query({
+        organizationId: 'org-a',
+        search: 'postgres',
+        statuses: 'restarting',
+        projectIds: 'proj-a',
+        hostIds: 'host-a',
+      });
+
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual({ containers: [] });
+  });
+
   it('rejects out-of-scope host filter values', async () => {
     const res = await request(app)
       .get('/hosts/host-a/containers')
