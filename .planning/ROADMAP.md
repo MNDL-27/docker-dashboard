@@ -81,7 +81,7 @@ Plans:
   3. User can filter and search host container lists to find target workloads quickly.
 **Plans**: 3 plans
 Plans:
-- [ ] 04-01-PLAN.md - Expand inventory data contract and scoped API filtering/counts for fleet and host containers.
+- [x] 04-01-PLAN.md - Expand inventory data contract and scoped API filtering/counts for fleet and host containers.
 - [ ] 04-02-PLAN.md - Implement `/fleet` drill-down host/container card UX with contextual Apply-based filters and persisted density settings.
 - [ ] 04-03-PLAN.md - Add locked empty-state guidance, filter/search hardening, and final human verification checkpoint.
 
@@ -133,7 +133,7 @@ Plans:
 | 1. Dual-Mode Foundation and Local DX | 3/3 | Complete | 2026-03-02 |
 | 2. Identity, Access, and Tenant Isolation | 6/6 | Complete   | 2026-03-02 |
 | 3. Host Enrollment and Trusted Connectivity | 3/3 | Complete | 2026-03-02 |
-| 4. Fleet Inventory Views | 0/3 | Not started | - |
+| 4. Fleet Inventory Views | 1/3 | In Progress | - |
 | 5. Metrics Telemetry Core | 0/TBD | Not started | - |
 | 6. Live Logs and Retention | 0/TBD | Not started | - |
 | 7. Safe Container Actions and Audit Trail | 0/TBD | Not started | - |

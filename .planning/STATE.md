@@ -10,18 +10,18 @@ See: `.planning/PROJECT.md` (updated 2026-03-01)
 ## Current Position
 
 Phase: 4 of 8 (Fleet Inventory Views)
-Plan: 0 of TBD in current phase
-Status: Context gathered, ready to plan
-Last activity: 2026-03-03 - Completed discuss-phase 4, captured layout, density, filtering, and empty state decisions.
+Plan: 1 of 3 in current phase
+Status: Phase 4 plan execution in progress
+Last activity: 2026-03-04 - Completed 04-01 inventory data contract, scoped filters, and regression tests.
 
-Progress: [██████████] 87.5%
+Progress: [██████████] 90.0%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 12
+- Total plans completed: 13
 - Average duration: 4 min
-- Total execution time: 0.9 hours
+- Total execution time: 1.0 hours
 
 **By Phase:**
 
@@ -30,15 +30,16 @@ Progress: [██████████] 87.5%
 | 1 | 3 | 0 min | 0 min |
 | 2 | 6 | 35 min | 6 min |
 | 3 | 3 | 14 min | 5 min |
-| 4-8 | 0 | 0 min | 0 min |
+| 4-8 | 1 | 8 min | 8 min |
 
 **Recent Trend:**
-- Last 5 plans: 02-05, 02-06, 03-01, 03-02, 03-03
+- Last 5 plans: 02-06, 03-01, 03-02, 03-03, 04-01
 - Trend: Stable
 
 *Updated after each plan completion*
-- Latest execution: Phase 03 Plan 03 | 5 min | 3 tasks | 10 files
+- Latest execution: Phase 04 Plan 01 | 8 min | 3 tasks | 7 files
 | Phase 03 P04 | 3 | 3 tasks | 3 files |
+| Phase 04 P01 | 8 min | 3 tasks | 7 files |
 
 ## Accumulated Context
 
@@ -73,6 +74,8 @@ Recent decisions affecting current work:
 - [Phase 03]: Use HOST_ONLINE_THRESHOLD_MS in one shared presence service as the single connectivity policy.
 - [Phase 03]: Apply rate limiting at mount points in index.ts and key agent buckets by req.agent.hostId.
 - [Phase 03]: Hash pre-auth enrollment tokens for limiter keys so abusive bootstrap traffic is isolated without storing plaintext.
+- [Phase 04]: Kept /agent/containers backward compatible by accepting legacy array and extended object payload shapes.
+- [Phase 04]: Applied scoped validation for host/project/status filters before container queries to keep tenant boundaries fail-closed.
 
 ### Pending Todos
 
@@ -86,6 +89,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-03
-Stopped at: Phase 4 context gathered
-Resume file: .planning/phases/04-fleet-inventory-views/04-CONTEXT.md
+Last session: 2026-03-04
+Stopped at: Completed 04-01-PLAN.md
+Resume file: None

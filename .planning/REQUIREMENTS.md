@@ -32,9 +32,9 @@ Requirements for initial release. Each maps to exactly one roadmap phase.
 
 ### Inventory and Fleet Views
 
-- [ ] **INVT-01**: User can view fleet-level host and container counts.
-- [ ] **INVT-02**: User can view containers for a selected host with status, image, labels, and restart count.
-- [ ] **INVT-03**: User can filter/search host container lists.
+- [x] **INVT-01**: User can view fleet-level host and container counts.
+- [x] **INVT-02**: User can view containers for a selected host with status, image, labels, and restart count.
+- [x] **INVT-03**: User can filter/search host container lists.
 
 ### Metrics and Container Detail
 
@@ -130,9 +130,9 @@ Which phases cover which requirements. Populated during roadmap creation.
 | ENRL-03 | Phase 3 | Complete |
 | ENRL-04 | Phase 3 | Complete |
 | ENRL-05 | Phase 3 | Complete |
-| INVT-01 | Phase 4 | Pending |
-| INVT-02 | Phase 4 | Pending |
-| INVT-03 | Phase 4 | Pending |
+| INVT-01 | Phase 4 | Complete |
+| INVT-02 | Phase 4 | Complete |
+| INVT-03 | Phase 4 | Complete |
 | METR-01 | Phase 5 | Pending |
 | METR-02 | Phase 5 | Pending |
 | METR-03 | Phase 5 | Pending |
