@@ -341,6 +341,165 @@
     // Store container stats with their metadata
     let containerStatsData = [];
     let previousNetworkStats = new Map(); // Track previous network bytes for speed calculation
+    
+    // WebSocket connection for real-time updates
+    let ws = null;
+    let wsReconnectAttempts = 0;
+    const MAX_RECONNECT_ATTEMPTS = 10;
+    const RECONNECT_DELAY = 3000;
+
+    function connectWebSocket() {
+      const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+      const wsUrl = `${protocol}//${window.location.host}/ws/containers`;
+      
+      ws = new WebSocket(wsUrl);
+      
+      ws.onopen = () => {
+        console.log('[WS] Connected to /ws/containers');
+        wsReconnectAttempts = 0;
+      };
+      
+      ws.onmessage = (event) => {
+        try {
+          const data = JSON.parse(event.data);
+          
+          if (data.type === 'snapshot' || data.type === 'tick') {
+            const containers = data.containers || [];
+            const stats = data.stats || {};
+            
+            // Update container cards
+            renderContainers(containers);
+            
+            // Update global stats using normalized data from WebSocket
+            updateGlobalStatsFromWS(containers, stats);
+          }
+        } catch (err) {
+          console.error('[WS] Error parsing message:', err);
+        }
+      };
+      
+      ws.onclose = () => {
+        console.log('[WS] Disconnected');
+        // Try to reconnect
+        if (wsReconnectAttempts < MAX_RECONNECT_ATTEMPTS) {
+          wsReconnectAttempts++;
+          console.log(`[WS] Reconnecting in ${RECONNECT_DELAY}ms (attempt ${wsReconnectAttempts})`);
+          setTimeout(connectWebSocket, RECONNECT_DELAY);
+        }
+      };
+      
+      ws.onerror = (err) => {
+        console.error('[WS] Error:', err);
+      };
+    }
+
+    // Update global stats from WebSocket normalized data
+    function updateGlobalStatsFromWS(containers, stats) {
+      const runningContainers = containers.filter(c => c.State === 'running');
+      
+      if (runningContainers.length === 0) {
+        document.getElementById('global-cpu').textContent = '0.0';
+        document.getElementById('global-cpu-bar').style.width = '0%';
+        document.getElementById('global-ram').textContent = '0.0';
+        document.getElementById('global-ram-percent').textContent = '0.0';
+        document.getElementById('global-ram-total').textContent = '0';
+        document.getElementById('global-download-speed').textContent = '0 B/s';
+        document.getElementById('global-upload-speed').textContent = '0 B/s';
+        document.getElementById('global-download-total').textContent = '0 B';
+        document.getElementById('global-upload-total').textContent = '0 B';
+        document.getElementById('global-combined-total').textContent = '0 B';
+        return;
+      }
+
+      let totalCpuPercent = 0;
+      let totalMemoryUsage = 0;
+      let totalMemoryLimit = 0;
+      let totalDownloadBytes = 0;
+      let totalUploadBytes = 0;
+
+      containerStatsData = [];
+
+      runningContainers.forEach(container => {
+        const containerId = container.Id;
+        const containerName = container.Names ? container.Names[0].replace(/^\//, '') : containerId.substring(0, 12);
+        
+        // Get normalized stats from WebSocket
+        const stat = stats[containerId];
+        
+        let cpuPercent = 0;
+        let memoryUsage = 0;
+        let memoryLimit = 1;
+        let memoryPercent = 0;
+        let downloadSpeed = 0;
+        let uploadSpeed = 0;
+        let downloadBytes = 0;
+        let uploadBytes = 0;
+
+        if (stat) {
+          cpuPercent = stat.cpuPercent || 0;
+          memoryUsage = stat.memoryUsage || 0;
+          memoryLimit = stat.memoryLimit || 1;
+          memoryPercent = stat.memoryPercent || 0;
+          downloadBytes = stat.networkRx || 0;
+          uploadBytes = stat.networkTx || 0;
+
+          // Calculate speed from previous reading
+          const prevStats = previousNetworkStats.get(containerId);
+          if (prevStats && stat.timestamp) {
+            const timeDiff = (stat.timestamp - prevStats.timestamp) / 1000;
+            if (timeDiff > 0) {
+              downloadSpeed = (downloadBytes - prevStats.downloadBytes) / timeDiff;
+              uploadSpeed = (uploadBytes - prevStats.uploadBytes) / timeDiff;
+            }
+          }
+
+          // Store current stats for next calculation
+          previousNetworkStats.set(containerId, {
+            downloadBytes,
+            uploadBytes,
+            timestamp: stat.timestamp
+          });
+        }
+
+        totalCpuPercent += cpuPercent;
+        totalMemoryUsage += memoryUsage;
+        totalMemoryLimit += memoryLimit;
+        totalDownloadBytes += downloadBytes;
+        totalUploadBytes += uploadBytes;
+
+        containerStatsData.push({
+          id: containerId,
+          name: containerName,
+          cpuPercent,
+          memoryUsage,
+          memoryLimit,
+          memoryPercent,
+          downloadSpeed,
+          uploadSpeed,
+          downloadBytes,
+          uploadBytes
+        });
+      });
+
+      // Update CPU
+      const cpuPercent = Math.min(totalCpuPercent, 100);
+      document.getElementById('global-cpu').textContent = cpuPercent.toFixed(1);
+      document.getElementById('global-cpu-bar').style.width = cpuPercent + '%';
+
+      // Update RAM
+      const ramGB = (totalMemoryUsage / (1024 ** 3)).toFixed(1);
+      const ramTotalGB = (totalMemoryLimit / (1024 ** 3)).toFixed(1);
+      const ramPercent = totalMemoryLimit > 0 ? ((totalMemoryUsage / totalMemoryLimit) * 100).toFixed(1) : 0;
+      document.getElementById('global-ram').textContent = ramGB;
+      document.getElementById('global-ram-percent').textContent = ramPercent;
+      document.getElementById('global-ram-total').textContent = ramTotalGB;
+
+      // Update Network Speed (using previous tick data for speed calculation)
+      // For now, show total bytes - speed requires time diff calculation
+      document.getElementById('global-download-total').textContent = formatBytes(totalDownloadBytes);
+      document.getElementById('global-upload-total').textContent = formatBytes(totalUploadBytes);
+      document.getElementById('global-combined-total').textContent = formatBytes(totalDownloadBytes + totalUploadBytes);
+    }
 
     // Modal functions
     function showStatsModal(type) {
@@ -714,23 +873,8 @@
 
     // Fetch and render containers
     async function init() {
-      try {
-        const res = await fetch('/api/containers');
-        const containers = await res.json();
-        renderContainers(containers);
-        await updateGlobalStats();
-      } catch (error) {
-        console.error('Error fetching containers:', error);
-        document.getElementById('loading').innerHTML = `
-          <div class="text-red-400">
-            <svg class="w-16 h-16 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-            </svg>
-            <p class="text-lg font-semibold">Failed to load containers</p>
-            <p class="text-sm text-gray-500 mt-2">Please check if Docker is running</p>
-          </div>
-        `;
-      }
+      // Connect to WebSocket for real-time updates
+      connectWebSocket();
     }
 
     // Initial load
@@ -782,17 +926,7 @@
     // Check auth status on page load
     checkAuthStatus();
 
-    // Auto-refresh every 5 seconds
-    setInterval(async () => {
-      try {
-        const res = await fetch('/api/containers');
-        const containers = await res.json();
-        renderContainers(containers);
-        await updateGlobalStats();
-      } catch (error) {
-        console.error('Error during refresh:', error);
-      }
-    }, 5000);
+    // WebSocket handles real-time updates - no polling needed!
   </script>
 </body>
 </html>

@@ -12,6 +12,7 @@ const qbittorrentRoute = require('./routes/qbittorrent');
 const authRoute = require('./routes/auth');
 const { requireAuth, isAuthEnabled } = require('./middleware/auth');
 const wsHandlers = require('./sockets');
+const statsHub = require('./statsHub');
 const path = require('path');
 const config = require('./config/defaults');
 const { validateEnv } = require('./config/schema');
@@ -38,7 +39,7 @@ if (process.env.TRUST_PROXY === 'true') {
 // Rate limiting
 const apiLimiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 minutes
-    max: 100, // Limit each IP to 100 requests per window
+    max: 500, // Increased limit - WebSocket now handles real-time, HTTP is fallback
     message: { error: 'Too many requests, please try again later.' },
     standardHeaders: true,
     legacyHeaders: false,
@@ -144,6 +145,8 @@ if (process.env.HTTPS === 'true') {
 }
 const wssStats = new WebSocket.Server({ server: process.env.HTTPS === 'true' ? httpsServer : server, path: '/ws/stats' });
 const wssLogs = new WebSocket.Server({ server: process.env.HTTPS === 'true' ? httpsServer : server, path: '/ws/logs' });
+const wssContainers = new WebSocket.Server({ server: process.env.HTTPS === 'true' ? httpsServer : server, path: '/ws/containers' });
+
 wssStats.on('connection', (ws, req) => {
     console.log(`[${new Date().toISOString()}] WS connection: ${req.url}`);
     wsHandlers.handleConnection(ws, req);
@@ -152,6 +155,13 @@ wssLogs.on('connection', (ws, req) => {
     console.log(`[${new Date().toISOString()}] WS connection: ${req.url}`);
     wsHandlers.handleConnection(ws, req);
 });
+wssContainers.on('connection', (ws, req) => {
+    console.log(`[${new Date().toISOString()}] WS connection: ${req.url}`);
+    wsHandlers.handleConnection(ws, req);
+});
+
+// Start the stats collector hub
+statsHub.startCollector();
 const PORT = config.PORT;
 if (process.env.HTTPS === 'true') {
     httpsServer.listen(PORT, () => {
