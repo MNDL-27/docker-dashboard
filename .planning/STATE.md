@@ -5,14 +5,14 @@
 See: `.planning/PROJECT.md` (updated 2026-03-01)
 
 **Core value:** Operators can securely observe and control Docker containers across many hosts from one place without exposing inbound ports on customer infrastructure.
-**Current focus:** Phase 4 - Fleet Inventory Views
+**Current focus:** Phase 5 - Metrics Telemetry Core
 
 ## Current Position
 
-Phase: 4 of 8 (Fleet Inventory Views)
-Plan: 3 of 3 in current phase
-Status: Phase 4 complete - ready for next phase planning
-Last activity: 2026-03-04 - Completed 04-03 locked fleet empty states, filter/search regressions, and final checkpoint auto-approval.
+Phase: 5 of 8 (Metrics Telemetry Core)
+Plan: 0 of TBD in current phase
+Status: Context gathered, ready to plan
+Last activity: 2026-03-04 - Completed discuss-phase 5 and captured live telemetry surface decisions.
 
 Progress: [██████████] 93.0%
 
@@ -98,5 +98,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-03-04
-Stopped at: Completed 04-03-PLAN.md
-Resume file: None
+Stopped at: Phase 5 context gathered
+Resume file: .planning/phases/05-metrics-telemetry-core/05-CONTEXT.md
