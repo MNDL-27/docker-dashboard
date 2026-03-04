@@ -1,4 +1,4 @@
-const proxy = require('../docker/proxy');
+const proxy = require('./docker/proxy');
 
 // Configuration
 const COLLECTION_INTERVAL_MS = process.env.STATS_INTERVAL_MS ? parseInt(process.env.STATS_INTERVAL_MS) : 5000;
