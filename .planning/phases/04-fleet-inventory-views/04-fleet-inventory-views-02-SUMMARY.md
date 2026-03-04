@@ -73,7 +73,7 @@ Each task was committed atomically:
 2. **Task 2: Implement contextual filter panel with draft vs applied state and full search** - `6546de2` (feat)
 3. **Task 3: Add and persist inventory density setting in settings (default Detailed)** - `cc7e923` (feat)
 
-**Plan metadata:** pending
+**Plan metadata:** `ab53356` (docs)
 
 ## Files Created/Modified
 - `apps/web/src/components/fleet/FleetInventoryView.tsx` - Fleet overview shell, host expansion, applied filter wiring, and density-aware rendering orchestration.
