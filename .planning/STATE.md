@@ -10,11 +10,11 @@ See: `.planning/PROJECT.md` (updated 2026-03-01)
 ## Current Position
 
 Phase: 5 of 8 (Metrics Telemetry Core)
-Plan: 1 of 3 in current phase
+Plan: 2 of 3 in current phase
 Status: In progress
-Last activity: 2026-03-04 - Completed 05-01 telemetry ingest identity + retention hardening.
+Last activity: 2026-03-04 - Completed 05-02 tenant-safe telemetry history/stream contracts.
 
-Progress: [██████████] 93.0%
+Progress: [██████████] 94.0%
 
 ## Performance Metrics
 
@@ -43,6 +43,7 @@ Progress: [██████████] 93.0%
 | Phase 04 P02 | 8 min | 3 tasks | 7 files |
 | Phase 04 P03 | 2 min | 3 tasks | 3 files |
 | Phase 05 P01 | 4 min | 3 tasks | 3 files |
+| Phase 05 P02 | 4 min | 3 tasks | 5 files |
 
 ## Accumulated Context
 
@@ -87,6 +88,8 @@ Recent decisions affecting current work:
 - [Phase 04]: Use auto-advance to auto-approve Plan 04-03 human verification checkpoint.
 - [Phase 05]: Drop unmatched Docker ID metrics during ingest with host-scoped counters instead of persisting invalid relations.
 - [Phase 05]: Clamp default telemetry lookback to the shared 24-hour retention cutoff so history queries cannot include older samples by default.
+- [Phase 05]: Expose telemetry history and live snapshot under /api/metrics with required organization scope and optional project/host/container filters to keep tenant boundaries fail-closed.
+- [Phase 05]: Keep ingest cadence unchanged and apply pause/resume/speed controls only to websocket fan-out emission timing.
 
 ### Pending Todos
 
@@ -101,5 +104,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-03-04
-Stopped at: Completed 05-01-PLAN.md
+Stopped at: Completed 05-02-PLAN.md
 Resume file: None

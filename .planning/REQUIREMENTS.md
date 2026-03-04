@@ -39,7 +39,7 @@ Requirements for initial release. Each maps to exactly one roadmap phase.
 ### Metrics and Container Detail
 
 - [x] **METR-01**: User can view live container metrics updates (CPU, memory, network, restart indicators).
-- [ ] **METR-02**: User can view recent metrics history windows (15m, 1h, 6h, 24h).
+- [x] **METR-02**: User can view recent metrics history windows (15m, 1h, 6h, 24h).
 - [x] **METR-03**: Platform can retain metrics samples for at least 24 hours in MVP.
 
 ### Logs
@@ -134,7 +134,7 @@ Which phases cover which requirements. Populated during roadmap creation.
 | INVT-02 | Phase 4 | Complete |
 | INVT-03 | Phase 4 | Complete |
 | METR-01 | Phase 5 | Complete |
-| METR-02 | Phase 5 | Pending |
+| METR-02 | Phase 5 | Complete |
 | METR-03 | Phase 5 | Complete |
 | LOGS-01 | Phase 6 | Pending |
 | LOGS-02 | Phase 6 | Pending |

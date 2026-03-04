@@ -96,7 +96,7 @@ Plans:
 **Plans**: 3 plans
 Plans:
 - [x] 05-01-PLAN.md - Harden telemetry ingest identity mapping and 24h retention enforcement with regression tests.
-- [ ] 05-02-PLAN.md - Add scoped telemetry history/stream contracts with 15m/1h/6h/24h windows and live controls.
+- [x] 05-02-PLAN.md - Add scoped telemetry history/stream contracts with 15m/1h/6h/24h windows and live controls.
 - [ ] 05-03-PLAN.md - Integrate fleet-level KPI telemetry UI with auto-follow context, Top N focus, and aggregate contributors.
 
 ### Phase 6: Live Logs and Retention
@@ -138,7 +138,7 @@ Plans:
 | 2. Identity, Access, and Tenant Isolation | 6/6 | Complete   | 2026-03-02 |
 | 3. Host Enrollment and Trusted Connectivity | 3/3 | Complete | 2026-03-02 |
 | 4. Fleet Inventory Views | 3/3 | Complete | 2026-03-04 |
-| 5. Metrics Telemetry Core | 1/3 | In Progress | - |
+| 5. Metrics Telemetry Core | 2/3 | In Progress | - |
 | 6. Live Logs and Retention | 0/TBD | Not started | - |
 | 7. Safe Container Actions and Audit Trail | 0/TBD | Not started | - |
 | 8. Alerting and Notification Delivery | 0/TBD | Not started | - |
