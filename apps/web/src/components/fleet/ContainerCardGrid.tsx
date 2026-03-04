@@ -19,6 +19,12 @@ interface ContainerCard {
 interface ContainerCardGridProps {
     containers: ContainerCard[];
     emptyMessage?: string;
+    emptyTitle?: string;
+    emptyHints?: string[];
+    emptyAction?: {
+        label: string;
+        href: string;
+    };
     density?: InventoryDensity;
 }
 
@@ -84,14 +90,41 @@ function normalizeListField(value: unknown): string[] {
     return [];
 }
 
-export function ContainerCardGrid({ containers, emptyMessage, density = 'DETAILED' }: ContainerCardGridProps) {
+export function ContainerCardGrid({
+    containers,
+    emptyMessage,
+    emptyTitle,
+    emptyHints,
+    emptyAction,
+    density = 'DETAILED',
+}: ContainerCardGridProps) {
     const showStandardFields = density === 'STANDARD' || density === 'DETAILED';
     const showDetailedFields = density === 'DETAILED';
 
     if (containers.length === 0) {
         return (
-            <div className="rounded-xl border border-dashed border-slate-700 bg-slate-900/60 px-4 py-6 text-sm text-slate-400">
-                {emptyMessage ?? 'No containers match this selection.'}
+            <div className="rounded-xl border border-dashed border-slate-700 bg-slate-900/60 px-4 py-6">
+                <h4 className="text-sm font-semibold text-slate-100">{emptyTitle ?? 'No containers match this selection.'}</h4>
+                {emptyMessage ? <p className="mt-1 text-sm text-slate-400">{emptyMessage}</p> : null}
+
+                {emptyHints && emptyHints.length > 0 ? (
+                    <ol className="mt-3 space-y-1 text-xs text-slate-400">
+                        {emptyHints.map((hint, index) => (
+                            <li key={hint}>{index + 1}. {hint}</li>
+                        ))}
+                    </ol>
+                ) : null}
+
+                {emptyAction ? (
+                    <a
+                        href={emptyAction.href}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="mt-4 inline-flex rounded-lg border border-blue-500/60 bg-blue-500/10 px-3 py-2 text-sm font-medium text-blue-200 hover:border-blue-400 hover:text-blue-100"
+                    >
+                        {emptyAction.label}
+                    </a>
+                ) : null}
             </div>
         );
     }

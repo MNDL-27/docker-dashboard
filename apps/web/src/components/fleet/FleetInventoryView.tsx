@@ -162,10 +162,12 @@ export function FleetInventoryView({ organizationId }: FleetInventoryViewProps) 
     }, [hosts, appliedFilters.projectIds, appliedFilters.hostIds]);
 
     const hasHosts = visibleHosts.length > 0;
+    const hasHostsInScope = hosts.length > 0;
     const expandedContainers = expandedHostId ? containersByHost[expandedHostId] ?? [] : [];
     const isExpandedLoading = expandedHostId ? loadingContainersByHost[expandedHostId] : false;
     const expandedHostError = expandedHostId ? containerErrorsByHost[expandedHostId] : null;
     const activeFilterCount = countAppliedFilters(appliedFilters);
+    const hasAppliedFilters = activeFilterCount > 0;
 
     const onlineCount = useMemo(
         () => visibleHosts.filter((host) => host.status === 'ONLINE').length,
@@ -227,12 +229,31 @@ export function FleetInventoryView({ organizationId }: FleetInventoryViewProps) 
                 </div>
             ) : null}
 
-            {!loadingHosts && !hostsError && !hasHosts ? (
+            {!loadingHosts && !hostsError && !hasHostsInScope ? (
                 <div className="rounded-xl border border-dashed border-slate-700 bg-slate-900/50 p-6">
-                    <h3 className="text-base font-semibold text-slate-100">No hosts enrolled yet</h3>
+                    <h3 className="text-base font-semibold text-slate-100">No hosts in scope</h3>
                     <p className="mt-1 text-sm text-slate-400">
-                        Add your first host from the toolbar above to start building fleet visibility.
+                        Enroll your first host to unlock container visibility on this page.
                     </p>
+                    <ol className="mt-3 space-y-1 text-xs text-slate-400">
+                        <li>1. Click + Add Host in the top toolbar.</li>
+                        <li>2. Select the target client workspace and copy the install command.</li>
+                        <li>3. Run the command on the host, then refresh inventory.</li>
+                    </ol>
+                </div>
+            ) : null}
+
+            {!loadingHosts && !hostsError && hasHostsInScope && !hasHosts ? (
+                <div className="rounded-xl border border-dashed border-slate-700 bg-slate-900/50 p-6">
+                    <h3 className="text-base font-semibold text-slate-100">No containers match your search</h3>
+                    <p className="mt-1 text-sm text-slate-400">
+                        Your applied filters are still active. Update criteria and press Apply to widen results.
+                    </p>
+                    <ol className="mt-3 space-y-1 text-xs text-slate-400">
+                        <li>1. Click Filter to review search, status, project, and host filters.</li>
+                        <li>2. Clear one restrictive value at a time so you can see what changes results.</li>
+                        <li>3. Press Apply to keep filter context while restoring matching hosts.</li>
+                    </ol>
                 </div>
             ) : null}
 
@@ -287,10 +308,36 @@ export function FleetInventoryView({ organizationId }: FleetInventoryViewProps) 
                                             <ContainerCardGrid
                                                 containers={expandedContainers}
                                                 density={density}
-                                                emptyMessage={
-                                                    appliedFilters.search || appliedFilters.statuses.length
+                                                emptyTitle={
+                                                    hasAppliedFilters
                                                         ? 'No containers match your search'
-                                                        : 'No containers reported for this host yet.'
+                                                        : 'No containers are reporting for this host'
+                                                }
+                                                emptyMessage={
+                                                    hasAppliedFilters
+                                                        ? 'Applied search/filter context is preserved. Update filters and re-apply to expand results.'
+                                                        : 'This host is connected but has not reported any running workload yet.'
+                                                }
+                                                emptyHints={
+                                                    hasAppliedFilters
+                                                        ? [
+                                                              'Open Filter and relax one constraint at a time.',
+                                                              'Use Apply to commit the new criteria.',
+                                                              'Keep this host expanded to compare results immediately.',
+                                                          ]
+                                                        : [
+                                                              'Open Docker on the host to confirm containers are running.',
+                                                              'Check agent connectivity if running containers do not appear.',
+                                                              'Refresh after the next snapshot to verify discovery.',
+                                                          ]
+                                                }
+                                                emptyAction={
+                                                    !hasAppliedFilters && host.ipAddress
+                                                        ? {
+                                                              label: 'Open Docker',
+                                                              href: `http://${host.ipAddress}:2375`,
+                                                          }
+                                                        : undefined
                                                 }
                                             />
                                         ) : null}
