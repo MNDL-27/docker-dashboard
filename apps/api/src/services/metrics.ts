@@ -8,13 +8,25 @@ export interface MetricItem {
     networkTxBytes: number;
 }
 
+interface BufferedMetricItem extends MetricItem {
+    hostId: string;
+}
+
 // In-memory buffer for batched inserts
-let metricsBuffer: MetricItem[] = [];
+let metricsBuffer: BufferedMetricItem[] = [];
 let flushTimeout: NodeJS.Timeout | null = null;
 
 export async function saveMetricsBatch(hostId: string, metricsArray: MetricItem[]) {
-    // We accept hostId to validate or enrich, but metrics have their own containerId.
-    metricsBuffer.push(...metricsArray);
+    if (metricsArray.length === 0) {
+        return;
+    }
+
+    metricsBuffer.push(
+        ...metricsArray.map((metric) => ({
+            ...metric,
+            hostId,
+        }))
+    );
 
     if (!flushTimeout) {
         flushTimeout = setTimeout(flushMetrics, 2000); // Flush every 2 seconds
@@ -29,8 +41,67 @@ async function flushMetrics() {
     flushTimeout = null;
 
     try {
+        const metricsByHost = new Map<string, BufferedMetricItem[]>();
+        for (const metric of batch) {
+            const hostMetrics = metricsByHost.get(metric.hostId);
+            if (hostMetrics) {
+                hostMetrics.push(metric);
+            } else {
+                metricsByHost.set(metric.hostId, [metric]);
+            }
+        }
+
+        const rowsToPersist: MetricItem[] = [];
+
+        for (const [hostId, hostMetrics] of metricsByHost.entries()) {
+            const dockerIds = [...new Set(hostMetrics.map((metric) => metric.containerId))];
+            const scopedContainers = await prisma.container.findMany({
+                where: {
+                    hostId,
+                    dockerId: {
+                        in: dockerIds,
+                    },
+                },
+                select: {
+                    id: true,
+                    dockerId: true,
+                },
+            });
+
+            const internalIdByDockerId = new Map(scopedContainers.map((container) => [container.dockerId, container.id]));
+            let unmatchedCount = 0;
+
+            for (const metric of hostMetrics) {
+                const internalContainerId = internalIdByDockerId.get(metric.containerId);
+                if (!internalContainerId) {
+                    unmatchedCount += 1;
+                    continue;
+                }
+
+                rowsToPersist.push({
+                    containerId: internalContainerId,
+                    cpuUsagePercent: metric.cpuUsagePercent,
+                    memoryUsageBytes: metric.memoryUsageBytes,
+                    networkRxBytes: metric.networkRxBytes,
+                    networkTxBytes: metric.networkTxBytes,
+                });
+            }
+
+            if (unmatchedCount > 0) {
+                console.warn('[metrics.ingest.unmatched]', {
+                    hostId,
+                    unmatchedCount,
+                    totalReceived: hostMetrics.length,
+                });
+            }
+        }
+
+        if (rowsToPersist.length === 0) {
+            return;
+        }
+
         await prisma.containerMetric.createMany({
-            data: batch.map(m => ({
+            data: rowsToPersist.map((m) => ({
                 containerId: m.containerId,
                 cpuUsagePercent: m.cpuUsagePercent,
                 memoryUsageBytes: BigInt(m.memoryUsageBytes),
