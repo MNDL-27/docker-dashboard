@@ -10,18 +10,18 @@ See: `.planning/PROJECT.md` (updated 2026-03-01)
 ## Current Position
 
 Phase: 4 of 8 (Fleet Inventory Views)
-Plan: 1 of 3 in current phase
+Plan: 2 of 3 in current phase
 Status: Phase 4 plan execution in progress
-Last activity: 2026-03-04 - Completed 04-01 inventory data contract, scoped filters, and regression tests.
+Last activity: 2026-03-04 - Completed 04-02 fleet drill-down cards, apply-gated filters, and density settings.
 
-Progress: [██████████] 90.0%
+Progress: [██████████] 93.0%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 13
+- Total plans completed: 14
 - Average duration: 4 min
-- Total execution time: 1.0 hours
+- Total execution time: 1.1 hours
 
 **By Phase:**
 
@@ -33,13 +33,14 @@ Progress: [██████████] 90.0%
 | 4-8 | 1 | 8 min | 8 min |
 
 **Recent Trend:**
-- Last 5 plans: 02-06, 03-01, 03-02, 03-03, 04-01
+- Last 5 plans: 03-01, 03-02, 03-03, 04-01, 04-02
 - Trend: Stable
 
 *Updated after each plan completion*
-- Latest execution: Phase 04 Plan 01 | 8 min | 3 tasks | 7 files
+- Latest execution: Phase 04 Plan 02 | 8 min | 3 tasks | 7 files
 | Phase 03 P04 | 3 | 3 tasks | 3 files |
 | Phase 04 P01 | 8 min | 3 tasks | 7 files |
+| Phase 04 P02 | 8 min | 3 tasks | 7 files |
 
 ## Accumulated Context
 
@@ -76,6 +77,9 @@ Recent decisions affecting current work:
 - [Phase 03]: Hash pre-auth enrollment tokens for limiter keys so abusive bootstrap traffic is isolated without storing plaintext.
 - [Phase 04]: Kept /agent/containers backward compatible by accepting legacy array and extended object payload shapes.
 - [Phase 04]: Applied scoped validation for host/project/status filters before container queries to keep tenant boundaries fail-closed.
+- [Phase 04]: Keep /fleet as a single-page host-card drill-down surface with inline expansion.
+- [Phase 04]: Apply filters only from committed appliedFilters state while draft edits stay local to the panel.
+- [Phase 04]: Persist inventory density as a client localStorage preference with Detailed fallback.
 
 ### Pending Todos
 
@@ -90,5 +94,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-03-04
-Stopped at: Completed 04-01-PLAN.md
+Stopped at: Completed 04-02-PLAN.md
 Resume file: None

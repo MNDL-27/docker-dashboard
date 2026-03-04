@@ -133,7 +133,7 @@ Plans:
 | 1. Dual-Mode Foundation and Local DX | 3/3 | Complete | 2026-03-02 |
 | 2. Identity, Access, and Tenant Isolation | 6/6 | Complete   | 2026-03-02 |
 | 3. Host Enrollment and Trusted Connectivity | 3/3 | Complete | 2026-03-02 |
-| 4. Fleet Inventory Views | 1/3 | In Progress | - |
+| 4. Fleet Inventory Views | 2/3 | In Progress | - |
 | 5. Metrics Telemetry Core | 0/TBD | Not started | - |
 | 6. Live Logs and Retention | 0/TBD | Not started | - |
 | 7. Safe Container Actions and Audit Trail | 0/TBD | Not started | - |
