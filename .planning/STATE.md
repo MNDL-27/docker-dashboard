@@ -10,11 +10,11 @@ See: `.planning/PROJECT.md` (updated 2026-03-01)
 ## Current Position
 
 Phase: 6 of 8 (Live Logs and Retention)
-Plan: 1 of 3 in current phase
+Plan: 2 of 3 in current phase
 Status: In progress
-Last activity: 2026-03-04 - Completed execute-plan for 06-01 (log ingest mapping and retention guardrails).
+Last activity: 2026-03-04 - Completed execute-plan for 06-02 (scoped logs route and websocket stream contracts).
 
-Progress: [██████████] 100.0%
+Progress: [███████░░░] 66.7%
 
 ## Performance Metrics
 
@@ -46,6 +46,7 @@ Progress: [██████████] 100.0%
 | Phase 05 P02 | 4 min | 3 tasks | 5 files |
 | Phase 05 P03 | 13 min | 3 tasks | 6 files |
 | Phase 06-live-logs-and-retention P01 | 4m | 3 tasks | 4 files |
+| Phase 06-live-logs-and-retention P02 | 6m | 3 tasks | 5 files |
 
 ## Accumulated Context
 
@@ -97,6 +98,8 @@ Recent decisions affecting current work:
 - [Phase 05-metrics-telemetry-core]: Apply pause/resume/speed controls to websocket fan-out while history window switches continue trend refresh.
 - [Phase 06]: Set log retention to 24h with shared cutoff/clamp helpers reused by cleanup and range calculations.
 - [Phase 06]: Map host-scoped docker IDs to internal container UUIDs before log writes and drop unmatched rows with structured counters.
+- [Phase 06]: Use scopedAccess resolution plus scoped container checks as a fail-closed gate before /api/logs queries.
+- [Phase 06]: Treat reconnect mode as explicit websocket contract state (backfill or now) with logs.status updates and paused pending counters.
 
 ### Pending Todos
 
@@ -111,5 +114,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-03-04
-Stopped at: Completed 06-live-logs-and-retention-01-PLAN.md
-Resume file: .planning/phases/06-live-logs-and-retention/06-02-PLAN.md
+Stopped at: Completed 06-02-PLAN.md
+Resume file: .planning/phases/06-live-logs-and-retention/06-03-PLAN.md

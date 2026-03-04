@@ -44,8 +44,8 @@ Requirements for initial release. Each maps to exactly one roadmap phase.
 
 ### Logs
 
-- [ ] **LOGS-01**: User can view live log tail for a container.
-- [ ] **LOGS-02**: User can pause and resume live log streaming.
+- [x] **LOGS-01**: User can view live log tail for a container.
+- [x] **LOGS-02**: User can pause and resume live log streaming.
 - [ ] **LOGS-03**: User can download logs for a selected time range.
 - [x] **LOGS-04**: Platform can enforce bounded log retention per container/host.
 
@@ -136,8 +136,8 @@ Which phases cover which requirements. Populated during roadmap creation.
 | METR-01 | Phase 5 | Complete |
 | METR-02 | Phase 5 | Complete |
 | METR-03 | Phase 5 | Complete |
-| LOGS-01 | Phase 6 | Pending |
-| LOGS-02 | Phase 6 | Pending |
+| LOGS-01 | Phase 6 | Complete |
+| LOGS-02 | Phase 6 | Complete |
 | LOGS-03 | Phase 6 | Pending |
 | LOGS-04 | Phase 6 | Complete |
 | ACTN-01 | Phase 7 | Pending |

@@ -110,7 +110,7 @@ Plans:
 **Plans**: 3 plans
 Plans:
 - [x] 06-01-PLAN.md - Harden log ingest identity mapping and retention clamp foundations with regression tests.
-- [ ] 06-02-PLAN.md - Implement scoped logs read/websocket contracts with pause semantics and reconnect Backfill/Now handling.
+- [x] 06-02-PLAN.md - Implement scoped logs read/websocket contracts with pause semantics and reconnect Backfill/Now handling.
 - [ ] 06-03-PLAN.md - Deliver fleet-integrated log panel and hybrid single-container export UX with retention-boundary messaging.
 
 ### Phase 7: Safe Container Actions and Audit Trail
@@ -143,6 +143,6 @@ Plans:
 | 3. Host Enrollment and Trusted Connectivity | 3/3 | Complete | 2026-03-02 |
 | 4. Fleet Inventory Views | 3/3 | Complete | 2026-03-04 |
 | 5. Metrics Telemetry Core | 3/3 | Complete | 2026-03-04 |
-| 6. Live Logs and Retention | 1/3 | In Progress | - |
+| 6. Live Logs and Retention | 2/3 | In Progress | - |
 | 7. Safe Container Actions and Audit Trail | 0/TBD | Not started | - |
 | 8. Alerting and Notification Delivery | 0/TBD | Not started | - |
