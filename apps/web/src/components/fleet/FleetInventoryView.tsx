@@ -13,6 +13,7 @@ import {
 import { ContainerCardGrid } from './ContainerCardGrid';
 import { FleetFilters } from './FleetFilters';
 import { HostCard } from './HostCard';
+import { TelemetryKpiPanel } from '@/components/telemetry/TelemetryKpiPanel';
 
 interface FleetInventoryViewProps {
     organizationId: string;
@@ -54,6 +55,7 @@ export function FleetInventoryView({ organizationId }: FleetInventoryViewProps) 
     const [hostTotals, setHostTotals] = useState({ hostCount: 0, containerCount: 0 });
 
     const [expandedHostId, setExpandedHostId] = useState<string | null>(null);
+    const [selectedContainerId, setSelectedContainerId] = useState<string | null>(null);
     const [containersByHost, setContainersByHost] = useState<Record<string, FleetContainerSummary[]>>({});
     const [loadingContainersByHost, setLoadingContainersByHost] = useState<Record<string, boolean>>({});
     const [containerErrorsByHost, setContainerErrorsByHost] = useState<Record<string, string | null>>({});
@@ -132,8 +134,21 @@ export function FleetInventoryView({ organizationId }: FleetInventoryViewProps) 
     useEffect(() => {
         if (expandedHostId && !hosts.some((host) => host.id === expandedHostId)) {
             setExpandedHostId(null);
+            setSelectedContainerId(null);
         }
     }, [expandedHostId, hosts]);
+
+    useEffect(() => {
+        if (!expandedHostId) {
+            setSelectedContainerId(null);
+            return;
+        }
+
+        const containers = containersByHost[expandedHostId] ?? [];
+        if (selectedContainerId && !containers.some((container) => container.id === selectedContainerId)) {
+            setSelectedContainerId(null);
+        }
+    }, [expandedHostId, containersByHost, selectedContainerId]);
 
     const projectOptions = useMemo(() => {
         const deduped = new Map<string, string>();
@@ -217,6 +232,15 @@ export function FleetInventoryView({ organizationId }: FleetInventoryViewProps) 
                 }}
             />
 
+            <TelemetryKpiPanel
+                organizationId={organizationId}
+                projectId={appliedFilters.projectIds.length === 1 ? appliedFilters.projectIds[0] : undefined}
+                hostId={expandedHostId}
+                containerId={selectedContainerId}
+                selectedContainerId={selectedContainerId}
+                onSelectContainer={setSelectedContainerId}
+            />
+
             {loadingHosts ? (
                 <div className="rounded-xl border border-slate-800 bg-slate-900/50 p-6 text-sm text-slate-400">
                     Loading fleet inventory...
@@ -271,9 +295,11 @@ export function FleetInventoryView({ organizationId }: FleetInventoryViewProps) 
                                     onToggle={() => {
                                         if (isExpanded) {
                                             setExpandedHostId(null);
+                                            setSelectedContainerId(null);
                                             return;
                                         }
                                         setExpandedHostId(host.id);
+                                        setSelectedContainerId(null);
                                     }}
                                 />
 
@@ -339,6 +365,8 @@ export function FleetInventoryView({ organizationId }: FleetInventoryViewProps) 
                                                           }
                                                         : undefined
                                                 }
+                                                selectedContainerId={selectedContainerId}
+                                                onSelectContainer={setSelectedContainerId}
                                             />
                                         ) : null}
                                     </div>

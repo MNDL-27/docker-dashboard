@@ -26,6 +26,8 @@ interface ContainerCardGridProps {
         href: string;
     };
     density?: InventoryDensity;
+    selectedContainerId?: string | null;
+    onSelectContainer?: (containerId: string) => void;
 }
 
 function formatTimestamp(timestamp: string | null): string {
@@ -97,6 +99,8 @@ export function ContainerCardGrid({
     emptyHints,
     emptyAction,
     density = 'DETAILED',
+    selectedContainerId,
+    onSelectContainer,
 }: ContainerCardGridProps) {
     const showStandardFields = density === 'STANDARD' || density === 'DETAILED';
     const showDetailedFields = density === 'DETAILED';
@@ -136,9 +140,30 @@ export function ContainerCardGrid({
                 const ports = normalizePorts(container.ports);
                 const networks = normalizeListField(container.networks);
                 const volumes = normalizeListField(container.volumes);
+                const isSelected = selectedContainerId === container.id;
 
                 return (
-                    <article key={container.id} className="rounded-xl border border-slate-800 bg-slate-950/50 p-4">
+                    <article
+                        key={container.id}
+                        role={onSelectContainer ? 'button' : undefined}
+                        tabIndex={onSelectContainer ? 0 : undefined}
+                        onClick={onSelectContainer ? () => onSelectContainer(container.id) : undefined}
+                        onKeyDown={
+                            onSelectContainer
+                                ? (event) => {
+                                      if (event.key === 'Enter' || event.key === ' ') {
+                                          event.preventDefault();
+                                          onSelectContainer(container.id);
+                                      }
+                                  }
+                                : undefined
+                        }
+                        className={`rounded-xl border bg-slate-950/50 p-4 ${
+                            isSelected
+                                ? 'border-blue-500/70 ring-1 ring-blue-500/40'
+                                : 'border-slate-800'
+                        } ${onSelectContainer ? 'cursor-pointer hover:border-slate-600' : ''}`}
+                    >
                         <div className="flex items-start justify-between gap-2">
                             <div>
                                 <h4 className="text-sm font-semibold text-slate-100">{container.name}</h4>
