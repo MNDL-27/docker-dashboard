@@ -107,6 +107,140 @@ export interface FleetInventoryResponse {
     hosts: FleetHostSummary[];
 }
 
+export const TELEMETRY_HISTORY_WINDOWS = ['15m', '1h', '6h', '24h'] as const;
+export type TelemetryHistoryWindow = (typeof TELEMETRY_HISTORY_WINDOWS)[number];
+
+export const TELEMETRY_SPEED_PRESETS = ['1x', '2x', '4x'] as const;
+export type TelemetrySpeedPreset = (typeof TELEMETRY_SPEED_PRESETS)[number];
+
+export const TELEMETRY_DEFAULT_TOP_N = 5;
+
+export interface TelemetryScope {
+    organizationId: string;
+    projectId?: string;
+    hostId?: string;
+    containerId?: string;
+}
+
+export interface TelemetryRestartIndicators {
+    restartingNow: number;
+    containersWithRestarts: number;
+}
+
+export interface TelemetryFrameAggregate {
+    containerCount: number;
+    cpuUsagePercentAvg: number;
+    memoryUsageBytesAvg: number;
+    networkRxBytesMax: number;
+    networkTxBytesMax: number;
+    restartIndicators: TelemetryRestartIndicators;
+}
+
+export interface TelemetryContributor {
+    containerId: string;
+    dockerId: string;
+    hostId: string;
+    name: string;
+    cpuUsagePercent: number;
+    memoryUsageBytes: number;
+    networkRxBytes: number;
+    networkTxBytes: number;
+    restartCount: number;
+    state: string;
+}
+
+export interface TelemetryTrendPoint {
+    timestamp: string;
+    cpuUsagePercentAvg: number;
+    memoryUsageBytesAvg: number;
+    networkRxBytesMax: number;
+    networkTxBytesMax: number;
+}
+
+export interface TelemetryHistoryResponse {
+    scope: TelemetryScope;
+    window: TelemetryHistoryWindow;
+    lookbackStart: string;
+    aggregate: TelemetryFrameAggregate;
+    topContributors: TelemetryContributor[];
+    trend: TelemetryTrendPoint[];
+}
+
+export interface TelemetryLiveSnapshotResponse {
+    scope: TelemetryScope;
+    window: TelemetryHistoryWindow;
+    aggregate: TelemetryFrameAggregate;
+    topContributors: TelemetryContributor[];
+    generatedAt: string;
+}
+
+export interface TelemetryQueryOptions {
+    organizationId: string;
+    projectId?: string;
+    hostId?: string;
+    containerId?: string;
+    window: TelemetryHistoryWindow;
+    topN?: number;
+}
+
+export interface TelemetrySubscribeMessage {
+    type: 'metrics.subscribe';
+    organizationId: string;
+    projectId?: string;
+    hostId?: string;
+    containerId?: string;
+    topN?: number;
+}
+
+export type TelemetryControlMessage =
+    | {
+          type: 'metrics.control';
+          action: 'pause' | 'resume';
+      }
+    | {
+          type: 'metrics.control';
+          action: 'set-speed';
+          speed: TelemetrySpeedPreset;
+      };
+
+export interface TelemetrySubscribeAckMessage {
+    type: 'metrics.subscribe.ack';
+    scope: TelemetryScope;
+    topN: number;
+}
+
+export interface TelemetrySubscribeErrorMessage {
+    type: 'metrics.subscribe.error';
+    error: string;
+}
+
+export interface TelemetryControlAckMessage {
+    type: 'metrics.control.ack';
+    paused: boolean;
+    speed: TelemetrySpeedPreset;
+}
+
+export interface TelemetryControlErrorMessage {
+    type: 'metrics.control.error';
+    error: string;
+}
+
+export interface TelemetryMetricsFrameMessage {
+    type: 'metrics';
+    scope: TelemetryScope;
+    aggregate: TelemetryFrameAggregate;
+    topContributors: TelemetryContributor[];
+    restartIndicators: TelemetryRestartIndicators;
+    generatedAt: string;
+}
+
+export type TelemetryInboundMessage =
+    | TelemetrySubscribeAckMessage
+    | TelemetrySubscribeErrorMessage
+    | TelemetryControlAckMessage
+    | TelemetryControlErrorMessage
+    | TelemetryMetricsFrameMessage;
+
 const SELECTED_ORGANIZATION_KEY = 'docker-dashboard:selected-organization-id';
 const INVENTORY_DENSITY_KEY = 'docker-dashboard:inventory-density';
 
@@ -123,6 +257,309 @@ function appendInventoryFilters(query: URLSearchParams, filters: InventoryFilter
     if (filters.hostIds.length > 0) {
         query.set('hostIds', filters.hostIds.join(','));
     }
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+    return typeof value === 'object' && value !== null;
+}
+
+function asString(value: unknown): string | null {
+    return typeof value === 'string' ? value : null;
+}
+
+function asNumber(value: unknown): number | null {
+    return typeof value === 'number' && Number.isFinite(value) ? value : null;
+}
+
+function asBoolean(value: unknown): boolean | null {
+    return typeof value === 'boolean' ? value : null;
+}
+
+function isTelemetryHistoryWindow(value: unknown): value is TelemetryHistoryWindow {
+    return typeof value === 'string' && TELEMETRY_HISTORY_WINDOWS.includes(value as TelemetryHistoryWindow);
+}
+
+function isTelemetrySpeedPreset(value: unknown): value is TelemetrySpeedPreset {
+    return typeof value === 'string' && TELEMETRY_SPEED_PRESETS.includes(value as TelemetrySpeedPreset);
+}
+
+function sanitizeTopN(topN: number | undefined): number {
+    if (!Number.isFinite(topN) || topN === undefined) {
+        return TELEMETRY_DEFAULT_TOP_N;
+    }
+
+    if (topN < 1) {
+        return 1;
+    }
+
+    if (topN > 25) {
+        return 25;
+    }
+
+    return Math.floor(topN);
+}
+
+function parseTelemetryScope(value: unknown): TelemetryScope | null {
+    if (!isRecord(value)) {
+        return null;
+    }
+
+    const organizationId = asString(value.organizationId);
+    if (!organizationId) {
+        return null;
+    }
+
+    const projectId = asString(value.projectId) ?? undefined;
+    const hostId = asString(value.hostId) ?? undefined;
+    const containerId = asString(value.containerId) ?? undefined;
+
+    return {
+        organizationId,
+        projectId,
+        hostId,
+        containerId,
+    };
+}
+
+function parseRestartIndicators(value: unknown): TelemetryRestartIndicators | null {
+    if (!isRecord(value)) {
+        return null;
+    }
+
+    const restartingNow = asNumber(value.restartingNow);
+    const containersWithRestarts = asNumber(value.containersWithRestarts);
+    if (restartingNow === null || containersWithRestarts === null) {
+        return null;
+    }
+
+    return {
+        restartingNow,
+        containersWithRestarts,
+    };
+}
+
+function parseAggregate(value: unknown): TelemetryFrameAggregate | null {
+    if (!isRecord(value)) {
+        return null;
+    }
+
+    const containerCount = asNumber(value.containerCount);
+    const cpuUsagePercentAvg = asNumber(value.cpuUsagePercentAvg);
+    const memoryUsageBytesAvg = asNumber(value.memoryUsageBytesAvg);
+    const networkRxBytesMax = asNumber(value.networkRxBytesMax);
+    const networkTxBytesMax = asNumber(value.networkTxBytesMax);
+    const restartIndicators = parseRestartIndicators(value.restartIndicators);
+
+    if (
+        containerCount === null ||
+        cpuUsagePercentAvg === null ||
+        memoryUsageBytesAvg === null ||
+        networkRxBytesMax === null ||
+        networkTxBytesMax === null ||
+        !restartIndicators
+    ) {
+        return null;
+    }
+
+    return {
+        containerCount,
+        cpuUsagePercentAvg,
+        memoryUsageBytesAvg,
+        networkRxBytesMax,
+        networkTxBytesMax,
+        restartIndicators,
+    };
+}
+
+function parseContributor(value: unknown): TelemetryContributor | null {
+    if (!isRecord(value)) {
+        return null;
+    }
+
+    const containerId = asString(value.containerId);
+    const dockerId = asString(value.dockerId);
+    const hostId = asString(value.hostId);
+    const name = asString(value.name);
+    const cpuUsagePercent = asNumber(value.cpuUsagePercent);
+    const memoryUsageBytes = asNumber(value.memoryUsageBytes);
+    const networkRxBytes = asNumber(value.networkRxBytes);
+    const networkTxBytes = asNumber(value.networkTxBytes);
+    const restartCount = asNumber(value.restartCount);
+    const state = asString(value.state);
+
+    if (
+        !containerId ||
+        !dockerId ||
+        !hostId ||
+        !name ||
+        cpuUsagePercent === null ||
+        memoryUsageBytes === null ||
+        networkRxBytes === null ||
+        networkTxBytes === null ||
+        restartCount === null ||
+        !state
+    ) {
+        return null;
+    }
+
+    return {
+        containerId,
+        dockerId,
+        hostId,
+        name,
+        cpuUsagePercent,
+        memoryUsageBytes,
+        networkRxBytes,
+        networkTxBytes,
+        restartCount,
+        state,
+    };
+}
+
+function parseTrendPoint(value: unknown): TelemetryTrendPoint | null {
+    if (!isRecord(value)) {
+        return null;
+    }
+
+    const timestamp = asString(value.timestamp);
+    const cpuUsagePercentAvg = asNumber(value.cpuUsagePercentAvg);
+    const memoryUsageBytesAvg = asNumber(value.memoryUsageBytesAvg);
+    const networkRxBytesMax = asNumber(value.networkRxBytesMax);
+    const networkTxBytesMax = asNumber(value.networkTxBytesMax);
+
+    if (
+        !timestamp ||
+        cpuUsagePercentAvg === null ||
+        memoryUsageBytesAvg === null ||
+        networkRxBytesMax === null ||
+        networkTxBytesMax === null
+    ) {
+        return null;
+    }
+
+    return {
+        timestamp,
+        cpuUsagePercentAvg,
+        memoryUsageBytesAvg,
+        networkRxBytesMax,
+        networkTxBytesMax,
+    };
+}
+
+function parseContributors(value: unknown): TelemetryContributor[] | null {
+    if (!Array.isArray(value)) {
+        return null;
+    }
+
+    const parsed = value.map(parseContributor);
+    if (parsed.some((item) => item === null)) {
+        return null;
+    }
+
+    return parsed as TelemetryContributor[];
+}
+
+function parseTrend(value: unknown): TelemetryTrendPoint[] | null {
+    if (!Array.isArray(value)) {
+        return null;
+    }
+
+    const parsed = value.map(parseTrendPoint);
+    if (parsed.some((item) => item === null)) {
+        return null;
+    }
+
+    return parsed as TelemetryTrendPoint[];
+}
+
+function buildTelemetryQuery(options: TelemetryQueryOptions): string {
+    const query = new URLSearchParams({
+        organizationId: options.organizationId,
+        window: options.window,
+        topN: String(sanitizeTopN(options.topN)),
+    });
+
+    if (options.projectId) {
+        query.set('projectId', options.projectId);
+    }
+    if (options.hostId) {
+        query.set('hostId', options.hostId);
+    }
+    if (options.containerId) {
+        query.set('containerId', options.containerId);
+    }
+
+    return query.toString();
+}
+
+function parseTelemetryInboundMessage(payload: unknown): TelemetryInboundMessage | null {
+    if (!isRecord(payload)) {
+        return null;
+    }
+
+    const type = asString(payload.type);
+    if (!type) {
+        return null;
+    }
+
+    if (type === 'metrics.subscribe.ack') {
+        const scope = parseTelemetryScope(payload.scope);
+        const topN = asNumber(payload.topN);
+        if (!scope || topN === null) {
+            return null;
+        }
+        return {
+            type,
+            scope,
+            topN,
+        };
+    }
+
+    if (type === 'metrics.subscribe.error' || type === 'metrics.control.error') {
+        const error = asString(payload.error);
+        if (!error) {
+            return null;
+        }
+        return {
+            type,
+            error,
+        };
+    }
+
+    if (type === 'metrics.control.ack') {
+        const paused = asBoolean(payload.paused);
+        const speed = payload.speed;
+        if (paused === null || !isTelemetrySpeedPreset(speed)) {
+            return null;
+        }
+        return {
+            type,
+            paused,
+            speed,
+        };
+    }
+
+    if (type === 'metrics') {
+        const scope = parseTelemetryScope(payload.scope);
+        const aggregate = parseAggregate(payload.aggregate);
+        const topContributors = parseContributors(payload.topContributors);
+        const restartIndicators = parseRestartIndicators(payload.restartIndicators);
+        const generatedAt = asString(payload.generatedAt);
+        if (!scope || !aggregate || !topContributors || !restartIndicators || !generatedAt) {
+            return null;
+        }
+
+        return {
+            type,
+            scope,
+            aggregate,
+            topContributors,
+            restartIndicators,
+            generatedAt,
+        };
+    }
+
+    return null;
 }
 
 async function extractErrorMessage(res: Response): Promise<string> {
@@ -246,6 +683,67 @@ export async function fetchHostContainers(
     );
 
     return response.containers;
+}
+
+export async function fetchTelemetryHistory(options: TelemetryQueryOptions): Promise<TelemetryHistoryResponse> {
+    return apiFetch<TelemetryHistoryResponse>(`/api/metrics?${buildTelemetryQuery(options)}`);
+}
+
+export async function fetchLiveTelemetrySnapshot(options: TelemetryQueryOptions): Promise<TelemetryLiveSnapshotResponse> {
+    return apiFetch<TelemetryLiveSnapshotResponse>(`/api/metrics/live?${buildTelemetryQuery(options)}`);
+}
+
+export function createTelemetrySocket(): WebSocket {
+    if (typeof window === 'undefined') {
+        throw new Error('Telemetry socket is only available in the browser');
+    }
+
+    return new WebSocket(`${API_WS_BASE}/ws/client`);
+}
+
+export function buildTelemetrySubscribeMessage(options: TelemetryQueryOptions): TelemetrySubscribeMessage {
+    return {
+        type: 'metrics.subscribe',
+        organizationId: options.organizationId,
+        projectId: options.projectId,
+        hostId: options.hostId,
+        containerId: options.containerId,
+        topN: sanitizeTopN(options.topN),
+    };
+}
+
+export function buildTelemetryControlMessage(action: 'pause' | 'resume'): TelemetryControlMessage;
+export function buildTelemetryControlMessage(action: 'set-speed', speed: TelemetrySpeedPreset): TelemetryControlMessage;
+export function buildTelemetryControlMessage(
+    action: 'pause' | 'resume' | 'set-speed',
+    speed?: TelemetrySpeedPreset
+): TelemetryControlMessage {
+    if (action === 'set-speed') {
+        if (!speed || !isTelemetrySpeedPreset(speed)) {
+            throw new Error('Telemetry speed preset must be one of 1x, 2x, or 4x');
+        }
+        return {
+            type: 'metrics.control',
+            action,
+            speed,
+        };
+    }
+
+    return {
+        type: 'metrics.control',
+        action,
+    };
+}
+
+export function parseTelemetrySocketMessage(rawMessage: string): TelemetryInboundMessage | null {
+    let payload: unknown;
+    try {
+        payload = JSON.parse(rawMessage) as unknown;
+    } catch {
+        return null;
+    }
+
+    return parseTelemetryInboundMessage(payload);
 }
 
 export function getInventoryDensityPreference(): InventoryDensity {
