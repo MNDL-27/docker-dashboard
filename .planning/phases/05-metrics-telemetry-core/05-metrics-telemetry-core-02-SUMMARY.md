@@ -68,7 +68,7 @@ Each task was committed atomically:
 2. **Task 2: Implement scope-aware telemetry stream fan-out with pause/resume and speed controls** - `652f7e8` (feat)
 3. **Task 3: Add API/websocket contract tests for windows, scoping, and telemetry frame shape** - `7dd2b59` (test)
 
-**Plan metadata:** pending final docs commit
+**Plan metadata:** `d01cef5` (docs)
 
 ## Files Created/Modified
 - `apps/api/src/services/telemetryQuery.ts` - Scope resolution, window presets, bucketed history aggregation, live frame shaping helpers.
