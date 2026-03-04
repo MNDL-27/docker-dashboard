@@ -13,7 +13,7 @@ This roadmap delivers a secure outbound-agent Docker control plane in capability
 - [x] **Phase 1: Dual-Mode Foundation and Local DX** - Keep self-hosted mode working while enabling reproducible local SaaS+agent workflows and secure transport defaults.
 - [x] **Phase 2: Identity, Access, and Tenant Isolation** - Deliver accounts, organization/project boundaries, role assignment, and strict tenant-scoped access. (completed 2026-03-02)
 - [x] **Phase 3: Host Enrollment and Trusted Connectivity** - Establish one-time enrollment, durable agent credentials, heartbeat freshness, and protected ingest. (completed 2026-03-02)
-- [ ] **Phase 4: Fleet Inventory Views** - Deliver fleet and host container visibility with practical filtering and search.
+- [x] **Phase 4: Fleet Inventory Views** - Deliver fleet and host container visibility with practical filtering and search. (completed 2026-03-04)
 - [ ] **Phase 5: Metrics Telemetry Core** - Provide live container metrics and bounded historical windows.
 - [ ] **Phase 6: Live Logs and Retention** - Provide live tailing, stream controls, downloads, and bounded log retention behavior.
 - [ ] **Phase 7: Safe Container Actions and Audit Trail** - Deliver role-guarded lifecycle actions, result tracking, monitor-only mode, and immutable action auditability.
@@ -133,7 +133,7 @@ Plans:
 | 1. Dual-Mode Foundation and Local DX | 3/3 | Complete | 2026-03-02 |
 | 2. Identity, Access, and Tenant Isolation | 6/6 | Complete   | 2026-03-02 |
 | 3. Host Enrollment and Trusted Connectivity | 3/3 | Complete | 2026-03-02 |
-| 4. Fleet Inventory Views | 2/3 | In Progress | - |
+| 4. Fleet Inventory Views | 3/3 | Complete | 2026-03-04 |
 | 5. Metrics Telemetry Core | 0/TBD | Not started | - |
 | 6. Live Logs and Retention | 0/TBD | Not started | - |
 | 7. Safe Container Actions and Audit Trail | 0/TBD | Not started | - |
