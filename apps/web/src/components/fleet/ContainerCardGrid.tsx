@@ -1,5 +1,7 @@
 'use client';
 
+import { InventoryDensity } from '@/lib/api';
+
 interface ContainerCard {
     id: string;
     name: string;
@@ -17,6 +19,7 @@ interface ContainerCard {
 interface ContainerCardGridProps {
     containers: ContainerCard[];
     emptyMessage?: string;
+    density?: InventoryDensity;
 }
 
 function formatTimestamp(timestamp: string | null): string {
@@ -81,7 +84,10 @@ function normalizeListField(value: unknown): string[] {
     return [];
 }
 
-export function ContainerCardGrid({ containers, emptyMessage }: ContainerCardGridProps) {
+export function ContainerCardGrid({ containers, emptyMessage, density = 'DETAILED' }: ContainerCardGridProps) {
+    const showStandardFields = density === 'STANDARD' || density === 'DETAILED';
+    const showDetailedFields = density === 'DETAILED';
+
     if (containers.length === 0) {
         return (
             <div className="rounded-xl border border-dashed border-slate-700 bg-slate-900/60 px-4 py-6 text-sm text-slate-400">
@@ -119,47 +125,53 @@ export function ContainerCardGrid({ containers, emptyMessage }: ContainerCardGri
                                 <div className="text-slate-500">Status</div>
                                 <div>{container.status}</div>
                             </div>
-                            <div>
-                                <div className="text-slate-500">Restarts</div>
-                                <div>{container.restartCount}</div>
-                            </div>
-                            <div>
-                                <div className="text-slate-500">Created</div>
-                                <div>{formatTimestamp(container.dockerCreatedAt)}</div>
-                            </div>
+                            {showStandardFields ? (
+                                <>
+                                    <div>
+                                        <div className="text-slate-500">Restarts</div>
+                                        <div>{container.restartCount}</div>
+                                    </div>
+                                    <div>
+                                        <div className="text-slate-500">Created</div>
+                                        <div>{formatTimestamp(container.dockerCreatedAt)}</div>
+                                    </div>
+                                </>
+                            ) : null}
                         </div>
 
-                        <div className="mt-3 space-y-2 text-xs text-slate-300">
-                            <div>
-                                <div className="text-slate-500">Labels</div>
-                                <div className="mt-1 flex flex-wrap gap-1.5">
-                                    {labels.length ? (
-                                        labels.slice(0, 6).map(([key, value]) => (
-                                            <span key={key} className="rounded border border-slate-700 px-1.5 py-0.5 text-[11px]">
-                                                {key}={String(value)}
-                                            </span>
-                                        ))
-                                    ) : (
-                                        <span className="text-slate-500">None</span>
-                                    )}
+                        {showDetailedFields ? (
+                            <div className="mt-3 space-y-2 text-xs text-slate-300">
+                                <div>
+                                    <div className="text-slate-500">Labels</div>
+                                    <div className="mt-1 flex flex-wrap gap-1.5">
+                                        {labels.length ? (
+                                            labels.slice(0, 6).map(([key, value]) => (
+                                                <span key={key} className="rounded border border-slate-700 px-1.5 py-0.5 text-[11px]">
+                                                    {key}={String(value)}
+                                                </span>
+                                            ))
+                                        ) : (
+                                            <span className="text-slate-500">None</span>
+                                        )}
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <div className="text-slate-500">Ports</div>
+                                    <div>{ports.length ? ports.join(', ') : 'None'}</div>
+                                </div>
+
+                                <div>
+                                    <div className="text-slate-500">Networks</div>
+                                    <div>{networks.length ? networks.join(', ') : 'None'}</div>
+                                </div>
+
+                                <div>
+                                    <div className="text-slate-500">Volumes</div>
+                                    <div>{volumes.length ? volumes.join(', ') : 'None'}</div>
                                 </div>
                             </div>
-
-                            <div>
-                                <div className="text-slate-500">Ports</div>
-                                <div>{ports.length ? ports.join(', ') : 'None'}</div>
-                            </div>
-
-                            <div>
-                                <div className="text-slate-500">Networks</div>
-                                <div>{networks.length ? networks.join(', ') : 'None'}</div>
-                            </div>
-
-                            <div>
-                                <div className="text-slate-500">Volumes</div>
-                                <div>{volumes.length ? volumes.join(', ') : 'None'}</div>
-                            </div>
-                        </div>
+                        ) : null}
                     </article>
                 );
             })}

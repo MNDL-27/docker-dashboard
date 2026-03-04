@@ -1,5 +1,7 @@
 'use client';
 
+import { InventoryDensity } from '@/lib/api';
+
 interface HostCardData {
     id: string;
     name: string;
@@ -17,6 +19,7 @@ interface HostCardProps {
     host: HostCardData;
     expanded: boolean;
     onToggle: () => void;
+    density?: InventoryDensity;
 }
 
 function formatLastSeen(lastSeen: string | null): string {
@@ -48,8 +51,10 @@ function formatBytes(bytes: string | number | null): string {
     return `${normalized.toFixed(unitIndex === 0 ? 0 : 1)} ${units[unitIndex]}`;
 }
 
-export function HostCard({ host, expanded, onToggle }: HostCardProps) {
+export function HostCard({ host, expanded, onToggle, density = 'DETAILED' }: HostCardProps) {
     const isOnline = host.status === 'ONLINE';
+    const showStandardFields = density === 'STANDARD' || density === 'DETAILED';
+    const showDetailedFields = density === 'DETAILED';
 
     return (
         <button
@@ -82,30 +87,36 @@ export function HostCard({ host, expanded, onToggle }: HostCardProps) {
                     <div className="text-xs text-slate-500">Containers</div>
                     <div>{host.containerCount}</div>
                 </div>
-                <div>
-                    <div className="text-xs text-slate-500">Last seen</div>
-                    <div>{formatLastSeen(host.lastSeen)}</div>
-                </div>
-                <div>
-                    <div className="text-xs text-slate-500">IP address</div>
-                    <div>{host.ipAddress ?? 'Unknown'}</div>
-                </div>
-                <div>
-                    <div className="text-xs text-slate-500">Agent version</div>
-                    <div>{host.agentVersion ?? 'Unknown'}</div>
-                </div>
+                {showStandardFields ? (
+                    <>
+                        <div>
+                            <div className="text-xs text-slate-500">Last seen</div>
+                            <div>{formatLastSeen(host.lastSeen)}</div>
+                        </div>
+                        <div>
+                            <div className="text-xs text-slate-500">IP address</div>
+                            <div>{host.ipAddress ?? 'Unknown'}</div>
+                        </div>
+                        <div>
+                            <div className="text-xs text-slate-500">Agent version</div>
+                            <div>{host.agentVersion ?? 'Unknown'}</div>
+                        </div>
+                    </>
+                ) : null}
             </div>
 
-            <div className="mt-3 grid gap-2 text-sm text-slate-300 md:grid-cols-2">
-                <div>
-                    <div className="text-xs text-slate-500">CPU summary</div>
-                    <div>{host.cpuCount ? `${host.cpuCount} cores` : 'Unknown'}</div>
+            {showDetailedFields ? (
+                <div className="mt-3 grid gap-2 text-sm text-slate-300 md:grid-cols-2">
+                    <div>
+                        <div className="text-xs text-slate-500">CPU summary</div>
+                        <div>{host.cpuCount ? `${host.cpuCount} cores` : 'Unknown'}</div>
+                    </div>
+                    <div>
+                        <div className="text-xs text-slate-500">Memory summary</div>
+                        <div>{formatBytes(host.memoryTotalBytes)}</div>
+                    </div>
                 </div>
-                <div>
-                    <div className="text-xs text-slate-500">Memory summary</div>
-                    <div>{formatBytes(host.memoryTotalBytes)}</div>
-                </div>
-            </div>
+            ) : null}
         </button>
     );
 }

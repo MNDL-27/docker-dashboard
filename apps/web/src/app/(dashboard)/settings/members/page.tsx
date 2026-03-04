@@ -8,10 +8,13 @@ import {
     fetchCurrentUser,
     fetchOrganizationMembers,
     fetchOrganizations,
+    getInventoryDensityPreference,
     getSelectedOrganizationId,
+    InventoryDensity,
     OrganizationMember,
     OrganizationRole,
     OrganizationSummary,
+    setInventoryDensityPreference,
     setSelectedOrganizationId,
 } from '@/lib/api';
 
@@ -27,6 +30,7 @@ export default function MembersSettingsPage() {
     const [members, setMembers] = useState<OrganizationMember[]>([]);
     const [currentUserId, setCurrentUserId] = useState<string>('');
     const [error, setError] = useState<string | null>(null);
+    const [inventoryDensity, setInventoryDensity] = useState<InventoryDensity>('DETAILED');
 
     const currentOrganization = useMemo(
         () => organizations.find((organization) => organization.id === orgId),
@@ -34,6 +38,10 @@ export default function MembersSettingsPage() {
     );
     const currentRole = currentOrganization?.role;
     const canManage = canManageMembers(currentRole);
+
+    useEffect(() => {
+        setInventoryDensity(getInventoryDensityPreference());
+    }, []);
 
     useEffect(() => {
         async function bootstrap() {
@@ -92,6 +100,11 @@ export default function MembersSettingsPage() {
         setOrgId(nextOrgId);
     }
 
+    function handleDensityChange(nextDensity: InventoryDensity) {
+        setInventoryDensity(nextDensity);
+        setInventoryDensityPreference(nextDensity);
+    }
+
     if (loading) {
         return <div className="p-8 text-slate-400 font-medium">Loading member settings...</div>;
     }
@@ -133,6 +146,33 @@ export default function MembersSettingsPage() {
                     {error}
                 </div>
             )}
+
+            <div className="rounded-xl border border-slate-800 bg-slate-900/70 p-4">
+                <h2 className="text-base font-semibold text-slate-100">Inventory density</h2>
+                <p className="mt-1 text-sm text-slate-400">
+                    Set the default detail level for host and container cards in Fleet Inventory.
+                </p>
+                <div className="mt-3 flex flex-wrap gap-2">
+                    {(['SIMPLE', 'STANDARD', 'DETAILED'] as const).map((value) => {
+                        const selected = inventoryDensity === value;
+
+                        return (
+                            <button
+                                key={value}
+                                type="button"
+                                onClick={() => handleDensityChange(value)}
+                                className={`rounded-lg border px-3 py-2 text-sm font-medium transition ${
+                                    selected
+                                        ? 'border-blue-500 bg-blue-500/15 text-blue-200'
+                                        : 'border-slate-700 text-slate-300 hover:border-slate-500'
+                                }`}
+                            >
+                                {value === 'SIMPLE' ? 'Simple' : value === 'STANDARD' ? 'Standard' : 'Detailed'}
+                            </button>
+                        );
+                    })}
+                </div>
+            </div>
 
             <InviteMemberForm
                 organizationId={orgId}

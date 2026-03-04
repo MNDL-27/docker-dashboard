@@ -6,7 +6,9 @@ import {
     fetchHostContainers,
     FleetContainerSummary,
     FleetHostSummary,
+    getInventoryDensityPreference,
     InventoryFilters,
+    InventoryDensity,
 } from '@/lib/api';
 import { ContainerCardGrid } from './ContainerCardGrid';
 import { FleetFilters } from './FleetFilters';
@@ -41,6 +43,7 @@ function countAppliedFilters(filters: InventoryFilters): number {
 }
 
 export function FleetInventoryView({ organizationId }: FleetInventoryViewProps) {
+    const [density, setDensity] = useState<InventoryDensity>('DETAILED');
     const [filterPanelOpen, setFilterPanelOpen] = useState(false);
     const [draftFilters, setDraftFilters] = useState<InventoryFilters>(DEFAULT_FILTERS);
     const [appliedFilters, setAppliedFilters] = useState<InventoryFilters>(DEFAULT_FILTERS);
@@ -104,6 +107,19 @@ export function FleetInventoryView({ organizationId }: FleetInventoryViewProps) 
 
         return () => window.clearInterval(interval);
     }, [organizationId, appliedFilters]);
+
+    useEffect(() => {
+        setDensity(getInventoryDensityPreference());
+
+        function onStorage(event: StorageEvent) {
+            if (event.key === 'docker-dashboard:inventory-density') {
+                setDensity(getInventoryDensityPreference());
+            }
+        }
+
+        window.addEventListener('storage', onStorage);
+        return () => window.removeEventListener('storage', onStorage);
+    }, []);
 
     useEffect(() => {
         if (!expandedHostId) {
@@ -230,6 +246,7 @@ export function FleetInventoryView({ organizationId }: FleetInventoryViewProps) 
                                 <HostCard
                                     host={host}
                                     expanded={isExpanded}
+                                    density={density}
                                     onToggle={() => {
                                         if (isExpanded) {
                                             setExpandedHostId(null);
@@ -269,6 +286,7 @@ export function FleetInventoryView({ organizationId }: FleetInventoryViewProps) 
                                         {!isExpandedLoading && !expandedHostError ? (
                                             <ContainerCardGrid
                                                 containers={expandedContainers}
+                                                density={density}
                                                 emptyMessage={
                                                     appliedFilters.search || appliedFilters.statuses.length
                                                         ? 'No containers match your search'
