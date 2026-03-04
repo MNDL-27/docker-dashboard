@@ -5,23 +5,23 @@
 See: `.planning/PROJECT.md` (updated 2026-03-01)
 
 **Core value:** Operators can securely observe and control Docker containers across many hosts from one place without exposing inbound ports on customer infrastructure.
-**Current focus:** Phase 5 - Metrics Telemetry Core
+**Current focus:** Phase 6 - Live Logs and Retention
 
 ## Current Position
 
-Phase: 5 of 8 (Metrics Telemetry Core)
-Plan: 2 of 3 in current phase
-Status: In progress
-Last activity: 2026-03-04 - Completed 05-02 tenant-safe telemetry history/stream contracts.
+Phase: 6 of 8 (Live Logs and Retention)
+Plan: 0 of TBD in current phase
+Status: Ready to plan
+Last activity: 2026-03-04 - Completed 05-03 fleet telemetry KPI UX integration.
 
-Progress: [██████████] 94.0%
+Progress: [██████████] 100.0%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 15
-- Average duration: 4 min
-- Total execution time: 1.1 hours
+- Total plans completed: 16
+- Average duration: 5 min
+- Total execution time: 1.3 hours
 
 **By Phase:**
 
@@ -33,17 +33,18 @@ Progress: [██████████] 94.0%
 | 4-8 | 1 | 8 min | 8 min |
 
 **Recent Trend:**
-- Last 5 plans: 03-03, 04-01, 04-02, 04-03, 05-01
+- Last 5 plans: 04-01, 04-02, 04-03, 05-02, 05-03
 - Trend: Stable
 
 *Updated after each plan completion*
-- Latest execution: Phase 05 Plan 01 | 4 min | 3 tasks | 3 files
+- Latest execution: Phase 05 Plan 03 | 13 min | 3 tasks | 6 files
 | Phase 03 P04 | 3 | 3 tasks | 3 files |
 | Phase 04 P01 | 8 min | 3 tasks | 7 files |
 | Phase 04 P02 | 8 min | 3 tasks | 7 files |
 | Phase 04 P03 | 2 min | 3 tasks | 3 files |
 | Phase 05 P01 | 4 min | 3 tasks | 3 files |
 | Phase 05 P02 | 4 min | 3 tasks | 5 files |
+| Phase 05 P03 | 13 min | 3 tasks | 6 files |
 
 ## Accumulated Context
 
@@ -90,6 +91,9 @@ Recent decisions affecting current work:
 - [Phase 05]: Clamp default telemetry lookback to the shared 24-hour retention cutoff so history queries cannot include older samples by default.
 - [Phase 05]: Expose telemetry history and live snapshot under /api/metrics with required organization scope and optional project/host/container filters to keep tenant boundaries fail-closed.
 - [Phase 05]: Keep ingest cadence unchanged and apply pause/resume/speed controls only to websocket fan-out emission timing.
+- [Phase 05-metrics-telemetry-core]: Use Top N default of 5 in web telemetry contracts with server subscribe-ack override.
+- [Phase 05-metrics-telemetry-core]: Keep fleet telemetry scope anchored to expanded host and optional selected container from inventory interactions.
+- [Phase 05-metrics-telemetry-core]: Apply pause/resume/speed controls to websocket fan-out while history window switches continue trend refresh.
 
 ### Pending Todos
 
@@ -104,5 +108,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-03-04
-Stopped at: Completed 05-02-PLAN.md
+Stopped at: Completed 05-03-PLAN.md
 Resume file: None

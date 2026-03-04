@@ -14,7 +14,7 @@ This roadmap delivers a secure outbound-agent Docker control plane in capability
 - [x] **Phase 2: Identity, Access, and Tenant Isolation** - Deliver accounts, organization/project boundaries, role assignment, and strict tenant-scoped access. (completed 2026-03-02)
 - [x] **Phase 3: Host Enrollment and Trusted Connectivity** - Establish one-time enrollment, durable agent credentials, heartbeat freshness, and protected ingest. (completed 2026-03-02)
 - [x] **Phase 4: Fleet Inventory Views** - Deliver fleet and host container visibility with practical filtering and search. (completed 2026-03-04)
-- [ ] **Phase 5: Metrics Telemetry Core** - Provide live container metrics and bounded historical windows.
+- [x] **Phase 5: Metrics Telemetry Core** - Provide live container metrics and bounded historical windows. (completed 2026-03-04)
 - [ ] **Phase 6: Live Logs and Retention** - Provide live tailing, stream controls, downloads, and bounded log retention behavior.
 - [ ] **Phase 7: Safe Container Actions and Audit Trail** - Deliver role-guarded lifecycle actions, result tracking, monitor-only mode, and immutable action auditability.
 - [ ] **Phase 8: Alerting and Notification Delivery** - Deliver baseline alert rules, deduplicated alert state transitions, and outbound notifications.
@@ -97,7 +97,7 @@ Plans:
 Plans:
 - [x] 05-01-PLAN.md - Harden telemetry ingest identity mapping and 24h retention enforcement with regression tests.
 - [x] 05-02-PLAN.md - Add scoped telemetry history/stream contracts with 15m/1h/6h/24h windows and live controls.
-- [ ] 05-03-PLAN.md - Integrate fleet-level KPI telemetry UI with auto-follow context, Top N focus, and aggregate contributors.
+- [x] 05-03-PLAN.md - Integrate fleet-level KPI telemetry UI with auto-follow context, Top N focus, and aggregate contributors.
 
 ### Phase 6: Live Logs and Retention
 **Goal**: Users can follow and export container logs within bounded retention limits.
@@ -138,7 +138,7 @@ Plans:
 | 2. Identity, Access, and Tenant Isolation | 6/6 | Complete   | 2026-03-02 |
 | 3. Host Enrollment and Trusted Connectivity | 3/3 | Complete | 2026-03-02 |
 | 4. Fleet Inventory Views | 3/3 | Complete | 2026-03-04 |
-| 5. Metrics Telemetry Core | 2/3 | In Progress | - |
+| 5. Metrics Telemetry Core | 3/3 | Complete | 2026-03-04 |
 | 6. Live Logs and Retention | 0/TBD | Not started | - |
 | 7. Safe Container Actions and Audit Trail | 0/TBD | Not started | - |
 | 8. Alerting and Notification Delivery | 0/TBD | Not started | - |
