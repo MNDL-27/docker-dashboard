@@ -1,10 +1,27 @@
 import { prisma } from '../lib/prisma';
 
+export const LOG_RETENTION_HOURS = 24;
+const LOG_RETENTION_MS = LOG_RETENTION_HOURS * 60 * 60 * 1000;
+const LOG_CLEANUP_INTERVAL_MS = 60 * 60 * 1000;
+
 export interface LogItem {
     containerId: string;
     stream: string;
     message: string;
     timestamp?: string | number | Date;
+}
+
+export function getLogRetentionCutoff(now: Date = new Date()): Date {
+    return new Date(now.getTime() - LOG_RETENTION_MS);
+}
+
+export function clampLogRangeStart(requestedStart: Date | undefined, now: Date = new Date()): Date {
+    const retentionCutoff = getLogRetentionCutoff(now);
+    if (!requestedStart) {
+        return retentionCutoff;
+    }
+
+    return requestedStart < retentionCutoff ? retentionCutoff : requestedStart;
 }
 
 interface BufferedLogItem extends LogItem {
@@ -132,11 +149,11 @@ function coerceLogTimestamp(rawTimestamp: string | number | Date | undefined): D
 // Standard metrics might be 24h, logs maybe slightly longer for audit
 export async function cleanupOldLogs() {
     try {
-        const lastWeek = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+        const cutoff = getLogRetentionCutoff();
         const result = await prisma.containerLog.deleteMany({
             where: {
                 timestamp: {
-                    lt: lastWeek,
+                    lt: cutoff,
                 },
             },
         });
@@ -147,4 +164,4 @@ export async function cleanupOldLogs() {
 }
 
 // Start cleanup interval (runs hourly)
-setInterval(cleanupOldLogs, 60 * 60 * 1000);
+setInterval(cleanupOldLogs, LOG_CLEANUP_INTERVAL_MS);
