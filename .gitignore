@@ -54,3 +54,11 @@ adapters/
 docs/
 scripts/
 .planning/
+DEVELOPMENT.md
+DOCKER_DEPLOYMENT.md
+GSD-STYLE.md
+INSTALL.md
+PROJECT_RULES.md
+PROJECT_STRUCTURE.md
+QBITTORRENT_INTEGRATION.md
+idea.md
