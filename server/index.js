@@ -118,6 +118,11 @@ app.use((req, res, next) => {
 });
 
 const server = http.createServer(app);
+// Handle WebSocket upgrades
+server.on('upgrade', (req, socket, head) => {
+    console.log('[WS] Upgrade request:', req.url);
+});
+
 // Log raw upgrade attempts to help debug WebSocket handshakes (Cloudflared/tunnel visibility)
 // Optional raw upgrade logging to help debug WebSocket handshakes (Cloudflared/tunnel visibility)
 // Controlled by env var DEBUG_UPGRADE (set to 'true' to enable).
@@ -146,6 +151,8 @@ if (process.env.HTTPS === 'true') {
 const wssStats = new WebSocket.Server({ server: process.env.HTTPS === 'true' ? httpsServer : server, path: '/ws/stats' });
 const wssLogs = new WebSocket.Server({ server: process.env.HTTPS === 'true' ? httpsServer : server, path: '/ws/logs' });
 const wssContainers = new WebSocket.Server({ server: process.env.HTTPS === 'true' ? httpsServer : server, path: '/ws/containers' });
+
+console.log('[WS] WebSocket servers initialized');
 
 wssStats.on('connection', (ws, req) => {
     console.log(`[${new Date().toISOString()}] WS connection: ${req.url}`);
