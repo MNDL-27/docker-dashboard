@@ -11,6 +11,7 @@ import {
 import { resolveAgentScope } from '../services/scopedAccess';
 import { consumeEnrollmentToken } from '../services/enrollment';
 import { recordHeartbeat } from '../services/presence';
+import { syncContainers, ContainerPayload, HostSnapshotPayload } from '../services/container';
 
 const router = Router();
 const JWT_SECRET = process.env.AGENT_JWT_SECRET || process.env.SESSION_SECRET || 'fallback_agent_secret';
@@ -23,6 +24,38 @@ const enrollSchema = z.object({
     architecture: z.string().min(1),
     dockerVersion: z.string().min(1),
 });
+
+const hostSnapshotSchema = z.object({
+    ipAddress: z.string().trim().min(1).optional(),
+    agentVersion: z.string().trim().min(1).optional(),
+    cpuCount: z.number().int().nonnegative().optional(),
+    memoryTotalBytes: z.number().int().nonnegative().optional(),
+});
+
+const containerSnapshotSchema = z.object({
+    dockerId: z.string().min(1),
+    name: z.string(),
+    image: z.string(),
+    imageId: z.string(),
+    command: z.string(),
+    state: z.string(),
+    status: z.string(),
+    restartCount: z.number().int().nonnegative().optional(),
+    ports: z.record(z.unknown()).default({}),
+    labels: z.record(z.unknown()).default({}),
+    networks: z.record(z.unknown()).optional(),
+    volumes: z.array(z.string()).optional(),
+    createdAt: z.string().datetime().nullable().optional(),
+    startedAt: z.string().datetime().nullable().optional(),
+});
+
+const inventorySnapshotSchema = z.union([
+    z.array(containerSnapshotSchema),
+    z.object({
+        host: hostSnapshotSchema.optional(),
+        containers: z.array(containerSnapshotSchema),
+    }),
+]);
 
 // POST /agent/enroll - Agent enrollment
 router.post('/enroll', async (req: Request, res: Response): Promise<void> => {
@@ -94,13 +127,26 @@ router.post('/heartbeat', requireAgentAuth, async (req: Request, res: Response):
     }
 });
 
-import { syncContainers, ContainerPayload } from '../services/container';
-
 // POST /agent/containers - Sync container snapshots
 router.post('/containers', requireAgentAuth, async (req: Request, res: Response): Promise<void> => {
     try {
         const { hostId, organizationId, projectId } = req.agent!;
-        const containers: ContainerPayload[] = req.body;
+        const payloadResult = inventorySnapshotSchema.safeParse(req.body);
+
+        if (!payloadResult.success) {
+            res.status(400).json({ error: 'Invalid container snapshot payload', details: payloadResult.error.errors });
+            return;
+        }
+
+        let containers: ContainerPayload[];
+        let hostSnapshot: HostSnapshotPayload | undefined;
+
+        if (Array.isArray(payloadResult.data)) {
+            containers = payloadResult.data;
+        } else {
+            containers = payloadResult.data.containers;
+            hostSnapshot = payloadResult.data.host;
+        }
 
         const validScope = await resolveAgentScope({ hostId, organizationId, projectId });
         if (!validScope) {
@@ -108,12 +154,7 @@ router.post('/containers', requireAgentAuth, async (req: Request, res: Response)
             return;
         }
 
-        if (!Array.isArray(containers)) {
-            res.status(400).json({ error: 'Expected an array of containers' });
-            return;
-        }
-
-        const { added, updated, removed } = await syncContainers(hostId, containers);
+        const { added, updated, removed } = await syncContainers(hostId, containers, hostSnapshot);
 
         // Also update host lastSeen
         await prisma.host.update({

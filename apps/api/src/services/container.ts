@@ -8,14 +8,43 @@ export interface ContainerPayload {
     command: string;
     state: string;
     status: string;
+    restartCount?: number;
     ports: any; // Ideally typed, but JSON works
     labels: any;
+    networks?: any;
+    volumes?: any;
+    createdAt?: string | null;
     startedAt?: string | null;
 }
 
-export async function syncContainers(hostId: string, containers: ContainerPayload[]): Promise<{ added: number; updated: number; removed: number }> {
+export interface HostSnapshotPayload {
+    ipAddress?: string;
+    agentVersion?: string;
+    cpuCount?: number;
+    memoryTotalBytes?: number;
+}
+
+export async function syncContainers(
+    hostId: string,
+    containers: ContainerPayload[],
+    hostSnapshot?: HostSnapshotPayload
+): Promise<{ added: number; updated: number; removed: number }> {
     // Use a transaction since we are deleting and upserting
     return await prisma.$transaction(async (tx) => {
+        if (hostSnapshot) {
+            await tx.host.update({
+                where: { id: hostId },
+                data: {
+                    ipAddress: hostSnapshot.ipAddress || null,
+                    agentVersion: hostSnapshot.agentVersion || null,
+                    cpuCount: typeof hostSnapshot.cpuCount === 'number' ? hostSnapshot.cpuCount : null,
+                    memoryTotalBytes:
+                        typeof hostSnapshot.memoryTotalBytes === 'number' ? BigInt(hostSnapshot.memoryTotalBytes) : null,
+                },
+                select: { id: true },
+            });
+        }
+
         // 1. Get existing containers for this host
         const existingContainers = await tx.container.findMany({
             where: { hostId },
@@ -41,6 +70,7 @@ export async function syncContainers(hostId: string, containers: ContainerPayloa
 
         // 3. Upsert incoming containers
         for (const incoming of containers) {
+            const dockerCreatedAtDate = incoming.createdAt ? new Date(incoming.createdAt) : null;
             const startedAtDate = incoming.startedAt ? new Date(incoming.startedAt) : null;
 
             if (existingDockerIds.has(incoming.dockerId)) {
@@ -59,8 +89,12 @@ export async function syncContainers(hostId: string, containers: ContainerPayloa
                         command: incoming.command,
                         state: incoming.state,
                         status: incoming.status,
+                        restartCount: incoming.restartCount ?? 0,
                         ports: incoming.ports || {},
                         labels: incoming.labels || {},
+                        networks: incoming.networks || {},
+                        volumes: incoming.volumes || [],
+                        dockerCreatedAt: dockerCreatedAtDate,
                         startedAt: startedAtDate,
                     },
                 });
@@ -77,8 +111,12 @@ export async function syncContainers(hostId: string, containers: ContainerPayloa
                         command: incoming.command,
                         state: incoming.state,
                         status: incoming.status,
+                        restartCount: incoming.restartCount ?? 0,
                         ports: incoming.ports || {},
                         labels: incoming.labels || {},
+                        networks: incoming.networks || {},
+                        volumes: incoming.volumes || [],
+                        dockerCreatedAt: dockerCreatedAtDate,
                         startedAt: startedAtDate,
                     },
                 });

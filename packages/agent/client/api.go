@@ -107,19 +107,43 @@ type ContainerSnapshot struct {
 	Command   string                 `json:"command"`
 	State     string                 `json:"state"`
 	Status    string                 `json:"status"`
+	RestartCount int                 `json:"restartCount"`
 	Ports     map[string]interface{} `json:"ports"`
 	Labels    map[string]interface{} `json:"labels"`
+	Networks  map[string]interface{} `json:"networks,omitempty"`
+	Volumes   []string               `json:"volumes,omitempty"`
+	CreatedAt *string                `json:"createdAt,omitempty"`
 	StartedAt *string                `json:"startedAt,omitempty"`
 }
 
-func (c *APIClient) SyncContainers(containers []ContainerSnapshot) error {
+type HostSnapshot struct {
+	IPAddress        string `json:"ipAddress,omitempty"`
+	AgentVersion     string `json:"agentVersion,omitempty"`
+	CpuCount         int    `json:"cpuCount,omitempty"`
+	MemoryTotalBytes int64  `json:"memoryTotalBytes,omitempty"`
+}
+
+type InventorySnapshot struct {
+	Host       HostSnapshot        `json:"host,omitempty"`
+	Containers []ContainerSnapshot `json:"containers"`
+}
+
+func (c *APIClient) SyncContainers(containers []ContainerSnapshot, host ...HostSnapshot) error {
 	if c.AgentToken == "" {
 		return fmt.Errorf("agent token is required for sync")
 	}
 
 	url := fmt.Sprintf("%s/api/agent/containers", c.BaseURL)
-	
-	bodyData, err := json.Marshal(containers)
+
+	requestBody := any(containers)
+	if len(host) > 0 {
+		requestBody = InventorySnapshot{
+			Host:       host[0],
+			Containers: containers,
+		}
+	}
+
+	bodyData, err := json.Marshal(requestBody)
 	if err != nil {
 		return fmt.Errorf("failed to marshal containers: %w", err)
 	}

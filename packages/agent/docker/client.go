@@ -2,16 +2,17 @@ package docker
 
 import (
 	"context"
+	"encoding/binary"
+	"encoding/json"
 	"fmt"
+	"io"
+	"strings"
+	"time"
+
+	apiclient "docker-dashboard-agent/client"
 	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/client"
-	"encoding/json"
-	apiclient "docker-dashboard-agent/client"
-	"strings"
-	"time"
-	"io"
-	"encoding/binary"
 )
 
 type Client struct {
@@ -64,14 +65,47 @@ func (c *Client) ListContainers(ctx context.Context) ([]apiclient.ContainerSnaps
 			labels[k] = v
 		}
 
+		inspect, err := c.dockerCli.ContainerInspect(ctx, cnt.ID)
+		if err != nil {
+			return nil, fmt.Errorf("failed to inspect container %s: %w", cnt.ID, err)
+		}
+
 		var startedAt *string
-		if cnt.State == "running" {
-			// Actually we'd need container inspect to get exact StartedAt,
-			// but for simplicity we can just leave it nil or mock it based on Status.
-			// Getting accurate StartedAt requires a separate Inspect call per container,
-			// which can be slow. Best effort here.
-			now := time.Now().Format(time.RFC3339)
-			startedAt = &now
+		if inspect.State != nil && inspect.State.StartedAt != "" && inspect.State.StartedAt != "0001-01-01T00:00:00Z" {
+			startedAt = stringPtr(inspect.State.StartedAt)
+		}
+
+		var createdAt *string
+		if inspect.Created != "" {
+			createdAt = stringPtr(inspect.Created)
+		}
+
+		networks := make(map[string]interface{})
+		if inspect.NetworkSettings != nil {
+			for networkName, network := range inspect.NetworkSettings.Networks {
+				networks[networkName] = map[string]interface{}{
+					"networkId": network.NetworkID,
+					"ipAddress": network.IPAddress,
+					"gateway":   network.Gateway,
+					"macAddress": network.MacAddress,
+				}
+			}
+		}
+
+		volumes := make([]string, 0, len(inspect.Mounts))
+		for _, mount := range inspect.Mounts {
+			if mount.Destination != "" {
+				volumes = append(volumes, mount.Destination)
+				continue
+			}
+			if mount.Name != "" {
+				volumes = append(volumes, mount.Name)
+			}
+		}
+
+		restartCount := 0
+		if inspect.State != nil {
+			restartCount = inspect.State.RestartCount
 		}
 
 		snapshot := apiclient.ContainerSnapshot{
@@ -82,8 +116,12 @@ func (c *Client) ListContainers(ctx context.Context) ([]apiclient.ContainerSnaps
 			Command:   cnt.Command,
 			State:     cnt.State,
 			Status:    cnt.Status,
+			RestartCount: restartCount,
 			Ports:     ports,
 			Labels:    labels,
+			Networks:  networks,
+			Volumes:   volumes,
+			CreatedAt: createdAt,
 			StartedAt: startedAt,
 		}
 
@@ -91,6 +129,28 @@ func (c *Client) ListContainers(ctx context.Context) ([]apiclient.ContainerSnaps
 	}
 
 	return snapshots, nil
+}
+
+func (c *Client) GetHostSnapshot(ctx context.Context) (*apiclient.HostSnapshot, error) {
+	info, err := c.dockerCli.Info(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get docker info for host snapshot: %w", err)
+	}
+
+	ipAddress := ""
+	if info.Swarm.NodeAddr != "" {
+		ipAddress = info.Swarm.NodeAddr
+	}
+
+	return &apiclient.HostSnapshot{
+		IPAddress:        ipAddress,
+		CpuCount:         info.NCPU,
+		MemoryTotalBytes: int64(info.MemTotal),
+	}, nil
+}
+
+func stringPtr(value string) *string {
+	return &value
 }
 
 func (c *Client) GetContainerStats(ctx context.Context, containerID string) (*apiclient.MetricItem, error) {

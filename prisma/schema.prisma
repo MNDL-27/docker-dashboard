@@ -156,6 +156,10 @@ model Host {
   projectId      String
   name           String
   hostname       String
+  ipAddress      String?
+  agentVersion   String?
+  cpuCount       Int?
+  memoryTotalBytes BigInt?
   os             String
   architecture   String
   dockerVersion  String
@@ -207,8 +211,12 @@ model Container {
   command   String
   state     String
   status    String
+  restartCount Int    @default(0)
   ports     Json
   labels    Json
+  networks  Json      @default("{}")
+  volumes   Json      @default("[]")
+  dockerCreatedAt DateTime?
   startedAt DateTime?
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
