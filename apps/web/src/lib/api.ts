@@ -59,7 +59,71 @@ export interface HostEnrollmentTokenResponse {
     projectName: string;
 }
 
+export type InventoryDensity = 'SIMPLE' | 'STANDARD' | 'DETAILED';
+
+export interface InventoryFilters {
+    search: string;
+    statuses: string[];
+    projectIds: string[];
+    hostIds: string[];
+}
+
+export interface FleetHostSummary {
+    id: string;
+    name: string;
+    hostname: string;
+    status: 'ONLINE' | 'OFFLINE';
+    lastSeen: string | null;
+    containerCount: number;
+    ipAddress: string | null;
+    agentVersion: string | null;
+    cpuCount: number | null;
+    memoryTotalBytes: string | number | null;
+    project: {
+        id: string;
+        name: string;
+    };
+}
+
+export interface FleetContainerSummary {
+    id: string;
+    name: string;
+    image: string;
+    state: string;
+    status: string;
+    restartCount: number;
+    dockerCreatedAt: string | null;
+    labels: Record<string, string> | null;
+    ports: Record<string, unknown> | null;
+    networks: unknown;
+    volumes: unknown;
+}
+
+export interface FleetInventoryResponse {
+    fleetTotals: {
+        hostCount: number;
+        containerCount: number;
+    };
+    hosts: FleetHostSummary[];
+}
+
 const SELECTED_ORGANIZATION_KEY = 'docker-dashboard:selected-organization-id';
+const INVENTORY_DENSITY_KEY = 'docker-dashboard:inventory-density';
+
+function appendInventoryFilters(query: URLSearchParams, filters: InventoryFilters): void {
+    if (filters.search.trim()) {
+        query.set('search', filters.search.trim());
+    }
+    if (filters.statuses.length > 0) {
+        query.set('statuses', filters.statuses.join(','));
+    }
+    if (filters.projectIds.length > 0) {
+        query.set('projectIds', filters.projectIds.join(','));
+    }
+    if (filters.hostIds.length > 0) {
+        query.set('hostIds', filters.hostIds.join(','));
+    }
+}
 
 async function extractErrorMessage(res: Response): Promise<string> {
     const fallback = res.status === 401 ? 'Invalid credentials' : `HTTP ${res.status}`;
@@ -155,6 +219,54 @@ export async function issueHostEnrollmentToken(
         method: 'POST',
         body: { organizationId, projectId },
     });
+}
+
+export async function fetchFleetInventory(
+    organizationId: string,
+    filters: InventoryFilters
+): Promise<FleetInventoryResponse> {
+    const query = new URLSearchParams({ organizationId });
+
+    if (filters.projectIds.length === 1) {
+        query.set('projectId', filters.projectIds[0]);
+    }
+
+    return apiFetch<FleetInventoryResponse>(`/api/hosts?${query.toString()}`);
+}
+
+export async function fetchHostContainers(
+    hostId: string,
+    organizationId: string,
+    filters: InventoryFilters
+): Promise<FleetContainerSummary[]> {
+    const query = new URLSearchParams({ organizationId });
+    appendInventoryFilters(query, filters);
+    const response = await apiFetch<{ containers: FleetContainerSummary[] }>(
+        `/api/hosts/${hostId}/containers?${query.toString()}`
+    );
+
+    return response.containers;
+}
+
+export function getInventoryDensityPreference(): InventoryDensity {
+    if (typeof window === 'undefined') {
+        return 'DETAILED';
+    }
+
+    const value = window.localStorage.getItem(INVENTORY_DENSITY_KEY);
+    if (value === 'SIMPLE' || value === 'STANDARD' || value === 'DETAILED') {
+        return value;
+    }
+
+    return 'DETAILED';
+}
+
+export function setInventoryDensityPreference(value: InventoryDensity): void {
+    if (typeof window === 'undefined') {
+        return;
+    }
+
+    window.localStorage.setItem(INVENTORY_DENSITY_KEY, value);
 }
 
 export function getSelectedOrganizationId(): string | null {

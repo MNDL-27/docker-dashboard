@@ -1,69 +1,64 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { apiFetch } from '@/lib/api';
+import {
+    fetchFleetInventory,
+    fetchHostContainers,
+    FleetContainerSummary,
+    FleetHostSummary,
+    InventoryFilters,
+} from '@/lib/api';
 import { ContainerCardGrid } from './ContainerCardGrid';
+import { FleetFilters } from './FleetFilters';
 import { HostCard } from './HostCard';
-
-interface FleetHost {
-    id: string;
-    name: string;
-    hostname: string;
-    status: 'ONLINE' | 'OFFLINE';
-    lastSeen: string | null;
-    containerCount: number;
-    ipAddress: string | null;
-    agentVersion: string | null;
-    cpuCount: number | null;
-    memoryTotalBytes: string | number | null;
-    project: {
-        id: string;
-        name: string;
-    };
-}
-
-interface FleetContainer {
-    id: string;
-    name: string;
-    image: string;
-    state: string;
-    status: string;
-    restartCount: number;
-    dockerCreatedAt: string | null;
-    labels: Record<string, string> | null;
-    ports: Record<string, unknown> | null;
-    networks: unknown;
-    volumes: unknown;
-}
-
-interface FleetInventoryResponse {
-    fleetTotals: {
-        hostCount: number;
-        containerCount: number;
-    };
-    hosts: FleetHost[];
-}
 
 interface FleetInventoryViewProps {
     organizationId: string;
 }
 
+const DEFAULT_FILTERS: InventoryFilters = {
+    search: '',
+    statuses: [],
+    projectIds: [],
+    hostIds: [],
+};
+
+function countAppliedFilters(filters: InventoryFilters): number {
+    let count = 0;
+    if (filters.search.trim()) {
+        count += 1;
+    }
+    if (filters.statuses.length > 0) {
+        count += 1;
+    }
+    if (filters.projectIds.length > 0) {
+        count += 1;
+    }
+    if (filters.hostIds.length > 0) {
+        count += 1;
+    }
+    return count;
+}
+
 export function FleetInventoryView({ organizationId }: FleetInventoryViewProps) {
+    const [filterPanelOpen, setFilterPanelOpen] = useState(false);
+    const [draftFilters, setDraftFilters] = useState<InventoryFilters>(DEFAULT_FILTERS);
+    const [appliedFilters, setAppliedFilters] = useState<InventoryFilters>(DEFAULT_FILTERS);
+
     const [loadingHosts, setLoadingHosts] = useState(true);
     const [hostsError, setHostsError] = useState<string | null>(null);
-    const [hosts, setHosts] = useState<FleetHost[]>([]);
+    const [hosts, setHosts] = useState<FleetHostSummary[]>([]);
     const [hostTotals, setHostTotals] = useState({ hostCount: 0, containerCount: 0 });
 
     const [expandedHostId, setExpandedHostId] = useState<string | null>(null);
-    const [containersByHost, setContainersByHost] = useState<Record<string, FleetContainer[]>>({});
+    const [containersByHost, setContainersByHost] = useState<Record<string, FleetContainerSummary[]>>({});
     const [loadingContainersByHost, setLoadingContainersByHost] = useState<Record<string, boolean>>({});
     const [containerErrorsByHost, setContainerErrorsByHost] = useState<Record<string, string | null>>({});
 
     async function fetchHosts() {
         try {
             setHostsError(null);
-            const query = new URLSearchParams({ organizationId });
-            const response = await apiFetch<FleetInventoryResponse>(`/api/hosts?${query.toString()}`);
+            const response = await fetchFleetInventory(organizationId, appliedFilters);
             setHosts(response.hosts);
             setHostTotals(response.fleetTotals);
         } catch (error) {
@@ -75,17 +70,12 @@ export function FleetInventoryView({ organizationId }: FleetInventoryViewProps) 
         }
     }
 
-    async function fetchHostContainers(hostId: string) {
+    async function loadHostContainers(hostId: string) {
         try {
             setContainerErrorsByHost((current) => ({ ...current, [hostId]: null }));
             setLoadingContainersByHost((current) => ({ ...current, [hostId]: true }));
-
-            const query = new URLSearchParams({ organizationId });
-            const response = await apiFetch<{ containers: FleetContainer[] }>(
-                `/api/hosts/${hostId}/containers?${query.toString()}`
-            );
-
-            setContainersByHost((current) => ({ ...current, [hostId]: response.containers }));
+            const containers = await fetchHostContainers(hostId, organizationId, appliedFilters);
+            setContainersByHost((current) => ({ ...current, [hostId]: containers }));
         } catch (error) {
             setContainersByHost((current) => ({ ...current, [hostId]: [] }));
             setContainerErrorsByHost((current) => ({
@@ -102,6 +92,9 @@ export function FleetInventoryView({ organizationId }: FleetInventoryViewProps) 
             return;
         }
 
+        setContainersByHost({});
+        setContainerErrorsByHost({});
+        setLoadingContainersByHost({});
         setLoadingHosts(true);
         void fetchHosts();
 
@@ -110,19 +103,15 @@ export function FleetInventoryView({ organizationId }: FleetInventoryViewProps) 
         }, 30_000);
 
         return () => window.clearInterval(interval);
-    }, [organizationId]);
+    }, [organizationId, appliedFilters]);
 
     useEffect(() => {
         if (!expandedHostId) {
             return;
         }
 
-        if (containersByHost[expandedHostId]) {
-            return;
-        }
-
-        void fetchHostContainers(expandedHostId);
-    }, [expandedHostId, containersByHost]);
+        void loadHostContainers(expandedHostId);
+    }, [expandedHostId, appliedFilters]);
 
     useEffect(() => {
         if (expandedHostId && !hosts.some((host) => host.id === expandedHostId)) {
@@ -130,25 +119,85 @@ export function FleetInventoryView({ organizationId }: FleetInventoryViewProps) 
         }
     }, [expandedHostId, hosts]);
 
-    const hasHosts = hosts.length > 0;
+    const projectOptions = useMemo(() => {
+        const deduped = new Map<string, string>();
+        for (const host of hosts) {
+            deduped.set(host.project.id, host.project.name);
+        }
+
+        return Array.from(deduped.entries()).map(([id, label]) => ({ id, label }));
+    }, [hosts]);
+
+    const hostOptions = useMemo(
+        () => hosts.map((host) => ({ id: host.id, label: host.name })),
+        [hosts]
+    );
+
+    const visibleHosts = useMemo(() => {
+        return hosts.filter((host) => {
+            if (appliedFilters.projectIds.length > 0 && !appliedFilters.projectIds.includes(host.project.id)) {
+                return false;
+            }
+            if (appliedFilters.hostIds.length > 0 && !appliedFilters.hostIds.includes(host.id)) {
+                return false;
+            }
+            return true;
+        });
+    }, [hosts, appliedFilters.projectIds, appliedFilters.hostIds]);
+
+    const hasHosts = visibleHosts.length > 0;
     const expandedContainers = expandedHostId ? containersByHost[expandedHostId] ?? [] : [];
     const isExpandedLoading = expandedHostId ? loadingContainersByHost[expandedHostId] : false;
     const expandedHostError = expandedHostId ? containerErrorsByHost[expandedHostId] : null;
+    const activeFilterCount = countAppliedFilters(appliedFilters);
 
     const onlineCount = useMemo(
-        () => hosts.filter((host) => host.status === 'ONLINE').length,
-        [hosts]
+        () => visibleHosts.filter((host) => host.status === 'ONLINE').length,
+        [visibleHosts]
     );
 
     return (
         <section className="mt-8 space-y-4">
             <header className="rounded-xl border border-slate-800 bg-slate-900/50 p-4">
-                <h2 className="text-lg font-semibold text-slate-100">Fleet inventory</h2>
-                <p className="mt-1 text-sm text-slate-400">
-                    {hostTotals.hostCount} host{hostTotals.hostCount === 1 ? '' : 's'} total, {hostTotals.containerCount} container
-                    {hostTotals.containerCount === 1 ? '' : 's'}, {onlineCount} online.
-                </p>
+                <div className="flex flex-wrap items-start justify-between gap-3">
+                    <div>
+                        <h2 className="text-lg font-semibold text-slate-100">Fleet inventory</h2>
+                        <p className="mt-1 text-sm text-slate-400">
+                            {hostTotals.hostCount} host{hostTotals.hostCount === 1 ? '' : 's'} total, {hostTotals.containerCount}{' '}
+                            container{hostTotals.containerCount === 1 ? '' : 's'}, {onlineCount} online.
+                        </p>
+                    </div>
+                    <button
+                        type="button"
+                        onClick={() => setFilterPanelOpen((current) => !current)}
+                        className="rounded-lg border border-slate-700 px-3 py-2 text-sm text-slate-200 hover:border-slate-500"
+                    >
+                        Filter{activeFilterCount > 0 ? ` (${activeFilterCount})` : ''}
+                    </button>
+                </div>
             </header>
+
+            <FleetFilters
+                open={filterPanelOpen}
+                draftFilters={draftFilters}
+                appliedFilters={appliedFilters}
+                projectOptions={projectOptions}
+                hostOptions={hostOptions}
+                onDraftChange={setDraftFilters}
+                onClose={() => setFilterPanelOpen(false)}
+                onReset={() => {
+                    setDraftFilters(DEFAULT_FILTERS);
+                    setAppliedFilters(DEFAULT_FILTERS);
+                }}
+                onApply={() => {
+                    setAppliedFilters({
+                        search: draftFilters.search,
+                        statuses: [...draftFilters.statuses],
+                        projectIds: [...draftFilters.projectIds],
+                        hostIds: [...draftFilters.hostIds],
+                    });
+                }}
+            />
 
             {loadingHosts ? (
                 <div className="rounded-xl border border-slate-800 bg-slate-900/50 p-6 text-sm text-slate-400">
@@ -173,7 +222,7 @@ export function FleetInventoryView({ organizationId }: FleetInventoryViewProps) 
 
             {!loadingHosts && !hostsError && hasHosts ? (
                 <div className="space-y-3">
-                    {hosts.map((host) => {
+                    {visibleHosts.map((host) => {
                         const isExpanded = host.id === expandedHostId;
 
                         return (
@@ -199,6 +248,12 @@ export function FleetInventoryView({ organizationId }: FleetInventoryViewProps) 
                                             <span className="text-xs text-slate-500">Project: {host.project.name}</span>
                                         </div>
 
+                                        {appliedFilters.search.trim() ? (
+                                            <p className="mb-3 text-xs text-slate-500">
+                                                Search query: <span className="text-slate-300">{appliedFilters.search.trim()}</span>
+                                            </p>
+                                        ) : null}
+
                                         {isExpandedLoading ? (
                                             <div className="rounded-lg border border-slate-800 bg-slate-950/40 p-4 text-sm text-slate-400">
                                                 Loading containers...
@@ -212,7 +267,14 @@ export function FleetInventoryView({ organizationId }: FleetInventoryViewProps) 
                                         ) : null}
 
                                         {!isExpandedLoading && !expandedHostError ? (
-                                            <ContainerCardGrid containers={expandedContainers} />
+                                            <ContainerCardGrid
+                                                containers={expandedContainers}
+                                                emptyMessage={
+                                                    appliedFilters.search || appliedFilters.statuses.length
+                                                        ? 'No containers match your search'
+                                                        : 'No containers reported for this host yet.'
+                                                }
+                                            />
                                         ) : null}
                                     </div>
                                 ) : null}

@@ -16,6 +16,7 @@ interface ContainerCard {
 
 interface ContainerCardGridProps {
     containers: ContainerCard[];
+    emptyMessage?: string;
 }
 
 function formatTimestamp(timestamp: string | null): string {
@@ -80,11 +81,11 @@ function normalizeListField(value: unknown): string[] {
     return [];
 }
 
-export function ContainerCardGrid({ containers }: ContainerCardGridProps) {
+export function ContainerCardGrid({ containers, emptyMessage }: ContainerCardGridProps) {
     if (containers.length === 0) {
         return (
             <div className="rounded-xl border border-dashed border-slate-700 bg-slate-900/60 px-4 py-6 text-sm text-slate-400">
-                No containers match this selection.
+                {emptyMessage ?? 'No containers match this selection.'}
             </div>
         );
     }
