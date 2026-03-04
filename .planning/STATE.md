@@ -10,9 +10,9 @@ See: `.planning/PROJECT.md` (updated 2026-03-01)
 ## Current Position
 
 Phase: 6 of 8 (Live Logs and Retention)
-Plan: 0 of TBD in current phase
-Status: Ready to plan
-Last activity: 2026-03-04 - Completed discuss-phase 6 and captured live logs/retention interaction decisions.
+Plan: 1 of 3 in current phase
+Status: In progress
+Last activity: 2026-03-04 - Completed execute-plan for 06-01 (log ingest mapping and retention guardrails).
 
 Progress: [██████████] 100.0%
 
@@ -45,6 +45,7 @@ Progress: [██████████] 100.0%
 | Phase 05 P01 | 4 min | 3 tasks | 3 files |
 | Phase 05 P02 | 4 min | 3 tasks | 5 files |
 | Phase 05 P03 | 13 min | 3 tasks | 6 files |
+| Phase 06-live-logs-and-retention P01 | 4m | 3 tasks | 4 files |
 
 ## Accumulated Context
 
@@ -94,6 +95,8 @@ Recent decisions affecting current work:
 - [Phase 05-metrics-telemetry-core]: Use Top N default of 5 in web telemetry contracts with server subscribe-ack override.
 - [Phase 05-metrics-telemetry-core]: Keep fleet telemetry scope anchored to expanded host and optional selected container from inventory interactions.
 - [Phase 05-metrics-telemetry-core]: Apply pause/resume/speed controls to websocket fan-out while history window switches continue trend refresh.
+- [Phase 06]: Set log retention to 24h with shared cutoff/clamp helpers reused by cleanup and range calculations.
+- [Phase 06]: Map host-scoped docker IDs to internal container UUIDs before log writes and drop unmatched rows with structured counters.
 
 ### Pending Todos
 
@@ -108,5 +111,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-03-04
-Stopped at: Phase 6 context gathered
-Resume file: .planning/phases/06-live-logs-and-retention/06-CONTEXT.md
+Stopped at: Completed 06-live-logs-and-retention-01-PLAN.md
+Resume file: .planning/phases/06-live-logs-and-retention/06-02-PLAN.md
