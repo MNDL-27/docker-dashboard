@@ -7,6 +7,8 @@ class QBittorrentClient {
     this.username = username || 'admin';
     this.password = password || 'adminadmin';
     this.cookie = null;
+    this.loginAttempts = 0;
+    this.maxLoginAttempts = 2;
   }
 
   /**
@@ -28,6 +30,7 @@ class QBittorrentClient {
       const cookies = response.headers['set-cookie'];
       if (cookies && cookies.length > 0) {
         this.cookie = cookies[0].split(';')[0];
+        this.loginAttempts = 0; // Reset on successful login
         return true;
       }
       return false;
@@ -72,12 +75,14 @@ class QBittorrentClient {
         },
       };
     } catch (error) {
-      // If unauthorized, try to login again
-      if (error.response && error.response.status === 403) {
+      // If unauthorized, try to login again (with retry limit)
+      if (error.response && error.response.status === 403 && this.loginAttempts < this.maxLoginAttempts) {
         this.cookie = null;
+        this.loginAttempts++;
         return this.getTransferInfo();
       }
       
+      this.loginAttempts = 0; // Reset counter
       console.error('Failed to get qBittorrent transfer info:', error.message);
       return {
         success: false,
@@ -109,11 +114,13 @@ class QBittorrentClient {
         data: response.data,
       };
     } catch (error) {
-      if (error.response && error.response.status === 403) {
+      if (error.response && error.response.status === 403 && this.loginAttempts < this.maxLoginAttempts) {
         this.cookie = null;
+        this.loginAttempts++;
         return this.getTorrents();
       }
       
+      this.loginAttempts = 0; // Reset counter
       console.error('Failed to get qBittorrent torrents:', error.message);
       return {
         success: false,

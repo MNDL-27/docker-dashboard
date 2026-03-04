@@ -12,9 +12,10 @@ function dockerRequest(path, method = 'GET') {
 			timeout,
 		};
 		const req = http.request(options, res => {
-			let data = '';
-			res.on('data', chunk => data += chunk);
+			const chunks = [];
+			res.on('data', chunk => chunks.push(chunk));
 			res.on('end', () => {
+				const data = Buffer.concat(chunks).toString();
 				try {
 					resolve({ status: res.statusCode, data: JSON.parse(data) });
 				} catch {
