@@ -1,11 +1,28 @@
 import { prisma } from '../lib/prisma';
 
+export const METRICS_RETENTION_HOURS = 24;
+const METRICS_RETENTION_MS = METRICS_RETENTION_HOURS * 60 * 60 * 1000;
+const METRICS_CLEANUP_INTERVAL_MS = 60 * 60 * 1000;
+
 export interface MetricItem {
     containerId: string;
     cpuUsagePercent: number;
     memoryUsageBytes: number;
     networkRxBytes: number;
     networkTxBytes: number;
+}
+
+export function getMetricsRetentionCutoff(now: Date = new Date()): Date {
+    return new Date(now.getTime() - METRICS_RETENTION_MS);
+}
+
+export function clampMetricsLookbackStart(requestedStart: Date | undefined, now: Date = new Date()): Date {
+    const retentionCutoff = getMetricsRetentionCutoff(now);
+    if (!requestedStart) {
+        return retentionCutoff;
+    }
+
+    return requestedStart < retentionCutoff ? retentionCutoff : requestedStart;
 }
 
 interface BufferedMetricItem extends MetricItem {
@@ -118,11 +135,11 @@ async function flushMetrics() {
 // Cleanup job: run periodically to delete metrics older than 24 hours
 export async function cleanupOldMetrics() {
     try {
-        const yesterday = new Date(Date.now() - 24 * 60 * 60 * 1000);
+        const cutoff = getMetricsRetentionCutoff();
         const result = await prisma.containerMetric.deleteMany({
             where: {
                 timestamp: {
-                    lt: yesterday,
+                    lt: cutoff,
                 },
             },
         });
@@ -133,4 +150,4 @@ export async function cleanupOldMetrics() {
 }
 
 // Start cleanup interval (runs hourly)
-setInterval(cleanupOldMetrics, 60 * 60 * 1000);
+setInterval(cleanupOldMetrics, METRICS_CLEANUP_INTERVAL_MS);

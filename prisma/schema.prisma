@@ -250,6 +250,7 @@ model ContainerMetric {
   container Container @relation(fields: [containerId], references: [id], onDelete: Cascade)
 
   @@index([containerId, timestamp(sort: Desc)])
+  @@index([timestamp(sort: Desc)])
 }
 
 model ContainerLog {
