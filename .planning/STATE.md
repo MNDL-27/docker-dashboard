@@ -10,16 +10,16 @@ See: `.planning/PROJECT.md` (updated 2026-03-01)
 ## Current Position
 
 Phase: 5 of 8 (Metrics Telemetry Core)
-Plan: 0 of TBD in current phase
-Status: Context gathered, ready to plan
-Last activity: 2026-03-04 - Completed discuss-phase 5 and captured live telemetry surface decisions.
+Plan: 1 of 3 in current phase
+Status: In progress
+Last activity: 2026-03-04 - Completed 05-01 telemetry ingest identity + retention hardening.
 
 Progress: [██████████] 93.0%
 
 ## Performance Metrics
 
 **Velocity:**
-- Total plans completed: 14
+- Total plans completed: 15
 - Average duration: 4 min
 - Total execution time: 1.1 hours
 
@@ -33,15 +33,16 @@ Progress: [██████████] 93.0%
 | 4-8 | 1 | 8 min | 8 min |
 
 **Recent Trend:**
-- Last 5 plans: 03-02, 03-03, 04-01, 04-02, 04-03
+- Last 5 plans: 03-03, 04-01, 04-02, 04-03, 05-01
 - Trend: Stable
 
 *Updated after each plan completion*
-- Latest execution: Phase 04 Plan 03 | 2 min | 3 tasks | 3 files
+- Latest execution: Phase 05 Plan 01 | 4 min | 3 tasks | 3 files
 | Phase 03 P04 | 3 | 3 tasks | 3 files |
 | Phase 04 P01 | 8 min | 3 tasks | 7 files |
 | Phase 04 P02 | 8 min | 3 tasks | 7 files |
 | Phase 04 P03 | 2 min | 3 tasks | 3 files |
+| Phase 05 P01 | 4 min | 3 tasks | 3 files |
 
 ## Accumulated Context
 
@@ -84,6 +85,8 @@ Recent decisions affecting current work:
 - [Phase 04]: Differentiate true no-host scope from filter-driven no-results to preserve applied filter context.
 - [Phase 04]: Expose an informational Open Docker action in host no-container state without adding deferred control features.
 - [Phase 04]: Use auto-advance to auto-approve Plan 04-03 human verification checkpoint.
+- [Phase 05]: Drop unmatched Docker ID metrics during ingest with host-scoped counters instead of persisting invalid relations.
+- [Phase 05]: Clamp default telemetry lookback to the shared 24-hour retention cutoff so history queries cannot include older samples by default.
 
 ### Pending Todos
 
@@ -98,5 +101,5 @@ None yet.
 ## Session Continuity
 
 Last session: 2026-03-04
-Stopped at: Phase 5 context gathered
-Resume file: .planning/phases/05-metrics-telemetry-core/05-CONTEXT.md
+Stopped at: Completed 05-01-PLAN.md
+Resume file: None
