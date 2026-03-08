@@ -2,7 +2,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { dockerApi } from "@/services/docker-api";
 import { useAuth } from "@/contexts/AuthContext";
-import type { DockerHost } from "@/types/database";
+import type { DockerHost, ConnectionMode } from "@/types/database";
 
 export function useDockerHosts(orgId?: string | null) {
   return useQuery({
@@ -25,12 +25,16 @@ export function useAddDockerHost() {
   const { user } = useAuth();
 
   return useMutation({
-    mutationFn: async ({ orgId, name, hostUrl, tlsCerts }: {
+    mutationFn: async ({ orgId, name, hostUrl, connectionMode, dockerSocketPath, secrets }: {
       orgId: string; name: string; hostUrl: string;
-      tlsCerts?: { caCert: string; clientCert: string; clientKey: string; serverName?: string };
+      connectionMode: ConnectionMode;
+      dockerSocketPath?: string;
+      secrets: {
+        agentApiKey?: string;
+        cfServiceTokenId?: string;
+        cfServiceTokenSecret?: string;
+      };
     }) => {
-      const tlsEnabled = hostUrl.startsWith('https');
-
       // 1. Insert host record
       const { data, error } = await (supabase as any)
         .from('docker_hosts')
@@ -38,7 +42,8 @@ export function useAddDockerHost() {
           organization_id: orgId,
           name,
           host_url: hostUrl,
-          tls_enabled: tlsEnabled,
+          connection_mode: connectionMode,
+          docker_socket_path: dockerSocketPath || '/var/run/docker.sock',
           created_by: user!.id,
           status: 'unknown',
         })
@@ -46,22 +51,19 @@ export function useAddDockerHost() {
         .single();
       if (error) throw error;
 
-      // 2. If TLS certs provided, store them in the separate secure table
-      if (tlsCerts) {
-        const { error: tlsError } = await (supabase as any)
-          .from('docker_host_tls')
-          .insert({
-            host_id: data.id,
-            ca_cert: tlsCerts.caCert,
-            client_cert: tlsCerts.clientCert,
-            client_key: tlsCerts.clientKey,
-            server_name: tlsCerts.serverName || null,
-          });
-        if (tlsError) {
-          // Clean up the host if cert storage failed
-          await (supabase as any).from('docker_hosts').delete().eq('id', data.id);
-          throw new Error(`Failed to store TLS certificates: ${tlsError.message}`);
-        }
+      // 2. Store secrets in the separate secure table
+      const { error: secretsError } = await (supabase as any)
+        .from('docker_host_secrets')
+        .insert({
+          host_id: data.id,
+          agent_api_key: secrets.agentApiKey || null,
+          cf_service_token_id: secrets.cfServiceTokenId || null,
+          cf_service_token_secret: secrets.cfServiceTokenSecret || null,
+        });
+      if (secretsError) {
+        // Clean up the host if secret storage failed
+        await (supabase as any).from('docker_hosts').delete().eq('id', data.id);
+        throw new Error(`Failed to store connection secrets: ${secretsError.message}`);
       }
 
       return data as DockerHost;
@@ -76,7 +78,7 @@ export function useDeleteDockerHost() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (hostId: string) => {
-      // TLS certs cascade-delete via FK
+      // Secrets cascade-delete via FK
       const { error } = await (supabase as any)
         .from('docker_hosts')
         .delete()

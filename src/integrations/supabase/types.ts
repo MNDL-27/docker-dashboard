@@ -14,40 +14,37 @@ export type Database = {
   }
   public: {
     Tables: {
-      docker_host_tls: {
+      docker_host_secrets: {
         Row: {
-          ca_cert: string | null
-          client_cert: string | null
-          client_key: string | null
+          agent_api_key: string | null
+          cf_service_token_id: string | null
+          cf_service_token_secret: string | null
           created_at: string
           host_id: string
           id: string
-          server_name: string | null
           updated_at: string
         }
         Insert: {
-          ca_cert?: string | null
-          client_cert?: string | null
-          client_key?: string | null
+          agent_api_key?: string | null
+          cf_service_token_id?: string | null
+          cf_service_token_secret?: string | null
           created_at?: string
           host_id: string
           id?: string
-          server_name?: string | null
           updated_at?: string
         }
         Update: {
-          ca_cert?: string | null
-          client_cert?: string | null
-          client_key?: string | null
+          agent_api_key?: string | null
+          cf_service_token_id?: string | null
+          cf_service_token_secret?: string | null
           created_at?: string
           host_id?: string
           id?: string
-          server_name?: string | null
           updated_at?: string
         }
         Relationships: [
           {
-            foreignKeyName: "docker_host_tls_host_id_fkey"
+            foreignKeyName: "docker_host_secrets_host_id_fkey"
             columns: ["host_id"]
             isOneToOne: true
             referencedRelation: "docker_hosts"
@@ -57,8 +54,10 @@ export type Database = {
       }
       docker_hosts: {
         Row: {
+          connection_mode: string
           created_at: string
           created_by: string
+          docker_socket_path: string | null
           docker_version: string | null
           host_url: string
           id: string
@@ -67,12 +66,13 @@ export type Database = {
           organization_id: string
           os_info: string | null
           status: string
-          tls_enabled: boolean
           updated_at: string
         }
         Insert: {
+          connection_mode?: string
           created_at?: string
           created_by: string
+          docker_socket_path?: string | null
           docker_version?: string | null
           host_url: string
           id?: string
@@ -81,12 +81,13 @@ export type Database = {
           organization_id: string
           os_info?: string | null
           status?: string
-          tls_enabled?: boolean
           updated_at?: string
         }
         Update: {
+          connection_mode?: string
           created_at?: string
           created_by?: string
+          docker_socket_path?: string | null
           docker_version?: string | null
           host_url?: string
           id?: string
@@ -95,7 +96,6 @@ export type Database = {
           organization_id?: string
           os_info?: string | null
           status?: string
-          tls_enabled?: boolean
           updated_at?: string
         }
         Relationships: [

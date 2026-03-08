@@ -7,7 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useHostContainers } from "@/hooks/useDocker";
 import { dockerApi } from "@/services/docker-api";
 import type { DockerHost } from "@/types/database";
-import { Server, Box, Loader2, RefreshCw, Wifi, WifiOff } from "lucide-react";
+import { Server, Box, Loader2, RefreshCw, Wifi, WifiOff, Terminal, CloudCog } from "lucide-react";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 
@@ -52,6 +52,8 @@ export default function HostDetailPage() {
 
   const realContainers = Array.isArray(containers) ? containers : [];
   const runningCount = realContainers.filter((c: any) => c.State === 'running').length;
+  const ModeIcon = host.connection_mode === 'cloudflare_tunnel' ? CloudCog : Terminal;
+  const modeLabel = host.connection_mode === 'cloudflare_tunnel' ? 'Cloudflare Tunnel' : 'Agent';
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -61,6 +63,10 @@ export default function HostDetailPage() {
         breadcrumbs={[{ label: "Hosts", href: "/app/hosts" }, { label: host.name }]}
         actions={
           <div className="flex items-center gap-2">
+            <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-secondary text-muted-foreground inline-flex items-center gap-1">
+              <ModeIcon className="h-3 w-3" />
+              {modeLabel}
+            </span>
             <span className={`text-xs font-medium px-2 py-0.5 rounded-full inline-flex items-center gap-1 ${
               host.status === 'connected' ? 'bg-success/15 text-success' :
               host.status === 'error' ? 'bg-destructive/15 text-destructive' :
@@ -91,9 +97,10 @@ export default function HostDetailPage() {
           {[
             ["Name", host.name],
             ["URL", host.host_url],
+            ["Mode", modeLabel],
             ["Docker Version", host.docker_version || "—"],
             ["OS", host.os_info || "—"],
-            ["TLS", host.tls_enabled ? "Enabled" : "Disabled"],
+            ["Socket", host.docker_socket_path || "/var/run/docker.sock"],
             ["Last Seen", host.last_seen_at ? new Date(host.last_seen_at).toLocaleString() : "Never"],
           ].map(([k, v]) => (
             <div key={k}>

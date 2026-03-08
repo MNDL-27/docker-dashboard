@@ -5,26 +5,47 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
 }
 
-/** Build a Deno HTTP client with optional mTLS certs */
-function buildHttpClient(tls?: { ca_cert?: string; client_cert?: string; client_key?: string }) {
-  const opts: Record<string, unknown> = {}
-  if (tls?.ca_cert) opts.caCerts = [tls.ca_cert]
-  if (tls?.client_cert && tls?.client_key) {
-    opts.certChain = tls.client_cert
-    opts.privateKey = tls.client_key
+/**
+ * Build the correct fetch options for a Docker API call depending on connection mode.
+ *
+ * Agent mode:      GET/POST  https://agent-url/docker/<path>   with X-Agent-Key header
+ * Cloudflare mode: GET/POST  https://tunnel-url/<path>         with CF-Access-Client-Id / Secret headers
+ */
+function buildRequest(
+  host: { host_url: string; connection_mode: string; docker_socket_path: string },
+  secrets: { agent_api_key?: string; cf_service_token_id?: string; cf_service_token_secret?: string } | null,
+  dockerPath: string,
+  method: string,
+) {
+  const base = host.host_url.replace(/\/$/, '')
+  const headers: Record<string, string> = {}
+
+  let url: string
+
+  if (host.connection_mode === 'cloudflare_tunnel') {
+    // Cloudflare Access expects these headers for service token auth
+    url = `${base}${dockerPath}`
+    if (secrets?.cf_service_token_id) headers['CF-Access-Client-Id'] = secrets.cf_service_token_id
+    if (secrets?.cf_service_token_secret) headers['CF-Access-Client-Secret'] = secrets.cf_service_token_secret
+  } else {
+    // Agent mode — agent expects /docker/<path> and an API key
+    url = `${base}/docker${dockerPath}`
+    if (secrets?.agent_api_key) headers['X-Agent-Key'] = secrets.agent_api_key
+    // Tell agent which socket to use if non-default
+    if (host.docker_socket_path && host.docker_socket_path !== '/var/run/docker.sock') {
+      headers['X-Docker-Socket'] = host.docker_socket_path
+    }
   }
-  // Deno.createHttpClient supports mTLS natively
-  return Deno.createHttpClient(opts)
+
+  return { url, method, headers }
 }
 
-/** Fetch with optional TLS client, auto-cleanup */
-async function dockerFetch(url: string, method: string, tls?: any, timeoutMs = 30000) {
-  const client = buildHttpClient(tls)
-  try {
-    return await fetch(url, { method, signal: AbortSignal.timeout(timeoutMs), client } as any)
-  } finally {
-    client.close()
-  }
+async function dockerFetch(url: string, method: string, headers: Record<string, string>, timeoutMs = 30000) {
+  return await fetch(url, {
+    method,
+    headers,
+    signal: AbortSignal.timeout(timeoutMs),
+  })
 }
 
 Deno.serve(async (req) => {
@@ -54,20 +75,19 @@ Deno.serve(async (req) => {
 
   const userId = claimsData.claims.sub as string
 
-  // Service client for reading TLS secrets (bypasses RLS)
+  // Service client for reading secrets (bypasses RLS)
   const serviceClient = createClient(
     Deno.env.get('SUPABASE_URL')!,
     Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
   )
 
-  /** Load TLS certs for a host (only via service role) */
-  async function loadTls(hostId: string) {
+  async function loadSecrets(hostId: string) {
     const { data } = await serviceClient
-      .from('docker_host_tls')
-      .select('ca_cert, client_cert, client_key, server_name')
+      .from('docker_host_secrets')
+      .select('agent_api_key, cf_service_token_id, cf_service_token_secret')
       .eq('host_id', hostId)
       .maybeSingle()
-    return data || undefined
+    return data || null
   }
 
   try {
@@ -99,11 +119,9 @@ Deno.serve(async (req) => {
       const allContainers: unknown[] = []
       for (const host of (hosts || [])) {
         try {
-          const tls = host.tls_enabled ? await loadTls(host.id) : undefined
-          const resp = await dockerFetch(
-            `${host.host_url.replace(/\/$/, '')}/containers/json?all=true`,
-            'GET', tls, 10000
-          )
+          const secrets = await loadSecrets(host.id)
+          const { url, method, headers } = buildRequest(host, secrets, '/containers/json?all=true', 'GET')
+          const resp = await dockerFetch(url, method, headers, 10000)
           if (resp.ok) {
             const containers = await resp.json()
             allContainers.push(...containers.map((c: any) => ({
@@ -140,59 +158,58 @@ Deno.serve(async (req) => {
       return new Response(JSON.stringify({ error: 'Host not found or access denied' }), { status: 404, headers: jsonHeaders })
     }
 
-    // Load TLS certs via service role
-    const tls = (host as any).tls_enabled ? await loadTls(hostId) : undefined
+    const secrets = await loadSecrets(hostId)
 
-    const baseUrl = (host as any).host_url.replace(/\/$/, '')
-    let dockerUrl: string
+    let dockerPath: string
     let method = 'GET'
 
     switch (action) {
       case 'ping':
-        dockerUrl = `${baseUrl}/_ping`
+        dockerPath = '/_ping'
         break
       case 'info':
-        dockerUrl = `${baseUrl}/info`
+        dockerPath = '/info'
         break
       case 'version':
-        dockerUrl = `${baseUrl}/version`
+        dockerPath = '/version'
         break
       case 'containers':
-        dockerUrl = `${baseUrl}/containers/json?all=true`
+        dockerPath = '/containers/json?all=true'
         break
       case 'container-inspect':
         if (!containerId) return new Response(JSON.stringify({ error: 'containerId required' }), { status: 400, headers: jsonHeaders })
-        dockerUrl = `${baseUrl}/containers/${containerId}/json`
+        dockerPath = `/containers/${containerId}/json`
         break
       case 'container-stats':
         if (!containerId) return new Response(JSON.stringify({ error: 'containerId required' }), { status: 400, headers: jsonHeaders })
-        dockerUrl = `${baseUrl}/containers/${containerId}/stats?stream=false`
+        dockerPath = `/containers/${containerId}/stats?stream=false`
         break
       case 'container-logs':
         if (!containerId) return new Response(JSON.stringify({ error: 'containerId required' }), { status: 400, headers: jsonHeaders })
         const tail = params?.tail || 100
-        dockerUrl = `${baseUrl}/containers/${containerId}/logs?stdout=true&stderr=true&tail=${tail}&timestamps=true`
+        dockerPath = `/containers/${containerId}/logs?stdout=true&stderr=true&tail=${tail}&timestamps=true`
         break
       case 'container-start':
         if (!containerId) return new Response(JSON.stringify({ error: 'containerId required' }), { status: 400, headers: jsonHeaders })
-        dockerUrl = `${baseUrl}/containers/${containerId}/start`
+        dockerPath = `/containers/${containerId}/start`
         method = 'POST'
         break
       case 'container-stop':
         if (!containerId) return new Response(JSON.stringify({ error: 'containerId required' }), { status: 400, headers: jsonHeaders })
-        dockerUrl = `${baseUrl}/containers/${containerId}/stop`
+        dockerPath = `/containers/${containerId}/stop`
         method = 'POST'
         break
       case 'container-restart':
         if (!containerId) return new Response(JSON.stringify({ error: 'containerId required' }), { status: 400, headers: jsonHeaders })
-        dockerUrl = `${baseUrl}/containers/${containerId}/restart`
+        dockerPath = `/containers/${containerId}/restart`
         method = 'POST'
         break
       default:
         return new Response(JSON.stringify({ error: `Unknown action: ${action}` }), { status: 400, headers: jsonHeaders })
     }
 
-    const dockerResponse = await dockerFetch(dockerUrl, method, tls)
+    const reqData = buildRequest(host as any, secrets, dockerPath, method)
+    const dockerResponse = await dockerFetch(reqData.url, reqData.method, reqData.headers)
 
     // ── Handle ping ──
     if (action === 'ping') {
@@ -202,7 +219,8 @@ Deno.serve(async (req) => {
       let dockerVersion = null
       let osInfo = null
       try {
-        const vResp = await dockerFetch(`${baseUrl}/version`, 'GET', tls, 5000)
+        const vReq = buildRequest(host as any, secrets, '/version', 'GET')
+        const vResp = await dockerFetch(vReq.url, vReq.method, vReq.headers, 5000)
         if (vResp.ok) {
           const vData = await vResp.json()
           dockerVersion = vData.Version || null
@@ -222,7 +240,7 @@ Deno.serve(async (req) => {
         status: text,
         docker_version: dockerVersion,
         os_info: osInfo,
-        tls_verified: !!(tls?.ca_cert),
+        connection_mode: (host as any).connection_mode,
       }), { headers: jsonHeaders })
     }
 
@@ -265,11 +283,9 @@ Deno.serve(async (req) => {
     return new Response(JSON.stringify(data), { headers: jsonHeaders })
 
   } catch (error: any) {
-    // Distinguish TLS errors
     const msg = error.message || ''
-    const isTlsError = msg.includes('tls') || msg.includes('certificate') || msg.includes('SSL') || msg.includes('handshake')
     return new Response(JSON.stringify({
-      error: isTlsError ? 'TLS connection failed' : 'Docker connection failed',
+      error: 'Docker connection failed',
       details: msg,
     }), { status: 502, headers: jsonHeaders })
   }

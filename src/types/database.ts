@@ -1,5 +1,4 @@
 // Manual type definitions for tables added via migration
-// These supplement the auto-generated types until they are regenerated
 
 export interface Organization {
   id: string;
@@ -18,12 +17,15 @@ export interface OrganizationMember {
   created_at: string;
 }
 
+export type ConnectionMode = 'agent' | 'cloudflare_tunnel';
+
 export interface DockerHost {
   id: string;
   organization_id: string;
   name: string;
   host_url: string;
-  tls_enabled: boolean;
+  connection_mode: ConnectionMode;
+  docker_socket_path: string;
   status: string;
   docker_version: string | null;
   os_info: string | null;
