@@ -5,8 +5,9 @@ import { Label } from "@/components/ui/label";
 import { apiKeys, auditLogs } from "@/lib/mock-data";
 import { Plus, Key, Copy, Trash2, Clock, AlertTriangle } from "lucide-react";
 import { useState } from "react";
+import { ProfileSettings } from "@/components/settings/ProfileSettings";
 
-const tabs = ["General", "API Keys", "Webhooks", "Notifications", "Audit Logs", "Danger Zone"];
+const tabs = ["Profile", "General", "API Keys", "Webhooks", "Notifications", "Audit Logs", "Danger Zone"];
 
 export default function SettingsPage() {
   const [tab, setTab] = useState("General");
