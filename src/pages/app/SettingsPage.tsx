@@ -26,6 +26,8 @@ export default function SettingsPage() {
         ))}
       </div>
 
+      {tab === "Profile" && <ProfileSettings />}
+
       {tab === "General" && (
         <div className="space-y-6 max-w-lg">
           <div className="glass-card p-6 space-y-4">
