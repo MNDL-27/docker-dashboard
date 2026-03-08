@@ -10,7 +10,7 @@ import { ProfileSettings } from "@/components/settings/ProfileSettings";
 const tabs = ["Profile", "General", "API Keys", "Webhooks", "Notifications", "Audit Logs", "Danger Zone"];
 
 export default function SettingsPage() {
-  const [tab, setTab] = useState("General");
+  const [tab, setTab] = useState("Profile");
 
   return (
     <div className="space-y-6 animate-fade-in">
