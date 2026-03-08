@@ -60,16 +60,13 @@ export function OrganizationProvider({ children }: { children: ReactNode }) {
   const currentOrg = organizations.find(o => o.id === currentOrgId) || null;
 
   const createOrganization = async (name: string) => {
-    const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
-    const { data, error } = await (supabase as any)
-      .from('organizations')
-      .insert({ name, slug: `${slug}-${Date.now().toString(36)}`, created_by: user!.id })
-      .select()
-      .single();
+    // Use RPC to bypass RLS INSERT+SELECT timing issues
+    const { data: orgId, error } = await supabase.rpc('create_organization', { _name: name });
     if (error) throw error;
     queryClient.invalidateQueries({ queryKey: ['organizations'] });
-    setCurrentOrgId(data.id);
-    return data as Organization;
+    setCurrentOrgId(orgId);
+    // Return a minimal org object; full data comes from the query refetch
+    return { id: orgId, name, slug: '', created_by: user!.id, created_at: '', updated_at: '' } as Organization;
   };
 
   return (
