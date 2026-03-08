@@ -14,6 +14,47 @@ export type Database = {
   }
   public: {
     Tables: {
+      docker_host_tls: {
+        Row: {
+          ca_cert: string | null
+          client_cert: string | null
+          client_key: string | null
+          created_at: string
+          host_id: string
+          id: string
+          server_name: string | null
+          updated_at: string
+        }
+        Insert: {
+          ca_cert?: string | null
+          client_cert?: string | null
+          client_key?: string | null
+          created_at?: string
+          host_id: string
+          id?: string
+          server_name?: string | null
+          updated_at?: string
+        }
+        Update: {
+          ca_cert?: string | null
+          client_cert?: string | null
+          client_key?: string | null
+          created_at?: string
+          host_id?: string
+          id?: string
+          server_name?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "docker_host_tls_host_id_fkey"
+            columns: ["host_id"]
+            isOneToOne: true
+            referencedRelation: "docker_hosts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       docker_hosts: {
         Row: {
           created_at: string
