@@ -1,86 +1,112 @@
 import { PageHeader } from "@/components/shared/PageHeader";
-import { StatusBadge } from "@/components/shared/StatusBadge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { containers } from "@/lib/mock-data";
-import { Search, MoreHorizontal, RotateCcw, Square, Play, FileText } from "lucide-react";
+import { Search, Loader2, Box } from "lucide-react";
 import { useState } from "react";
 import { Link } from "react-router-dom";
+import { useOrganization } from "@/contexts/OrganizationContext";
+import { useContainers } from "@/hooks/useDocker";
 
 export default function ContainersPage() {
+  const { currentOrg } = useOrganization();
+  const { data: rawContainers, isLoading, error } = useContainers(currentOrg?.id);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
-  const filtered = containers
-    .filter(c => c.name.toLowerCase().includes(search.toLowerCase()) || c.image.toLowerCase().includes(search.toLowerCase()))
-    .filter(c => statusFilter === "all" || c.status === statusFilter);
 
-  const statuses = ["all", "running", "unhealthy", "restarting", "exited", "paused"];
+  const containers = Array.isArray(rawContainers) ? rawContainers : [];
+  const filtered = containers
+    .filter((c: any) => {
+      const name = (c.Names?.[0] || '').replace(/^\//, '').toLowerCase();
+      const image = (c.Image || '').toLowerCase();
+      return name.includes(search.toLowerCase()) || image.includes(search.toLowerCase());
+    })
+    .filter((c: any) => statusFilter === "all" || c.State === statusFilter);
+
+  const statuses = ["all", "running", "exited", "paused", "restarting", "created"];
+  const hostCount = new Set(containers.map((c: any) => c._hostId)).size;
+
+  if (isLoading) {
+    return <div className="flex items-center justify-center h-64"><Loader2 className="h-8 w-8 animate-spin text-muted-foreground" /></div>;
+  }
+
+  if (error) {
+    return (
+      <div className="space-y-6 animate-fade-in">
+        <PageHeader title="Containers" breadcrumbs={[{ label: "Infrastructure" }, { label: "Containers" }]} />
+        <div className="glass-card p-8 text-center">
+          <p className="text-sm text-destructive">Failed to load containers: {(error as Error).message}</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6 animate-fade-in">
       <PageHeader
         title="Containers"
-        description={`${containers.length} containers across ${new Set(containers.map(c => c.hostId)).size} hosts`}
+        description={containers.length > 0 ? `${containers.length} containers across ${hostCount} host(s)` : "No containers found"}
         breadcrumbs={[{ label: "Infrastructure" }, { label: "Containers" }]}
       />
 
-      <div className="flex items-center gap-2 flex-wrap">
-        <div className="relative flex-1 max-w-sm">
-          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
-          <Input placeholder="Search containers or images..." className="pl-8 h-8 text-sm" value={search} onChange={e => setSearch(e.target.value)} />
+      {containers.length === 0 ? (
+        <div className="glass-card p-12 text-center">
+          <Box className="h-10 w-10 text-muted-foreground mx-auto mb-4" />
+          <h2 className="text-lg font-semibold mb-2">No containers found</h2>
+          <p className="text-sm text-muted-foreground mb-4">
+            {currentOrg ? "Connect a Docker host first, then containers will appear here." : "No organization selected."}
+          </p>
+          <Link to="/app/hosts"><Button variant="outline">Go to Hosts</Button></Link>
         </div>
-        <div className="flex items-center gap-1 bg-secondary rounded-md p-0.5">
-          {statuses.map(s => (
-            <button key={s} onClick={() => setStatusFilter(s)} className={`px-2.5 py-1 text-xs rounded-md capitalize transition-colors ${statusFilter === s ? "bg-card text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"}`}>{s}</button>
-          ))}
-        </div>
-      </div>
+      ) : (
+        <>
+          <div className="flex items-center gap-2 flex-wrap">
+            <div className="relative flex-1 max-w-sm">
+              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+              <Input placeholder="Search containers or images..." className="pl-8 h-8 text-sm" value={search} onChange={e => setSearch(e.target.value)} />
+            </div>
+            <div className="flex items-center gap-1 bg-secondary rounded-md p-0.5">
+              {statuses.map(s => (
+                <button key={s} onClick={() => setStatusFilter(s)} className={`px-2.5 py-1 text-xs rounded-md capitalize transition-colors ${statusFilter === s ? "bg-card text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"}`}>{s}</button>
+              ))}
+            </div>
+          </div>
 
-      <div className="glass-card overflow-hidden">
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="border-b border-border bg-muted/30">
-              <th className="text-left p-3 font-medium text-muted-foreground text-xs">Container</th>
-              <th className="text-left p-3 font-medium text-muted-foreground text-xs">Status</th>
-              <th className="text-left p-3 font-medium text-muted-foreground text-xs hidden md:table-cell">Host</th>
-              <th className="text-left p-3 font-medium text-muted-foreground text-xs hidden lg:table-cell">Image</th>
-              <th className="text-right p-3 font-medium text-muted-foreground text-xs">CPU</th>
-              <th className="text-right p-3 font-medium text-muted-foreground text-xs">Memory</th>
-              <th className="text-left p-3 font-medium text-muted-foreground text-xs hidden md:table-cell">Uptime</th>
-              <th className="text-right p-3 font-medium text-muted-foreground text-xs hidden lg:table-cell">Restarts</th>
-              <th className="p-3 text-right text-xs font-medium text-muted-foreground">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {filtered.map(c => (
-              <tr key={c.id} className="border-b border-border last:border-0 hover:bg-accent/30 transition-colors">
-                <td className="p-3">
-                  <Link to={`/app/containers/${c.id}`} className="font-medium text-primary hover:underline">{c.name}</Link>
-                  {c.ports && <div className="text-xs text-muted-foreground">{c.ports}</div>}
-                </td>
-                <td className="p-3"><StatusBadge status={c.status} /></td>
-                <td className="p-3 hidden md:table-cell">
-                  <Link to={`/app/hosts/${c.hostId}`} className="text-muted-foreground hover:text-foreground transition-colors">{c.hostName}</Link>
-                </td>
-                <td className="p-3 text-muted-foreground hidden lg:table-cell font-mono text-xs">{c.image}</td>
-                <td className="p-3 text-right"><span className={c.cpu > 50 ? "text-warning" : ""}>{c.cpu}%</span></td>
-                <td className="p-3 text-right">{c.memory} MB</td>
-                <td className="p-3 text-muted-foreground hidden md:table-cell">{c.uptime}</td>
-                <td className="p-3 text-right hidden lg:table-cell">
-                  <span className={c.restarts > 5 ? "text-destructive font-medium" : "text-muted-foreground"}>{c.restarts}</span>
-                </td>
-                <td className="p-3">
-                  <div className="flex items-center justify-end gap-0.5">
-                    <Button variant="ghost" size="icon" className="h-7 w-7" title="Logs"><FileText className="h-3 w-3" /></Button>
-                    <Button variant="ghost" size="icon" className="h-7 w-7" title="Restart"><RotateCcw className="h-3 w-3" /></Button>
-                    <Button variant="ghost" size="icon" className="h-7 w-7"><MoreHorizontal className="h-3 w-3" /></Button>
-                  </div>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+          <div className="glass-card overflow-hidden">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-border bg-muted/30">
+                  <th className="text-left p-3 font-medium text-muted-foreground text-xs">Container</th>
+                  <th className="text-left p-3 font-medium text-muted-foreground text-xs">State</th>
+                  <th className="text-left p-3 font-medium text-muted-foreground text-xs hidden md:table-cell">Host</th>
+                  <th className="text-left p-3 font-medium text-muted-foreground text-xs hidden lg:table-cell">Image</th>
+                  <th className="text-left p-3 font-medium text-muted-foreground text-xs hidden md:table-cell">Status</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filtered.map((c: any) => (
+                  <tr key={c.Id} className="border-b border-border last:border-0 hover:bg-accent/30 transition-colors">
+                    <td className="p-3">
+                      <Link to={`/app/containers/${c.Id?.substring(0, 12)}?host=${c._hostId}`} className="font-medium text-primary hover:underline">
+                        {(c.Names?.[0] || c.Id?.substring(0, 12)).replace(/^\//, '')}
+                      </Link>
+                    </td>
+                    <td className="p-3">
+                      <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${
+                        c.State === 'running' ? 'bg-success/15 text-success' :
+                        c.State === 'exited' ? 'bg-muted text-muted-foreground' :
+                        'bg-warning/15 text-warning'
+                      }`}>{c.State}</span>
+                    </td>
+                    <td className="p-3 text-muted-foreground hidden md:table-cell">{c._hostName || '—'}</td>
+                    <td className="p-3 text-muted-foreground hidden lg:table-cell font-mono text-xs truncate max-w-[200px]">{c.Image}</td>
+                    <td className="p-3 text-muted-foreground text-xs hidden md:table-cell">{c.Status}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </>
+      )}
     </div>
   );
 }

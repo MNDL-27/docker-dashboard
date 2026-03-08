@@ -1,73 +1,116 @@
 import { PageHeader } from "@/components/shared/PageHeader";
-import { StatusBadge } from "@/components/shared/StatusBadge";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { hosts } from "@/lib/mock-data";
-import { Search, Plus, MoreHorizontal } from "lucide-react";
-import { useState } from "react";
+import { Loader2, Trash2, RefreshCw, Wifi, WifiOff } from "lucide-react";
 import { Link } from "react-router-dom";
+import { useOrganization } from "@/contexts/OrganizationContext";
+import { useDockerHosts, useDeleteDockerHost } from "@/hooks/useDocker";
+import { AddHostDialog } from "@/components/docker/AddHostDialog";
+import { dockerApi } from "@/services/docker-api";
+import { useToast } from "@/hooks/use-toast";
+import { useState } from "react";
 
 export default function HostsPage() {
-  const [search, setSearch] = useState("");
-  const filtered = hosts.filter(h => h.name.toLowerCase().includes(search.toLowerCase()));
+  const { currentOrg } = useOrganization();
+  const { data: hosts = [], isLoading, refetch } = useDockerHosts(currentOrg?.id);
+  const deleteHost = useDeleteDockerHost();
+  const { toast } = useToast();
+  const [testingId, setTestingId] = useState<string | null>(null);
+
+  const handleTest = async (hostId: string) => {
+    setTestingId(hostId);
+    try {
+      const result = await dockerApi.ping(hostId);
+      toast({ title: result.ok ? "✓ Connection successful" : "Connection failed", description: result.ok ? `Docker ${result.docker_version || ''}` : undefined });
+      refetch();
+    } catch (e: any) {
+      toast({ title: "Connection failed", description: e.message, variant: "destructive" });
+      refetch();
+    }
+    setTestingId(null);
+  };
+
+  const handleDelete = async (hostId: string, name: string) => {
+    if (!confirm(`Remove host "${name}"? This only removes it from the dashboard.`)) return;
+    try {
+      await deleteHost.mutateAsync(hostId);
+      toast({ title: "Host removed" });
+    } catch (e: any) {
+      toast({ title: "Failed", description: e.message, variant: "destructive" });
+    }
+  };
+
+  if (isLoading) {
+    return <div className="flex items-center justify-center h-64"><Loader2 className="h-8 w-8 animate-spin text-muted-foreground" /></div>;
+  }
 
   return (
     <div className="space-y-6 animate-fade-in">
       <PageHeader
         title="Hosts"
-        description={`${hosts.length} hosts connected`}
+        description={hosts.length > 0 ? `${hosts.length} host(s) configured` : "Connect Docker hosts to monitor"}
         breadcrumbs={[{ label: "Infrastructure" }, { label: "Hosts" }]}
-        actions={<Button size="sm" className="gap-1.5"><Plus className="h-3.5 w-3.5" />Connect Host</Button>}
+        actions={currentOrg ? <AddHostDialog orgId={currentOrg.id} /> : undefined}
       />
 
-      <div className="flex items-center gap-2">
-        <div className="relative flex-1 max-w-sm">
-          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
-          <Input placeholder="Search hosts..." className="pl-8 h-8 text-sm" value={search} onChange={e => setSearch(e.target.value)} />
+      {hosts.length === 0 ? (
+        <div className="glass-card p-12 text-center">
+          <WifiOff className="h-10 w-10 text-muted-foreground mx-auto mb-4" />
+          <h2 className="text-lg font-semibold mb-2">No Docker hosts connected</h2>
+          <p className="text-sm text-muted-foreground mb-6 max-w-md mx-auto">
+            Connect a Docker host by providing its remote API URL. The Docker daemon must be configured to listen on TCP (e.g. port 2375).
+          </p>
+          {currentOrg && <AddHostDialog orgId={currentOrg.id} trigger={<Button>Connect Your First Host</Button>} />}
         </div>
-      </div>
-
-      <div className="glass-card overflow-hidden">
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="border-b border-border bg-muted/30">
-              <th className="text-left p-3 font-medium text-muted-foreground text-xs">Host</th>
-              <th className="text-left p-3 font-medium text-muted-foreground text-xs">Status</th>
-              <th className="text-left p-3 font-medium text-muted-foreground text-xs hidden md:table-cell">Region</th>
-              <th className="text-left p-3 font-medium text-muted-foreground text-xs hidden md:table-cell">OS</th>
-              <th className="text-left p-3 font-medium text-muted-foreground text-xs hidden lg:table-cell">Docker</th>
-              <th className="text-right p-3 font-medium text-muted-foreground text-xs">CPU</th>
-              <th className="text-right p-3 font-medium text-muted-foreground text-xs">Memory</th>
-              <th className="text-right p-3 font-medium text-muted-foreground text-xs hidden md:table-cell">Containers</th>
-              <th className="text-left p-3 font-medium text-muted-foreground text-xs hidden lg:table-cell">Last Seen</th>
-              <th className="p-3"></th>
-            </tr>
-          </thead>
-          <tbody>
-            {filtered.map(h => (
-              <tr key={h.id} className="border-b border-border last:border-0 hover:bg-accent/30 transition-colors">
-                <td className="p-3">
-                  <Link to={`/app/hosts/${h.id}`} className="font-medium text-primary hover:underline">{h.name}</Link>
-                  <div className="text-xs text-muted-foreground">{h.ip}</div>
-                </td>
-                <td className="p-3"><StatusBadge status={h.status} /></td>
-                <td className="p-3 text-muted-foreground hidden md:table-cell">{h.region}</td>
-                <td className="p-3 text-muted-foreground hidden md:table-cell">{h.os}</td>
-                <td className="p-3 text-muted-foreground hidden lg:table-cell">{h.dockerVersion}</td>
-                <td className="p-3 text-right">
-                  <span className={h.cpu > 70 ? "text-warning" : ""}>{h.cpu}%</span>
-                </td>
-                <td className="p-3 text-right">
-                  <span className={h.memory > 75 ? "text-warning" : ""}>{h.memory}%</span>
-                </td>
-                <td className="p-3 text-right hidden md:table-cell">{h.containers}</td>
-                <td className="p-3 text-muted-foreground hidden lg:table-cell">{h.lastSeen}</td>
-                <td className="p-3"><Button variant="ghost" size="icon" className="h-7 w-7"><MoreHorizontal className="h-3.5 w-3.5" /></Button></td>
+      ) : (
+        <div className="glass-card overflow-hidden">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-border bg-muted/30">
+                <th className="text-left p-3 font-medium text-muted-foreground text-xs">Host</th>
+                <th className="text-left p-3 font-medium text-muted-foreground text-xs">Status</th>
+                <th className="text-left p-3 font-medium text-muted-foreground text-xs hidden md:table-cell">URL</th>
+                <th className="text-left p-3 font-medium text-muted-foreground text-xs hidden lg:table-cell">Docker</th>
+                <th className="text-left p-3 font-medium text-muted-foreground text-xs hidden lg:table-cell">Last Seen</th>
+                <th className="p-3 text-right text-xs font-medium text-muted-foreground">Actions</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+            </thead>
+            <tbody>
+              {hosts.map(h => (
+                <tr key={h.id} className="border-b border-border last:border-0 hover:bg-accent/30 transition-colors">
+                  <td className="p-3">
+                    <Link to={`/app/hosts/${h.id}`} className="font-medium text-primary hover:underline">{h.name}</Link>
+                  </td>
+                  <td className="p-3">
+                    <span className={`text-xs font-medium px-2 py-0.5 rounded-full inline-flex items-center gap-1 ${
+                      h.status === 'connected' ? 'bg-success/15 text-success' :
+                      h.status === 'error' ? 'bg-destructive/15 text-destructive' :
+                      'bg-muted text-muted-foreground'
+                    }`}>
+                      {h.status === 'connected' ? <Wifi className="h-3 w-3" /> : <WifiOff className="h-3 w-3" />}
+                      {h.status}
+                    </span>
+                  </td>
+                  <td className="p-3 text-muted-foreground font-mono text-xs hidden md:table-cell">{h.host_url}</td>
+                  <td className="p-3 text-muted-foreground hidden lg:table-cell">{h.docker_version || '—'}</td>
+                  <td className="p-3 text-muted-foreground hidden lg:table-cell">
+                    {h.last_seen_at ? new Date(h.last_seen_at).toLocaleString() : 'Never'}
+                  </td>
+                  <td className="p-3">
+                    <div className="flex items-center justify-end gap-1">
+                      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleTest(h.id)} disabled={testingId === h.id} title="Test connection">
+                        {testingId === h.id ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RefreshCw className="h-3.5 w-3.5" />}
+                      </Button>
+                      <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => handleDelete(h.id, h.name)} title="Remove host">
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </Button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
     </div>
   );
 }
