@@ -25,22 +25,45 @@ export function useAddDockerHost() {
   const { user } = useAuth();
 
   return useMutation({
-    mutationFn: async ({ orgId, name, hostUrl }: {
+    mutationFn: async ({ orgId, name, hostUrl, tlsCerts }: {
       orgId: string; name: string; hostUrl: string;
+      tlsCerts?: { caCert: string; clientCert: string; clientKey: string; serverName?: string };
     }) => {
+      const tlsEnabled = hostUrl.startsWith('https');
+
+      // 1. Insert host record
       const { data, error } = await (supabase as any)
         .from('docker_hosts')
         .insert({
           organization_id: orgId,
           name,
           host_url: hostUrl,
-          tls_enabled: hostUrl.startsWith('https'),
+          tls_enabled: tlsEnabled,
           created_by: user!.id,
           status: 'unknown',
         })
         .select()
         .single();
       if (error) throw error;
+
+      // 2. If TLS certs provided, store them in the separate secure table
+      if (tlsCerts) {
+        const { error: tlsError } = await (supabase as any)
+          .from('docker_host_tls')
+          .insert({
+            host_id: data.id,
+            ca_cert: tlsCerts.caCert,
+            client_cert: tlsCerts.clientCert,
+            client_key: tlsCerts.clientKey,
+            server_name: tlsCerts.serverName || null,
+          });
+        if (tlsError) {
+          // Clean up the host if cert storage failed
+          await (supabase as any).from('docker_hosts').delete().eq('id', data.id);
+          throw new Error(`Failed to store TLS certificates: ${tlsError.message}`);
+        }
+      }
+
       return data as DockerHost;
     },
     onSuccess: () => {
@@ -53,6 +76,7 @@ export function useDeleteDockerHost() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (hostId: string) => {
+      // TLS certs cascade-delete via FK
       const { error } = await (supabase as any)
         .from('docker_hosts')
         .delete()

@@ -5,6 +5,28 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version',
 }
 
+/** Build a Deno HTTP client with optional mTLS certs */
+function buildHttpClient(tls?: { ca_cert?: string; client_cert?: string; client_key?: string }) {
+  const opts: Record<string, unknown> = {}
+  if (tls?.ca_cert) opts.caCerts = [tls.ca_cert]
+  if (tls?.client_cert && tls?.client_key) {
+    opts.certChain = tls.client_cert
+    opts.privateKey = tls.client_key
+  }
+  // Deno.createHttpClient supports mTLS natively
+  return Deno.createHttpClient(opts)
+}
+
+/** Fetch with optional TLS client, auto-cleanup */
+async function dockerFetch(url: string, method: string, tls?: any, timeoutMs = 30000) {
+  const client = buildHttpClient(tls)
+  try {
+    return await fetch(url, { method, signal: AbortSignal.timeout(timeoutMs), client } as any)
+  } finally {
+    client.close()
+  }
+}
+
 Deno.serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders })
@@ -32,17 +54,32 @@ Deno.serve(async (req) => {
 
   const userId = claimsData.claims.sub as string
 
+  // Service client for reading TLS secrets (bypasses RLS)
+  const serviceClient = createClient(
+    Deno.env.get('SUPABASE_URL')!,
+    Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
+  )
+
+  /** Load TLS certs for a host (only via service role) */
+  async function loadTls(hostId: string) {
+    const { data } = await serviceClient
+      .from('docker_host_tls')
+      .select('ca_cert, client_cert, client_key, server_name')
+      .eq('host_id', hostId)
+      .maybeSingle()
+    return data || undefined
+  }
+
   try {
     const body = await req.json()
     const { action, hostId, orgId, containerId, params } = body
 
-    // Org-wide action: fetch containers from all connected hosts
+    // ── Org-wide: fetch containers from all hosts ──
     if (action === 'all-containers') {
       if (!orgId) {
         return new Response(JSON.stringify({ error: 'orgId required' }), { status: 400, headers: jsonHeaders })
       }
 
-      // Verify membership via RLS (user's token scopes the query)
       const { data: membership } = await supabase
         .from('organization_members')
         .select('id')
@@ -54,33 +91,26 @@ Deno.serve(async (req) => {
         return new Response(JSON.stringify({ error: 'Access denied' }), { status: 403, headers: jsonHeaders })
       }
 
-      const serviceClient = createClient(
-        Deno.env.get('SUPABASE_URL')!,
-        Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
-      )
-
       const { data: hosts } = await serviceClient
         .from('docker_hosts')
         .select('*')
         .eq('organization_id', orgId)
 
-      const allContainers: any[] = []
+      const allContainers: unknown[] = []
       for (const host of (hosts || [])) {
         try {
-          const resp = await fetch(`${host.host_url.replace(/\/$/, '')}/containers/json?all=true`, {
-            signal: AbortSignal.timeout(10000),
-          })
+          const tls = host.tls_enabled ? await loadTls(host.id) : undefined
+          const resp = await dockerFetch(
+            `${host.host_url.replace(/\/$/, '')}/containers/json?all=true`,
+            'GET', tls, 10000
+          )
           if (resp.ok) {
             const containers = await resp.json()
             allContainers.push(...containers.map((c: any) => ({
-              ...c,
-              _hostId: host.id,
-              _hostName: host.name,
+              ...c, _hostId: host.id, _hostName: host.name,
             })))
-            // Update host status
             await serviceClient.from('docker_hosts').update({
-              status: 'connected',
-              last_seen_at: new Date().toISOString(),
+              status: 'connected', last_seen_at: new Date().toISOString(),
             }).eq('id', host.id)
           } else {
             await resp.text()
@@ -94,12 +124,12 @@ Deno.serve(async (req) => {
       return new Response(JSON.stringify(allContainers), { headers: jsonHeaders })
     }
 
-    // Host-specific actions require hostId
+    // ── Host-specific actions ──
     if (!hostId) {
       return new Response(JSON.stringify({ error: 'hostId required' }), { status: 400, headers: jsonHeaders })
     }
 
-    // Fetch host (RLS ensures user has access via org membership)
+    // Fetch host (RLS ensures user has org access)
     const { data: host, error: hostError } = await supabase
       .from('docker_hosts')
       .select('*')
@@ -109,6 +139,9 @@ Deno.serve(async (req) => {
     if (hostError || !host) {
       return new Response(JSON.stringify({ error: 'Host not found or access denied' }), { status: 404, headers: jsonHeaders })
     }
+
+    // Load TLS certs via service role
+    const tls = (host as any).tls_enabled ? await loadTls(hostId) : undefined
 
     const baseUrl = (host as any).host_url.replace(/\/$/, '')
     let dockerUrl: string
@@ -159,33 +192,22 @@ Deno.serve(async (req) => {
         return new Response(JSON.stringify({ error: `Unknown action: ${action}` }), { status: 400, headers: jsonHeaders })
     }
 
-    const dockerResponse = await fetch(dockerUrl, {
-      method,
-      signal: AbortSignal.timeout(30000),
-    })
+    const dockerResponse = await dockerFetch(dockerUrl, method, tls)
 
-    const serviceClient = createClient(
-      Deno.env.get('SUPABASE_URL')!,
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
-    )
-
-    // Handle ping
+    // ── Handle ping ──
     if (action === 'ping') {
       const text = await dockerResponse.text()
       const ok = dockerResponse.ok
 
-      // Try to get version info too
       let dockerVersion = null
       let osInfo = null
       try {
-        const vResp = await fetch(`${baseUrl}/version`, { signal: AbortSignal.timeout(5000) })
+        const vResp = await dockerFetch(`${baseUrl}/version`, 'GET', tls, 5000)
         if (vResp.ok) {
           const vData = await vResp.json()
           dockerVersion = vData.Version || null
           osInfo = vData.Os ? `${vData.Os}/${vData.Arch}` : null
-        } else {
-          await vResp.text()
-        }
+        } else { await vResp.text() }
       } catch (_) { /* ignore */ }
 
       await serviceClient.from('docker_hosts').update({
@@ -195,25 +217,28 @@ Deno.serve(async (req) => {
         ...(osInfo && { os_info: osInfo }),
       }).eq('id', hostId)
 
-      return new Response(JSON.stringify({ ok, status: text, docker_version: dockerVersion, os_info: osInfo }), { headers: jsonHeaders })
+      return new Response(JSON.stringify({
+        ok,
+        status: text,
+        docker_version: dockerVersion,
+        os_info: osInfo,
+        tls_verified: !!(tls?.ca_cert),
+      }), { headers: jsonHeaders })
     }
 
-    // Handle logs (raw text)
+    // ── Handle logs ──
     if (action === 'container-logs') {
       const rawBytes = new Uint8Array(await dockerResponse.arrayBuffer())
-      // Docker multiplexed stream: strip 8-byte header frames
       const lines: string[] = []
       let offset = 0
       while (offset + 8 <= rawBytes.length) {
         const size = (rawBytes[offset + 4] << 24) | (rawBytes[offset + 5] << 16) | (rawBytes[offset + 6] << 8) | rawBytes[offset + 7]
         offset += 8
         if (offset + size <= rawBytes.length) {
-          const line = new TextDecoder().decode(rawBytes.slice(offset, offset + size))
-          lines.push(line.trimEnd())
+          lines.push(new TextDecoder().decode(rawBytes.slice(offset, offset + size)).trimEnd())
         }
         offset += size
       }
-      // Fallback: if parsing produced nothing, treat as plain text
       if (lines.length === 0) {
         const text = new TextDecoder().decode(rawBytes)
         lines.push(...text.split('\n').filter(Boolean))
@@ -221,14 +246,14 @@ Deno.serve(async (req) => {
       return new Response(JSON.stringify({ logs: lines }), { headers: jsonHeaders })
     }
 
-    // Handle start/stop/restart (204 or 304 = success)
+    // ── Handle start/stop/restart ──
     if (['container-start', 'container-stop', 'container-restart'].includes(action)) {
       const text = await dockerResponse.text()
       const ok = dockerResponse.status === 204 || dockerResponse.status === 304 || dockerResponse.ok
       return new Response(JSON.stringify({ ok, status: dockerResponse.status, message: text }), { headers: jsonHeaders })
     }
 
-    // All other JSON responses
+    // ── All other JSON responses ──
     if (!dockerResponse.ok) {
       const errText = await dockerResponse.text()
       return new Response(JSON.stringify({ error: `Docker API error: ${dockerResponse.status}`, details: errText }), {
@@ -240,9 +265,12 @@ Deno.serve(async (req) => {
     return new Response(JSON.stringify(data), { headers: jsonHeaders })
 
   } catch (error: any) {
+    // Distinguish TLS errors
+    const msg = error.message || ''
+    const isTlsError = msg.includes('tls') || msg.includes('certificate') || msg.includes('SSL') || msg.includes('handshake')
     return new Response(JSON.stringify({
-      error: 'Docker connection failed',
-      details: error.message,
+      error: isTlsError ? 'TLS connection failed' : 'Docker connection failed',
+      details: msg,
     }), { status: 502, headers: jsonHeaders })
   }
 })
