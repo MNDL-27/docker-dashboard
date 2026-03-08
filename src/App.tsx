@@ -14,6 +14,8 @@ import DocsPage from "./pages/DocsPage";
 import ContactPage from "./pages/ContactPage";
 import LoginPage from "./pages/LoginPage";
 import SignupPage from "./pages/SignupPage";
+import ForgotPasswordPage from "./pages/ForgotPasswordPage";
+import ResetPasswordPage from "./pages/ResetPasswordPage";
 import OnboardingPage from "./pages/OnboardingPage";
 import DashboardPage from "./pages/app/DashboardPage";
 import HostsPage from "./pages/app/HostsPage";
@@ -64,6 +66,8 @@ const App = () => (
               {/* Auth */}
               <Route path="/login" element={<LoginPage />} />
               <Route path="/signup" element={<SignupPage />} />
+              <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+              <Route path="/reset-password" element={<ResetPasswordPage />} />
               <Route path="/onboarding" element={<OnboardingPage />} />
               {/* App Shell - Protected */}
               <Route path="/app" element={<ProtectedRoute><AppShell /></ProtectedRoute>}>
