@@ -175,9 +175,9 @@ export function AddHostDialog({ orgId, trigger }: AddHostDialogProps) {
             </div>
           )}
           {testStatus === 'success' && (
-            <div className="flex items-center gap-2 p-3 rounded-md bg-emerald-500/10 border border-emerald-500/20">
-              <CheckCircle2 className="h-4 w-4 text-emerald-500" />
-              <p className="text-xs text-emerald-500">Connection successful!</p>
+            <div className="flex items-center gap-2 p-3 rounded-md bg-primary/10 border border-primary/20">
+              <CheckCircle2 className="h-4 w-4 text-primary" />
+              <p className="text-xs text-primary">Connection successful!</p>
             </div>
           )}
 
