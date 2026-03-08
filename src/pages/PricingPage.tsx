@@ -1,7 +1,13 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Box, Check } from "lucide-react";
-import { plans } from "@/lib/mock-data";
+
+const plans = [
+  { id: "free", name: "Free", price: 0, features: ["2 hosts", "1 user", "24h data retention", "Basic alerts", "Community support"] },
+  { id: "pro", name: "Pro", price: 29, features: ["10 hosts", "5 users", "7-day retention", "Advanced alerts", "Email support", "API access"] },
+  { id: "team", name: "Team", price: 79, features: ["50 hosts", "25 users", "30-day retention", "Custom dashboards", "Priority support", "SSO", "Audit logs"] },
+  { id: "enterprise", name: "Enterprise", price: -1, features: ["Unlimited hosts", "Unlimited users", "Custom retention", "Dedicated support", "SLA", "On-premise option", "Custom integrations"] },
+];
 
 export default function PricingPage() {
   return (

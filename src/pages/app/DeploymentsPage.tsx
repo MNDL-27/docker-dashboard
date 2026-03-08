@@ -1,6 +1,5 @@
 import { PageHeader } from "@/components/shared/PageHeader";
-import { StatusBadge } from "@/components/shared/StatusBadge";
-import { deployments } from "@/lib/mock-data";
+import { Construction } from "lucide-react";
 
 export default function DeploymentsPage() {
   return (
@@ -10,31 +9,12 @@ export default function DeploymentsPage() {
         description="Deployment history and release tracking"
         breadcrumbs={[{ label: "Operations" }, { label: "Deployments" }]}
       />
-      <div className="glass-card overflow-hidden">
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="border-b border-border bg-muted/30">
-              <th className="text-left p-3 font-medium text-muted-foreground text-xs">Image</th>
-              <th className="text-left p-3 font-medium text-muted-foreground text-xs">Host</th>
-              <th className="text-left p-3 font-medium text-muted-foreground text-xs">Status</th>
-              <th className="text-left p-3 font-medium text-muted-foreground text-xs hidden md:table-cell">Deployed By</th>
-              <th className="text-left p-3 font-medium text-muted-foreground text-xs hidden md:table-cell">Duration</th>
-              <th className="text-left p-3 font-medium text-muted-foreground text-xs">When</th>
-            </tr>
-          </thead>
-          <tbody>
-            {deployments.map(d => (
-              <tr key={d.id} className="border-b border-border last:border-0 hover:bg-accent/30 transition-colors">
-                <td className="p-3 font-mono text-xs">{d.image}</td>
-                <td className="p-3 text-muted-foreground">{d.host}</td>
-                <td className="p-3"><StatusBadge status={d.status} /></td>
-                <td className="p-3 text-muted-foreground hidden md:table-cell">{d.deployedBy}</td>
-                <td className="p-3 text-muted-foreground hidden md:table-cell">{d.duration}</td>
-                <td className="p-3 text-muted-foreground">{d.deployedAt}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+      <div className="glass-card p-12 text-center">
+        <Construction className="h-10 w-10 text-muted-foreground mx-auto mb-3" />
+        <h3 className="font-medium mb-1">Coming Soon</h3>
+        <p className="text-sm text-muted-foreground max-w-md mx-auto">
+          Deployment history and release tracking for your Docker containers is under development.
+        </p>
       </div>
     </div>
   );
