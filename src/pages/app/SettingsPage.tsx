@@ -5,11 +5,12 @@ import { Label } from "@/components/ui/label";
 import { apiKeys, auditLogs } from "@/lib/mock-data";
 import { Plus, Key, Copy, Trash2, Clock, AlertTriangle } from "lucide-react";
 import { useState } from "react";
+import { ProfileSettings } from "@/components/settings/ProfileSettings";
 
-const tabs = ["General", "API Keys", "Webhooks", "Notifications", "Audit Logs", "Danger Zone"];
+const tabs = ["Profile", "General", "API Keys", "Webhooks", "Notifications", "Audit Logs", "Danger Zone"];
 
 export default function SettingsPage() {
-  const [tab, setTab] = useState("General");
+  const [tab, setTab] = useState("Profile");
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -24,6 +25,8 @@ export default function SettingsPage() {
           <button key={t} onClick={() => setTab(t)} className={`px-3 py-1.5 text-xs rounded-md whitespace-nowrap transition-colors ${tab === t ? "bg-card text-foreground shadow-sm" : "text-muted-foreground"}`}>{t}</button>
         ))}
       </div>
+
+      {tab === "Profile" && <ProfileSettings />}
 
       {tab === "General" && (
         <div className="space-y-6 max-w-lg">
