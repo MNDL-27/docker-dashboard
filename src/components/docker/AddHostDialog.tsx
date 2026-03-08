@@ -4,10 +4,11 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogDescription } from "@/components/ui/dialog";
-import { Plus, Loader2, CheckCircle2, XCircle, ShieldCheck, AlertTriangle } from "lucide-react";
+import { Plus, Loader2, CheckCircle2, XCircle, ShieldCheck, CloudCog, Terminal } from "lucide-react";
 import { useAddDockerHost } from "@/hooks/useDocker";
 import { dockerApi } from "@/services/docker-api";
 import { useToast } from "@/hooks/use-toast";
+import type { ConnectionMode } from "@/types/database";
 
 interface AddHostDialogProps {
   orgId: string;
@@ -17,55 +18,50 @@ interface AddHostDialogProps {
 export function AddHostDialog({ orgId, trigger }: AddHostDialogProps) {
   const [open, setOpen] = useState(false);
   const [name, setName] = useState("");
+  const [mode, setMode] = useState<ConnectionMode>("agent");
   const [hostUrl, setHostUrl] = useState("");
-  const [caCert, setCaCert] = useState("");
-  const [clientCert, setClientCert] = useState("");
-  const [clientKey, setClientKey] = useState("");
-  const [serverName, setServerName] = useState("");
+  const [socketPath, setSocketPath] = useState("/var/run/docker.sock");
+  // Agent mode
+  const [agentApiKey, setAgentApiKey] = useState("");
+  // Cloudflare Tunnel mode
+  const [cfServiceTokenId, setCfServiceTokenId] = useState("");
+  const [cfServiceTokenSecret, setCfServiceTokenSecret] = useState("");
+
   const [testStatus, setTestStatus] = useState<'idle' | 'testing' | 'success' | 'error'>('idle');
   const [testError, setTestError] = useState("");
   const addHost = useAddDockerHost();
   const { toast } = useToast();
 
-  const isInsecure = (() => {
-    try {
-      const u = new URL(hostUrl);
-      return u.protocol === 'http:' || u.port === '2375';
-    } catch { return false; }
-  })();
-
-  const hasTlsCerts = !!(caCert.trim() && clientCert.trim() && clientKey.trim());
-
   const resetForm = () => {
-    setName(""); setHostUrl(""); setCaCert(""); setClientCert("");
-    setClientKey(""); setServerName(""); setTestStatus('idle'); setTestError("");
+    setName(""); setHostUrl(""); setMode("agent"); setSocketPath("/var/run/docker.sock");
+    setAgentApiKey(""); setCfServiceTokenId(""); setCfServiceTokenSecret("");
+    setTestStatus('idle'); setTestError("");
   };
 
   const handleSave = async () => {
     try { new URL(hostUrl); } catch {
-      toast({ title: "Invalid URL", description: "Enter a valid Docker API URL (e.g. https://docker.example.com:2376)", variant: "destructive" });
+      toast({ title: "Invalid URL", description: "Enter a valid agent or tunnel URL (e.g. https://agent.example.com:9876)", variant: "destructive" });
       return;
     }
 
-    if (isInsecure && !window.confirm(
-      "WARNING: You are connecting over plain HTTP without TLS. " +
-      "This is insecure and should only be used for local development. Continue?"
-    )) return;
+    if (mode === 'agent' && !agentApiKey.trim()) {
+      toast({ title: "API Key required", description: "Enter the agent API key for authentication.", variant: "destructive" });
+      return;
+    }
 
-    if (!isInsecure && !hasTlsCerts) {
-      toast({ title: "TLS certificates required", description: "HTTPS hosts require CA cert, client cert, and client key for mutual TLS.", variant: "destructive" });
+    if (mode === 'cloudflare_tunnel' && (!cfServiceTokenId.trim() || !cfServiceTokenSecret.trim())) {
+      toast({ title: "CF Access tokens required", description: "Enter both Cloudflare Access Service Token ID and Secret.", variant: "destructive" });
       return;
     }
 
     try {
       const host = await addHost.mutateAsync({
         orgId, name, hostUrl,
-        tlsCerts: hasTlsCerts ? {
-          caCert: caCert.trim(),
-          clientCert: clientCert.trim(),
-          clientKey: clientKey.trim(),
-          serverName: serverName.trim() || undefined,
-        } : undefined,
+        connectionMode: mode,
+        dockerSocketPath: socketPath,
+        secrets: mode === 'agent'
+          ? { agentApiKey: agentApiKey.trim() }
+          : { cfServiceTokenId: cfServiceTokenId.trim(), cfServiceTokenSecret: cfServiceTokenSecret.trim() },
       });
 
       setTestStatus('testing');
@@ -77,7 +73,7 @@ export function AddHostDialog({ orgId, trigger }: AddHostDialogProps) {
         } else {
           setTestStatus('error');
           setTestError('Docker API did not respond with OK');
-          toast({ title: "Host saved but unreachable", description: "Check URL and TLS configuration.", variant: "destructive" });
+          toast({ title: "Host saved but unreachable", description: "Check URL and credentials.", variant: "destructive" });
         }
       } catch (e: any) {
         setTestStatus('error');
@@ -91,6 +87,11 @@ export function AddHostDialog({ orgId, trigger }: AddHostDialogProps) {
     }
   };
 
+  const modes: { value: ConnectionMode; label: string; icon: typeof Terminal; desc: string }[] = [
+    { value: 'agent', label: 'Watchtower Agent', icon: Terminal, desc: 'Install a lightweight agent on the host. No open Docker ports needed.' },
+    { value: 'cloudflare_tunnel', label: 'Cloudflare Tunnel', icon: CloudCog, desc: 'Use Cloudflare Tunnel to expose Docker socket securely. Zero open ports.' },
+  ];
+
   return (
     <Dialog open={open} onOpenChange={(v) => { setOpen(v); if (!v) resetForm(); }}>
       <DialogTrigger asChild>
@@ -100,70 +101,98 @@ export function AddHostDialog({ orgId, trigger }: AddHostDialogProps) {
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <ShieldCheck className="h-5 w-5 text-primary" />
-            Connect Docker Host (TLS)
+            Connect Docker Host
           </DialogTitle>
           <DialogDescription>
-            Connect to a Docker daemon over its remote TLS API (port 2376). Mutual TLS certificates are required for secure connections.
+            Connect securely via a lightweight agent or Cloudflare Tunnel. No open Docker ports required.
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-4 mt-2">
+          {/* Connection Mode Selector */}
+          <div className="space-y-2">
+            <Label>Connection Method</Label>
+            <div className="grid grid-cols-2 gap-2">
+              {modes.map(m => (
+                <button
+                  key={m.value}
+                  type="button"
+                  onClick={() => setMode(m.value)}
+                  className={`p-3 rounded-lg border text-left transition-all ${
+                    mode === m.value
+                      ? 'border-primary bg-primary/5 ring-1 ring-primary/20'
+                      : 'border-border hover:border-primary/40'
+                  }`}
+                >
+                  <m.icon className={`h-4 w-4 mb-1 ${mode === m.value ? 'text-primary' : 'text-muted-foreground'}`} />
+                  <div className="text-xs font-medium">{m.label}</div>
+                  <div className="text-[10px] text-muted-foreground mt-0.5">{m.desc}</div>
+                </button>
+              ))}
+            </div>
+          </div>
+
           <div className="space-y-2">
             <Label>Host Name</Label>
             <Input placeholder="e.g. prod-server-01" value={name} onChange={e => setName(e.target.value)} />
           </div>
 
           <div className="space-y-2">
-            <Label>Docker API URL</Label>
-            <Input placeholder="https://docker.example.com:2376" value={hostUrl} onChange={e => setHostUrl(e.target.value)} />
-            {isInsecure && (
-              <div className="flex items-start gap-2 p-2 rounded-md bg-warning/10 border border-warning/30">
-                <AlertTriangle className="h-4 w-4 text-warning shrink-0 mt-0.5" />
-                <p className="text-xs text-warning">Insecure connection (plain HTTP or port 2375). Use only for local development.</p>
-              </div>
-            )}
+            <Label>{mode === 'agent' ? 'Agent URL' : 'Tunnel URL'}</Label>
+            <Input
+              placeholder={mode === 'agent' ? 'https://your-host:9876' : 'https://docker.your-team.cloudflareaccess.com'}
+              value={hostUrl}
+              onChange={e => setHostUrl(e.target.value)}
+            />
             <p className="text-xs text-muted-foreground">
-              Docker daemon must be configured with <code className="bg-muted px-1 py-0.5 rounded">--tlsverify</code> and listening on TCP port 2376.
+              {mode === 'agent'
+                ? 'The HTTPS URL where the Watchtower Agent is running.'
+                : 'The Cloudflare Tunnel public hostname that proxies the Docker socket.'}
             </p>
           </div>
 
-          {!isInsecure && (
+          <div className="space-y-2">
+            <Label>Docker Socket Path <span className="text-muted-foreground">(optional)</span></Label>
+            <Input placeholder="/var/run/docker.sock" value={socketPath} onChange={e => setSocketPath(e.target.value)} />
+          </div>
+
+          {/* Agent-specific fields */}
+          {mode === 'agent' && (
+            <div className="space-y-2">
+              <Label>Agent API Key</Label>
+              <Input
+                type="password"
+                placeholder="Shared secret for authenticating with the agent"
+                value={agentApiKey}
+                onChange={e => setAgentApiKey(e.target.value)}
+              />
+              <p className="text-xs text-muted-foreground">
+                This key is stored securely and <strong>never returned to the browser</strong> after saving.
+              </p>
+            </div>
+          )}
+
+          {/* Cloudflare Tunnel fields */}
+          {mode === 'cloudflare_tunnel' && (
             <>
               <div className="space-y-2">
-                <Label>CA Certificate (ca.pem)</Label>
-                <Textarea
-                  placeholder="-----BEGIN CERTIFICATE-----&#10;...&#10;-----END CERTIFICATE-----"
-                  value={caCert}
-                  onChange={e => setCaCert(e.target.value)}
-                  className="font-mono text-xs h-24"
+                <Label>CF Access Service Token ID</Label>
+                <Input
+                  placeholder="e.g. abc123..."
+                  value={cfServiceTokenId}
+                  onChange={e => setCfServiceTokenId(e.target.value)}
                 />
               </div>
-
               <div className="space-y-2">
-                <Label>Client Certificate (cert.pem)</Label>
-                <Textarea
-                  placeholder="-----BEGIN CERTIFICATE-----&#10;...&#10;-----END CERTIFICATE-----"
-                  value={clientCert}
-                  onChange={e => setClientCert(e.target.value)}
-                  className="font-mono text-xs h-24"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label>Client Key (key.pem)</Label>
-                <Textarea
-                  placeholder="-----BEGIN RSA PRIVATE KEY-----&#10;...&#10;-----END RSA PRIVATE KEY-----"
-                  value={clientKey}
-                  onChange={e => setClientKey(e.target.value)}
-                  className="font-mono text-xs h-24"
+                <Label>CF Access Service Token Secret</Label>
+                <Input
+                  type="password"
+                  placeholder="e.g. xyz789..."
+                  value={cfServiceTokenSecret}
+                  onChange={e => setCfServiceTokenSecret(e.target.value)}
                 />
                 <p className="text-xs text-muted-foreground">
-                  Private key is stored securely and <strong>never returned to the browser</strong> after saving.
+                  Tokens are stored securely and <strong>never returned to the browser</strong> after saving.
                 </p>
-              </div>
-
-              <div className="space-y-2">
-                <Label>TLS Server Name <span className="text-muted-foreground">(optional)</span></Label>
-                <Input placeholder="docker.example.com" value={serverName} onChange={e => setServerName(e.target.value)} />
               </div>
             </>
           )}
