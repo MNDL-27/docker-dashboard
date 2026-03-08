@@ -1,117 +1,155 @@
 import { PageHeader } from "@/components/shared/PageHeader";
 import { MetricCard } from "@/components/shared/MetricCard";
-import { StatusBadge } from "@/components/shared/StatusBadge";
-import { hosts, containers, metricsTimeSeries } from "@/lib/mock-data";
+import { Button } from "@/components/ui/button";
 import { useParams, Link } from "react-router-dom";
-import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { useHostContainers } from "@/hooks/useDocker";
+import { dockerApi } from "@/services/docker-api";
+import type { DockerHost } from "@/types/database";
+import { Server, Box, Loader2, RefreshCw, Wifi, WifiOff } from "lucide-react";
 import { useState } from "react";
-import { Server, Cpu, HardDrive, Box } from "lucide-react";
-
-const detailTabs = ["Overview", "Containers", "Metrics", "Events", "Logs", "Agent"];
+import { useToast } from "@/hooks/use-toast";
 
 export default function HostDetailPage() {
   const { id } = useParams();
-  const host = hosts.find(h => h.id === id) || hosts[0];
-  const hostContainers = containers.filter(c => c.hostId === host.id);
-  const [tab, setTab] = useState("Overview");
+  const { toast } = useToast();
+  const [testing, setTesting] = useState(false);
+
+  const { data: host, isLoading: hostLoading, refetch: refetchHost } = useQuery({
+    queryKey: ['docker-host', id],
+    queryFn: async () => {
+      const { data, error } = await (supabase as any).from('docker_hosts').select('*').eq('id', id).single();
+      if (error) throw error;
+      return data as DockerHost;
+    },
+    enabled: !!id,
+  });
+
+  const { data: containers = [], isLoading: containersLoading } = useHostContainers(host?.status === 'connected' ? id : null);
+
+  const handleTest = async () => {
+    if (!id) return;
+    setTesting(true);
+    try {
+      const result = await dockerApi.ping(id);
+      toast({ title: result.ok ? "✓ Connected" : "Connection failed" });
+      refetchHost();
+    } catch (e: any) {
+      toast({ title: "Connection failed", description: e.message, variant: "destructive" });
+      refetchHost();
+    }
+    setTesting(false);
+  };
+
+  if (hostLoading) {
+    return <div className="flex items-center justify-center h-64"><Loader2 className="h-8 w-8 animate-spin text-muted-foreground" /></div>;
+  }
+
+  if (!host) {
+    return <div className="glass-card p-8 text-center text-muted-foreground">Host not found</div>;
+  }
+
+  const realContainers = Array.isArray(containers) ? containers : [];
+  const runningCount = realContainers.filter((c: any) => c.State === 'running').length;
 
   return (
     <div className="space-y-6 animate-fade-in">
       <PageHeader
         title={host.name}
-        description={`${host.ip} • ${host.region} • ${host.os}`}
+        description={host.host_url}
         breadcrumbs={[{ label: "Hosts", href: "/app/hosts" }, { label: host.name }]}
-        actions={<StatusBadge status={host.status} />}
+        actions={
+          <div className="flex items-center gap-2">
+            <span className={`text-xs font-medium px-2 py-0.5 rounded-full inline-flex items-center gap-1 ${
+              host.status === 'connected' ? 'bg-success/15 text-success' :
+              host.status === 'error' ? 'bg-destructive/15 text-destructive' :
+              'bg-muted text-muted-foreground'
+            }`}>
+              {host.status === 'connected' ? <Wifi className="h-3 w-3" /> : <WifiOff className="h-3 w-3" />}
+              {host.status}
+            </span>
+            <Button size="sm" variant="outline" onClick={handleTest} disabled={testing} className="gap-1.5">
+              {testing ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RefreshCw className="h-3.5 w-3.5" />}
+              Test Connection
+            </Button>
+          </div>
+        }
       />
 
-      <div className="flex gap-1 overflow-x-auto bg-secondary rounded-md p-0.5 w-fit">
-        {detailTabs.map(t => (
-          <button key={t} onClick={() => setTab(t)} className={`px-3 py-1.5 text-xs rounded-md whitespace-nowrap transition-colors ${tab === t ? "bg-card text-foreground shadow-sm" : "text-muted-foreground"}`}>{t}</button>
-        ))}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <MetricCard label="Status" value={host.status} icon={Server} />
+        <MetricCard label="Containers" value={realContainers.length} icon={Box} />
+        <MetricCard label="Running" value={runningCount} icon={Box} />
+        <MetricCard label="Docker" value={host.docker_version || 'Unknown'} icon={Server} />
       </div>
 
-      {tab === "Overview" && (
-        <>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-            <MetricCard label="CPU Usage" value={`${host.cpu}%`} icon={Cpu} changeType={host.cpu > 70 ? "negative" : "neutral"} />
-            <MetricCard label="Memory" value={`${host.memory}%`} icon={HardDrive} />
-            <MetricCard label="Containers" value={host.containers} icon={Box} />
-            <MetricCard label="Agent Version" value={host.agentVersion} icon={Server} />
-          </div>
-          <div className="glass-card p-4">
-            <h3 className="text-sm font-medium mb-4">CPU & Memory (24h)</h3>
-            <ResponsiveContainer width="100%" height={220}>
-              <AreaChart data={metricsTimeSeries}>
-                <defs>
-                  <linearGradient id="hostCpu" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="hsl(190, 80%, 50%)" stopOpacity={0.3} />
-                    <stop offset="100%" stopColor="hsl(190, 80%, 50%)" stopOpacity={0} />
-                  </linearGradient>
-                </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="hsl(220, 16%, 16%)" />
-                <XAxis dataKey="time" tick={{ fontSize: 10 }} stroke="hsl(220, 12%, 30%)" />
-                <YAxis tick={{ fontSize: 10 }} stroke="hsl(220, 12%, 30%)" domain={[0, 100]} />
-                <Tooltip contentStyle={{ backgroundColor: "hsl(220, 20%, 10%)", border: "1px solid hsl(220, 16%, 16%)", borderRadius: "8px", fontSize: 12 }} />
-                <Area type="monotone" dataKey="cpu" stroke="hsl(190, 80%, 50%)" fill="url(#hostCpu)" strokeWidth={2} />
-                <Area type="monotone" dataKey="memory" stroke="hsl(38, 92%, 50%)" fill="none" strokeWidth={2} strokeDasharray="4 2" />
-              </AreaChart>
-            </ResponsiveContainer>
-          </div>
-          <div>
-            <h3 className="text-sm font-medium mb-3">Host Details</h3>
-            <div className="glass-card p-4">
-              <dl className="grid grid-cols-2 md:grid-cols-3 gap-4 text-sm">
-                {[
-                  ["Hostname", host.name], ["IP Address", host.ip], ["Region", host.region],
-                  ["OS", host.os], ["Docker Version", host.dockerVersion], ["Agent Version", host.agentVersion],
-                  ["Last Seen", host.lastSeen], ["Containers", String(host.containers)], ["Status", host.status],
-                ].map(([k, v]) => (
-                  <div key={k}>
-                    <dt className="text-muted-foreground text-xs">{k}</dt>
-                    <dd className="font-medium mt-0.5">{v}</dd>
-                  </div>
-                ))}
-              </dl>
+      {/* Host Details */}
+      <div className="glass-card p-4">
+        <h3 className="text-sm font-medium mb-3">Host Details</h3>
+        <dl className="grid grid-cols-2 md:grid-cols-3 gap-4 text-sm">
+          {[
+            ["Name", host.name],
+            ["URL", host.host_url],
+            ["Docker Version", host.docker_version || "—"],
+            ["OS", host.os_info || "—"],
+            ["TLS", host.tls_enabled ? "Enabled" : "Disabled"],
+            ["Last Seen", host.last_seen_at ? new Date(host.last_seen_at).toLocaleString() : "Never"],
+          ].map(([k, v]) => (
+            <div key={k}>
+              <dt className="text-muted-foreground text-xs">{k}</dt>
+              <dd className="font-medium mt-0.5 font-mono text-xs">{v}</dd>
             </div>
+          ))}
+        </dl>
+      </div>
+
+      {/* Containers */}
+      <div>
+        <h3 className="text-sm font-medium mb-3">Containers on this host</h3>
+        {host.status !== 'connected' ? (
+          <div className="glass-card p-8 text-center text-muted-foreground text-sm">
+            Host is not connected. Test the connection to fetch container data.
           </div>
-        </>
-      )}
-
-      {tab === "Containers" && (
-        <div className="glass-card overflow-hidden">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-border bg-muted/30">
-                <th className="text-left p-3 font-medium text-muted-foreground text-xs">Container</th>
-                <th className="text-left p-3 font-medium text-muted-foreground text-xs">Status</th>
-                <th className="text-right p-3 font-medium text-muted-foreground text-xs">CPU</th>
-                <th className="text-right p-3 font-medium text-muted-foreground text-xs">Memory</th>
-                <th className="text-left p-3 font-medium text-muted-foreground text-xs">Uptime</th>
-              </tr>
-            </thead>
-            <tbody>
-              {hostContainers.map(c => (
-                <tr key={c.id} className="border-b border-border last:border-0 hover:bg-accent/30">
-                  <td className="p-3">
-                    <Link to={`/app/containers/${c.id}`} className="font-medium text-primary hover:underline">{c.name}</Link>
-                    <div className="text-xs text-muted-foreground font-mono">{c.image}</div>
-                  </td>
-                  <td className="p-3"><StatusBadge status={c.status} /></td>
-                  <td className="p-3 text-right">{c.cpu}%</td>
-                  <td className="p-3 text-right">{c.memory} MB</td>
-                  <td className="p-3 text-muted-foreground">{c.uptime}</td>
+        ) : containersLoading ? (
+          <div className="flex items-center justify-center h-24"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>
+        ) : realContainers.length === 0 ? (
+          <div className="glass-card p-8 text-center text-muted-foreground text-sm">No containers found on this host.</div>
+        ) : (
+          <div className="glass-card overflow-hidden">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-border bg-muted/30">
+                  <th className="text-left p-3 font-medium text-muted-foreground text-xs">Container</th>
+                  <th className="text-left p-3 font-medium text-muted-foreground text-xs">State</th>
+                  <th className="text-left p-3 font-medium text-muted-foreground text-xs hidden md:table-cell">Image</th>
+                  <th className="text-left p-3 font-medium text-muted-foreground text-xs hidden md:table-cell">Status</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
-
-      {(tab === "Metrics" || tab === "Events" || tab === "Logs" || tab === "Agent") && (
-        <div className="glass-card p-8 text-center">
-          <p className="text-muted-foreground">Detailed {tab.toLowerCase()} view for {host.name}</p>
-        </div>
-      )}
+              </thead>
+              <tbody>
+                {realContainers.map((c: any) => (
+                  <tr key={c.Id} className="border-b border-border last:border-0 hover:bg-accent/30 transition-colors">
+                    <td className="p-3">
+                      <Link to={`/app/containers/${c.Id?.substring(0, 12)}?host=${id}`} className="font-medium text-primary hover:underline">
+                        {(c.Names?.[0] || c.Id?.substring(0, 12)).replace(/^\//, '')}
+                      </Link>
+                    </td>
+                    <td className="p-3">
+                      <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${
+                        c.State === 'running' ? 'bg-success/15 text-success' :
+                        c.State === 'exited' ? 'bg-muted text-muted-foreground' :
+                        'bg-warning/15 text-warning'
+                      }`}>{c.State}</span>
+                    </td>
+                    <td className="p-3 text-muted-foreground font-mono text-xs hidden md:table-cell truncate max-w-[200px]">{c.Image}</td>
+                    <td className="p-3 text-muted-foreground text-xs hidden md:table-cell">{c.Status}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
