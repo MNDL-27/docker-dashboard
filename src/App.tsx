@@ -34,6 +34,7 @@ import SettingsPage from "./pages/app/SettingsPage";
 import OrganizationsPage from "./pages/app/OrganizationsPage";
 import AdminPage from "./pages/app/AdminPage";
 import HelpPage from "./pages/app/HelpPage";
+import SetupGuidePage from "./pages/app/SetupGuidePage";
 import NotFound from "./pages/NotFound";
 import { useEffect } from "react";
 
