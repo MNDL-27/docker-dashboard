@@ -1,36 +1,36 @@
 #!/usr/bin/env bash
 # =============================================================================
-# Watchtower Docker Agent — Lightweight HTTP proxy for Docker socket
+# ⚠️  DEV-ONLY CONNECTOR — NOT FOR PRODUCTION USE
 # =============================================================================
 #
-# This script starts a tiny HTTP proxy that:
-#   1. Listens on a port (default 9876) over HTTPS (or HTTP for dev)
+# This is a lightweight socat-based shim for LOCAL DEVELOPMENT AND TESTING ONLY.
+# It mimics the Watchtower Agent HTTP interface so you can test the dashboard
+# against a local Docker socket without building/running the real agent.
+#
+# ┌─────────────────────────────────────────────────────────────────┐
+# │  DO NOT USE IN PRODUCTION.                                      │
+# │  This script has NO request sanitization, NO TLS, NO audit log. │
+# │  A hardened Go-based production agent is planned.               │
+# └─────────────────────────────────────────────────────────────────┘
+#
+# It:
+#   1. Listens on a port (default 9876) over plain HTTP
 #   2. Authenticates requests via X-Agent-Key header
 #   3. Proxies /docker/* requests to the local Docker Unix socket
 #
 # REQUIREMENTS:
 #   - socat (apt install socat / yum install socat)
-#   - curl (for testing)
+#   - curl
 #   - Docker installed and socket accessible
 #
 # USAGE:
-#   chmod +x watchtower-agent.sh
-#   AGENT_API_KEY="your-secret-key" ./watchtower-agent.sh
+#   chmod +x watchtower-dev-connector.sh
+#   AGENT_API_KEY="your-secret-key" ./watchtower-dev-connector.sh
 #
 # ENVIRONMENT VARIABLES:
 #   AGENT_API_KEY   (required) Shared secret for authentication
 #   AGENT_PORT      (optional) Port to listen on (default: 9876)
 #   DOCKER_SOCKET   (optional) Docker socket path (default: /var/run/docker.sock)
-#   TLS_CERT        (optional) Path to TLS cert for HTTPS
-#   TLS_KEY         (optional) Path to TLS key for HTTPS
-#
-# PRODUCTION RECOMMENDATION:
-#   Use a reverse proxy (nginx, caddy) for TLS termination instead of
-#   running this script directly with TLS. Example with Caddy:
-#
-#     docker.example.com {
-#       reverse_proxy localhost:9876
-#     }
 #
 # =============================================================================
 
