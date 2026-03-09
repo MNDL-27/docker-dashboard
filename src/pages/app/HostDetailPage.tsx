@@ -104,6 +104,8 @@ export default function HostDetailPage() {
             ["OS", host.os_info || "—"],
             ["Socket", host.docker_socket_path || "/var/run/docker.sock"],
             ["Last Seen", host.last_seen_at ? new Date(host.last_seen_at).toLocaleString() : "Never"],
+            ["Health Failures", String(host.consecutive_failures ?? 0)],
+            ...(host.last_error ? [["Last Error", host.last_error]] : []),
           ].map(([k, v]) => (
             <div key={k}>
               <dt className="text-muted-foreground text-xs">{k}</dt>
