@@ -24,6 +24,7 @@ export default function HostDetailPage() {
       return data as DockerHost;
     },
     enabled: !!id,
+    refetchInterval: 30000,
   });
 
   const { data: containers = [], isLoading: containersLoading } = useHostContainers(host?.status === 'connected' ? id : null);
