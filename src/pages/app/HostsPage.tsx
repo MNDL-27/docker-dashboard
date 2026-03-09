@@ -93,12 +93,18 @@ export default function HostsPage() {
                     <td className="p-3">
                       <span className={`text-xs font-medium px-2 py-0.5 rounded-full inline-flex items-center gap-1 ${
                         h.status === 'connected' ? 'bg-success/15 text-success' :
-                        h.status === 'error' ? 'bg-destructive/15 text-destructive' :
+                        h.status === 'unhealthy' ? 'bg-destructive/15 text-destructive' :
+                        h.status === 'error' ? 'bg-warning/15 text-warning' :
                         'bg-muted text-muted-foreground'
                       }`}>
                         {h.status === 'connected' ? <Wifi className="h-3 w-3" /> : <WifiOff className="h-3 w-3" />}
                         {h.status}
                       </span>
+                      {h.last_error && h.status !== 'connected' && (
+                        <span className="block text-[10px] text-destructive/70 mt-0.5 truncate max-w-[200px]" title={h.last_error}>
+                          {h.last_error}
+                        </span>
+                      )}
                     </td>
                     <td className="p-3 text-muted-foreground font-mono text-xs hidden md:table-cell">{h.host_url}</td>
                     <td className="p-3 text-muted-foreground hidden lg:table-cell">{h.docker_version || '—'}</td>

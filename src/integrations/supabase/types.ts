@@ -55,12 +55,14 @@ export type Database = {
       docker_hosts: {
         Row: {
           connection_mode: string
+          consecutive_failures: number
           created_at: string
           created_by: string
           docker_socket_path: string | null
           docker_version: string | null
           host_url: string
           id: string
+          last_error: string | null
           last_seen_at: string | null
           name: string
           organization_id: string
@@ -70,12 +72,14 @@ export type Database = {
         }
         Insert: {
           connection_mode?: string
+          consecutive_failures?: number
           created_at?: string
           created_by: string
           docker_socket_path?: string | null
           docker_version?: string | null
           host_url: string
           id?: string
+          last_error?: string | null
           last_seen_at?: string | null
           name: string
           organization_id: string
@@ -85,12 +89,14 @@ export type Database = {
         }
         Update: {
           connection_mode?: string
+          consecutive_failures?: number
           created_at?: string
           created_by?: string
           docker_socket_path?: string | null
           docker_version?: string | null
           host_url?: string
           id?: string
+          last_error?: string | null
           last_seen_at?: string | null
           name?: string
           organization_id?: string

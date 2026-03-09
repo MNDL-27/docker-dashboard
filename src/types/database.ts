@@ -30,6 +30,8 @@ export interface DockerHost {
   docker_version: string | null;
   os_info: string | null;
   last_seen_at: string | null;
+  consecutive_failures: number;
+  last_error: string | null;
   created_by: string;
   created_at: string;
   updated_at: string;

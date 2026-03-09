@@ -17,6 +17,7 @@ export function useDockerHosts(orgId?: string | null) {
       return data as DockerHost[];
     },
     enabled: !!orgId,
+    refetchInterval: 30000, // Read health from DB every 30s (server polls every 60s)
   });
 }
 

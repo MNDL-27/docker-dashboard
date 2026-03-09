@@ -24,6 +24,7 @@ export default function HostDetailPage() {
       return data as DockerHost;
     },
     enabled: !!id,
+    refetchInterval: 30000,
   });
 
   const { data: containers = [], isLoading: containersLoading } = useHostContainers(host?.status === 'connected' ? id : null);
@@ -69,7 +70,8 @@ export default function HostDetailPage() {
             </span>
             <span className={`text-xs font-medium px-2 py-0.5 rounded-full inline-flex items-center gap-1 ${
               host.status === 'connected' ? 'bg-success/15 text-success' :
-              host.status === 'error' ? 'bg-destructive/15 text-destructive' :
+              host.status === 'unhealthy' ? 'bg-destructive/15 text-destructive' :
+              host.status === 'error' ? 'bg-warning/15 text-warning' :
               'bg-muted text-muted-foreground'
             }`}>
               {host.status === 'connected' ? <Wifi className="h-3 w-3" /> : <WifiOff className="h-3 w-3" />}
@@ -102,6 +104,8 @@ export default function HostDetailPage() {
             ["OS", host.os_info || "—"],
             ["Socket", host.docker_socket_path || "/var/run/docker.sock"],
             ["Last Seen", host.last_seen_at ? new Date(host.last_seen_at).toLocaleString() : "Never"],
+            ["Health Failures", String(host.consecutive_failures ?? 0)],
+            ...(host.last_error ? [["Last Error", host.last_error]] : []),
           ].map(([k, v]) => (
             <div key={k}>
               <dt className="text-muted-foreground text-xs">{k}</dt>
