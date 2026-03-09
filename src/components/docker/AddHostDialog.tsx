@@ -54,9 +54,13 @@ export function AddHostDialog({ orgId, trigger }: AddHostDialogProps) {
         orgId, name, hostUrl,
         connectionMode: mode,
         dockerSocketPath: socketPath,
-        secrets: mode === 'agent'
-          ? { agentApiKey: agentApiKey.trim() }
-          : { cfServiceTokenId: cfServiceTokenId.trim(), cfServiceTokenSecret: cfServiceTokenSecret.trim() },
+        secrets: {
+          agentApiKey: agentApiKey.trim(),
+          ...(mode === 'cloudflare_tunnel' && {
+            cfServiceTokenId: cfServiceTokenId.trim() || undefined,
+            cfServiceTokenSecret: cfServiceTokenSecret.trim() || undefined,
+          }),
+        },
       });
 
       setTestStatus('testing');
