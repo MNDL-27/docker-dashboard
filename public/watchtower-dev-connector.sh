@@ -50,10 +50,12 @@ if ! command -v socat &>/dev/null; then
   exit 1
 fi
 
-echo "=== Watchtower Agent ==="
+echo "=== Watchtower Dev Connector (NOT FOR PRODUCTION) ==="
 echo "Port:    $AGENT_PORT"
 echo "Socket:  $DOCKER_SOCKET"
-echo "========================"
+echo "======================================================="
+echo ""
+echo "⚠️  This is a dev-only shim. Use the production agent for real deployments."
 echo ""
 echo "Listening on :$AGENT_PORT ..."
 echo "Test with: curl -H 'X-Agent-Key: <key>' http://localhost:$AGENT_PORT/docker/_ping"
