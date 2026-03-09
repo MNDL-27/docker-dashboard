@@ -6,10 +6,27 @@ const corsHeaders = {
 }
 
 /**
+ * Sanitize a Docker container ID to prevent path traversal.
+ * Valid Docker IDs are hex strings (short 12-char or full 64-char).
+ */
+function sanitizeContainerId(id: string): string {
+  if (!/^[a-zA-Z0-9][a-zA-Z0-9_.\-]{0,127}$/.test(id)) {
+    throw new Error('Invalid container ID format')
+  }
+  return id
+}
+
+/**
  * Build the correct fetch options for a Docker API call depending on connection mode.
  *
- * Agent mode:      GET/POST  https://agent-url/docker/<path>   with X-Agent-Key header
- * Cloudflare mode: GET/POST  https://tunnel-url/<path>         with CF-Access-Client-Id / Secret headers
+ * Both modes route through the Watchtower Agent over HTTPS.
+ * The agent authenticates via X-Agent-Key and proxies to the local Docker socket.
+ *
+ * Agent mode:            HTTPS directly to agent
+ * Cloudflare Tunnel:     HTTPS to agent via CF Tunnel (adds CF-Access headers for tunnel auth)
+ *
+ * In both cases the URL is:  https://<endpoint>/docker/<dockerPath>
+ * In both cases X-Agent-Key is sent for agent-level auth.
  */
 function buildRequest(
   host: { host_url: string; connection_mode: string; docker_socket_path: string },
@@ -20,21 +37,22 @@ function buildRequest(
   const base = host.host_url.replace(/\/$/, '')
   const headers: Record<string, string> = {}
 
-  let url: string
+  // Both modes talk to the agent — always use /docker prefix and API key
+  const url = `${base}/docker${dockerPath}`
 
+  if (secrets?.agent_api_key) {
+    headers['X-Agent-Key'] = secrets.agent_api_key
+  }
+
+  // Tell agent which socket to use if non-default
+  if (host.docker_socket_path && host.docker_socket_path !== '/var/run/docker.sock') {
+    headers['X-Docker-Socket'] = host.docker_socket_path
+  }
+
+  // Cloudflare Tunnel: add CF Access service token headers for tunnel authentication
   if (host.connection_mode === 'cloudflare_tunnel') {
-    // Cloudflare Access expects these headers for service token auth
-    url = `${base}${dockerPath}`
     if (secrets?.cf_service_token_id) headers['CF-Access-Client-Id'] = secrets.cf_service_token_id
     if (secrets?.cf_service_token_secret) headers['CF-Access-Client-Secret'] = secrets.cf_service_token_secret
-  } else {
-    // Agent mode — agent expects /docker/<path> and an API key
-    url = `${base}/docker${dockerPath}`
-    if (secrets?.agent_api_key) headers['X-Agent-Key'] = secrets.agent_api_key
-    // Tell agent which socket to use if non-default
-    if (host.docker_socket_path && host.docker_socket_path !== '/var/run/docker.sock') {
-      headers['X-Docker-Socket'] = host.docker_socket_path
-    }
   }
 
   return { url, method, headers }
@@ -176,34 +194,46 @@ Deno.serve(async (req) => {
       case 'containers':
         dockerPath = '/containers/json?all=true'
         break
-      case 'container-inspect':
+      case 'container-inspect': {
         if (!containerId) return new Response(JSON.stringify({ error: 'containerId required' }), { status: 400, headers: jsonHeaders })
-        dockerPath = `/containers/${containerId}/json`
+        const safeId = sanitizeContainerId(containerId)
+        dockerPath = `/containers/${safeId}/json`
         break
-      case 'container-stats':
+      }
+      case 'container-stats': {
         if (!containerId) return new Response(JSON.stringify({ error: 'containerId required' }), { status: 400, headers: jsonHeaders })
-        dockerPath = `/containers/${containerId}/stats?stream=false`
+        const safeId = sanitizeContainerId(containerId)
+        dockerPath = `/containers/${safeId}/stats?stream=false`
         break
-      case 'container-logs':
+      }
+      case 'container-logs': {
         if (!containerId) return new Response(JSON.stringify({ error: 'containerId required' }), { status: 400, headers: jsonHeaders })
+        const safeId = sanitizeContainerId(containerId)
         const tail = params?.tail || 100
-        dockerPath = `/containers/${containerId}/logs?stdout=true&stderr=true&tail=${tail}&timestamps=true`
+        dockerPath = `/containers/${safeId}/logs?stdout=true&stderr=true&tail=${tail}&timestamps=true`
         break
-      case 'container-start':
+      }
+      case 'container-start': {
         if (!containerId) return new Response(JSON.stringify({ error: 'containerId required' }), { status: 400, headers: jsonHeaders })
-        dockerPath = `/containers/${containerId}/start`
+        const safeId = sanitizeContainerId(containerId)
+        dockerPath = `/containers/${safeId}/start`
         method = 'POST'
         break
-      case 'container-stop':
+      }
+      case 'container-stop': {
         if (!containerId) return new Response(JSON.stringify({ error: 'containerId required' }), { status: 400, headers: jsonHeaders })
-        dockerPath = `/containers/${containerId}/stop`
+        const safeId = sanitizeContainerId(containerId)
+        dockerPath = `/containers/${safeId}/stop`
         method = 'POST'
         break
-      case 'container-restart':
+      }
+      case 'container-restart': {
         if (!containerId) return new Response(JSON.stringify({ error: 'containerId required' }), { status: 400, headers: jsonHeaders })
-        dockerPath = `/containers/${containerId}/restart`
+        const safeId = sanitizeContainerId(containerId)
+        dockerPath = `/containers/${safeId}/restart`
         method = 'POST'
         break
+      }
       default:
         return new Response(JSON.stringify({ error: `Unknown action: ${action}` }), { status: 400, headers: jsonHeaders })
     }

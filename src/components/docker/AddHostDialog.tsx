@@ -44,13 +44,8 @@ export function AddHostDialog({ orgId, trigger }: AddHostDialogProps) {
       return;
     }
 
-    if (mode === 'agent' && !agentApiKey.trim()) {
-      toast({ title: "API Key required", description: "Enter the agent API key for authentication.", variant: "destructive" });
-      return;
-    }
-
-    if (mode === 'cloudflare_tunnel' && (!cfServiceTokenId.trim() || !cfServiceTokenSecret.trim())) {
-      toast({ title: "CF Access tokens required", description: "Enter both Cloudflare Access Service Token ID and Secret.", variant: "destructive" });
+    if (!agentApiKey.trim()) {
+      toast({ title: "API Key required", description: "The agent API key is required for both connection modes.", variant: "destructive" });
       return;
     }
 
@@ -88,8 +83,8 @@ export function AddHostDialog({ orgId, trigger }: AddHostDialogProps) {
   };
 
   const modes: { value: ConnectionMode; label: string; icon: typeof Terminal; desc: string }[] = [
-    { value: 'agent', label: 'Watchtower Agent', icon: Terminal, desc: 'Install a lightweight agent on the host. No open Docker ports needed.' },
-    { value: 'cloudflare_tunnel', label: 'Cloudflare Tunnel', icon: CloudCog, desc: 'Use Cloudflare Tunnel to expose Docker socket securely. Zero open ports.' },
+    { value: 'agent', label: 'Agent (Direct)', icon: Terminal, desc: 'Connect to the Watchtower Agent over HTTPS. Agent runs on the host and proxies to Docker socket.' },
+    { value: 'cloudflare_tunnel', label: 'Agent via CF Tunnel', icon: CloudCog, desc: 'Same agent, accessed through a Cloudflare Tunnel. Zero open ports on the host.' },
   ];
 
   return (
@@ -155,35 +150,33 @@ export function AddHostDialog({ orgId, trigger }: AddHostDialogProps) {
             <Input placeholder="/var/run/docker.sock" value={socketPath} onChange={e => setSocketPath(e.target.value)} />
           </div>
 
-          {/* Agent-specific fields */}
-          {mode === 'agent' && (
-            <div className="space-y-2">
-              <Label>Agent API Key</Label>
-              <Input
-                type="password"
-                placeholder="Shared secret for authenticating with the agent"
-                value={agentApiKey}
-                onChange={e => setAgentApiKey(e.target.value)}
-              />
-              <p className="text-xs text-muted-foreground">
-                This key is stored securely and <strong>never returned to the browser</strong> after saving.
-              </p>
-            </div>
-          )}
+          {/* Agent API Key — required for both modes */}
+          <div className="space-y-2">
+            <Label>Agent API Key</Label>
+            <Input
+              type="password"
+              placeholder="Shared secret for authenticating with the agent"
+              value={agentApiKey}
+              onChange={e => setAgentApiKey(e.target.value)}
+            />
+            <p className="text-xs text-muted-foreground">
+              This key is stored securely and <strong>never returned to the browser</strong> after saving.
+            </p>
+          </div>
 
-          {/* Cloudflare Tunnel fields */}
+          {/* Cloudflare Tunnel — additional CF Access headers */}
           {mode === 'cloudflare_tunnel' && (
             <>
               <div className="space-y-2">
-                <Label>CF Access Service Token ID</Label>
+                <Label>CF Access Service Token ID <span className="text-muted-foreground">(optional)</span></Label>
                 <Input
-                  placeholder="e.g. abc123..."
+                  placeholder="Only if CF Access is protecting the tunnel"
                   value={cfServiceTokenId}
                   onChange={e => setCfServiceTokenId(e.target.value)}
                 />
               </div>
               <div className="space-y-2">
-                <Label>CF Access Service Token Secret</Label>
+                <Label>CF Access Service Token Secret <span className="text-muted-foreground">(optional)</span></Label>
                 <Input
                   type="password"
                   placeholder="e.g. xyz789..."
@@ -191,7 +184,7 @@ export function AddHostDialog({ orgId, trigger }: AddHostDialogProps) {
                   onChange={e => setCfServiceTokenSecret(e.target.value)}
                 />
                 <p className="text-xs text-muted-foreground">
-                  Tokens are stored securely and <strong>never returned to the browser</strong> after saving.
+                  Only needed if Cloudflare Access protects your tunnel endpoint.
                 </p>
               </div>
             </>
