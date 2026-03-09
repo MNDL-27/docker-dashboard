@@ -194,34 +194,46 @@ Deno.serve(async (req) => {
       case 'containers':
         dockerPath = '/containers/json?all=true'
         break
-      case 'container-inspect':
+      case 'container-inspect': {
         if (!containerId) return new Response(JSON.stringify({ error: 'containerId required' }), { status: 400, headers: jsonHeaders })
-        dockerPath = `/containers/${containerId}/json`
+        const safeId = sanitizeContainerId(containerId)
+        dockerPath = `/containers/${safeId}/json`
         break
-      case 'container-stats':
+      }
+      case 'container-stats': {
         if (!containerId) return new Response(JSON.stringify({ error: 'containerId required' }), { status: 400, headers: jsonHeaders })
-        dockerPath = `/containers/${containerId}/stats?stream=false`
+        const safeId = sanitizeContainerId(containerId)
+        dockerPath = `/containers/${safeId}/stats?stream=false`
         break
-      case 'container-logs':
+      }
+      case 'container-logs': {
         if (!containerId) return new Response(JSON.stringify({ error: 'containerId required' }), { status: 400, headers: jsonHeaders })
+        const safeId = sanitizeContainerId(containerId)
         const tail = params?.tail || 100
-        dockerPath = `/containers/${containerId}/logs?stdout=true&stderr=true&tail=${tail}&timestamps=true`
+        dockerPath = `/containers/${safeId}/logs?stdout=true&stderr=true&tail=${tail}&timestamps=true`
         break
-      case 'container-start':
+      }
+      case 'container-start': {
         if (!containerId) return new Response(JSON.stringify({ error: 'containerId required' }), { status: 400, headers: jsonHeaders })
-        dockerPath = `/containers/${containerId}/start`
+        const safeId = sanitizeContainerId(containerId)
+        dockerPath = `/containers/${safeId}/start`
         method = 'POST'
         break
-      case 'container-stop':
+      }
+      case 'container-stop': {
         if (!containerId) return new Response(JSON.stringify({ error: 'containerId required' }), { status: 400, headers: jsonHeaders })
-        dockerPath = `/containers/${containerId}/stop`
+        const safeId = sanitizeContainerId(containerId)
+        dockerPath = `/containers/${safeId}/stop`
         method = 'POST'
         break
-      case 'container-restart':
+      }
+      case 'container-restart': {
         if (!containerId) return new Response(JSON.stringify({ error: 'containerId required' }), { status: 400, headers: jsonHeaders })
-        dockerPath = `/containers/${containerId}/restart`
+        const safeId = sanitizeContainerId(containerId)
+        dockerPath = `/containers/${safeId}/restart`
         method = 'POST'
         break
+      }
       default:
         return new Response(JSON.stringify({ error: `Unknown action: ${action}` }), { status: 400, headers: jsonHeaders })
     }

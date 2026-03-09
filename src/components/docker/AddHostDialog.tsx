@@ -44,13 +44,8 @@ export function AddHostDialog({ orgId, trigger }: AddHostDialogProps) {
       return;
     }
 
-    if (mode === 'agent' && !agentApiKey.trim()) {
-      toast({ title: "API Key required", description: "Enter the agent API key for authentication.", variant: "destructive" });
-      return;
-    }
-
-    if (mode === 'cloudflare_tunnel' && (!cfServiceTokenId.trim() || !cfServiceTokenSecret.trim())) {
-      toast({ title: "CF Access tokens required", description: "Enter both Cloudflare Access Service Token ID and Secret.", variant: "destructive" });
+    if (!agentApiKey.trim()) {
+      toast({ title: "API Key required", description: "The agent API key is required for both connection modes.", variant: "destructive" });
       return;
     }
 
