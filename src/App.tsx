@@ -91,6 +91,7 @@ const App = () => (
                   <Route path="settings" element={<SettingsPage />} />
                   <Route path="admin" element={<AdminPage />} />
                   <Route path="help" element={<HelpPage />} />
+                  <Route path="setup-guide" element={<SetupGuidePage />} />
                 </Route>
                 <Route path="*" element={<NotFound />} />
               </Routes>

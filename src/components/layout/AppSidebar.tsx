@@ -44,6 +44,7 @@ const navGroups = [
       { label: "Billing", icon: CreditCard, href: "/app/billing" },
       { label: "Settings", icon: Settings, href: "/app/settings" },
       { label: "Admin", icon: Shield, href: "/app/admin" },
+      { label: "Setup Guide", icon: BookOpen, href: "/app/setup-guide" },
       { label: "Help", icon: HelpCircle, href: "/app/help" },
     ],
   },
