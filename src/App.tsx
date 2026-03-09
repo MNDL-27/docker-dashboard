@@ -34,6 +34,7 @@ import SettingsPage from "./pages/app/SettingsPage";
 import OrganizationsPage from "./pages/app/OrganizationsPage";
 import AdminPage from "./pages/app/AdminPage";
 import HelpPage from "./pages/app/HelpPage";
+import SetupGuidePage from "./pages/app/SetupGuidePage";
 import NotFound from "./pages/NotFound";
 import { useEffect } from "react";
 
@@ -90,6 +91,7 @@ const App = () => (
                   <Route path="settings" element={<SettingsPage />} />
                   <Route path="admin" element={<AdminPage />} />
                   <Route path="help" element={<HelpPage />} />
+                  <Route path="setup-guide" element={<SetupGuidePage />} />
                 </Route>
                 <Route path="*" element={<NotFound />} />
               </Routes>

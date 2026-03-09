@@ -4,7 +4,7 @@ import { cn } from "@/lib/utils";
 import {
   LayoutDashboard, Server, Box, Activity, FileText, Bell, AlertTriangle,
   Rocket, CreditCard, Settings, HelpCircle, ChevronLeft, ChevronRight,
-  Building2, Users, Shield
+  Building2, Users, Shield, BookOpen
 } from "lucide-react";
 
 const navGroups = [
@@ -44,6 +44,7 @@ const navGroups = [
       { label: "Billing", icon: CreditCard, href: "/app/billing" },
       { label: "Settings", icon: Settings, href: "/app/settings" },
       { label: "Admin", icon: Shield, href: "/app/admin" },
+      { label: "Setup Guide", icon: BookOpen, href: "/app/setup-guide" },
       { label: "Help", icon: HelpCircle, href: "/app/help" },
     ],
   },
