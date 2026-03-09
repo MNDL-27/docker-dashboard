@@ -88,8 +88,8 @@ export function AddHostDialog({ orgId, trigger }: AddHostDialogProps) {
   };
 
   const modes: { value: ConnectionMode; label: string; icon: typeof Terminal; desc: string }[] = [
-    { value: 'agent', label: 'Watchtower Agent', icon: Terminal, desc: 'Install a lightweight agent on the host. No open Docker ports needed.' },
-    { value: 'cloudflare_tunnel', label: 'Cloudflare Tunnel', icon: CloudCog, desc: 'Use Cloudflare Tunnel to expose Docker socket securely. Zero open ports.' },
+    { value: 'agent', label: 'Agent (Direct)', icon: Terminal, desc: 'Connect to the Watchtower Agent over HTTPS. Agent runs on the host and proxies to Docker socket.' },
+    { value: 'cloudflare_tunnel', label: 'Agent via CF Tunnel', icon: CloudCog, desc: 'Same agent, accessed through a Cloudflare Tunnel. Zero open ports on the host.' },
   ];
 
   return (
