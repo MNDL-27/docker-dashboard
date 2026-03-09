@@ -69,7 +69,8 @@ export default function HostDetailPage() {
             </span>
             <span className={`text-xs font-medium px-2 py-0.5 rounded-full inline-flex items-center gap-1 ${
               host.status === 'connected' ? 'bg-success/15 text-success' :
-              host.status === 'error' ? 'bg-destructive/15 text-destructive' :
+              host.status === 'unhealthy' ? 'bg-destructive/15 text-destructive' :
+              host.status === 'error' ? 'bg-warning/15 text-warning' :
               'bg-muted text-muted-foreground'
             }`}>
               {host.status === 'connected' ? <Wifi className="h-3 w-3" /> : <WifiOff className="h-3 w-3" />}
