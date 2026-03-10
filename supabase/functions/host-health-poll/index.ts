@@ -50,6 +50,8 @@ Deno.serve(async (req) => {
   const anonKey = Deno.env.get('SUPABASE_ANON_KEY')
   const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
 
+  console.log('Auth debug:', { hasBearer: !!bearerToken, hasAnon: !!anonKey, hasSrk: !!serviceRoleKey, bearerLen: bearerToken?.length, anonLen: anonKey?.length })
+
   const isValidBearer = bearerToken && (bearerToken === anonKey || bearerToken === serviceRoleKey)
   const isValidCronSecret = expectedCronSecret && cronSecret === expectedCronSecret
 
