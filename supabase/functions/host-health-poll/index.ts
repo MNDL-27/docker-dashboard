@@ -38,11 +38,31 @@ Deno.serve(async (req) => {
 
   const jsonHeaders = { ...corsHeaders, 'Content-Type': 'application/json' }
 
-  // This function is called by pg_cron — authenticate via Authorization header matching anon key
-  // or service role. We verify_jwt = false in config.toml, so we just proceed with service role.
+  // --- Server-to-server auth ---
+  // verify_jwt = false, so we validate manually.
+  // Accept: Bearer token matching anon key or service role key (sent by pg_cron via pg_net).
+  // Also accept x-cron-secret header matching HEALTH_POLL_SECRET if configured.
+  const authHeader = req.headers.get('Authorization') || ''
+  const bearerToken = authHeader.replace(/^Bearer\s+/i, '')
+  const cronSecret = req.headers.get('x-cron-secret')
+  const expectedCronSecret = Deno.env.get('HEALTH_POLL_SECRET')
+
+  const anonKey = Deno.env.get('SUPABASE_ANON_KEY')
+  const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
+
+  const isValidBearer = bearerToken && (bearerToken === anonKey || bearerToken === serviceRoleKey)
+  const isValidCronSecret = expectedCronSecret && cronSecret === expectedCronSecret
+
+  if (!isValidBearer && !isValidCronSecret) {
+    return new Response(
+      JSON.stringify({ error: 'Unauthorized: invalid or missing credentials' }),
+      { status: 401, headers: jsonHeaders }
+    )
+  }
+
   const serviceClient = createClient(
     Deno.env.get('SUPABASE_URL')!,
-    Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
+    serviceRoleKey!
   )
 
   try {
