@@ -38,34 +38,13 @@ Deno.serve(async (req) => {
 
   const jsonHeaders = { ...corsHeaders, 'Content-Type': 'application/json' }
 
-  // --- Server-to-server auth ---
-  // verify_jwt = false, so we validate manually.
-  // Accept: Bearer JWT with iss=supabase and correct project ref (sent by pg_cron via pg_net).
-  // Also accept x-cron-secret header matching HEALTH_POLL_SECRET if configured.
-  const authHeader = req.headers.get('Authorization') || ''
-  const bearerToken = authHeader.replace(/^Bearer\s+/i, '').trim()
+  // --- Auth: shared secret only ---
   const cronSecret = req.headers.get('x-cron-secret')
-  const expectedCronSecret = Deno.env.get('HEALTH_POLL_SECRET')
+  const expectedSecret = Deno.env.get('HEALTH_POLL_SECRET')
 
-  let isValidBearer = false
-  if (bearerToken) {
-    try {
-      const payloadB64 = bearerToken.split('.')[1]
-      if (payloadB64) {
-        const payload = JSON.parse(atob(payloadB64))
-        // Verify this is a Supabase-issued key for THIS project
-        isValidBearer = payload.iss === 'supabase' &&
-          payload.ref === 'hldzdjtwtxgiqrpjidhf' &&
-          (payload.role === 'anon' || payload.role === 'service_role')
-      }
-    } catch (_) { /* invalid JWT format */ }
-  }
-
-  const isValidCronSecret = !!(expectedCronSecret && cronSecret === expectedCronSecret)
-
-  if (!isValidBearer && !isValidCronSecret) {
+  if (!expectedSecret || !cronSecret || cronSecret !== expectedSecret) {
     return new Response(
-      JSON.stringify({ error: 'Unauthorized: invalid or missing credentials' }),
+      JSON.stringify({ error: 'Unauthorized' }),
       { status: 401, headers: jsonHeaders }
     )
   }
