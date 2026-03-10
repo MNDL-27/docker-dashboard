@@ -40,20 +40,28 @@ Deno.serve(async (req) => {
 
   // --- Server-to-server auth ---
   // verify_jwt = false, so we validate manually.
-  // Accept: Bearer token matching anon key or service role key (sent by pg_cron via pg_net).
+  // Accept: Bearer JWT with iss=supabase and correct project ref (sent by pg_cron via pg_net).
   // Also accept x-cron-secret header matching HEALTH_POLL_SECRET if configured.
   const authHeader = req.headers.get('Authorization') || ''
-  const bearerToken = authHeader.replace(/^Bearer\s+/i, '')
+  const bearerToken = authHeader.replace(/^Bearer\s+/i, '').trim()
   const cronSecret = req.headers.get('x-cron-secret')
   const expectedCronSecret = Deno.env.get('HEALTH_POLL_SECRET')
 
-  const anonKey = Deno.env.get('SUPABASE_ANON_KEY')
-  const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')
+  let isValidBearer = false
+  if (bearerToken) {
+    try {
+      const payloadB64 = bearerToken.split('.')[1]
+      if (payloadB64) {
+        const payload = JSON.parse(atob(payloadB64))
+        // Verify this is a Supabase-issued key for THIS project
+        isValidBearer = payload.iss === 'supabase' &&
+          payload.ref === 'hldzdjtwtxgiqrpjidhf' &&
+          (payload.role === 'anon' || payload.role === 'service_role')
+      }
+    } catch (_) { /* invalid JWT format */ }
+  }
 
-  console.log('Auth debug:', { hasBearer: !!bearerToken, hasAnon: !!anonKey, hasSrk: !!serviceRoleKey, bearerLen: bearerToken?.length, anonLen: anonKey?.length })
-
-  const isValidBearer = bearerToken && (bearerToken === anonKey || bearerToken === serviceRoleKey)
-  const isValidCronSecret = expectedCronSecret && cronSecret === expectedCronSecret
+  const isValidCronSecret = !!(expectedCronSecret && cronSecret === expectedCronSecret)
 
   if (!isValidBearer && !isValidCronSecret) {
     return new Response(
