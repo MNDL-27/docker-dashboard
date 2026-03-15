@@ -1,6 +1,6 @@
 import type { Config } from '@netlify/functions';
 import { sql } from './lib/db.mjs';
-import { getUserFromHeader } from './lib/auth.mjs';
+import { requireAuth } from './lib/auth.mjs';
 
 const headers = {
   'Access-Control-Allow-Origin': '*',
@@ -14,12 +14,12 @@ export default async (req: Request) => {
   }
 
   try {
-    const authUser = getUserFromHeader(req.headers.get('Authorization'));
+    const authContext = await requireAuth(req, { requireOrg: false });
 
     const users = await sql`
       SELECT id, email, full_name, avatar_url 
       FROM users 
-      WHERE id = ${authUser.id}
+      WHERE id = ${authContext.userId}
     `;
 
     if (users.length === 0) {

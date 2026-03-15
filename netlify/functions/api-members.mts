@@ -1,6 +1,6 @@
 import type { Config } from '@netlify/functions';
 import { sql } from './lib/db.mjs';
-import { getUserFromHeader } from './lib/auth.mjs';
+import { requireAuth } from './lib/auth.mjs';
 
 const headers = {
   'Access-Control-Allow-Origin': '*',
@@ -14,9 +14,11 @@ export default async (req: Request) => {
   }
 
   try {
-    const user = getUserFromHeader(req.headers.get('Authorization'));
+    const authContext = await requireAuth(req);
     const url = new URL(req.url);
-    const orgId = url.searchParams.get('orgId');
+    
+    // Use the orgId from the Clerk active organization token context, or fallback to query param
+    const orgId = authContext.orgId || url.searchParams.get('orgId');
 
     if (req.method !== 'GET') {
       return new Response(JSON.stringify({ error: 'Method not allowed' }), { status: 405, headers });
@@ -32,7 +34,7 @@ export default async (req: Request) => {
       WHERE om.organization_id = ${orgId}
       AND EXISTS (
         SELECT 1 FROM organization_members 
-        WHERE organization_id = ${orgId} AND user_id = ${user.id}
+        WHERE organization_id = ${orgId} AND user_id = ${authContext.userId}
       )
     `;
 

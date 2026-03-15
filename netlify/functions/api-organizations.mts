@@ -1,6 +1,6 @@
 import type { Config } from '@netlify/functions';
 import { sql } from './lib/db.mjs';
-import { getUserFromHeader } from './lib/auth.mjs';
+import { requireAuth } from './lib/auth.mjs';
 
 const headers = {
   'Access-Control-Allow-Origin': '*',
@@ -14,14 +14,14 @@ export default async (req: Request) => {
   }
 
   try {
-    const user = getUserFromHeader(req.headers.get('Authorization'));
+    const authContext = await requireAuth(req, { requireOrg: false });
 
     if (req.method === 'GET') {
       const orgs = await sql`
         SELECT o.* 
         FROM organizations o
         JOIN organization_members om ON o.id = om.organization_id
-        WHERE om.user_id = ${user.id}
+        WHERE om.user_id = ${authContext.userId}
         ORDER BY o.created_at ASC
       `;
       return new Response(JSON.stringify(orgs), { headers });
@@ -32,7 +32,7 @@ export default async (req: Request) => {
       if (!name) return new Response(JSON.stringify({ error: 'Name required' }), { status: 400, headers });
 
       const [{ create_organization: orgId }] = await sql`
-        SELECT public.create_organization(${name}, ${user.id})
+        SELECT public.create_organization(${name}, ${authContext.userId})
       `;
 
       return new Response(JSON.stringify({ id: orgId }), { headers });
