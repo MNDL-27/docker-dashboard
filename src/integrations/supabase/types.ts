@@ -114,6 +114,24 @@ export type Database = {
           },
         ]
       }
+      mock_agent_config: {
+        Row: {
+          created_at: string
+          id: number
+          mode: string
+        }
+        Insert: {
+          created_at?: string
+          id?: number
+          mode?: string
+        }
+        Update: {
+          created_at?: string
+          id?: number
+          mode?: string
+        }
+        Relationships: []
+      }
       organization_members: {
         Row: {
           created_at: string
