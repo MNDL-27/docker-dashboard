@@ -1,29 +1,22 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
 import { dockerApi } from "@/services/docker-api";
 import { useAuth } from "@/contexts/AuthContext";
+import { apiFetch } from "@/lib/api";
 import type { DockerHost, ConnectionMode } from "@/types/database";
 
 export function useDockerHosts(orgId?: string | null) {
   return useQuery({
     queryKey: ['docker-hosts', orgId],
     queryFn: async () => {
-      const { data, error } = await (supabase as any)
-        .from('docker_hosts')
-        .select('*')
-        .eq('organization_id', orgId)
-        .order('created_at', { ascending: false });
-      if (error) throw error;
-      return data as DockerHost[];
+      return (await apiFetch(`/docker-hosts?orgId=${orgId}`)) as DockerHost[];
     },
     enabled: !!orgId,
-    refetchInterval: 30000, // Read health from DB every 30s (server polls every 60s)
+    refetchInterval: 30000,
   });
 }
 
 export function useAddDockerHost() {
   const queryClient = useQueryClient();
-  const { user } = useAuth();
 
   return useMutation({
     mutationFn: async ({ orgId, name, hostUrl, connectionMode, dockerSocketPath, secrets }: {
@@ -36,37 +29,17 @@ export function useAddDockerHost() {
         cfServiceTokenSecret?: string;
       };
     }) => {
-      // 1. Insert host record
-      const { data, error } = await (supabase as any)
-        .from('docker_hosts')
-        .insert({
+      const data = await apiFetch('/docker-hosts', {
+        method: 'POST',
+        body: JSON.stringify({
           organization_id: orgId,
           name,
           host_url: hostUrl,
           connection_mode: connectionMode,
           docker_socket_path: dockerSocketPath || '/var/run/docker.sock',
-          created_by: user!.id,
-          status: 'unknown',
-        })
-        .select()
-        .single();
-      if (error) throw error;
-
-      // 2. Store secrets in the separate secure table
-      const { error: secretsError } = await (supabase as any)
-        .from('docker_host_secrets')
-        .insert({
-          host_id: data.id,
-          agent_api_key: secrets.agentApiKey || null,
-          cf_service_token_id: secrets.cfServiceTokenId || null,
-          cf_service_token_secret: secrets.cfServiceTokenSecret || null,
-        });
-      if (secretsError) {
-        // Clean up the host if secret storage failed
-        await (supabase as any).from('docker_hosts').delete().eq('id', data.id);
-        throw new Error(`Failed to store connection secrets: ${secretsError.message}`);
-      }
-
+          secrets,
+        }),
+      });
       return data as DockerHost;
     },
     onSuccess: () => {
@@ -79,12 +52,9 @@ export function useDeleteDockerHost() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async (hostId: string) => {
-      // Secrets cascade-delete via FK
-      const { error } = await (supabase as any)
-        .from('docker_hosts')
-        .delete()
-        .eq('id', hostId);
-      if (error) throw error;
+      await apiFetch(`/docker-hosts?hostId=${hostId}`, {
+        method: 'DELETE',
+      });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['docker-hosts'] });

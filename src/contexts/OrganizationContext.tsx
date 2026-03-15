@@ -1,7 +1,7 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { apiFetch } from "@/lib/api";
 import type { Organization } from "@/types/database";
 
 interface OrgContextType {
@@ -34,17 +34,11 @@ export function OrganizationProvider({ children }: { children: ReactNode }) {
   const { data: organizations = [], isLoading } = useQuery({
     queryKey: ['organizations', user?.id],
     queryFn: async () => {
-      const { data, error } = await (supabase as any)
-        .from('organizations')
-        .select('*')
-        .order('created_at', { ascending: true });
-      if (error) throw error;
-      return data as Organization[];
+      return (await apiFetch('/organizations')) as Organization[];
     },
     enabled: !!user,
   });
 
-  // Auto-select first org if none selected
   useEffect(() => {
     if (organizations.length > 0 && (!currentOrgId || !organizations.find(o => o.id === currentOrgId))) {
       setCurrentOrgId(organizations[0].id);
@@ -60,13 +54,14 @@ export function OrganizationProvider({ children }: { children: ReactNode }) {
   const currentOrg = organizations.find(o => o.id === currentOrgId) || null;
 
   const createOrganization = async (name: string) => {
-    // Use RPC to bypass RLS INSERT+SELECT timing issues
-    const { data: orgId, error } = await supabase.rpc('create_organization', { _name: name });
-    if (error) throw error;
+    const data = await apiFetch('/organizations', {
+      method: 'POST',
+      body: JSON.stringify({ name }),
+    });
+    
     queryClient.invalidateQueries({ queryKey: ['organizations'] });
-    setCurrentOrgId(orgId);
-    // Return a minimal org object; full data comes from the query refetch
-    return { id: orgId, name, slug: '', created_by: user!.id, created_at: '', updated_at: '' } as Organization;
+    setCurrentOrgId(data.id);
+    return { id: data.id, name, slug: '', created_by: user!.id, created_at: '', updated_at: '' } as Organization;
   };
 
   return (

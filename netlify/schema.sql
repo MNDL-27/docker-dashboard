@@ -1,0 +1,109 @@
+-- Step 1: Extensions
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+
+-- Step 2: Users (Replaces Supabase auth.users & public.profiles)
+CREATE TABLE public.users (
+  id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
+  email text UNIQUE NOT NULL,
+  password_hash text NOT NULL,
+  full_name text,
+  avatar_url text,
+  created_at timestamptz NOT NULL DEFAULT now(),
+  updated_at timestamptz NOT NULL DEFAULT now()
+);
+
+-- Step 3: Organizations
+CREATE TABLE public.organizations (
+  id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
+  name text NOT NULL,
+  slug text UNIQUE NOT NULL,
+  created_by uuid NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
+  created_at timestamptz NOT NULL DEFAULT now(),
+  updated_at timestamptz NOT NULL DEFAULT now()
+);
+
+-- Step 4: Organization Members
+CREATE TABLE public.organization_members (
+  id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
+  organization_id uuid NOT NULL REFERENCES public.organizations(id) ON DELETE CASCADE,
+  user_id uuid NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
+  role text NOT NULL DEFAULT 'member',
+  created_at timestamptz NOT NULL DEFAULT now(),
+  UNIQUE(organization_id, user_id)
+);
+
+-- Step 5: Docker Hosts
+CREATE TABLE public.docker_hosts (
+  id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
+  organization_id uuid NOT NULL REFERENCES public.organizations(id) ON DELETE CASCADE,
+  name text NOT NULL,
+  host_url text NOT NULL,
+  connection_mode text NOT NULL DEFAULT 'agent',
+  docker_socket_path text DEFAULT '/var/run/docker.sock',
+  status text NOT NULL DEFAULT 'unknown',
+  docker_version text,
+  os_info text,
+  last_seen_at timestamptz,
+  consecutive_failures integer NOT NULL DEFAULT 0,
+  last_error text,
+  created_by uuid NOT NULL REFERENCES public.users(id),
+  created_at timestamptz NOT NULL DEFAULT now(),
+  updated_at timestamptz NOT NULL DEFAULT now()
+);
+
+-- Step 6: Docker Host Secrets (No selecting by frontend)
+CREATE TABLE public.docker_host_secrets (
+  id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
+  host_id uuid REFERENCES public.docker_hosts(id) ON DELETE CASCADE NOT NULL UNIQUE,
+  agent_api_key text,
+  cf_service_token_id text,
+  cf_service_token_secret text,
+  created_at timestamptz NOT NULL DEFAULT now(),
+  updated_at timestamptz NOT NULL DEFAULT now()
+);
+
+-- Step 7: Mock Agent Config 
+CREATE TABLE public.mock_agent_config (
+  id integer PRIMARY KEY DEFAULT 1 CHECK (id = 1),
+  mode text NOT NULL DEFAULT 'success',
+  created_at timestamptz NOT NULL DEFAULT now()
+);
+INSERT INTO public.mock_agent_config (id, mode) VALUES (1, 'success');
+
+-- Step 8: Update Triggers
+CREATE OR REPLACE FUNCTION update_updated_at_column()
+RETURNS TRIGGER AS $$
+BEGIN
+  NEW.updated_at = now();
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER update_users_updated_at BEFORE UPDATE ON public.users FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+CREATE TRIGGER update_organizations_updated_at BEFORE UPDATE ON public.organizations FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+CREATE TRIGGER update_docker_hosts_updated_at BEFORE UPDATE ON public.docker_hosts FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+CREATE TRIGGER update_docker_host_secrets_updated_at BEFORE UPDATE ON public.docker_host_secrets FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+-- Function to create organization and auto-add owner
+CREATE OR REPLACE FUNCTION public.create_organization(_name text, _user_id uuid)
+RETURNS uuid
+LANGUAGE plpgsql
+AS $$
+DECLARE
+  _slug text;
+  _org_id uuid;
+BEGIN
+  _slug := lower(regexp_replace(_name, '[^a-zA-Z0-9]+', '-', 'g'));
+  _slug := trim(both '-' from _slug) || '-' || to_hex(extract(epoch from now())::int);
+  
+  INSERT INTO public.organizations (name, slug, created_by)
+  VALUES (_name, _slug, _user_id)
+  RETURNING id INTO _org_id;
+  
+  INSERT INTO public.organization_members (organization_id, user_id, role)
+  VALUES (_org_id, _user_id, 'owner')
+  ON CONFLICT DO NOTHING;
+  
+  RETURN _org_id;
+END;
+$$;

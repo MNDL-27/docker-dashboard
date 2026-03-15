@@ -3,7 +3,7 @@ import { MetricCard } from "@/components/shared/MetricCard";
 import { Button } from "@/components/ui/button";
 import { useParams, Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { apiFetch } from "@/lib/api";
 import { useHostContainers } from "@/hooks/useDocker";
 import { dockerApi } from "@/services/docker-api";
 import type { DockerHost } from "@/types/database";
@@ -19,9 +19,7 @@ export default function HostDetailPage() {
   const { data: host, isLoading: hostLoading, refetch: refetchHost } = useQuery({
     queryKey: ['docker-host', id],
     queryFn: async () => {
-      const { data, error } = await (supabase as any).from('docker_hosts').select('*').eq('id', id).single();
-      if (error) throw error;
-      return data as DockerHost;
+      return (await apiFetch(`/docker-hosts?hostId=${id}`)) as DockerHost;
     },
     enabled: !!id,
     refetchInterval: 30000,

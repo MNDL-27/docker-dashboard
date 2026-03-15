@@ -3,7 +3,7 @@ import { StatusBadge } from "@/components/shared/StatusBadge";
 import { Loader2, Users } from "lucide-react";
 import { useOrganization } from "@/contexts/OrganizationContext";
 import { useQuery } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
+import { apiFetch } from "@/lib/api";
 
 export default function MembersPage() {
   const { currentOrg } = useOrganization();
@@ -11,11 +11,7 @@ export default function MembersPage() {
   const { data: members = [], isLoading } = useQuery({
     queryKey: ['org-members', currentOrg?.id],
     queryFn: async () => {
-      const { data, error } = await supabase.rpc('get_org_member_profiles', {
-        _org_id: currentOrg!.id,
-      });
-      if (error) throw error;
-      return data || [];
+      return await apiFetch(`/members?orgId=${currentOrg!.id}`);
     },
     enabled: !!currentOrg,
   });
@@ -54,7 +50,11 @@ export default function MembersPage() {
                   <td className="p-3">
                     <div className="flex items-center gap-3">
                       <div className="w-8 h-8 rounded-full bg-primary/20 text-primary flex items-center justify-center text-xs font-semibold">
-                        {(m.full_name || '?').charAt(0).toUpperCase()}
+                        {m.avatar_url ? (
+                          <img src={m.avatar_url} alt="" className="w-full h-full rounded-full object-cover" />
+                        ) : (
+                          (m.full_name || '?').charAt(0).toUpperCase()
+                        )}
                       </div>
                       <div>
                         <div className="font-medium">{m.full_name || 'Unknown'}</div>

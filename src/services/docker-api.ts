@@ -1,8 +1,10 @@
-import { supabase } from "@/integrations/supabase/client";
+import { apiFetch } from "@/lib/api";
 
 async function invoke(body: Record<string, unknown>) {
-  const { data, error } = await supabase.functions.invoke('docker-proxy', { body });
-  if (error) throw new Error(error.message || 'Docker proxy error');
+  const data = await apiFetch('/docker-proxy', {
+    method: 'POST',
+    body: JSON.stringify(body),
+  });
   if (data?.error) throw new Error(data.error + (data.details ? `: ${data.details}` : ''));
   return data;
 }

@@ -3,12 +3,12 @@ import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Box } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
+import { Box, Github, Mail } from "lucide-react";
+import { apiFetch } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
 
 export default function SignupPage() {
-  const [name, setName] = useState("");
+  const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -18,21 +18,22 @@ export default function SignupPage() {
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
     if (password.length < 6) {
-      toast({ title: "Password too short", description: "Password must be at least 6 characters", variant: "destructive" });
+      toast({ title: "Password too short", description: "Must be at least 6 characters", variant: "destructive" });
       return;
     }
     setLoading(true);
-    const { error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: { data: { full_name: name }, emailRedirectTo: window.location.origin },
-    });
-    setLoading(false);
-    if (error) {
-      toast({ title: "Sign up failed", description: error.message, variant: "destructive" });
-    } else {
-      toast({ title: "Account created!", description: "Check your email to confirm, then sign in." });
+    
+    try {
+      await apiFetch('/auth/signup', {
+        method: 'POST',
+        body: JSON.stringify({ email, password, full_name: fullName }),
+      });
+      toast({ title: "Account created!", description: "You can now log in." });
       navigate("/login");
+    } catch (err: any) {
+      toast({ title: "Error", description: err.message, variant: "destructive" });
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -44,17 +45,19 @@ export default function SignupPage() {
             <div className="w-8 h-8 rounded-md bg-primary flex items-center justify-center">
               <Box className="h-5 w-5 text-primary-foreground" />
             </div>
+            <span className="font-bold text-xl">Watchtower</span>
           </Link>
-          <h1 className="text-2xl font-bold tracking-tight">Create your account</h1>
-          <p className="text-sm text-muted-foreground mt-1">Start monitoring Docker in minutes</p>
+          <h1 className="text-2xl font-bold tracking-tight">Create an account</h1>
+          <p className="text-sm text-muted-foreground mt-1">Get started with Docker monitoring</p>
         </div>
+
         <form onSubmit={handleSignup} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="name">Full name</Label>
-            <Input id="name" placeholder="Jane Doe" value={name} onChange={e => setName(e.target.value)} required />
+            <Label htmlFor="name">Full Name</Label>
+            <Input id="name" placeholder="John Doe" value={fullName} onChange={e => setFullName(e.target.value)} required />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="email">Work email</Label>
+            <Label htmlFor="email">Email</Label>
             <Input id="email" type="email" placeholder="you@company.com" value={email} onChange={e => setEmail(e.target.value)} required />
           </div>
           <div className="space-y-2">
@@ -62,12 +65,10 @@ export default function SignupPage() {
             <Input id="password" type="password" placeholder="Min. 6 characters" value={password} onChange={e => setPassword(e.target.value)} required />
           </div>
           <Button type="submit" className="w-full" disabled={loading}>
-            {loading ? "Creating account..." : "Create account"}
+            {loading ? "Creating account..." : "Sign up"}
           </Button>
-          <p className="text-xs text-muted-foreground text-center">
-            By signing up, you agree to our Terms and Privacy Policy.
-          </p>
         </form>
+
         <p className="text-center text-sm text-muted-foreground">
           Already have an account? <Link to="/login" className="text-primary hover:underline">Sign in</Link>
         </p>
