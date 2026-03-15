@@ -3,12 +3,22 @@ import { MetricCard } from "@/components/shared/MetricCard";
 import { Button } from "@/components/ui/button";
 import { Server, Box, Activity, Loader2, Plus, Building2 } from "lucide-react";
 import { Link } from "react-router-dom";
-import { useOrganization } from "@/contexts/OrganizationContext";
+import { useOrganization, useOrganizationList } from "@clerk/clerk-react";
 import { useDockerHosts, useContainers } from "@/hooks/useDocker";
 import { useState } from "react";
 
 export default function DashboardPage() {
-  const { currentOrg, hasOrgs, isLoading: orgLoading, createOrganization } = useOrganization();
+  const { organization, isLoaded: orgLoaded } = useOrganization();
+  const { createOrganization, userMemberships, isLoaded: listLoaded } = useOrganizationList({
+    userMemberships: {
+      infinite: true,
+    },
+  });
+  
+  const currentOrg = organization;
+  const hasOrgs = userMemberships.count ? userMemberships.count > 0 : false;
+  const orgLoading = !orgLoaded || !listLoaded;
+
   const { data: hosts = [], isLoading: hostsLoading } = useDockerHosts(currentOrg?.id);
   const { data: containers = [], isLoading: containersLoading } = useContainers(currentOrg?.id);
   const [creatingOrg, setCreatingOrg] = useState(false);
@@ -37,7 +47,14 @@ export default function DashboardPage() {
                 autoFocus
               />
               <Button className="w-full" disabled={!orgName} onClick={async () => {
-                try { await createOrganization(orgName); } catch {}
+                try { 
+                  if (createOrganization) {
+                    await createOrganization({ name: orgName });
+                    setCreatingOrg(false);
+                  }
+                } catch (err) {
+                  console.error(err);
+                }
               }}>Create Organization</Button>
             </div>
           ) : (

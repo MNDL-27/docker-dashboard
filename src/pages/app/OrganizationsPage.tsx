@@ -2,22 +2,28 @@ import { PageHeader } from "@/components/shared/PageHeader";
 import { Button } from "@/components/ui/button";
 import { Building2, Loader2, Plus, Server } from "lucide-react";
 import { Link } from "react-router-dom";
-import { useOrganization } from "@/contexts/OrganizationContext";
+import { useOrganizationList } from "@clerk/clerk-react";
 import { useDockerHosts } from "@/hooks/useDocker";
 import { useState } from "react";
 import { Input } from "@/components/ui/input";
 
 export default function OrganizationsPage() {
-  const { organizations, isLoading, createOrganization } = useOrganization();
+  const { userMemberships, isLoaded, createOrganization } = useOrganizationList({
+    userMemberships: { infinite: true },
+  });
+  const organizations = userMemberships.data?.map(m => m.organization) || [];
+  const isLoading = !isLoaded;
   const [creating, setCreating] = useState(false);
   const [newName, setNewName] = useState("");
 
   const handleCreate = async () => {
     if (!newName.trim()) return;
     try {
-      await createOrganization(newName.trim());
-      setNewName("");
-      setCreating(false);
+      if (createOrganization) {
+        await createOrganization({ name: newName.trim() });
+        setNewName("");
+        setCreating(false);
+      }
     } catch {}
   };
 
@@ -66,7 +72,7 @@ export default function OrganizationsPage() {
   );
 }
 
-function OrgCard({ org }: { org: { id: string; name: string; slug: string; created_at: string } }) {
+function OrgCard({ org }: { org: { id: string; name: string; slug: string | null } }) {
   const { data: hosts = [] } = useDockerHosts(org.id);
 
   return (

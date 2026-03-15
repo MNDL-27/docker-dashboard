@@ -1,6 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { dockerApi } from "@/services/docker-api";
-import { useAuth } from "@/contexts/AuthContext";
 import { apiFetch } from "@/lib/api";
 import type { DockerHost, ConnectionMode } from "@/types/database";
 

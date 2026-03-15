@@ -1,6 +1,7 @@
 import type { Config } from '@netlify/functions';
 import { sql } from './lib/db.mjs';
-import { getUserFromHeader } from './lib/auth.mjs';
+import { requireAuth } from './lib/auth.mjs';
+import { decryptSecret } from './lib/crypto.mjs';
 
 const headers = {
   'Access-Control-Allow-Origin': '*',
@@ -42,11 +43,79 @@ function buildRequest(
   return { url, method, headers: reqHeaders };
 }
 
-async function dockerFetch(url: string, method: string, reqHeaders: Record<string, string>, timeoutMs = 30000) {
-  return await fetch(url, {
-    method,
-    headers: reqHeaders,
-    signal: AbortSignal.timeout(timeoutMs),
+// Bounded concurrency helper for querying multiple hosts
+async function mapConcurrent<T, R>(items: T[], limit: number, fn: (item: T) => Promise<R>): Promise<R[]> {
+  const results: R[] = [];
+  let i = 0;
+  const exec = async () => {
+    while (i < items.length) {
+      const index = i++;
+      results[index] = await fn(items[index]);
+    }
+  };
+  const workers = Array.from({ length: Math.min(limit, items.length) }, exec);
+  await Promise.all(workers);
+  return results;
+}
+
+async function dockerFetch(url: string, method: string, reqHeaders: Record<string, string>, timeoutMs = 5000) {
+  let response: Response;
+  try {
+    response = await fetch(url, {
+      method,
+      headers: reqHeaders,
+      signal: AbortSignal.timeout(timeoutMs),
+    });
+  } catch (err: any) {
+    if (err.name === 'AbortError' || err.name === 'TimeoutError') {
+      return new Response(JSON.stringify({ error: 'Agent connection timed out' }), { status: 504, headers: { 'Content-Type': 'application/json' } });
+    }
+    return new Response(JSON.stringify({ error: 'Agent connection failed', details: err.message }), { status: 502, headers: { 'Content-Type': 'application/json' } });
+  }
+
+  const MAX_PAYLOAD_SIZE = 4 * 1024 * 1024; // 4MB
+  if (!response.body) return response;
+
+  const reader = response.body.getReader();
+  const chunks: Uint8Array[] = [];
+  let totalSize = 0;
+
+  try {
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      if (value) {
+        totalSize += value.length;
+        if (totalSize > MAX_PAYLOAD_SIZE) {
+          reader.cancel('Payload too large');
+          return new Response(JSON.stringify({ error: 'Payload too large (exceeds 4MB limit)' }), {
+            status: 413,
+            headers: { 'Content-Type': 'application/json' }
+          });
+        }
+        chunks.push(value);
+      }
+    }
+  } catch (err: any) {
+    if (err.name === 'AbortError' || err.name === 'TimeoutError') {
+      return new Response(JSON.stringify({ error: 'Agent stream timed out' }), { status: 504, headers: { 'Content-Type': 'application/json' } });
+    }
+    return new Response(JSON.stringify({ error: 'Stream read error', details: err.message }), { status: 502, headers: { 'Content-Type': 'application/json' } });
+  }
+
+  const fullBody = new Uint8Array(totalSize);
+  let offset = 0;
+  for (const chunk of chunks) {
+    fullBody.set(chunk, offset);
+    offset += chunk.length;
+  }
+
+  const newHeaders = new Headers(response.headers);
+  newHeaders.delete('content-encoding'); 
+  return new Response(fullBody, {
+    status: response.status,
+    statusText: response.statusText,
+    headers: newHeaders
   });
 }
 
@@ -56,33 +125,42 @@ export default async (req: Request) => {
   }
 
   try {
-    const user = getUserFromHeader(req.headers.get('Authorization'));
+    const auth = await requireAuth(req);
     const body = await req.json();
-    const { action, hostId, orgId, containerId, params } = body;
+    const { action, hostId, containerId, params } = body;
+    const orgId = auth.orgId;
 
     // ── Org-wide: fetch containers from all hosts ──
     if (action === 'all-containers') {
       if (!orgId) return new Response(JSON.stringify({ error: 'orgId required' }), { status: 400, headers });
 
       const memberships = await sql`
-        SELECT 1 FROM organization_members WHERE organization_id = ${orgId} AND user_id = ${user.id}
+        SELECT 1 FROM organization_members WHERE organization_id = ${orgId} AND user_id = ${auth.userId}
       `;
       if (memberships.length === 0) return new Response(JSON.stringify({ error: 'Access denied' }), { status: 403, headers });
 
       const hosts = await sql`SELECT * FROM docker_hosts WHERE organization_id = ${orgId}`;
-
       const allContainers: any[] = [];
-      for (const host of hosts) {
+
+      await mapConcurrent(hosts as any[], 5, async (host) => {
         try {
           const secretsRecord = await sql`
             SELECT agent_api_key, cf_service_token_id, cf_service_token_secret 
             FROM docker_host_secrets WHERE host_id = ${host.id}
           `;
-          const secrets = secretsRecord[0] || null;
+          let secrets = secretsRecord[0] || null;
+          if (secrets) {
+            secrets = {
+              agent_api_key: decryptSecret(secrets.agent_api_key, host.id, 'agent_api_key'),
+              cf_service_token_id: decryptSecret(secrets.cf_service_token_id, host.id, 'cf_service_token_id'),
+              cf_service_token_secret: decryptSecret(secrets.cf_service_token_secret, host.id, 'cf_service_token_secret')
+            };
+          }
 
-          const { url, method, headers: reqHeaders } = buildRequest(host as any, secrets, '/containers/json?all=true', 'GET');
-          const resp = await dockerFetch(url, method, reqHeaders, 10000);
-          if (resp.ok) {
+          const { url, method, headers: reqHeaders } = buildRequest(host, secrets, '/containers/json?all=true', 'GET');
+          const resp = await dockerFetch(url, method, reqHeaders, 5000); // 5s timeout
+          
+          if (resp.ok && resp.status !== 413) {
             const containers = await resp.json();
             allContainers.push(...containers.map((c: any) => ({ ...c, _hostId: host.id, _hostName: host.name })));
             await sql`UPDATE docker_hosts SET status = 'connected', last_seen_at = now() WHERE id = ${host.id}`;
@@ -92,7 +170,7 @@ export default async (req: Request) => {
         } catch (_e) {
           await sql`UPDATE docker_hosts SET status = 'error' WHERE id = ${host.id}`;
         }
-      }
+      });
 
       return new Response(JSON.stringify(allContainers), { headers });
     }
@@ -103,7 +181,7 @@ export default async (req: Request) => {
     const hostRecords = await sql`
       SELECT h.* FROM docker_hosts h
       JOIN organization_members om ON h.organization_id = om.organization_id
-      WHERE h.id = ${hostId} AND om.user_id = ${user.id}
+      WHERE h.id = ${hostId} AND om.user_id = ${auth.userId}
     `;
 
     if (hostRecords.length === 0) {
@@ -115,46 +193,60 @@ export default async (req: Request) => {
       SELECT agent_api_key, cf_service_token_id, cf_service_token_secret 
       FROM docker_host_secrets WHERE host_id = ${hostId}
     `;
-    const secrets = secretsRecord[0] || null;
+    let secrets = secretsRecord[0] || null;
+    if (secrets) {
+      secrets = {
+        agent_api_key: decryptSecret(secrets.agent_api_key, host.id, 'agent_api_key'),
+        cf_service_token_id: decryptSecret(secrets.cf_service_token_id, host.id, 'cf_service_token_id'),
+        cf_service_token_secret: decryptSecret(secrets.cf_service_token_secret, host.id, 'cf_service_token_secret')
+      };
+    }
 
     let dockerPath: string;
     let method = 'GET';
+    let timeoutMs = 5000;
 
     switch (action) {
-      case 'ping': dockerPath = '/_ping'; break;
-      case 'info': dockerPath = '/info'; break;
-      case 'version': dockerPath = '/version'; break;
-      case 'containers': dockerPath = '/containers/json?all=true'; break;
+      case 'ping': dockerPath = '/_ping'; timeoutMs = 3000; break;
+      case 'info': dockerPath = '/info'; timeoutMs = 3000; break;
+      case 'version': dockerPath = '/version'; timeoutMs = 3000; break;
+      case 'containers': dockerPath = '/containers/json?all=true'; timeoutMs = 5000; break;
       case 'container-inspect': 
         if (!containerId) return new Response(JSON.stringify({ error: 'containerId required' }), { status: 400, headers });
         dockerPath = `/containers/${sanitizeContainerId(containerId)}/json`; 
+        timeoutMs = 5000;
         break;
       case 'container-stats': 
         if (!containerId) return new Response(JSON.stringify({ error: 'containerId required' }), { status: 400, headers });
         dockerPath = `/containers/${sanitizeContainerId(containerId)}/stats?stream=false`; 
+        timeoutMs = 5000;
         break;
       case 'container-logs': 
         if (!containerId) return new Response(JSON.stringify({ error: 'containerId required' }), { status: 400, headers });
         dockerPath = `/containers/${sanitizeContainerId(containerId)}/logs?stdout=true&stderr=true&tail=${params?.tail || 100}&timestamps=true`; 
+        timeoutMs = 6000;
         break;
       case 'container-start': 
         if (!containerId) return new Response(JSON.stringify({ error: 'containerId required' }), { status: 400, headers });
         dockerPath = `/containers/${sanitizeContainerId(containerId)}/start`; method = 'POST'; 
+        timeoutMs = 8000;
         break;
       case 'container-stop': 
         if (!containerId) return new Response(JSON.stringify({ error: 'containerId required' }), { status: 400, headers });
         dockerPath = `/containers/${sanitizeContainerId(containerId)}/stop`; method = 'POST'; 
+        timeoutMs = 8000;
         break;
       case 'container-restart': 
         if (!containerId) return new Response(JSON.stringify({ error: 'containerId required' }), { status: 400, headers });
         dockerPath = `/containers/${sanitizeContainerId(containerId)}/restart`; method = 'POST'; 
+        timeoutMs = 8000;
         break;
       default:
         return new Response(JSON.stringify({ error: `Unknown action: ${action}` }), { status: 400, headers });
     }
 
     const reqData = buildRequest(host as any, secrets, dockerPath, method);
-    const dockerResponse = await dockerFetch(reqData.url, reqData.method, reqData.headers);
+    const dockerResponse = await dockerFetch(reqData.url, reqData.method, reqData.headers, timeoutMs);
 
     if (action === 'ping') {
       const text = await dockerResponse.text();
@@ -187,6 +279,9 @@ export default async (req: Request) => {
     }
 
     if (action === 'container-logs') {
+      if (dockerResponse.status === 413) {
+        return new Response(JSON.stringify({ error: 'Logs too large (exceeded 4MB limit)' }), { status: 413, headers });
+      }
       const rawBytes = new Uint8Array(await dockerResponse.arrayBuffer());
       const lines: string[] = [];
       let offset = 0;

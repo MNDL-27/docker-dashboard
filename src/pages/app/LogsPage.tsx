@@ -3,13 +3,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Search, Loader2, RefreshCw, FileText } from "lucide-react";
 import { useState } from "react";
-import { useOrganization } from "@/contexts/OrganizationContext";
+import { useOrganization } from "@clerk/clerk-react";
 import { useDockerHosts } from "@/hooks/useDocker";
 import { dockerApi } from "@/services/docker-api";
 import { Link } from "react-router-dom";
 
 export default function LogsPage() {
-  const { currentOrg } = useOrganization();
+  const { organization: currentOrg } = useOrganization();
   const { data: hosts = [] } = useDockerHosts(currentOrg?.id);
   const [selectedHost, setSelectedHost] = useState<string>("");
   const [selectedContainer, setSelectedContainer] = useState<string>("");

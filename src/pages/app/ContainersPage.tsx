@@ -4,11 +4,11 @@ import { Input } from "@/components/ui/input";
 import { Search, Loader2, Box } from "lucide-react";
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { useOrganization } from "@/contexts/OrganizationContext";
+import { useOrganization } from "@clerk/clerk-react";
 import { useContainers } from "@/hooks/useDocker";
 
 export default function ContainersPage() {
-  const { currentOrg } = useOrganization();
+  const { organization: currentOrg } = useOrganization();
   const { data: rawContainers, isLoading, error } = useContainers(currentOrg?.id);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");

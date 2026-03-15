@@ -1,7 +1,8 @@
 const API_BASE = import.meta.env.VITE_API_BASE_URL || '/api';
 
 export async function apiFetch(path: string, options: RequestInit = {}) {
-  const token = localStorage.getItem('auth_token');
+  // @ts-expect-error window.Clerk is injected globally 
+  const token = await window.Clerk?.session?.getToken();
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
     ...((options.headers as Record<string, string>) || {}),

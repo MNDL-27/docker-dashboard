@@ -1,6 +1,6 @@
 import type { Config } from '@netlify/functions';
+import { requireAuth } from './lib/auth.mjs';
 import { sql } from './lib/db.mjs';
-import { getUserFromHeader } from './lib/auth.mjs';
 
 const headers = {
   'Access-Control-Allow-Origin': '*',
@@ -14,19 +14,12 @@ export default async (req: Request) => {
   }
 
   try {
-    const user = getUserFromHeader(req.headers.get('Authorization'));
+    const auth = await requireAuth(req);
 
-    if (req.method === 'PUT') {
-      const { full_name } = await req.json();
-      
-      const updated = await sql`
-        UPDATE users 
-        SET full_name = ${full_name} 
-        WHERE id = ${user.id}
-        RETURNING id, email, full_name, avatar_url
-      `;
-      
-      return new Response(JSON.stringify(updated[0]), { headers });
+    if (req.method === 'GET') {
+      const users = await sql`SELECT email, full_name, avatar_url FROM users WHERE id = ${auth.userId}`;
+      if (!users.length) return new Response('User not sync', { status: 404 });
+      return new Response(JSON.stringify(users[0]), { headers });
     }
 
     return new Response(JSON.stringify({ error: 'Method not allowed' }), { status: 405, headers });

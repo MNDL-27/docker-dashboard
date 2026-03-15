@@ -4,8 +4,6 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AppShell } from "@/components/layout/AppShell";
-import { AuthProvider } from "@/contexts/AuthContext";
-import { OrganizationProvider } from "@/contexts/OrganizationContext";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import LandingPage from "./pages/LandingPage";
 import FeaturesPage from "./pages/FeaturesPage";
@@ -13,10 +11,9 @@ import PricingPage from "./pages/PricingPage";
 import SecurityPage from "./pages/SecurityPage";
 import DocsPage from "./pages/DocsPage";
 import ContactPage from "./pages/ContactPage";
+import { ClerkProvider } from "@clerk/clerk-react";
 import LoginPage from "./pages/LoginPage";
 import SignupPage from "./pages/SignupPage";
-import ForgotPasswordPage from "./pages/ForgotPasswordPage";
-import ResetPasswordPage from "./pages/ResetPasswordPage";
 import OnboardingPage from "./pages/OnboardingPage";
 import DashboardPage from "./pages/app/DashboardPage";
 import HostsPage from "./pages/app/HostsPage";
@@ -50,12 +47,11 @@ const DarkModeInit = ({ children }: { children: React.ReactNode }) => {
 };
 
 const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <AuthProvider>
-        <OrganizationProvider>
-          <DarkModeInit>
-            <Toaster />
+  <ClerkProvider publishableKey={import.meta.env.VITE_CLERK_PUBLISHABLE_KEY}>
+    <QueryClientProvider client={queryClient}>
+      <TooltipProvider>
+        <DarkModeInit>
+          <Toaster />
             <Sonner />
             <BrowserRouter>
               <Routes>
@@ -69,8 +65,6 @@ const App = () => (
                 {/* Auth */}
                 <Route path="/login" element={<LoginPage />} />
                 <Route path="/signup" element={<SignupPage />} />
-                <Route path="/forgot-password" element={<ForgotPasswordPage />} />
-                <Route path="/reset-password" element={<ResetPasswordPage />} />
                 <Route path="/onboarding" element={<OnboardingPage />} />
                 {/* App Shell - Protected */}
                 <Route path="/app" element={<ProtectedRoute><AppShell /></ProtectedRoute>}>
@@ -97,10 +91,9 @@ const App = () => (
               </Routes>
             </BrowserRouter>
           </DarkModeInit>
-        </OrganizationProvider>
-      </AuthProvider>
-    </TooltipProvider>
-  </QueryClientProvider>
+      </TooltipProvider>
+    </QueryClientProvider>
+  </ClerkProvider>
 );
 
 export default App;

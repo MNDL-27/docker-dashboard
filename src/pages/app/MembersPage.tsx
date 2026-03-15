@@ -1,12 +1,12 @@
 import { PageHeader } from "@/components/shared/PageHeader";
 import { StatusBadge } from "@/components/shared/StatusBadge";
 import { Loader2, Users } from "lucide-react";
-import { useOrganization } from "@/contexts/OrganizationContext";
+import { useOrganization } from "@clerk/clerk-react";
 import { useQuery } from "@tanstack/react-query";
 import { apiFetch } from "@/lib/api";
 
 export default function MembersPage() {
-  const { currentOrg } = useOrganization();
+  const { organization: currentOrg } = useOrganization();
 
   const { data: members = [], isLoading } = useQuery({
     queryKey: ['org-members', currentOrg?.id],

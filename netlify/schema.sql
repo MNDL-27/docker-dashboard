@@ -2,28 +2,32 @@
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
 -- Step 2: Users (Replaces Supabase auth.users & public.profiles)
-CREATE TABLE public.users (
+CREATE TABLE IF NOT EXISTS public.users (
   id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
   email text UNIQUE NOT NULL,
-  password_hash text NOT NULL,
+  password_hash text,
   full_name text,
   avatar_url text,
+  clerk_user_id text UNIQUE,
   created_at timestamptz NOT NULL DEFAULT now(),
   updated_at timestamptz NOT NULL DEFAULT now()
 );
+ALTER TABLE public.users ADD COLUMN IF NOT EXISTS clerk_user_id text UNIQUE;
 
 -- Step 3: Organizations
-CREATE TABLE public.organizations (
+CREATE TABLE IF NOT EXISTS public.organizations (
   id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
   name text NOT NULL,
   slug text UNIQUE NOT NULL,
+  clerk_org_id text UNIQUE,
   created_by uuid NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
   created_at timestamptz NOT NULL DEFAULT now(),
   updated_at timestamptz NOT NULL DEFAULT now()
 );
+ALTER TABLE public.organizations ADD COLUMN IF NOT EXISTS clerk_org_id text UNIQUE;
 
 -- Step 4: Organization Members
-CREATE TABLE public.organization_members (
+CREATE TABLE IF NOT EXISTS public.organization_members (
   id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
   organization_id uuid NOT NULL REFERENCES public.organizations(id) ON DELETE CASCADE,
   user_id uuid NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
@@ -33,7 +37,7 @@ CREATE TABLE public.organization_members (
 );
 
 -- Step 5: Docker Hosts
-CREATE TABLE public.docker_hosts (
+CREATE TABLE IF NOT EXISTS public.docker_hosts (
   id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
   organization_id uuid NOT NULL REFERENCES public.organizations(id) ON DELETE CASCADE,
   name text NOT NULL,
@@ -52,7 +56,7 @@ CREATE TABLE public.docker_hosts (
 );
 
 -- Step 6: Docker Host Secrets (No selecting by frontend)
-CREATE TABLE public.docker_host_secrets (
+CREATE TABLE IF NOT EXISTS public.docker_host_secrets (
   id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
   host_id uuid REFERENCES public.docker_hosts(id) ON DELETE CASCADE NOT NULL UNIQUE,
   agent_api_key text,
@@ -63,12 +67,12 @@ CREATE TABLE public.docker_host_secrets (
 );
 
 -- Step 7: Mock Agent Config 
-CREATE TABLE public.mock_agent_config (
+CREATE TABLE IF NOT EXISTS public.mock_agent_config (
   id integer PRIMARY KEY DEFAULT 1 CHECK (id = 1),
   mode text NOT NULL DEFAULT 'success',
   created_at timestamptz NOT NULL DEFAULT now()
 );
-INSERT INTO public.mock_agent_config (id, mode) VALUES (1, 'success');
+INSERT INTO public.mock_agent_config (id, mode) VALUES (1, 'success') ON CONFLICT DO NOTHING;
 
 -- Step 8: Update Triggers
 CREATE OR REPLACE FUNCTION update_updated_at_column()
@@ -79,9 +83,16 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+DROP TRIGGER IF EXISTS update_users_updated_at ON public.users;
 CREATE TRIGGER update_users_updated_at BEFORE UPDATE ON public.users FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+DROP TRIGGER IF EXISTS update_organizations_updated_at ON public.organizations;
 CREATE TRIGGER update_organizations_updated_at BEFORE UPDATE ON public.organizations FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+DROP TRIGGER IF EXISTS update_docker_hosts_updated_at ON public.docker_hosts;
 CREATE TRIGGER update_docker_hosts_updated_at BEFORE UPDATE ON public.docker_hosts FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+DROP TRIGGER IF EXISTS update_docker_host_secrets_updated_at ON public.docker_host_secrets;
 CREATE TRIGGER update_docker_host_secrets_updated_at BEFORE UPDATE ON public.docker_host_secrets FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
 -- Function to create organization and auto-add owner

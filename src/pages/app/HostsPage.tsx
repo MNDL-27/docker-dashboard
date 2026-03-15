@@ -2,7 +2,7 @@ import { PageHeader } from "@/components/shared/PageHeader";
 import { Button } from "@/components/ui/button";
 import { Loader2, Trash2, RefreshCw, Wifi, WifiOff, Terminal, CloudCog } from "lucide-react";
 import { Link } from "react-router-dom";
-import { useOrganization } from "@/contexts/OrganizationContext";
+import { useOrganization } from "@clerk/clerk-react";
 import { useDockerHosts, useDeleteDockerHost } from "@/hooks/useDocker";
 import { AddHostDialog } from "@/components/docker/AddHostDialog";
 import { dockerApi } from "@/services/docker-api";
@@ -10,7 +10,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useState } from "react";
 
 export default function HostsPage() {
-  const { currentOrg } = useOrganization();
+  const { organization: currentOrg } = useOrganization();
   const { data: hosts = [], isLoading, refetch } = useDockerHosts(currentOrg?.id);
   const deleteHost = useDeleteDockerHost();
   const { toast } = useToast();
