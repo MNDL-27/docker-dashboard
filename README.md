@@ -1,73 +1,259 @@
-# Welcome to your Lovable project
+# Docker Watchtower Dashboard
 
-## Project info
+A self-hosted Docker fleet management dashboard. Monitor containers, view logs, and track host health across your infrastructure — all from a single pane of glass.
 
-**URL**: https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID
+**Stack:** React · Vite · Tailwind CSS · Netlify Functions · Neon Postgres
 
-## How can I edit this code?
+---
 
-There are several ways of editing your application.
+## Prerequisites
 
-**Use Lovable**
+| Requirement | Version | Notes |
+|---|---|---|
+| **Node.js** | ≥ 20 | [Install via nvm](https://github.com/nvm-sh/nvm#installing-and-updating) |
+| **npm** | ≥ 9 | Bundled with Node.js |
+| **Neon Postgres database** | — | Free tier works. [Create one at neon.tech](https://neon.tech) |
+| **Netlify CLI** | ≥ 17 | Installed automatically as a dev dependency |
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and start prompting.
+---
 
-Changes made via Lovable will be committed automatically to this repo.
-
-**Use your preferred IDE**
-
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
-
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
-
-Follow these steps:
+## 1. Clone & Install
 
 ```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
-
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
+git clone https://github.com/MNDL-27/docker-watchtower-dash.git
+cd docker-watchtower-dash
+npm install
 ```
 
-**Edit a file directly in GitHub**
+---
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+## 2. Configure Environment Variables
 
-**Use GitHub Codespaces**
+Copy the example file and fill in your values:
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+```sh
+cp .env.example .env
+```
 
-## What technologies are used for this project?
+Then edit `.env`:
 
-This project is built with:
+```env
+# ── Frontend ──────────────────────────────────────────────
+VITE_API_BASE_URL="/api"
+# The base path for API requests. Leave as "/api" for local
+# development and production on Netlify.
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+# ── Database ──────────────────────────────────────────────
+NETLIFY_DATABASE_URL="postgresql://<user>:<password>@<host>/neondb?sslmode=require"
+# Your Neon Postgres connection string. Find it in the Neon
+# dashboard under "Connection Details". Use the pooled
+# connection string for best performance.
 
-## How can I deploy this project?
+# ── Authentication ────────────────────────────────────────
+JWT_SECRET="replace-with-a-long-random-string"
+# Secret used to sign and verify JWT tokens. Generate one:
+#   node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
 
-Simply open [Lovable](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and click on Share -> Publish.
+# ── Health Poller ─────────────────────────────────────────
+HEALTH_POLL_SECRET="replace-with-another-random-string"
+# Shared secret that authorizes calls to the host health
+# polling endpoint. Used by the scheduled cron job (or
+# manual invocations in local dev).
+```
 
-## Can I connect a custom domain to my Lovable project?
+> **All four variables are required.** The app will not boot without `NETLIFY_DATABASE_URL` and `JWT_SECRET`.
 
-Yes, you can!
+---
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+## 3. Initialize the Database
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+The repository includes a schema file and an initialization script. Run it once against your empty Neon database:
+
+```sh
+node netlify/init-db.mjs
+```
+
+**What this does:** Executes `netlify/schema.sql`, which creates the `users`, `organizations`, `organization_members`, `docker_hosts`, `docker_host_secrets`, and `mock_agent_config` tables, along with triggers and helper functions.
+
+> ⚠️ **This script assumes a blank database.** If tables already exist, it will fail. To reset, drop and recreate the `public` schema in the Neon console first.
+
+---
+
+## 4. Start the Application
+
+```sh
+npx netlify dev
+```
+
+This boots:
+- The **Vite dev server** on port 8080 (frontend hot-reload)
+- The **Netlify Functions server** on port 8888 (API + serverless functions)
+
+Open **http://localhost:8888** in your browser.
+
+---
+
+## 5. First-Login Flow
+
+1. Click **Start Free** or navigate to `/signup`.
+2. Enter your **full name**, **email**, and **password**.
+3. Click **Sign up**. You'll be redirected to the login page.
+4. Log in with the credentials you just created.
+
+---
+
+## 6. Create Your Organization
+
+After your first login, the dashboard will prompt you:
+
+1. Click **Create Organization**.
+2. Enter an organization name (e.g., `My Team`).
+3. Click **Create Organization** again to confirm.
+
+You'll land on the main dashboard, ready to add hosts.
+
+---
+
+## 7. Add Your First Docker Host
+
+Navigate to **Infrastructure → Hosts** in the sidebar, then click **Connect Host**.
+
+| Field | What to Enter |
+|---|---|
+| **Connection Method** | `Agent (Direct)` — for a Watchtower Agent on the host |
+| **Host Name** | A friendly label, e.g. `prod-server-01` |
+| **Agent URL** | The HTTPS URL where your agent is running (e.g. `https://your-host:9876`) |
+| **Docker Socket Path** | Leave as `/var/run/docker.sock` unless non-standard |
+| **Agent API Key** | The shared secret configured on your agent |
+
+Click **Save & Test Connection**. The dashboard saves the host and immediately pings it.
+
+### ⚠️ UI Note: "Agent API Key" During Local Testing
+
+The **Agent API Key** field is mandatory in the UI. When testing locally against the built-in mock agent (`http://localhost:8888/api/mock-docker-agent`), enter **any non-empty string** (e.g. `test-key`). The mock agent accepts any value. This field is required because production agents always need authentication.
+
+---
+
+## 8. How Polling Works
+
+The host health poller (`/api/host-health-poll`) pings all registered Docker hosts and updates their status in the database. The frontend auto-refreshes every **30 seconds** — no manual action needed after the initial setup.
+
+### In Production (Netlify)
+
+Set up a **Netlify Scheduled Function** or external cron service (e.g. cron-job.org) to hit:
+
+```
+GET https://your-site.netlify.app/api/host-health-poll
+Header: x-cron-secret: <your HEALTH_POLL_SECRET value>
+```
+
+A 60-second interval is recommended.
+
+### In Local Development
+
+The poller does **not** run automatically during `netlify dev`. You have two options:
+
+**Option A — Manual one-shot poll:**
+```sh
+curl http://localhost:8888/api/host-health-poll -H "x-cron-secret: <your HEALTH_POLL_SECRET>"
+```
+
+**Option B — Simple loop (runs every 10 seconds):**
+```sh
+# PowerShell
+while ($true) { Invoke-RestMethod http://localhost:8888/api/host-health-poll -Headers @{"x-cron-secret"="your-secret"}; Start-Sleep 10 }
+
+# Bash / macOS / Linux
+while true; do curl -s http://localhost:8888/api/host-health-poll -H "x-cron-secret: your-secret"; sleep 10; done
+```
+
+### What Success Looks Like
+
+After polling, a healthy host will show:
+
+| DB Field | Value |
+|---|---|
+| `status` | `connected` |
+| `last_seen_at` | Recent timestamp |
+| `consecutive_failures` | `0` |
+| `last_error` | `null` |
+| `docker_version` | e.g. `27.0.3` |
+
+In the UI, the host row displays a **green "connected" badge**, the Docker version, and the last-seen time. No error text is visible.
+
+If a host fails, `consecutive_failures` increments. After **3 consecutive failures**, status escalates from `error` to `unhealthy` (red badge with error text).
+
+---
+
+## Common Setup Mistakes
+
+| Symptom | Cause | Fix |
+|---|---|---|
+| `NETLIFY_DATABASE_URL is required` | Missing `.env` or variable not set | Copy `.env.example` to `.env` and fill in all values |
+| `init-db.mjs` fails with "relation already exists" | Schema was already applied | Drop the `public` schema in Neon console, then re-run `node netlify/init-db.mjs` |
+| App loads but API calls return 401 | `JWT_SECRET` missing or wrong | Ensure `JWT_SECRET` is set in `.env` and restart `netlify dev` |
+| Hosts stay "unknown" forever | Poller never ran | The poller doesn't auto-run locally. See [How Polling Works](#8-how-polling-works) |
+| "API Key required" toast when adding host | Agent API Key field left blank | Enter any non-empty string for local/mock testing |
+| `netlify dev` fails to start | Port 8888 already in use | Kill any other `netlify dev` process, or check for port conflicts |
+| Signup succeeds but login fails | Typo in password during signup | Re-register with a new email or reset the database |
+
+---
+
+## Minimum Successful Install Checklist
+
+Use this after a fresh setup to verify everything works:
+
+- [ ] `npm install` completes without errors
+- [ ] `.env` file exists with all four required variables
+- [ ] `node netlify/init-db.mjs` prints `✓ Successfully initialized schema`
+- [ ] `npx netlify dev` starts without errors, shows "ready on port 8080"
+- [ ] http://localhost:8888 loads the landing page
+- [ ] Signup with a new email succeeds
+- [ ] Login with that email succeeds
+- [ ] Organization creation prompt appears and works
+- [ ] Adding a host with the mock agent URL succeeds
+- [ ] After triggering the poller, the host status becomes "connected" (green badge)
+- [ ] The "Last Seen" column shows a recent timestamp
+
+---
+
+## Project Structure
+
+```
+├── netlify/
+│   ├── functions/         # Netlify serverless functions (API)
+│   │   ├── api-docker-hosts.mts      # CRUD for Docker hosts
+│   │   ├── api-docker-proxy.mts      # Proxies Docker API calls to agents
+│   │   ├── api-host-health-poll.mts  # Scheduled health poller
+│   │   ├── api-mock-docker-agent.mts # Built-in mock agent for testing
+│   │   ├── auth-login.mts           # JWT authentication
+│   │   ├── auth-signup.mts          # User registration
+│   │   └── lib/                     # Shared DB + auth helpers
+│   ├── schema.sql         # Database schema
+│   ├── init-db.mjs        # Schema initialization script
+│   └── check-db.mjs       # Quick DB inspection utility
+├── src/
+│   ├── components/        # React UI components
+│   ├── contexts/          # Auth + Organization context providers
+│   ├── hooks/             # React Query hooks (useDockerHosts, etc.)
+│   ├── pages/             # Route pages (landing, app, auth)
+│   ├── services/          # Docker API client
+│   └── types/             # TypeScript type definitions
+├── netlify.toml           # Netlify build + redirect config
+└── .env.example           # Template for environment variables
+```
+
+---
+
+## Tech Stack
+
+- **Frontend:** React 18, Vite, TypeScript, Tailwind CSS, shadcn/ui, React Query
+- **Backend:** Netlify Functions (serverless), Neon Postgres
+- **Auth:** JWT (bcrypt password hashing, Bearer token)
+- **Deployment:** Netlify (or any platform supporting Netlify Functions)
+
+---
+
+## License
+
+Private — All rights reserved.
