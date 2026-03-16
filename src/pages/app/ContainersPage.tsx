@@ -5,11 +5,12 @@ import { Search, Loader2, Box } from "lucide-react";
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { useOrganization } from "@clerk/clerk-react";
-import { useContainers } from "@/hooks/useDocker";
+import { useContainers, useDockerHosts } from "@/hooks/useDocker";
 
 export default function ContainersPage() {
   const { organization: currentOrg } = useOrganization();
-  const { data: rawContainers, isLoading, error } = useContainers(currentOrg?.id);
+  const { data: hosts = [], isLoading: hostsLoading } = useDockerHosts(currentOrg?.id);
+  const { data: rawContainers, isLoading: containersLoading, error } = useContainers(hosts.length > 0 ? currentOrg?.id : null);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
 
@@ -25,7 +26,7 @@ export default function ContainersPage() {
   const statuses = ["all", "running", "exited", "paused", "restarting", "created"];
   const hostCount = new Set(containers.map((c: any) => c._hostId)).size;
 
-  if (isLoading) {
+  if (hostsLoading || containersLoading) {
     return <div className="flex items-center justify-center h-64"><Loader2 className="h-8 w-8 animate-spin text-muted-foreground" /></div>;
   }
 
@@ -53,9 +54,9 @@ export default function ContainersPage() {
           <Box className="h-10 w-10 text-muted-foreground mx-auto mb-4" />
           <h2 className="text-lg font-semibold mb-2">No containers found</h2>
           <p className="text-sm text-muted-foreground mb-4">
-            {currentOrg ? "Connect a Docker host first, then containers will appear here." : "No organization selected."}
+            {hosts.length === 0 ? "Connect a Docker host first, then containers will appear here." : "No containers are currently running on your connected hosts."}
           </p>
-          <Link to="/app/hosts"><Button variant="outline">Go to Hosts</Button></Link>
+          {hosts.length === 0 && <Link to="/app/hosts"><Button variant="outline">Go to Hosts</Button></Link>}
         </div>
       ) : (
         <>
@@ -87,7 +88,7 @@ export default function ContainersPage() {
                   <tr key={c.Id} className="border-b border-border last:border-0 hover:bg-accent/30 transition-colors">
                     <td className="p-3">
                       <Link to={`/app/containers/${c.Id?.substring(0, 12)}?host=${c._hostId}`} className="font-medium text-primary hover:underline">
-                        {(c.Names?.[0] || c.Id?.substring(0, 12)).replace(/^\//, '')}
+                        {(c.Names?.[0] || (c.Id ? c.Id.substring(0, 12) : 'unknown')).replace(/^\//, '')}
                       </Link>
                     </td>
                     <td className="p-3">

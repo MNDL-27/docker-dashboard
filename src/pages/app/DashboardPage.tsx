@@ -20,7 +20,8 @@ export default function DashboardPage() {
   const orgLoading = !orgLoaded || !listLoaded;
 
   const { data: hosts = [], isLoading: hostsLoading } = useDockerHosts(currentOrg?.id);
-  const { data: containers = [], isLoading: containersLoading } = useContainers(currentOrg?.id);
+  // Only try to fetch containers if we actually have connected hosts
+  const { data: containers = [], isLoading: containersLoading } = useContainers(hosts.length > 0 ? currentOrg?.id : null);
   const [creatingOrg, setCreatingOrg] = useState(false);
   const [orgName, setOrgName] = useState("");
 
