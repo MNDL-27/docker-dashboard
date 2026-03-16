@@ -76,6 +76,8 @@ function InfoBox({ variant = "info", children }: { variant?: "info" | "warning" 
 }
 
 export default function SetupGuidePage() {
+  const baseUrl = typeof window !== 'undefined' ? window.location.origin : 'https://dockerdash.mndl.eu.org';
+
   return (
     <div className="space-y-6 animate-fade-in max-w-4xl">
       <PageHeader
@@ -143,7 +145,7 @@ export default function SetupGuidePage() {
             <CopyBlock
               label="Dev connector (testing only)"
               code={`# Download the dev connector
-curl -fsSL https://your-watchtower-instance/watchtower-dev-connector.sh -o watchtower-dev-connector.sh
+curl -fsSL ${baseUrl}/watchtower-dev-connector.sh -o watchtower-dev-connector.sh
 chmod +x watchtower-dev-connector.sh
 
 # Run with your API key
