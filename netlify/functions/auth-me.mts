@@ -17,9 +17,11 @@ export default async (req: Request) => {
     const authContext = await requireAuth(req, { requireOrg: false, requireApproved: false });
 
     const users = await sql`
-      SELECT id, email, full_name, avatar_url, is_approved 
-      FROM users 
-      WHERE id = ${authContext.userId}
+      SELECT 
+        u.id, u.email, u.full_name, u.avatar_url, u.is_approved,
+        EXISTS(SELECT 1 FROM organization_members om WHERE om.user_id = u.id) as has_orgs
+      FROM users u
+      WHERE u.id = ${authContext.userId}
     `;
 
     if (users.length === 0) {

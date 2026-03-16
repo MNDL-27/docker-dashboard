@@ -66,7 +66,7 @@ const App = () => (
                 <Route path="/login" element={<LoginPage />} />
                 <Route path="/signup" element={<Navigate to="/login" replace />} />
                 <Route path="/beta-gate" element={<BetaGatePage />} />
-                <Route path="/onboarding" element={<OnboardingPage />} />
+                <Route path="/onboarding" element={<ProtectedRoute requireOnboarded={false}><OnboardingPage /></ProtectedRoute>} />
                 {/* App Shell - Protected */}
                 <Route path="/app" element={<ProtectedRoute><AppShell /></ProtectedRoute>}>
                   <Route index element={<DashboardPage />} />
