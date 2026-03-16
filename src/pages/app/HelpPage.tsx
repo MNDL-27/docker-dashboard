@@ -1,17 +1,10 @@
 import { PageHeader } from "@/components/shared/PageHeader";
-import { Button } from "@/components/ui/button";
-import { BookOpen, MessageCircle, FileText, ExternalLink } from "lucide-react";
+import { BookOpen, MessageCircle, FileText, Construction } from "lucide-react";
 
 const resources = [
   { icon: BookOpen, title: "Documentation", desc: "Guides, API reference, and tutorials", link: "#" },
   { icon: FileText, title: "Changelog", desc: "Latest updates and release notes", link: "#" },
   { icon: MessageCircle, title: "Community", desc: "Join the Docker Dashboard community", link: "#" },
-];
-
-const changelog = [
-  { version: "v1.4.2", date: "Jan 10, 2024", changes: ["Improved container metrics accuracy", "Added Slack thread notifications", "Fixed agent reconnection on network flap"] },
-  { version: "v1.4.1", date: "Dec 28, 2023", changes: ["New log search syntax", "PagerDuty integration", "Performance improvements for large fleets"] },
-  { version: "v1.4.0", date: "Dec 15, 2023", changes: ["Incident management system", "Custom dashboards", "Team SSO support", "Audit log export"] },
 ];
 
 export default function HelpPage() {
@@ -33,23 +26,12 @@ export default function HelpPage() {
 
       <div>
         <h3 className="text-lg font-semibold mb-4">Changelog</h3>
-        <div className="space-y-4">
-          {changelog.map(entry => (
-            <div key={entry.version} className="glass-card p-5">
-              <div className="flex items-center gap-3 mb-3">
-                <span className="text-sm font-semibold text-primary">{entry.version}</span>
-                <span className="text-xs text-muted-foreground">{entry.date}</span>
-              </div>
-              <ul className="space-y-1.5">
-                {entry.changes.map(c => (
-                  <li key={c} className="text-sm text-muted-foreground flex items-center gap-2">
-                    <span className="w-1 h-1 rounded-full bg-primary shrink-0" />
-                    {c}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          ))}
+        <div className="glass-card p-12 text-center">
+          <Construction className="h-10 w-10 text-muted-foreground mx-auto mb-3" />
+          <h3 className="font-medium mb-1">Coming Soon</h3>
+          <p className="text-sm text-muted-foreground max-w-sm mx-auto">
+            Release notes and product updates will be integrated here soon.
+          </p>
         </div>
       </div>
     </div>

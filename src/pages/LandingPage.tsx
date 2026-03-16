@@ -64,7 +64,7 @@ export default function LandingPage() {
         <div className="max-w-4xl mx-auto px-4 text-center">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-medium mb-6">
             <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse-dot" />
-            Now monitoring 50,000+ containers
+            Watchtower Private Beta
           </div>
           <h1 className="text-4xl md:text-6xl font-bold tracking-tight leading-tight mb-6">
             Monitor your Docker fleet<br />
@@ -115,25 +115,8 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* Metrics */}
-      <section className="py-16 bg-card/30 border-y border-border">
-        <div className="max-w-4xl mx-auto px-4 grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
-          {[
-            { value: "50K+", label: "Containers monitored" },
-            { value: "2,000+", label: "Teams" },
-            { value: "99.99%", label: "Uptime SLA" },
-            { value: "<1s", label: "Metric latency" },
-          ].map(m => (
-            <div key={m.label}>
-              <div className="text-3xl font-bold text-gradient">{m.value}</div>
-              <div className="text-sm text-muted-foreground mt-1">{m.label}</div>
-            </div>
-          ))}
-        </div>
-      </section>
-
       {/* Pricing */}
-      <section className="py-20">
+      <section className="py-20 border-t border-border">
         <div className="max-w-5xl mx-auto px-4">
           <div className="text-center mb-12">
             <h2 className="text-3xl font-bold tracking-tight mb-3">Simple, transparent pricing</h2>

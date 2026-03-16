@@ -1,55 +1,63 @@
 import { PageHeader } from "@/components/shared/PageHeader";
 import { MetricCard } from "@/components/shared/MetricCard";
-import { StatusBadge } from "@/components/shared/StatusBadge";
 import { Button } from "@/components/ui/button";
-import { Building2, Users, Server, CreditCard, Shield, AlertTriangle, Flag, Headphones } from "lucide-react";
-
-const adminOrgs = [
-  { name: "Acme Cloud", plan: "Team", hosts: 24, members: 12, status: "healthy" as const, mrr: "$79" },
-  { name: "DevStack Inc", plan: "Pro", hosts: 8, members: 4, status: "healthy" as const, mrr: "$29" },
-  { name: "CloudNine Labs", plan: "Enterprise", hosts: 120, members: 45, status: "warning" as const, mrr: "$499" },
-  { name: "StartupXYZ", plan: "Free", hosts: 2, members: 1, status: "healthy" as const, mrr: "$0" },
-];
+import { Building2, Users, Server, Shield, AlertTriangle, Flag, Headphones, Loader2 } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { apiFetch } from "@/lib/api";
 
 export default function AdminPage() {
+  const { data, isLoading, error } = useQuery({
+    queryKey: ['admin-stats'],
+    queryFn: async () => {
+      const res = await apiFetch('/admin/stats');
+      if (res.error) throw new Error(res.error);
+      return res.stats;
+    },
+    retry: false
+  });
+
+  if (isLoading) {
+    return <div className="flex items-center justify-center h-64"><Loader2 className="h-8 w-8 animate-spin text-muted-foreground" /></div>;
+  }
+
+  if (error) {
+    return (
+      <div className="space-y-6 animate-fade-in">
+        <PageHeader title="Admin" description="Platform administration and operations" breadcrumbs={[{ label: "Admin" }]} />
+        <div className="glass-card p-12 text-center text-destructive">
+          Failed to load admin statistics. You may not have administrative privileges.
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6 animate-fade-in">
       <PageHeader title="Admin" description="Platform administration and operations" breadcrumbs={[{ label: "Admin" }]} />
 
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <MetricCard label="Total Orgs" value="247" change="+12 this month" changeType="positive" icon={Building2} />
-        <MetricCard label="Total Users" value="1,834" change="+89" changeType="positive" icon={Users} />
-        <MetricCard label="Active Hosts" value="3,412" icon={Server} />
-        <MetricCard label="MRR" value="$34.2K" change="+8%" changeType="positive" icon={CreditCard} />
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+        <MetricCard label="Total Orgs" value={data?.totalOrgs ?? 0} icon={Building2} />
+        <MetricCard label="Total Users" value={data?.totalUsers ?? 0} icon={Users} />
+        <MetricCard label="Active Hosts" value={data?.activeHosts ?? 0} icon={Server} />
       </div>
 
       <div className="grid lg:grid-cols-2 gap-4">
         {/* Organizations */}
-        <div className="glass-card p-4">
-          <h3 className="text-sm font-medium mb-3">Customer Organizations</h3>
-          <div className="space-y-2">
-            {adminOrgs.map(org => (
-              <div key={org.name} className="flex items-center justify-between py-2 border-b border-border last:border-0">
-                <div>
-                  <div className="text-sm font-medium">{org.name}</div>
-                  <div className="text-xs text-muted-foreground">{org.plan} • {org.hosts} hosts • {org.members} members</div>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="text-sm font-medium">{org.mrr}/mo</span>
-                  <StatusBadge status={org.status} />
-                </div>
-              </div>
-            ))}
-          </div>
+        <div className="glass-card p-12 text-center">
+          <Building2 className="h-10 w-10 text-muted-foreground mx-auto mb-3" />
+          <h3 className="font-medium mb-1">Detailed Directory Coming Soon</h3>
+          <p className="text-sm text-muted-foreground max-w-sm mx-auto">
+            Platform-wide administration tools for organizing tenants and troubleshooting infrastructure will appear here.
+          </p>
         </div>
 
         {/* Admin Quick Links */}
         <div className="space-y-3">
           {[
-            { icon: Shield, title: "Platform Security", desc: "Security scan results and policies", status: "All clear" },
-            { icon: AlertTriangle, title: "Platform Status", desc: "System health and incident history", status: "Operational" },
-            { icon: Flag, title: "Feature Flags", desc: "Manage feature rollouts", status: "12 active" },
-            { icon: Headphones, title: "Support Queue", desc: "Customer support tickets", status: "3 open" },
+            { icon: Shield, title: "Platform Security", desc: "Security scan results and policies" },
+            { icon: AlertTriangle, title: "Platform Status", desc: "System health and incident history" },
+            { icon: Flag, title: "Feature Flags", desc: "Manage feature rollouts" },
+            { icon: Headphones, title: "Support Queue", desc: "Customer support tickets" },
           ].map(item => (
             <div key={item.title} className="glass-card p-4 flex items-center justify-between hover:bg-accent/30 transition-colors cursor-pointer">
               <div className="flex items-center gap-3">
@@ -61,7 +69,6 @@ export default function AdminPage() {
                   <div className="text-xs text-muted-foreground">{item.desc}</div>
                 </div>
               </div>
-              <span className="text-xs text-muted-foreground">{item.status}</span>
             </div>
           ))}
         </div>
