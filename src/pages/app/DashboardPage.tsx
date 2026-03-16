@@ -21,7 +21,7 @@ export default function DashboardPage() {
 
   const { data: hosts = [], isLoading: hostsLoading } = useDockerHosts(currentOrg?.id);
   // Only try to fetch containers if we actually have connected hosts
-  const { data: containers = [], isLoading: containersLoading } = useContainers(hosts.length > 0 ? currentOrg?.id : null);
+  const { data: containers = [], isLoading: containersLoading } = useContainers(currentOrg?.id, hosts.length > 0);
   const [creatingOrg, setCreatingOrg] = useState(false);
   const [orgName, setOrgName] = useState("");
 
@@ -81,7 +81,7 @@ export default function DashboardPage() {
         <PageHeader title="Dashboard" description={`Organization: ${currentOrg?.name}`} />
         <div className="glass-card p-12 text-center">
           <Server className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-          <h2 className="text-lg font-semibold mb-2">No Docker hosts connected</h2>
+          <h2 className="text-lg font-semibold mb-2">No hosts connected yet</h2>
           <p className="text-sm text-muted-foreground mb-6 max-w-md mx-auto">
             Connect your first Docker host to start monitoring containers, viewing logs, and managing your infrastructure in real time.
           </p>

@@ -10,7 +10,7 @@ import { useContainers, useDockerHosts } from "@/hooks/useDocker";
 export default function ContainersPage() {
   const { organization: currentOrg } = useOrganization();
   const { data: hosts = [], isLoading: hostsLoading } = useDockerHosts(currentOrg?.id);
-  const { data: rawContainers, isLoading: containersLoading, error } = useContainers(hosts.length > 0 ? currentOrg?.id : null);
+  const { data: rawContainers, isLoading: containersLoading, error } = useContainers(currentOrg?.id, hosts.length > 0);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
 

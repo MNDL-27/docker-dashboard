@@ -61,11 +61,11 @@ export function useDeleteDockerHost() {
   });
 }
 
-export function useContainers(orgId?: string | null) {
+export function useContainers(orgId?: string | null, hasHosts = true) {
   return useQuery({
     queryKey: ['containers', orgId],
     queryFn: () => dockerApi.allContainers(orgId!),
-    enabled: !!orgId,
+    enabled: !!orgId && hasHosts,
     refetchInterval: 30000,
   });
 }
