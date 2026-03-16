@@ -1,6 +1,7 @@
 import { SignIn } from "@clerk/clerk-react";
 import { Link } from "react-router-dom";
 import { Box, Server, Shield, Activity } from "lucide-react";
+import { LoginBackground } from "@/components/ui/LoginBackground";
 
 const features = [
   { icon: Server, title: "Multi-Host Monitoring", desc: "Monitor all your Docker hosts from a single pane of glass." },
@@ -10,9 +11,11 @@ const features = [
 
 export default function LoginPage() {
   return (
-    <div className="min-h-screen flex flex-col md:flex-row bg-background">
+    <div className="min-h-screen flex flex-col md:flex-row bg-background relative overflow-hidden">
+      <LoginBackground />
+
       {/* Left Column: Marketing / Brand (Hidden on mobile) */}
-      <div className="hidden md:flex md:w-1/2 lg:w-5/12 border-r border-border bg-card/30 p-12 flex-col justify-between relative overflow-hidden">
+      <div className="hidden md:flex md:w-1/2 lg:w-5/12 border-r border-border bg-card/30 p-12 flex-col justify-between relative overflow-hidden z-10">
         {/* Subtle background glow */}
         <div className="absolute top-0 left-0 w-full h-full bg-gradient-radial from-primary/5 via-transparent to-transparent opacity-50 pointer-events-none" />
 
