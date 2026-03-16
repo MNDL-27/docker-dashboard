@@ -13,7 +13,7 @@ import DocsPage from "./pages/DocsPage";
 import ContactPage from "./pages/ContactPage";
 import { ClerkProvider } from "@clerk/clerk-react";
 import LoginPage from "./pages/LoginPage";
-import SignupPage from "./pages/SignupPage";
+import BetaGatePage from "./pages/BetaGatePage";
 import OnboardingPage from "./pages/OnboardingPage";
 import DashboardPage from "./pages/app/DashboardPage";
 import HostsPage from "./pages/app/HostsPage";
@@ -64,7 +64,7 @@ const App = () => (
                 <Route path="/contact" element={<ContactPage />} />
                 {/* Auth */}
                 <Route path="/login" element={<LoginPage />} />
-                <Route path="/signup" element={<SignupPage />} />
+                <Route path="/beta-gate" element={<BetaGatePage />} />
                 <Route path="/onboarding" element={<OnboardingPage />} />
                 {/* App Shell - Protected */}
                 <Route path="/app" element={<ProtectedRoute><AppShell /></ProtectedRoute>}>

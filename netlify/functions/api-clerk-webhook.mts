@@ -63,6 +63,20 @@ export default async (req: Request) => {
             avatar_url = EXCLUDED.avatar_url,
             updated_at = now()
       `;
+
+      // Auto-approve if email is in beta allowlist (case-insensitive)
+      if (eventType === 'user.created') {
+        const allowed = await sql`
+          SELECT 1 FROM beta_allowlist WHERE lower(email) = lower(${email})
+        `;
+        if (allowed.length > 0) {
+          await sql`UPDATE users SET is_approved = true WHERE clerk_user_id = ${id}`;
+          console.log(`Auto-approved beta user ${id} (${email})`);
+        } else {
+          console.log(`User ${id} (${email}) signed up but is NOT in beta allowlist`);
+        }
+      }
+
       console.log(`Synced user ${id} (${email})`);
     } 
     else if (eventType === 'organization.created' || eventType === 'organization.updated') {

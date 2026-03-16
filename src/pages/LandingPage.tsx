@@ -1,4 +1,5 @@
-import { Link } from "react-router-dom";
+import { Link, Navigate } from "react-router-dom";
+import { useAuth } from "@clerk/clerk-react";
 import { Button } from "@/components/ui/button";
 import { Box, Server, Bell, FileText, Activity, Shield, Users, ArrowRight, Check, ChevronDown } from "lucide-react";
 
@@ -28,6 +29,12 @@ const faqs = [
 ];
 
 export default function LandingPage() {
+  const { isLoaded, isSignedIn } = useAuth();
+
+  if (isLoaded && isSignedIn) {
+    return <Navigate to="/app" replace />;
+  }
+
   return (
     <div className="min-h-screen bg-background">
       {/* Nav */}

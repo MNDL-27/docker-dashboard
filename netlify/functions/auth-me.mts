@@ -14,10 +14,10 @@ export default async (req: Request) => {
   }
 
   try {
-    const authContext = await requireAuth(req, { requireOrg: false });
+    const authContext = await requireAuth(req, { requireOrg: false, requireApproved: false });
 
     const users = await sql`
-      SELECT id, email, full_name, avatar_url 
+      SELECT id, email, full_name, avatar_url, is_approved 
       FROM users 
       WHERE id = ${authContext.userId}
     `;

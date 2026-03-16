@@ -1,7 +1,0 @@
-project_id = "hldzdjtwtxgiqrpjidhf"
-
-[functions.host-health-poll]
-verify_jwt = false
-
-[functions.mock-docker-agent]
-verify_jwt = false
