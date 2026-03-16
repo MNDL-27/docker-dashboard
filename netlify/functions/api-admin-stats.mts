@@ -11,8 +11,8 @@ const headers = {
 // Simple admin email list for v1 security.
 // In a real app, this would be a db column (e.g., users.is_superadmin).
 const ADMIN_EMAILS = [
-  'protim@layerlabs.io',
-  'protim.b13@gmail.com'
+  'protikmndl27@gmail.com',
+  'protikmondal27@gmail.com'
 ];
 
 export default async (req: Request) => {
