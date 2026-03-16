@@ -54,7 +54,7 @@ export default function LandingPage() {
           </div>
           <div className="flex items-center gap-2">
             <Link to="/login"><Button variant="ghost" size="sm">Log in</Button></Link>
-            <Link to="/signup"><Button size="sm">Start Free</Button></Link>
+            <Link to="/login"><Button size="sm">Start Free</Button></Link>
           </div>
         </div>
       </nav>
@@ -75,7 +75,7 @@ export default function LandingPage() {
             centralized logs, smart alerts, and incident management — all from a beautiful SaaS dashboard.
           </p>
           <div className="flex items-center justify-center gap-3">
-            <Link to="/signup"><Button size="lg" className="gap-2">Get Started Free <ArrowRight className="h-4 w-4" /></Button></Link>
+            <Link to="/login"><Button size="lg" className="gap-2">Get Started Free <ArrowRight className="h-4 w-4" /></Button></Link>
             <Link to="/contact"><Button size="lg" variant="outline">Book a Demo</Button></Link>
           </div>
           <p className="text-xs text-muted-foreground mt-4">Free tier includes 2 hosts. No credit card required.</p>
@@ -155,7 +155,7 @@ export default function LandingPage() {
                     </li>
                   ))}
                 </ul>
-                <Link to="/signup">
+                <Link to="/login">
                   <Button className="w-full" variant={p.id === "team" ? "default" : "outline"} size="sm">
                     {p.price === -1 ? "Contact Sales" : "Get Started"}
                   </Button>
@@ -189,7 +189,7 @@ export default function LandingPage() {
         <div className="max-w-2xl mx-auto px-4 text-center">
           <h2 className="text-3xl font-bold tracking-tight mb-4">Ready to monitor your Docker infrastructure?</h2>
           <p className="text-muted-foreground mb-8">Get started in under 5 minutes. No credit card required.</p>
-          <Link to="/signup"><Button size="lg" className="gap-2">Start Free <ArrowRight className="h-4 w-4" /></Button></Link>
+          <Link to="/login"><Button size="lg" className="gap-2">Start Free <ArrowRight className="h-4 w-4" /></Button></Link>
         </div>
       </section>
 

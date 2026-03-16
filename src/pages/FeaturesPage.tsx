@@ -22,7 +22,7 @@ export default function FeaturesPage() {
           </Link>
           <div className="flex items-center gap-2">
             <Link to="/login"><Button variant="ghost" size="sm">Log in</Button></Link>
-            <Link to="/signup"><Button size="sm">Start Free</Button></Link>
+            <Link to="/login"><Button size="sm">Start Free</Button></Link>
           </div>
         </div>
       </nav>
@@ -56,7 +56,7 @@ export default function FeaturesPage() {
       </section>
 
       <section className="py-16 text-center">
-        <Link to="/signup"><Button size="lg" className="gap-2">Get Started Free <ArrowRight className="h-4 w-4" /></Button></Link>
+        <Link to="/login"><Button size="lg" className="gap-2">Get Started Free <ArrowRight className="h-4 w-4" /></Button></Link>
       </section>
     </div>
   );

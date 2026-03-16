@@ -3,7 +3,7 @@ import { sql } from './db.mjs';
 
 const clerkClient = createClerkClient({
   secretKey: process.env.CLERK_SECRET_KEY,
-  publishableKey: process.env.CLERK_PUBLISHABLE_KEY,
+  publishableKey: process.env.CLERK_PUBLISHABLE_KEY || process.env.VITE_CLERK_PUBLISHABLE_KEY,
   jwtKey: process.env.CLERK_JWT_KEY,
 });
 
@@ -39,11 +39,12 @@ export async function requireAuth(
 
   const requestState = await clerkClient.authenticateRequest(req, {
     secretKey: process.env.CLERK_SECRET_KEY,
+    publishableKey: process.env.CLERK_PUBLISHABLE_KEY || process.env.VITE_CLERK_PUBLISHABLE_KEY,
     jwtKey: process.env.CLERK_JWT_KEY,
   });
 
   if (!requestState.isSignedIn) {
-    throw new Error('Unauthorized');
+    throw new Error(`Unauthorized. Reason: ${requestState.reason || 'unknown'}, Message: ${requestState.message || 'none'}`);
   }
 
   const authData = requestState.toAuth();

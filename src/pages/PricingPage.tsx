@@ -20,7 +20,7 @@ export default function PricingPage() {
           </Link>
           <div className="flex items-center gap-2">
             <Link to="/login"><Button variant="ghost" size="sm">Log in</Button></Link>
-            <Link to="/signup"><Button size="sm">Start Free</Button></Link>
+            <Link to="/login"><Button size="sm">Start Free</Button></Link>
           </div>
         </div>
       </nav>
@@ -47,7 +47,7 @@ export default function PricingPage() {
                     </li>
                   ))}
                 </ul>
-                <Link to="/signup"><Button className="w-full" variant={p.id === "team" ? "default" : "outline"} size="sm">
+                <Link to="/login"><Button className="w-full" variant={p.id === "team" ? "default" : "outline"} size="sm">
                   {p.price === -1 ? "Contact Sales" : "Get Started"}
                 </Button></Link>
               </div>

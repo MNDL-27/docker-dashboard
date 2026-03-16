@@ -16,7 +16,7 @@ export default function ContactPage() {
           </Link>
           <div className="flex items-center gap-2">
             <Link to="/login"><Button variant="ghost" size="sm">Log in</Button></Link>
-            <Link to="/signup"><Button size="sm">Start Free</Button></Link>
+            <Link to="/login"><Button size="sm">Start Free</Button></Link>
           </div>
         </div>
       </nav>
