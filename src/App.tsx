@@ -63,7 +63,7 @@ const App = () => (
                 <Route path="/docs" element={<DocsPage />} />
                 <Route path="/contact" element={<ContactPage />} />
                 {/* Auth */}
-                <Route path="/login" element={<LoginPage />} />
+                <Route path="/login/*" element={<LoginPage />} />
                 <Route path="/signup" element={<Navigate to="/login" replace />} />
                 <Route path="/beta-gate" element={<BetaGatePage />} />
                 <Route path="/onboarding" element={<ProtectedRoute requireOnboarded={false}><OnboardingPage /></ProtectedRoute>} />
