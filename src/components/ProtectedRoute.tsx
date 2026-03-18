@@ -2,6 +2,10 @@ import { Navigate } from "react-router-dom";
 import { useAuth } from "@clerk/clerk-react";
 import { useState, useEffect } from "react";
 
+// ─── TEMPORARY DEV BYPASS ───
+// Set to `false` to re-enable the private beta approval gate.
+const BYPASS_BETA_GATE = true;
+
 export function ProtectedRoute({ 
   children, 
   requireOnboarded = true 
@@ -65,7 +69,7 @@ export function ProtectedRoute({
   // ── Priority 3: Redirect unapproved users to beta gate ──
   // This MUST happen before any onboarding/org checks.
   // An unapproved user must never reach onboarding, regardless of requireOnboarded.
-  if (!authState.isApproved) {
+  if (!BYPASS_BETA_GATE && !authState.isApproved) {
     return <Navigate to="/beta-gate" replace />;
   }
 

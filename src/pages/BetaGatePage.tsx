@@ -4,6 +4,10 @@ import { Button } from "@/components/ui/button";
 import { Box, ShieldCheck, LogOut, Mail } from "lucide-react";
 import { Link, Navigate, useNavigate } from "react-router-dom";
 
+// ─── TEMPORARY DEV BYPASS ───
+// Set to `false` to re-enable the private beta approval gate.
+const BYPASS_BETA_GATE = true;
+
 export default function BetaGatePage() {
   const { signOut } = useClerk();
   const { user } = useUser();
@@ -70,6 +74,11 @@ export default function BetaGatePage() {
   // Not signed in
   if (!isSignedIn) {
     return <Navigate to="/" replace />;
+  }
+
+  // ─── TEMPORARY DEV BYPASS: skip the gate, redirect forward ───
+  if (BYPASS_BETA_GATE) {
+    return <Navigate to={appState.hasOrgs ? "/app" : "/onboarding"} replace />;
   }
 
   const email = user?.primaryEmailAddress?.emailAddress;
