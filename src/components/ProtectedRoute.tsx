@@ -80,8 +80,12 @@ export function ProtectedRoute({
   }
 
   // If hitting onboarding but user already has orgs, force them into the app
+  // — unless they're resuming onboarding after org creation (hard-reload flow)
   if (!requireOnboarded && authState.hasOrgs) {
-    return <Navigate to="/app" replace />;
+    const resuming = typeof window !== "undefined" && sessionStorage.getItem("onboarding_resume");
+    if (!resuming) {
+      return <Navigate to="/app" replace />;
+    }
   }
 
   // ── Priority 5: Render the requested route ──

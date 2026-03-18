@@ -1,6 +1,6 @@
-import { useState, useCallback, useRef, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { useOrganizationList, useAuth } from "@clerk/clerk-react";
+import { useOrganizationList } from "@clerk/clerk-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -32,15 +32,18 @@ type OnboardingStep =
   | { step: 2; phase: "done" };
 
 export default function OnboardingPage() {
-  const [state, setState] = useState<OnboardingStep>({ step: 0, phase: "form" });
+  // If resuming after a hard reload, start in syncing state to avoid a flash
+  const [state, setState] = useState<OnboardingStep>(() =>
+    sessionStorage.getItem("onboarding_resume") === "connect-host"
+      ? { step: 0, phase: "syncing" }
+      : { step: 0, phase: "form" }
+  );
   const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { getToken } = useAuth();
   const { createOrganization, setActive, userMemberships } = useOrganizationList({
     userMemberships: { infinite: true },
   });
-  const cancelledRef = useRef(false);
 
   /* ── Step 0 State ── */
   const [orgName, setOrgName] = useState("");
@@ -58,83 +61,60 @@ export default function OnboardingPage() {
 
   const addHost = useAddDockerHost();
 
-  // Cancel any in-flight polling on unmount
+  /* ── Resume onboarding after hard reload ── */
   useEffect(() => {
-    return () => { cancelledRef.current = true; };
-  }, []);
+    const resume = sessionStorage.getItem("onboarding_resume");
+    if (resume !== "connect-host") return;
 
-  /** Get a fresh token from the live Clerk singleton (same path as apiFetch). */
-  const getFreshToken = async (): Promise<string | null> => {
-    // @ts-expect-error window.Clerk is injected globally by ClerkProvider
-    return (await window.Clerk?.session?.getToken()) ?? null;
-  };
+    let cancelled = false;
 
-  /**
-   * Phase 1: Wait until `/api/auth/me` returns 200 with a valid token.
-   * Uses exponential backoff (200ms → 400ms → 800ms …), max 10 seconds.
-   */
-  const waitForAuthReady = useCallback(async (): Promise<void> => {
-    const maxWait = 10_000;
-    const start = Date.now();
-    let delay = 200;
+    (async () => {
+      // Wait for the backend to reflect the new org (webhook may take a moment)
+      const maxWait = 15_000;
+      const start = Date.now();
+      let delay = 500;
 
-    while (Date.now() - start < maxWait) {
-      if (cancelledRef.current) return;
-
-      const token = await getFreshToken();
-      if (token) {
+      while (Date.now() - start < maxWait) {
+        if (cancelled) return;
         try {
-          const res = await fetch("/api/auth/me", {
-            headers: { Authorization: `Bearer ${token}` },
-          });
-          if (res.ok) return; // auth is ready
-        } catch {
-          // transient network error — retry
-        }
-      }
-
-      await new Promise((r) => setTimeout(r, delay));
-      delay = Math.min(delay * 2, 2000);
-    }
-
-    throw new Error(
-      "Session refresh failed after organization creation. Please refresh and try again."
-    );
-  }, []);
-
-  /**
-   * Phase 2: Poll `/api/auth/me` until `has_orgs === true`.
-   * Sequential loop at 1.5s intervals, max 30 seconds.
-   */
-  const pollForOrgSync = useCallback(async (): Promise<void> => {
-    const maxWait = 30_000;
-    const interval = 1500;
-    const start = Date.now();
-
-    while (Date.now() - start < maxWait) {
-      if (cancelledRef.current) return;
-
-      const token = await getFreshToken();
-      if (token) {
-        try {
-          const res = await fetch("/api/auth/me", {
-            headers: { Authorization: `Bearer ${token}` },
-          });
-          if (res.ok) {
-            const data = await res.json();
-            if (data.user?.has_orgs) return; // org synced!
+          // @ts-expect-error window.Clerk is injected globally by ClerkProvider
+          const token = await window.Clerk?.session?.getToken();
+          if (token) {
+            const res = await fetch("/api/auth/me", {
+              headers: { Authorization: `Bearer ${token}` },
+            });
+            if (res.ok) {
+              const data = await res.json();
+              if (data.user?.has_orgs) {
+                sessionStorage.removeItem("onboarding_resume");
+                if (!cancelled) {
+                  toast({ title: "Organization created", description: "Now connect your first Docker host." });
+                  setState({ step: 1, phase: "form" });
+                }
+                return;
+              }
+            }
           }
         } catch {
-          // transient network error — retry
+          // transient error — retry
         }
+        await new Promise((r) => setTimeout(r, delay));
+        delay = Math.min(delay * 1.5, 2000);
       }
 
-      await new Promise((r) => setTimeout(r, interval));
-    }
+      // Timed out — fall back to Step 1
+      sessionStorage.removeItem("onboarding_resume");
+      if (!cancelled) {
+        setState({ step: 0, phase: "form" });
+        setError("Organization sync took too long. Please try creating your organization again.");
+      }
+    })();
 
-    throw new Error("Organization sync timed out. Please refresh the page.");
+    return () => { cancelled = true; };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  /* ── Step 0: Org Creation ── */
   const handleCreateOrg = async () => {
     if (!orgName.trim() || !createOrganization) return;
     setError(null);
@@ -143,29 +123,17 @@ export default function OnboardingPage() {
       setState({ step: 0, phase: "creating" });
       const org = await createOrganization({ name: orgName.trim() });
 
-      // Set the new org as the active Clerk organization so the session token includes orgId
+      // Set the new org as the active Clerk organization
       if (setActive && org) {
         await setActive({ organization: org.id });
       }
 
-      setState({ step: 0, phase: "syncing" });
-
-      // Phase 1: wait for Clerk session to yield a valid backend token
-      await waitForAuthReady();
-
-      // Phase 2: poll until the backend reflects the new org membership
-      await pollForOrgSync();
-
-      toast({
-        title: "Organization created",
-        description: `"${orgName.trim()}" is ready to go.`,
-      });
-
-      // Advance to Step 1: Connect Host
-      setState({ step: 1, phase: "form" });
-    } catch (err: any) {
+      // Persist resume flag and hard-reload to get a completely fresh Clerk session
+      sessionStorage.setItem("onboarding_resume", "connect-host");
+      window.location.assign("/onboarding");
+    } catch (err: unknown) {
       setState({ step: 0, phase: "form" });
-      setError(err?.message || "Failed to create organization. Please try again.");
+      setError(err instanceof Error ? err.message : "Failed to create organization. Please try again.");
     }
   };
 
