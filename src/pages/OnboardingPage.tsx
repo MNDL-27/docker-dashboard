@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
   Box, Building2, Loader2, CheckCircle2, ArrowRight, Server,
-  Terminal, CloudCog, XCircle,
+  Terminal, CloudCog, XCircle, Info, Check,
 } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { useAddDockerHost } from "@/hooks/useDocker";
@@ -281,7 +281,7 @@ export default function OnboardingPage() {
 
       {/* ── Main Content ── */}
       <main className="flex-1 flex items-center justify-center px-4 py-12">
-        <div className="w-full max-w-md">
+        <div className={`w-full ${state.step === 1 ? "max-w-lg" : "max-w-md"}`}>
 
           {/* ═══════════════════════════════════════════════════════════════
               STEP 0: Create Organization
@@ -356,118 +356,137 @@ export default function OnboardingPage() {
              ═══════════════════════════════════════════════════════════════ */}
           {state.step === 1 && state.phase === "form" && (
             <div className="animate-fade-in">
-              <div className="text-center mb-8">
-                <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-4">
-                  <Server className="h-7 w-7 text-primary" />
+              {/* Header */}
+              <div className="text-center mb-6">
+                <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center mx-auto mb-3">
+                  <Server className="h-6 w-6 text-primary" />
                 </div>
-                <h1 className="text-2xl font-bold tracking-tight mb-2">
-                  Connect your first host
+                <h1 className="text-xl font-bold tracking-tight mb-1">
+                  Add your first Docker host
                 </h1>
-                <p className="text-muted-foreground text-sm leading-relaxed">
-                  Add a Docker host via the Watchtower Agent. No open Docker ports required.
+                <p className="text-muted-foreground text-sm leading-relaxed max-w-sm mx-auto">
+                  Connect via the Watchtower Agent — no open Docker ports required.
                 </p>
               </div>
 
-              <div className="glass-card p-6 space-y-5">
-                {/* Connection Mode */}
-                <div className="space-y-2">
-                  <Label>Connection Method</Label>
-                  <div className="grid grid-cols-2 gap-2">
-                    {CONNECTION_MODES.map((m) => (
-                      <button
-                        key={m.value}
-                        type="button"
-                        onClick={() => setConnectionMode(m.value)}
-                        className={`p-3 rounded-lg border text-left transition-all ${
-                          connectionMode === m.value
-                            ? "border-primary bg-primary/5 ring-1 ring-primary/20"
-                            : "border-border hover:border-primary/40"
-                        }`}
-                      >
-                        <m.icon className={`h-4 w-4 mb-1 ${connectionMode === m.value ? "text-primary" : "text-muted-foreground"}`} />
-                        <div className="text-xs font-medium">{m.label}</div>
-                        <div className="text-[10px] text-muted-foreground mt-0.5">{m.desc}</div>
-                      </button>
-                    ))}
+              {/* Form Card */}
+              <div className="glass-card p-5 space-y-4">
+                {/* ── Host Details ── */}
+                <div className="space-y-4">
+                  {/* Host Name */}
+                  <div className="space-y-1.5">
+                    <Label htmlFor="host-name">Host Name</Label>
+                    <Input
+                      id="host-name"
+                      placeholder="e.g. prod-server-01"
+                      value={hostName}
+                      onChange={(e) => setHostName(e.target.value)}
+                      autoFocus
+                    />
+                  </div>
+
+                  {/* URL */}
+                  <div className="space-y-1.5">
+                    <Label htmlFor="host-url">{connectionMode === "agent" ? "Agent URL" : "Tunnel URL"}</Label>
+                    <Input
+                      id="host-url"
+                      placeholder={connectionMode === "agent" ? "https://your-host:9876" : "https://docker.your-team.cloudflareaccess.com"}
+                      value={hostUrl}
+                      onChange={(e) => setHostUrl(e.target.value)}
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      {connectionMode === "agent"
+                        ? "The HTTPS URL where the Watchtower Agent is running."
+                        : "The Cloudflare Tunnel public hostname that proxies the Docker socket."}
+                    </p>
+                  </div>
+
+                  {/* Socket Path */}
+                  <div className="space-y-1.5">
+                    <Label htmlFor="socket-path">Docker Socket Path <span className="text-muted-foreground font-normal">(optional)</span></Label>
+                    <Input
+                      id="socket-path"
+                      placeholder="/var/run/docker.sock"
+                      value={socketPath}
+                      onChange={(e) => setSocketPath(e.target.value)}
+                    />
                   </div>
                 </div>
 
-                {/* Host Name */}
-                <div className="space-y-2">
-                  <Label htmlFor="host-name">Host Name</Label>
-                  <Input
-                    id="host-name"
-                    placeholder="e.g. prod-server-01"
-                    value={hostName}
-                    onChange={(e) => setHostName(e.target.value)}
-                    autoFocus
-                  />
-                </div>
+                {/* ── Separator ── */}
+                <div className="border-t border-border" />
 
-                {/* URL */}
-                <div className="space-y-2">
-                  <Label htmlFor="host-url">{connectionMode === "agent" ? "Agent URL" : "Tunnel URL"}</Label>
-                  <Input
-                    id="host-url"
-                    placeholder={connectionMode === "agent" ? "https://your-host:9876" : "https://docker.your-team.cloudflareaccess.com"}
-                    value={hostUrl}
-                    onChange={(e) => setHostUrl(e.target.value)}
-                  />
-                  <p className="text-xs text-muted-foreground">
-                    {connectionMode === "agent"
-                      ? "The HTTPS URL where the Watchtower Agent is running."
-                      : "The Cloudflare Tunnel public hostname that proxies the Docker socket."}
-                  </p>
-                </div>
-
-                {/* Socket Path */}
-                <div className="space-y-2">
-                  <Label htmlFor="socket-path">Docker Socket Path <span className="text-muted-foreground">(optional)</span></Label>
-                  <Input
-                    id="socket-path"
-                    placeholder="/var/run/docker.sock"
-                    value={socketPath}
-                    onChange={(e) => setSocketPath(e.target.value)}
-                  />
-                </div>
-
-                {/* Agent API Key */}
-                <div className="space-y-2">
-                  <Label htmlFor="agent-key">Agent API Key</Label>
-                  <Input
-                    id="agent-key"
-                    type="password"
-                    placeholder="Shared secret for authenticating with the agent"
-                    value={agentApiKey}
-                    onChange={(e) => setAgentApiKey(e.target.value)}
-                  />
-                  <p className="text-xs text-muted-foreground">
-                    Stored securely and <strong>never returned to the browser</strong> after saving.
-                  </p>
-                </div>
-
-                {/* CF Tunnel fields */}
-                {connectionMode === "cloudflare_tunnel" && (
-                  <>
-                    <div className="space-y-2">
-                      <Label>CF Access Service Token ID <span className="text-muted-foreground">(optional)</span></Label>
-                      <Input
-                        placeholder="Only if CF Access is protecting the tunnel"
-                        value={cfServiceTokenId}
-                        onChange={(e) => setCfServiceTokenId(e.target.value)}
-                      />
+                {/* ── Connection & Auth ── */}
+                <div className="space-y-4">
+                  {/* Connection Mode */}
+                  <div className="space-y-1.5">
+                    <Label>Connection Method</Label>
+                    <div className="grid grid-cols-2 gap-2.5">
+                      {CONNECTION_MODES.map((m) => {
+                        const isSelected = connectionMode === m.value;
+                        return (
+                          <button
+                            key={m.value}
+                            type="button"
+                            onClick={() => setConnectionMode(m.value)}
+                            className={`relative p-3.5 rounded-lg border text-left transition-all ${
+                              isSelected
+                                ? "border-primary bg-primary/5 ring-1 ring-primary/30"
+                                : "border-border hover:border-primary/40 hover:bg-muted/30"
+                            }`}
+                          >
+                            {isSelected && (
+                              <div className="absolute top-2 right-2 w-4 h-4 rounded-full bg-primary flex items-center justify-center">
+                                <Check className="h-2.5 w-2.5 text-primary-foreground" />
+                              </div>
+                            )}
+                            <m.icon className={`h-4 w-4 mb-1.5 ${isSelected ? "text-primary" : "text-muted-foreground"}`} />
+                            <div className={`text-sm font-medium ${isSelected ? "text-foreground" : "text-foreground/80"}`}>{m.label}</div>
+                            <div className="text-xs text-muted-foreground mt-0.5 leading-snug">{m.desc}</div>
+                          </button>
+                        );
+                      })}
                     </div>
-                    <div className="space-y-2">
-                      <Label>CF Access Service Token Secret <span className="text-muted-foreground">(optional)</span></Label>
-                      <Input
-                        type="password"
-                        placeholder="e.g. xyz789..."
-                        value={cfServiceTokenSecret}
-                        onChange={(e) => setCfServiceTokenSecret(e.target.value)}
-                      />
-                    </div>
-                  </>
-                )}
+                  </div>
+
+                  {/* Agent API Key */}
+                  <div className="space-y-1.5">
+                    <Label htmlFor="agent-key">Agent API Key</Label>
+                    <Input
+                      id="agent-key"
+                      type="password"
+                      placeholder="Shared secret for authenticating with the agent"
+                      value={agentApiKey}
+                      onChange={(e) => setAgentApiKey(e.target.value)}
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Stored securely and <strong>never returned to the browser</strong> after saving.
+                    </p>
+                  </div>
+
+                  {/* CF Tunnel fields */}
+                  {connectionMode === "cloudflare_tunnel" && (
+                    <>
+                      <div className="space-y-1.5">
+                        <Label>CF Access Service Token ID <span className="text-muted-foreground font-normal">(optional)</span></Label>
+                        <Input
+                          placeholder="Only if CF Access is protecting the tunnel"
+                          value={cfServiceTokenId}
+                          onChange={(e) => setCfServiceTokenId(e.target.value)}
+                        />
+                      </div>
+                      <div className="space-y-1.5">
+                        <Label>CF Access Service Token Secret <span className="text-muted-foreground font-normal">(optional)</span></Label>
+                        <Input
+                          type="password"
+                          placeholder="e.g. xyz789..."
+                          value={cfServiceTokenSecret}
+                          onChange={(e) => setCfServiceTokenSecret(e.target.value)}
+                        />
+                      </div>
+                    </>
+                  )}
+                </div>
 
                 {/* Error */}
                 {error && (
@@ -487,15 +506,23 @@ export default function OnboardingPage() {
                   Save & Test Connection
                   <ArrowRight className="h-4 w-4 ml-1" />
                 </Button>
+              </div>
 
-                {/* Skip */}
-                <Button
-                  variant="ghost"
-                  className="w-full text-muted-foreground"
-                  onClick={() => setState({ step: 2, phase: "done" })}
-                >
-                  Skip for now
-                </Button>
+              {/* Skip — outside the main card */}
+              <button
+                type="button"
+                className="w-full text-center text-xs text-muted-foreground hover:text-foreground transition-colors mt-3 py-1"
+                onClick={() => setState({ step: 2, phase: "done" })}
+              >
+                Skip for now
+              </button>
+
+              {/* Helper info card */}
+              <div className="mt-4 flex items-start gap-2.5 rounded-lg border border-border bg-muted/40 px-4 py-3">
+                <Info className="h-4 w-4 text-muted-foreground shrink-0 mt-0.5" />
+                <p className="text-xs text-muted-foreground leading-relaxed">
+                  The Watchtower Agent runs alongside Docker on your host. It requires no open ports and connects outbound over HTTPS.
+                </p>
               </div>
             </div>
           )}
