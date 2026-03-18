@@ -40,7 +40,7 @@ export default function OnboardingPage() {
   const { createOrganization, setActive, userMemberships } = useOrganizationList({
     userMemberships: { infinite: true },
   });
-  const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const cancelledRef = useRef(false);
 
   /* ── Step 0 State ── */
   const [orgName, setOrgName] = useState("");
@@ -58,70 +58,82 @@ export default function OnboardingPage() {
 
   const addHost = useAddDockerHost();
 
-  // Cleanup polling on unmount
+  // Cancel any in-flight polling on unmount
   useEffect(() => {
-    return () => {
-      if (pollRef.current) clearInterval(pollRef.current);
-    };
+    return () => { cancelledRef.current = true; };
   }, []);
 
-  /* ── Step 0: Org Creation ── */
-  const pollForOrgSync = useCallback(async () => {
-    return new Promise<void>((resolve, reject) => {
-      let attempts = 0;
-      const maxAttempts = 30;
-      let consecutiveAuthFailures = 0;
-      const maxAuthFailures = 5;
+  /** Get a fresh token from the live Clerk singleton (same path as apiFetch). */
+  const getFreshToken = async (): Promise<string | null> => {
+    // @ts-expect-error window.Clerk is injected globally by ClerkProvider
+    return (await window.Clerk?.session?.getToken()) ?? null;
+  };
 
-      pollRef.current = setInterval(async () => {
-        attempts++;
+  /**
+   * Phase 1: Wait until `/api/auth/me` returns 200 with a valid token.
+   * Uses exponential backoff (200ms → 400ms → 800ms …), max 10 seconds.
+   */
+  const waitForAuthReady = useCallback(async (): Promise<void> => {
+    const maxWait = 10_000;
+    const start = Date.now();
+    let delay = 200;
+
+    while (Date.now() - start < maxWait) {
+      if (cancelledRef.current) return;
+
+      const token = await getFreshToken();
+      if (token) {
         try {
-          const token = await getToken();
+          const res = await fetch("/api/auth/me", {
+            headers: { Authorization: `Bearer ${token}` },
+          });
+          if (res.ok) return; // auth is ready
+        } catch {
+          // transient network error — retry
+        }
+      }
 
-          // Token not ready yet (Clerk session still refreshing) — skip this tick
-          if (!token) {
-            consecutiveAuthFailures++;
-            if (consecutiveAuthFailures >= maxAuthFailures) {
-              if (pollRef.current) clearInterval(pollRef.current);
-              pollRef.current = null;
-              reject(new Error("Authentication failed after creating your organization. Please refresh the page and try again."));
-            }
-            return;
-          }
+      await new Promise((r) => setTimeout(r, delay));
+      delay = Math.min(delay * 2, 2000);
+    }
 
-          consecutiveAuthFailures = 0; // valid token obtained
+    throw new Error(
+      "Session refresh failed after organization creation. Please refresh and try again."
+    );
+  }, []);
 
+  /**
+   * Phase 2: Poll `/api/auth/me` until `has_orgs === true`.
+   * Sequential loop at 1.5s intervals, max 30 seconds.
+   */
+  const pollForOrgSync = useCallback(async (): Promise<void> => {
+    const maxWait = 30_000;
+    const interval = 1500;
+    const start = Date.now();
+
+    while (Date.now() - start < maxWait) {
+      if (cancelledRef.current) return;
+
+      const token = await getFreshToken();
+      if (token) {
+        try {
           const res = await fetch("/api/auth/me", {
             headers: { Authorization: `Bearer ${token}` },
           });
           if (res.ok) {
             const data = await res.json();
-            if (data.user?.has_orgs) {
-              if (pollRef.current) clearInterval(pollRef.current);
-              pollRef.current = null;
-              resolve();
-              return;
-            }
-          } else if (res.status === 401) {
-            consecutiveAuthFailures++;
-            if (consecutiveAuthFailures >= maxAuthFailures) {
-              if (pollRef.current) clearInterval(pollRef.current);
-              pollRef.current = null;
-              reject(new Error("Authentication failed after creating your organization. Please refresh the page and try again."));
-            }
-            return; // don't count toward normal timeout
+            if (data.user?.has_orgs) return; // org synced!
           }
         } catch {
-          // Ignore transient network errors
+          // transient network error — retry
         }
-        if (attempts >= maxAttempts) {
-          if (pollRef.current) clearInterval(pollRef.current);
-          pollRef.current = null;
-          reject(new Error("Organization sync timed out. Please refresh the page."));
-        }
-      }, 1000);
-    });
-  }, [getToken]);
+      }
+
+      await new Promise((r) => setTimeout(r, interval));
+    }
+
+    throw new Error("Organization sync timed out. Please refresh the page.");
+  }, []);
 
   const handleCreateOrg = async () => {
     if (!orgName.trim() || !createOrganization) return;
@@ -136,10 +148,12 @@ export default function OnboardingPage() {
         await setActive({ organization: org.id });
       }
 
-      // Give Clerk time to refresh the session token after org switch
-      await new Promise((r) => setTimeout(r, 1500));
-
       setState({ step: 0, phase: "syncing" });
+
+      // Phase 1: wait for Clerk session to yield a valid backend token
+      await waitForAuthReady();
+
+      // Phase 2: poll until the backend reflects the new org membership
       await pollForOrgSync();
 
       toast({
