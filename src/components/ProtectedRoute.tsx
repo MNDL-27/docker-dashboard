@@ -11,9 +11,10 @@ export function ProtectedRoute({
 }) {
   const { isLoaded, isSignedIn, getToken } = useAuth();
   const [authState, setAuthState] = useState<{
-    status: "loading" | "approved" | "denied";
+    status: "loading" | "resolved";
+    isApproved: boolean;
     hasOrgs: boolean;
-  }>({ status: "loading", hasOrgs: false });
+  }>({ status: "loading", isApproved: false, hasOrgs: false });
 
   useEffect(() => {
     if (!isLoaded || !isSignedIn) return;
@@ -27,24 +28,27 @@ export function ProtectedRoute({
           headers: { Authorization: `Bearer ${token}` },
         });
         if (!res.ok) {
-          if (!cancelled) setAuthState({ status: "denied", hasOrgs: false });
+          // API error (user not synced yet, network issue, etc.) — treat as unapproved
+          if (!cancelled) setAuthState({ status: "resolved", isApproved: false, hasOrgs: false });
           return;
         }
         const data = await res.json();
         if (!cancelled) {
           setAuthState({
-            status: data.user?.is_approved ? "approved" : "denied",
-            hasOrgs: !!data.user?.has_orgs
+            status: "resolved",
+            isApproved: !!data.user?.is_approved,
+            hasOrgs: !!data.user?.has_orgs,
           });
         }
       } catch {
-        if (!cancelled) setAuthState({ status: "denied", hasOrgs: false });
+        if (!cancelled) setAuthState({ status: "resolved", isApproved: false, hasOrgs: false });
       }
     })();
 
     return () => { cancelled = true; };
   }, [isLoaded, isSignedIn, getToken]);
 
+  // ── Priority 1: Show loading while Clerk or auth/me is resolving ──
   if (!isLoaded || (isSignedIn && authState.status === "loading")) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
@@ -53,25 +57,30 @@ export function ProtectedRoute({
     );
   }
 
+  // ── Priority 2: Redirect unauthenticated users to login ──
   if (!isSignedIn) {
     return <Navigate to="/login" replace />;
   }
 
-  if (authState.status === "denied") {
+  // ── Priority 3: Redirect unapproved users to beta gate ──
+  // This MUST happen before any onboarding/org checks.
+  // An unapproved user must never reach onboarding, regardless of requireOnboarded.
+  if (!authState.isApproved) {
     return <Navigate to="/beta-gate" replace />;
   }
 
-  // At this point, the user is signed in AND approved via auth/me
-  // 1. If hitting a main app route but user has no orgs, force them to onboarding
+  // ── Priority 4: Onboarding gate (only for approved users) ──
+  // If hitting a main app route but user has no orgs, force them to onboarding
   if (requireOnboarded && !authState.hasOrgs) {
     return <Navigate to="/onboarding" replace />;
   }
 
-  // 2. If hitting onboarding specifically but user already has orgs, force them into the app
+  // If hitting onboarding but user already has orgs, force them into the app
   if (!requireOnboarded && authState.hasOrgs) {
     return <Navigate to="/app" replace />;
   }
 
-  // 3. Otherwise, render the requested route normally
+  // ── Priority 5: Render the requested route ──
   return <>{children}</>;
 }
+

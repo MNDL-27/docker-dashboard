@@ -1,11 +1,77 @@
-import { useClerk, useUser } from "@clerk/clerk-react";
+import { useClerk, useUser, useAuth } from "@clerk/clerk-react";
+import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Box, ShieldCheck, LogOut, Mail } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, Navigate, useNavigate } from "react-router-dom";
 
 export default function BetaGatePage() {
   const { signOut } = useClerk();
   const { user } = useUser();
+  const { isLoaded, isSignedIn, getToken } = useAuth();
+  const navigate = useNavigate();
+
+  const [appState, setAppState] = useState<{
+    status: "loading" | "resolved";
+    isApproved: boolean;
+    hasOrgs: boolean;
+  }>({ status: "loading", isApproved: false, hasOrgs: false });
+
+  const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  useEffect(() => {
+    if (!isLoaded || !isSignedIn) return;
+
+    const checkAuth = async () => {
+      try {
+        const token = await getToken();
+        const res = await fetch("/api/auth/me", {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (!res.ok) {
+          setAppState({ status: "resolved", isApproved: false, hasOrgs: false });
+          return;
+        }
+        const data = await res.json();
+        const isApproved = !!data.user?.is_approved;
+        const hasOrgs = !!data.user?.has_orgs;
+        setAppState({ status: "resolved", isApproved, hasOrgs });
+
+        // If approved, stop polling and redirect
+        if (isApproved) {
+          if (pollRef.current) clearInterval(pollRef.current);
+          pollRef.current = null;
+          navigate(hasOrgs ? "/app" : "/onboarding", { replace: true });
+        }
+      } catch {
+        setAppState({ status: "resolved", isApproved: false, hasOrgs: false });
+      }
+    };
+
+    // Initial check
+    checkAuth();
+
+    // Poll every 5s while the page is open
+    pollRef.current = setInterval(checkAuth, 5000);
+
+    return () => {
+      if (pollRef.current) clearInterval(pollRef.current);
+    };
+  }, [isLoaded, isSignedIn, getToken, navigate]);
+
+  // Clerk still loading
+  if (!isLoaded || (isSignedIn && appState.status === "loading")) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
+
+  // Not signed in
+  if (!isSignedIn) {
+    return <Navigate to="/" replace />;
+  }
+
   const email = user?.primaryEmailAddress?.emailAddress;
 
   return (
