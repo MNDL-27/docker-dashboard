@@ -70,11 +70,27 @@ export default function OnboardingPage() {
     return new Promise<void>((resolve, reject) => {
       let attempts = 0;
       const maxAttempts = 30;
+      let consecutiveAuthFailures = 0;
+      const maxAuthFailures = 5;
 
       pollRef.current = setInterval(async () => {
         attempts++;
         try {
           const token = await getToken();
+
+          // Token not ready yet (Clerk session still refreshing) — skip this tick
+          if (!token) {
+            consecutiveAuthFailures++;
+            if (consecutiveAuthFailures >= maxAuthFailures) {
+              if (pollRef.current) clearInterval(pollRef.current);
+              pollRef.current = null;
+              reject(new Error("Authentication failed after creating your organization. Please refresh the page and try again."));
+            }
+            return;
+          }
+
+          consecutiveAuthFailures = 0; // valid token obtained
+
           const res = await fetch("/api/auth/me", {
             headers: { Authorization: `Bearer ${token}` },
           });
@@ -86,9 +102,17 @@ export default function OnboardingPage() {
               resolve();
               return;
             }
+          } else if (res.status === 401) {
+            consecutiveAuthFailures++;
+            if (consecutiveAuthFailures >= maxAuthFailures) {
+              if (pollRef.current) clearInterval(pollRef.current);
+              pollRef.current = null;
+              reject(new Error("Authentication failed after creating your organization. Please refresh the page and try again."));
+            }
+            return; // don't count toward normal timeout
           }
         } catch {
-          // Ignore individual poll errors
+          // Ignore transient network errors
         }
         if (attempts >= maxAttempts) {
           if (pollRef.current) clearInterval(pollRef.current);
@@ -111,6 +135,9 @@ export default function OnboardingPage() {
       if (setActive && org) {
         await setActive({ organization: org.id });
       }
+
+      // Give Clerk time to refresh the session token after org switch
+      await new Promise((r) => setTimeout(r, 1500));
 
       setState({ step: 0, phase: "syncing" });
       await pollForOrgSync();
