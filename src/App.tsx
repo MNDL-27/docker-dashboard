@@ -47,7 +47,14 @@ const DarkModeInit = ({ children }: { children: React.ReactNode }) => {
 };
 
 const App = () => (
-  <ClerkProvider publishableKey={import.meta.env.VITE_CLERK_PUBLISHABLE_KEY}>
+  <ClerkProvider
+    publishableKey={import.meta.env.VITE_CLERK_PUBLISHABLE_KEY}
+    signInUrl="/login"
+    signUpUrl="/login"
+    signInFallbackRedirectUrl="/app"
+    signUpFallbackRedirectUrl="/app"
+    afterSignOutUrl="/"
+  >
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
         <DarkModeInit>

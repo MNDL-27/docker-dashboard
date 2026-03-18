@@ -73,7 +73,8 @@ export default function LoginPage() {
           <SignIn 
             routing="path" 
             path="/login" 
-            forceRedirectUrl="/app" 
+            forceRedirectUrl="/app"
+            fallbackRedirectUrl="/app" 
             appearance={{
               layout: {
                 socialButtonsPlacement: 'bottom',
