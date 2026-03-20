@@ -20,6 +20,15 @@
   [redirects.conditions]
     Host = "www.dockerdash.app"
 
+# Docs domain: docs.dockerdash.app → serve /docs SPA (200 rewrite)
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+  force = true
+  [redirects.conditions]
+    Host = "docs.dockerdash.app"
+
 [[redirects]]
   from = "/api/*"
   to = "/.netlify/functions/api-:splat"

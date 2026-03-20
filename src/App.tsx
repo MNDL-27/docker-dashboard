@@ -6,7 +6,7 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AppShell } from "@/components/layout/AppShell";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import AppRootRedirect from "@/components/AppRootRedirect";
-import { isAppSubdomain } from "@/lib/hostname";
+import { isAppSubdomain, isDocsSubdomain } from "@/lib/hostname";
 import { RequireAppSubdomain } from "@/components/RequireAppSubdomain";
 import LandingPage from "./pages/LandingPage";
 import FeaturesPage from "./pages/FeaturesPage";
@@ -66,7 +66,7 @@ const App = () => (
             <BrowserRouter>
               <Routes>
                 {/* Marketing */}
-                <Route path="/" element={isAppSubdomain() ? <AppRootRedirect /> : <LandingPage />} />
+                <Route path="/" element={isDocsSubdomain() ? <DocsPage /> : isAppSubdomain() ? <AppRootRedirect /> : <LandingPage />} />
                 <Route path="/features" element={<FeaturesPage />} />
                 <Route path="/pricing" element={<PricingPage />} />
                 <Route path="/security" element={<SecurityPage />} />
