@@ -7,6 +7,7 @@ import { AppShell } from "@/components/layout/AppShell";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import AppRootRedirect from "@/components/AppRootRedirect";
 import { isAppSubdomain } from "@/lib/hostname";
+import { RequireAppSubdomain } from "@/components/RequireAppSubdomain";
 import LandingPage from "./pages/LandingPage";
 import FeaturesPage from "./pages/FeaturesPage";
 import PricingPage from "./pages/PricingPage";
@@ -74,10 +75,10 @@ const App = () => (
                 {/* Auth */}
                 <Route path="/login/*" element={<LoginPage />} />
                 <Route path="/signup" element={<Navigate to="/login" replace />} />
-                <Route path="/beta-gate" element={<BetaGatePage />} />
-                <Route path="/onboarding" element={<ProtectedRoute requireOnboarded={false}><OnboardingPage /></ProtectedRoute>} />
+                <Route path="/beta-gate" element={<RequireAppSubdomain><BetaGatePage /></RequireAppSubdomain>} />
+                <Route path="/onboarding" element={<RequireAppSubdomain><ProtectedRoute requireOnboarded={false}><OnboardingPage /></ProtectedRoute></RequireAppSubdomain>} />
                 {/* App Shell - Protected */}
-                <Route path="/app" element={<ProtectedRoute><AppShell /></ProtectedRoute>}>
+                <Route path="/app" element={<RequireAppSubdomain><ProtectedRoute><AppShell /></ProtectedRoute></RequireAppSubdomain>}>
                   <Route index element={<DashboardPage />} />
                   <Route path="organizations" element={<OrganizationsPage />} />
                   <Route path="hosts" element={<HostsPage />} />
