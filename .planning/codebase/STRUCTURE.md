@@ -46,7 +46,9 @@ docker-watchtower-dash/
 │   │   ├── settings/               # Settings components
 │   │   │   └── ProfileSettings.tsx # Profile settings (placeholder)
 │   │   ├── NavLink.tsx             # Navigation link component
-│   │   └── ProtectedRoute.tsx      # Auth/onboarding gate
+│   │   ├── ProtectedRoute.tsx      # Auth/onboarding gate
+│   │   ├── RequireAppSubdomain.tsx # Hostname enforcer (redirects to app.dockerdash.app)
+│   │   └── AppRootRedirect.tsx    # Root redirect for app subdomain (auth → /app or /login)
 │   ├── hooks/                      # Custom React hooks
 │   │   ├── useDocker.ts            # Docker host/container queries & mutations
 │   │   ├── use-toast.ts            # Toast notification hook
@@ -55,6 +57,7 @@ docker-watchtower-dash/
 │   │   └── docker-api.ts           # Docker API client (typed actions)
 │   ├── lib/                        # Utilities
 │   │   ├── api.ts                  # apiFetch() — Clerk-authenticated fetch wrapper
+│   │   ├── hostname.ts             # Subdomain detection (isAppSubdomain, isDocsSubdomain)
 │   │   └── utils.ts                # cn() utility (clsx + tailwind-merge)
 │   ├── types/                      # TypeScript type definitions
 │   │   └── database.ts             # Organization, DockerHost, OrgMember types
@@ -130,10 +133,20 @@ docker-watchtower-dash/
 
 ## Routing Structure
 
+### Domain-Scoped Routing
+
+| Domain | Available Routes |
+|--------|------------------|
+| `dockerdash.app` | `/`, `/features`, `/pricing`, `/security`, `/docs`, `/contact` |
+| `app.dockerdash.app` | All routes (product: `/app/*`, auth: `/login`, `/signup`, `/beta-gate`, `/onboarding`) |
+| `docs.dockerdash.app` | `/` → DocsPage (SPA rewrite) |
+| `www.dockerdash.app` | 301 → `dockerdash.app` (Netlify) |
+| `localhost` | All routes (dev fallback) |
+
 ### Marketing (unauthenticated)
 `/`, `/features`, `/pricing`, `/security`, `/docs`, `/contact`
 
-### Auth
+### Auth (app.dockerdash.app only)
 `/login/*`, `/signup` (→ redirect to login), `/beta-gate`, `/onboarding`
 
 ### App (protected, nested under `<AppShell>`)

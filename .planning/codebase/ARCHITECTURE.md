@@ -11,11 +11,18 @@ The application is a Docker container management dashboard that allows organizat
 ```
 ┌─────────────────────────────────────────────────────┐
 │  Browser (React SPA)                                │
+│  ├── Hostname routing layer                         │
+│  │   ├── dockerdash.app → marketing pages           │
+│  │   ├── app.dockerdash.app → product/auth          │
+│  │   ├── docs.dockerdash.app → docs experience      │
+│  │   └── localhost → all routes (dev fallback)      │
 │  ├── Marketing pages (unauthenticated)              │
-│  ├── Auth flow (Clerk-managed)                      │
+│  ├── Auth flow (Clerk-managed, app subdomain only)  │
+│  ├── Documentation (polished foundation)            │
 │  └── App shell (authenticated, org-scoped)          │
 ├─────────────────────────────────────────────────────┤
 │  Netlify Edge / CDN                                  │
+│  ├── Host-based redirects (www → apex, docs rewrite)│
 │  ├── Static assets (Vite build → dist/)             │
 │  └── URL rewrites (/api/* → functions)              │
 ├─────────────────────────────────────────────────────┤
@@ -34,6 +41,18 @@ The application is a Docker container management dashboard that allows organizat
 │  └── Docker agents exposing Docker Engine API        │
 └─────────────────────────────────────────────────────┘
 ```
+
+## Hostname Routing
+
+| Domain | Role | Implementation |
+|--------|------|----------------|
+| `dockerdash.app` | Marketing site | Default SPA routing |
+| `app.dockerdash.app` | Product + auth | `isAppSubdomain()` + `RequireAppSubdomain` component |
+| `docs.dockerdash.app` | Documentation | Netlify 200 rewrite + `isDocsSubdomain()` |
+| `www.dockerdash.app` | Canonical redirect | Netlify 301 → `dockerdash.app` |
+| `localhost` | Development | All routes accessible (safe fallback) |
+
+**Key files:** `src/lib/hostname.ts`, `src/components/RequireAppSubdomain.tsx`, `src/components/AppRootRedirect.tsx`
 
 ## Data Flow
 
@@ -62,6 +81,9 @@ The application is a Docker container management dashboard that allows organizat
 - **`dockerApi`** (`src/services/docker-api.ts`) — Type-safe Docker API client wrapping `apiFetch`
 - **`useDocker*` hooks** (`src/hooks/useDocker.ts`) — TanStack Query wrappers with polling intervals
 - **`ProtectedRoute`** (`src/components/ProtectedRoute.tsx`) — Multi-level auth gate (Clerk → beta approval → onboarding → app)
+- **`RequireAppSubdomain`** (`src/components/RequireAppSubdomain.tsx`) — Hostname enforcer: redirects product/auth routes to `app.dockerdash.app` if accessed on wrong domain
+- **`AppRootRedirect`** (`src/components/AppRootRedirect.tsx`) — Root route handler for app subdomain: redirects to `/login` or `/app` based on auth state
+- **`isAppSubdomain()` / `isDocsSubdomain()`** (`src/lib/hostname.ts`) — Hostname detection utilities with localhost fallback
 
 ### Backend
 - **`requireAuth()`** (`netlify/functions/lib/auth.mts`) — Auth middleware returning `AppAuthContext` with internal UUIDs
