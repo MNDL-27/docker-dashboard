@@ -73,8 +73,8 @@ const App = () => (
                 <Route path="/docs" element={<DocsPage />} />
                 <Route path="/contact" element={<ContactPage />} />
                 {/* Auth */}
-                <Route path="/login/*" element={<LoginPage />} />
-                <Route path="/signup" element={<Navigate to="/login" replace />} />
+                <Route path="/login/*" element={<RequireAppSubdomain><LoginPage /></RequireAppSubdomain>} />
+                <Route path="/signup" element={<RequireAppSubdomain><Navigate to="/login" replace /></RequireAppSubdomain>} />
                 <Route path="/beta-gate" element={<RequireAppSubdomain><BetaGatePage /></RequireAppSubdomain>} />
                 <Route path="/onboarding" element={<RequireAppSubdomain><ProtectedRoute requireOnboarded={false}><OnboardingPage /></ProtectedRoute></RequireAppSubdomain>} />
                 {/* App Shell - Protected */}
