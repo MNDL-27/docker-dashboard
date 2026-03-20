@@ -3,121 +3,236 @@ import { Button } from "@/components/ui/button";
 import {
   Box,
   BookOpen,
-  Download,
   Server,
-  Bell,
   Activity,
-  Rocket,
   ChevronDown,
   ArrowRight,
   ExternalLink,
   Terminal,
   Search,
+  Users,
+  FileText,
+  Shield,
+  HelpCircle,
+  Construction,
 } from "lucide-react";
+
+/*
+ * ────────────────────────────────────────────────────────────
+ *  Evidence-based documentation.
+ *
+ *  Every section below is derived from source code analysis.
+ *  Where functionality is incomplete or unavailable, this is
+ *  stated explicitly rather than hidden behind polished copy.
+ * ────────────────────────────────────────────────────────────
+ */
 
 const sections = [
   {
     id: "getting-started",
     icon: BookOpen,
     title: "Getting Started",
-    desc: "Learn the basics of Docker Dashboard, from creating your account to monitoring your first container.",
+    desc: "Create your account, set up your organization, and connect your first Docker host.",
     articles: [
-      { title: "What is Docker Dashboard?", summary: "An overview of the platform, architecture, and how it fits into your infrastructure." },
-      { title: "Creating Your Account", summary: "Sign up, create an organization, and invite your first team member." },
-      { title: "Dashboard Overview", summary: "Navigate the dashboard, understand metrics, and customize your view." },
-      { title: "Concepts & Terminology", summary: "Hosts, agents, organizations, and how they relate." },
+      {
+        title: "Sign Up & Sign In",
+        summary:
+          "Create an account at app.dockerdash.app/login. Authentication is handled by Clerk — you can sign up with email or a supported SSO provider.",
+      },
+      {
+        title: "Create an Organization",
+        summary:
+          "After signing in, the onboarding wizard prompts you to create an organization. Organizations are the top-level workspace that groups your Docker hosts and team members.",
+      },
+      {
+        title: "Connect Your First Host",
+        summary:
+          "Step 2 of onboarding asks for a host name, agent URL, connection mode (Agent Direct or Cloudflare Tunnel), and an API key. The connection is tested automatically before proceeding.",
+      },
+      {
+        title: "Dashboard Overview",
+        summary:
+          "After onboarding, the dashboard shows four metric cards (Total Hosts, Connected, Containers, Running), a list of recent containers with state badges, and host connection status.",
+      },
     ],
   },
   {
-    id: "installation",
-    icon: Download,
-    title: "Installation",
-    desc: "Install the Docker Dashboard agent on any Docker host in under 2 minutes.",
-    articles: [
-      { title: "Quick Start (Docker Compose)", summary: "The fastest way to install — one YAML file and a single command." },
-      { title: "Standalone Docker Run", summary: "Install with a single docker run command for quick testing." },
-      { title: "Kubernetes DaemonSet", summary: "Deploy the agent across your Kubernetes cluster." },
-      { title: "System Requirements", summary: "Supported Docker versions, OS compatibility, and resource usage." },
-      { title: "Agent Configuration", summary: "Environment variables, custom socket paths, and advanced settings." },
-    ],
-  },
-  {
-    id: "connecting-a-host",
+    id: "connecting-hosts",
     icon: Server,
-    title: "Connecting a Host",
-    desc: "Register Docker hosts and establish secure connections through the dashboard.",
+    title: "Connecting Hosts",
+    desc: "Register Docker hosts and manage connections through the dashboard.",
     articles: [
-      { title: "Adding Your First Host", summary: "Step-by-step guide to registering a host and verifying the connection." },
-      { title: "Connection Modes", summary: "Direct agent connections vs. Cloudflare Tunnel for private networks." },
-      { title: "Authentication & API Keys", summary: "How agent authentication works and how to rotate keys." },
-      { title: "Troubleshooting Connections", summary: "Common connection issues, firewall rules, and diagnostic commands." },
+      {
+        title: "Connection Modes",
+        summary:
+          "Two modes are supported: Agent (Direct) connects over HTTPS to the Watchtower Agent, and Agent via Cloudflare Tunnel routes through a CF Tunnel. Both require an Agent API Key.",
+      },
+      {
+        title: "Required Fields",
+        summary:
+          "Host Name, Agent or Tunnel URL, Agent API Key (stored encrypted with AES-256-GCM, never returned to the browser). Optional: Docker Socket Path (defaults to /var/run/docker.sock), CF Access Service Token fields.",
+      },
+      {
+        title: "Host Management",
+        summary:
+          "The Hosts page lists all registered hosts with their connection mode, status (connected / unhealthy / error / unknown), URL, Docker version, and last-seen timestamp. You can test connections and remove hosts.",
+      },
+      {
+        title: "Health Polling",
+        summary:
+          "A server-side cron job periodically pings each registered host and updates its status, Docker version, and consecutive failure count in the database.",
+      },
     ],
   },
   {
-    id: "alerts",
-    icon: Bell,
-    title: "Alerts",
-    desc: "Configure alerting rules and notification channels to stay ahead of issues.",
-    articles: [
-      { title: "Alert Rules Overview", summary: "Types of alerts: container exit, resource thresholds, restart loops, and host offline." },
-      { title: "Creating Alert Rules", summary: "Build custom alert conditions with configurable thresholds." },
-      { title: "Notification Channels", summary: "Route alerts to Slack, email, PagerDuty, or custom webhooks." },
-      { title: "Alert History & Silencing", summary: "Review past alerts, acknowledge incidents, and set maintenance windows." },
-    ],
-  },
-  {
-    id: "monitoring",
+    id: "containers",
     icon: Activity,
-    title: "Monitoring",
-    desc: "Track real-time metrics, logs, and container health across your entire fleet.",
+    title: "Container Management",
+    desc: "View, inspect, and control containers across all connected hosts.",
     articles: [
-      { title: "Host Metrics", summary: "CPU, memory, disk, and network metrics at the host level." },
-      { title: "Container Metrics", summary: "Per-container resource usage, uptime, and restart history." },
-      { title: "Log Explorer", summary: "Search, filter, and tail logs from all containers in one place." },
-      { title: "Custom Dashboards", summary: "Create personalized views with the metrics that matter to you." },
+      {
+        title: "Container List",
+        summary:
+          "The Containers page aggregates containers from all connected hosts in your organization. Each entry shows the container name, image, state (running / exited / paused), and which host it belongs to.",
+      },
+      {
+        title: "Container Details",
+        summary:
+          "Click any container to view its inspect data, live resource stats (CPU and memory usage, refreshed every 10 seconds), and log output (last 200 lines by default).",
+      },
+      {
+        title: "Container Actions",
+        summary:
+          "You can start, stop, and restart containers directly from the dashboard. These actions are proxied through the backend to the Docker Engine API on the target host.",
+      },
     ],
   },
   {
-    id: "deployments",
-    icon: Rocket,
-    title: "Deployments",
-    desc: "Track container deployments, rollbacks, and version history.",
+    id: "logs",
+    icon: FileText,
+    title: "Log Explorer",
+    desc: "View real container logs from any connected host.",
     articles: [
-      { title: "Deployment Tracking", summary: "Automatically detect and log container image changes." },
-      { title: "Rollback Support", summary: "One-click rollback to a previous container version." },
-      { title: "Deployment Notifications", summary: "Get notified when containers are updated in your fleet." },
-      { title: "CI/CD Integration", summary: "Connect your deployment pipeline for automated tracking." },
+      {
+        title: "How It Works",
+        summary:
+          "Select a connected host, then a container. Click \"Fetch Logs\" to retrieve the last 300 lines from the Docker Engine API. Logs are displayed in a monospace viewer with line-by-line rendering.",
+      },
+      {
+        title: "Filtering",
+        summary:
+          "A text filter lets you search within fetched logs using case-insensitive matching. Filtering is client-side against the currently loaded log lines.",
+      },
+      {
+        title: "Limitations",
+        summary:
+          "Logs are fetched on-demand (not streamed in real time). There is no log persistence, export, or cross-container aggregation at this time.",
+      },
+    ],
+  },
+  {
+    id: "organizations",
+    icon: Users,
+    title: "Organizations & Members",
+    desc: "Multi-tenant workspaces powered by Clerk.",
+    articles: [
+      {
+        title: "Organizations",
+        summary:
+          "Each organization is a separate workspace with its own set of Docker hosts. You can create multiple organizations and switch between them using the organization switcher in the top bar.",
+      },
+      {
+        title: "Member Roles",
+        summary:
+          "Organization membership is managed through Clerk. The database tracks roles (owner, member). Member management is available in the Members page within the app.",
+      },
+      {
+        title: "Data Isolation",
+        summary:
+          "All API requests are scoped to the active organization. Docker hosts, container data, and settings are isolated per organization. Backend queries always join against organization membership.",
+      },
+    ],
+  },
+  {
+    id: "security",
+    icon: Shield,
+    title: "Security & Authentication",
+    desc: "How authentication, authorization, and secret storage work.",
+    articles: [
+      {
+        title: "Authentication",
+        summary:
+          "All authentication is handled by Clerk. The backend verifies Clerk JWTs on every API request using the @clerk/backend SDK. Unauthenticated requests are rejected with 401.",
+      },
+      {
+        title: "Secret Storage",
+        summary:
+          "Agent API keys and Cloudflare service tokens are encrypted at rest using AES-256-GCM with the AGENT_ENCRYPTION_KEY environment variable. Secrets are decrypted server-side only when proxying requests to Docker agents. They are never returned to the browser.",
+      },
+      {
+        title: "Domain Enforcement",
+        summary:
+          "Product routes (/app, /onboarding, /login) are restricted to app.dockerdash.app using frontend hostname detection. Marketing pages are served from dockerdash.app. Documentation is served from docs.dockerdash.app. Local development (localhost) shows all routes.",
+      },
+    ],
+  },
+  {
+    id: "coming-soon",
+    icon: Construction,
+    title: "Planned Features",
+    desc: "Features that are in the product roadmap but not yet implemented.",
+    planned: [
+      {
+        title: "Monitoring Dashboards",
+        summary: "Aggregated CPU, memory, network, and disk metrics with time-series charts. The UI page exists but shows a \"Coming Soon\" placeholder.",
+      },
+      {
+        title: "Alert Rules",
+        summary: "Configurable alerts for container failures, resource thresholds, restart loops, and host connectivity. Not yet implemented.",
+      },
+      {
+        title: "Incident Management",
+        summary: "Incident tracking with timelines and impacted services. Not yet implemented.",
+      },
+      {
+        title: "Deployment Tracking",
+        summary: "Container image change detection, rollback, and CI/CD integration. Not yet implemented.",
+      },
+      {
+        title: "Billing & Subscriptions",
+        summary: "Subscription management and usage tracking. Not yet implemented.",
+      },
     ],
   },
   {
     id: "faq",
-    icon: Box,
+    icon: HelpCircle,
     title: "FAQ",
-    desc: "Answers to common questions about Docker Dashboard.",
+    desc: "Answers to common questions.",
     faqs: [
       {
-        q: "How does the agent connect to Docker Dashboard?",
-        a: "The agent is a lightweight Docker container that runs on your host. It establishes an outbound HTTPS connection to the Docker Dashboard API — no inbound ports needed. All communication is encrypted with TLS.",
+        q: "What is Docker Dashboard?",
+        a: "Docker Dashboard (also called Watchtower) is a SaaS platform for monitoring and managing Docker containers across multiple hosts. You install a lightweight agent on your Docker hosts, and the dashboard provides a centralized UI for viewing containers, reading logs, and controlling container lifecycle.",
+      },
+      {
+        q: "How does the agent connection work?",
+        a: "The Watchtower Agent runs on your Docker host and exposes an HTTPS API. Docker Dashboard's backend proxies requests to the agent whenever you view containers, fetch logs, or start/stop containers. No inbound ports on your host are required if you use a Cloudflare Tunnel.",
       },
       {
         q: "Is my data secure?",
-        a: "Yes. Your container data stays on your infrastructure. The agent only sends metrics, logs, and events that you configure. All secrets are encrypted at rest with AES-256-GCM, and API keys are never exposed in the UI.",
+        a: "Agent API keys and Cloudflare tokens are encrypted at rest with AES-256-GCM. All API requests require a valid Clerk JWT. Secrets are never returned to the browser after being saved. The backend decrypts them only when proxying requests to your agents.",
       },
       {
         q: "What Docker versions are supported?",
-        a: "Docker Engine 20.10+ and Docker Desktop 4.x+. The agent supports Linux (amd64, arm64), macOS, and Windows hosts.",
+        a: "The agent connects to the standard Docker Engine API. Any Docker Engine version that exposes the /v1.x API should work. Specific version requirements depend on your agent implementation.",
       },
       {
-        q: "Can I self-host Docker Dashboard?",
-        a: "We offer an Enterprise plan with self-hosted deployment options. Contact our team for details on private cloud and on-premise installations.",
+        q: "Can I monitor multiple hosts?",
+        a: "Yes. You can register multiple Docker hosts per organization. The dashboard aggregates containers from all connected hosts and displays them in a unified view.",
       },
       {
-        q: "How many hosts can I monitor?",
-        a: "The Free tier includes 2 hosts. Pro supports 10, Team supports 50, and Enterprise offers unlimited hosts. All plans include unlimited containers per host.",
-      },
-      {
-        q: "What happens if the agent goes offline?",
-        a: "Docker Dashboard detects agent disconnections and marks the host as offline. You'll receive an alert (if configured). Your containers continue running normally — the agent is monitoring-only and never interferes with your workloads.",
+        q: "What happens if a host goes offline?",
+        a: "The server-side health poller detects disconnections and marks the host status as unhealthy or error after consecutive failures. The host's last-seen timestamp and error message are displayed in the Hosts page.",
       },
     ],
   },
@@ -153,7 +268,7 @@ export default function DocsPage() {
         <div className="max-w-4xl mx-auto px-4 text-center">
           <h1 className="text-4xl md:text-5xl font-bold tracking-tight mb-4">Documentation</h1>
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto mb-8">
-            Everything you need to install, configure, and operate Docker Dashboard.
+            Learn how to set up and use Docker Dashboard to monitor your Docker infrastructure.
           </p>
           <div className="max-w-md mx-auto relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -174,9 +289,9 @@ export default function DocsPage() {
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             {[
               { icon: Terminal, label: "Quick Start", target: "#getting-started" },
-              { icon: Download, label: "Install Agent", target: "#installation" },
-              { icon: Server, label: "Connect Host", target: "#connecting-a-host" },
-              { icon: Bell, label: "Set Up Alerts", target: "#alerts" },
+              { icon: Server, label: "Connect Host", target: "#connecting-hosts" },
+              { icon: Activity, label: "Containers", target: "#containers" },
+              { icon: FileText, label: "Log Explorer", target: "#logs" },
             ].map((link) => (
               <a
                 key={link.label}
@@ -203,9 +318,7 @@ export default function DocsPage() {
                 <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
                   <section.icon className="h-5 w-5 text-primary" />
                 </div>
-                <div>
-                  <h2 className="text-2xl font-bold tracking-tight">{section.title}</h2>
-                </div>
+                <h2 className="text-2xl font-bold tracking-tight">{section.title}</h2>
               </div>
               <p className="text-muted-foreground mb-6 ml-[52px]">{section.desc}</p>
 
@@ -220,6 +333,19 @@ export default function DocsPage() {
                       </summary>
                       <p className="text-sm text-muted-foreground mt-3 leading-relaxed">{faq.a}</p>
                     </details>
+                  ))}
+                </div>
+              ) : "planned" in section && section.planned ? (
+                /* Planned Features */
+                <div className="space-y-3 ml-[52px]">
+                  {section.planned.map((item) => (
+                    <div key={item.title} className="glass-card p-4 border-dashed">
+                      <div className="flex items-center gap-2 mb-1">
+                        <Construction className="h-3.5 w-3.5 text-muted-foreground" />
+                        <h3 className="font-medium text-sm">{item.title}</h3>
+                      </div>
+                      <p className="text-xs text-muted-foreground leading-relaxed ml-[22px]">{item.summary}</p>
+                    </div>
                   ))}
                 </div>
               ) : (
@@ -250,8 +376,8 @@ export default function DocsPage() {
       {/* CTA */}
       <section className="py-16 border-t border-border">
         <div className="max-w-2xl mx-auto px-4 text-center">
-          <h2 className="text-2xl font-bold tracking-tight mb-3">Can't find what you're looking for?</h2>
-          <p className="text-muted-foreground mb-6">Our team is here to help. Reach out and we'll get back to you within a few hours.</p>
+          <h2 className="text-2xl font-bold tracking-tight mb-3">Ready to get started?</h2>
+          <p className="text-muted-foreground mb-6">Create your account and connect your first Docker host in under 5 minutes.</p>
           <div className="flex items-center justify-center gap-3">
             <Link to="/contact"><Button size="lg" variant="outline">Contact Support</Button></Link>
             <Link to="/login"><Button size="lg" className="gap-2">Get Started <ArrowRight className="h-4 w-4" /></Button></Link>
