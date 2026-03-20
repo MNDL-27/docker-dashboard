@@ -11,6 +11,15 @@
   targetPort = 8080
   port = 8888
 
+# Canonical domain: www.dockerdash.app → dockerdash.app (301)
+[[redirects]]
+  from = "/*"
+  to = "https://dockerdash.app/:splat"
+  status = 301
+  force = true
+  [redirects.conditions]
+    Host = "www.dockerdash.app"
+
 [[redirects]]
   from = "/api/*"
   to = "/.netlify/functions/api-:splat"
