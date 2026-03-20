@@ -5,6 +5,8 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AppShell } from "@/components/layout/AppShell";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
+import AppRootRedirect from "@/components/AppRootRedirect";
+import { isAppSubdomain } from "@/lib/hostname";
 import LandingPage from "./pages/LandingPage";
 import FeaturesPage from "./pages/FeaturesPage";
 import PricingPage from "./pages/PricingPage";
@@ -63,7 +65,7 @@ const App = () => (
             <BrowserRouter>
               <Routes>
                 {/* Marketing */}
-                <Route path="/" element={<LandingPage />} />
+                <Route path="/" element={isAppSubdomain() ? <AppRootRedirect /> : <LandingPage />} />
                 <Route path="/features" element={<FeaturesPage />} />
                 <Route path="/pricing" element={<PricingPage />} />
                 <Route path="/security" element={<SecurityPage />} />
