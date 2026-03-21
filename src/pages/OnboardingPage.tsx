@@ -211,53 +211,23 @@ export default function OnboardingPage() {
   return (
     <div className="min-h-screen flex flex-col bg-background">
       {/* ── Top Header Bar ── */}
-      <header className="border-b border-border bg-card/60 backdrop-blur-sm">
-        <div className="max-w-2xl mx-auto w-full flex items-center justify-between px-6 py-4">
-          <Link to="/" className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-md bg-primary flex items-center justify-center">
-              <Box className="h-5 w-5 text-primary-foreground" />
-            </div>
-            <span className="font-semibold tracking-tight">Watchtower</span>
-          </Link>
-          <div className="flex items-center gap-1.5">
-            {STEPS.map((label, i) => (
-              <div key={label} className="flex items-center gap-1.5">
-                <div className="flex items-center gap-1.5">
-                  <div
-                    className={`
-                      w-6 h-6 rounded-full flex items-center justify-center text-xs font-medium transition-colors
-                      ${i < currentStepIndex
-                        ? "bg-primary text-primary-foreground"
-                        : i === currentStepIndex
-                          ? "bg-primary text-primary-foreground"
-                          : "bg-muted text-muted-foreground"
-                      }
-                    `}
-                  >
-                    {i < currentStepIndex ? (
-                      <CheckCircle2 className="h-3.5 w-3.5" />
-                    ) : (
-                      i + 1
-                    )}
-                  </div>
-                  <span
-                    className={`text-xs hidden sm:inline ${
-                      i <= currentStepIndex ? "text-foreground font-medium" : "text-muted-foreground"
-                    }`}
-                  >
-                    {label}
-                  </span>
-                </div>
-                {i < STEPS.length - 1 && (
-                  <div
-                    className={`w-6 h-px ${
-                      i < currentStepIndex ? "bg-primary" : "bg-border"
-                    }`}
-                  />
-                )}
-              </div>
-            ))}
+      <header className="border-b border-border bg-background">
+        <div className="w-full flex items-center justify-between px-6 py-4">
+          <div className="flex items-center gap-2">
+            <span className="text-sm font-medium text-muted-foreground">Onboarding</span>
           </div>
+          <div className="flex items-center gap-1.5">
+            <span className="text-sm font-medium text-foreground">
+              Step {currentStepIndex + 1} of {STEPS.length} — {STEPS[currentStepIndex]}
+            </span>
+          </div>
+        </div>
+        {/* Progress Bar */}
+        <div className="w-full h-1 bg-border">
+          <div 
+            className="h-full bg-primary transition-all duration-500 ease-in-out" 
+            style={{ width: `${((currentStepIndex + 1) / STEPS.length) * 100}%` }} 
+          />
         </div>
       </header>
 
@@ -269,28 +239,29 @@ export default function OnboardingPage() {
               STEP 0: Create Organization
              ═══════════════════════════════════════════════════════════════ */}
           {state.step === 0 && state.phase === "form" && (
-            <div className="animate-fade-in">
-              <div className="text-center mb-8">
-                <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-4">
+            <div className="animate-fade-in w-full">
+              <div className="text-center mb-10">
+                <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-6">
                   <Building2 className="h-7 w-7 text-primary" />
                 </div>
-                <h1 className="text-2xl font-bold tracking-tight mb-2">
+                <h1 className="text-3xl font-bold tracking-tight mb-3">
                   Create your organization
                 </h1>
-                <p className="text-muted-foreground text-sm leading-relaxed">
+                <p className="text-muted-foreground text-sm leading-relaxed max-w-sm mx-auto">
                   Your organization is your team's workspace for managing Docker infrastructure.
                 </p>
               </div>
 
-              <div className="glass-card p-6 space-y-5">
-                <div className="space-y-2">
-                  <Label htmlFor="org-name">Organization name</Label>
+              <div className="bg-card border border-border rounded-xl shadow-lg p-8 space-y-6">
+                <div className="space-y-3">
+                  <Label htmlFor="org-name" className="text-base font-medium">Organization name</Label>
                   <Input
                     id="org-name"
                     placeholder="e.g. Acme Cloud"
                     value={orgName}
                     onChange={(e) => setOrgName(e.target.value)}
                     onKeyDown={(e) => e.key === "Enter" && handleCreateOrg()}
+                    className="h-11"
                     autoFocus
                   />
                   <p className="text-xs text-muted-foreground">
@@ -299,12 +270,12 @@ export default function OnboardingPage() {
                 </div>
 
                 {error && (
-                  <div className="text-sm text-destructive bg-destructive/10 border border-destructive/20 rounded-md px-3 py-2">
+                  <div className="text-sm text-destructive bg-destructive/10 border border-destructive/20 rounded-md px-4 py-3">
                     {error}
                   </div>
                 )}
 
-                <Button className="w-full" size="lg" onClick={handleCreateOrg} disabled={!orgName.trim()}>
+                <Button className="w-full h-11 text-base" size="lg" onClick={handleCreateOrg} disabled={!orgName.trim()}>
                   Create Organization
                   <ArrowRight className="h-4 w-4 ml-1" />
                 </Button>
@@ -314,13 +285,13 @@ export default function OnboardingPage() {
 
           {/* Step 0: Creating / Syncing */}
           {isStep0Submitting && (
-            <div className="animate-fade-in">
-              <div className="glass-card p-10 text-center space-y-5">
-                <div className="w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center mx-auto">
-                  <Loader2 className="h-7 w-7 text-primary animate-spin" />
+            <div className="animate-fade-in w-full">
+              <div className="bg-card border border-border rounded-xl shadow-lg p-10 text-center space-y-6">
+                <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mx-auto">
+                  <Loader2 className="h-8 w-8 text-primary animate-spin" />
                 </div>
-                <div>
-                  <h2 className="text-lg font-semibold mb-1">
+                <div className="space-y-2">
+                  <h2 className="text-xl font-semibold">
                     {state.phase === "creating" ? "Creating organization…" : "Syncing your workspace…"}
                   </h2>
                   <p className="text-sm text-muted-foreground">
@@ -337,13 +308,13 @@ export default function OnboardingPage() {
               STEP 1: Connect Host
              ═══════════════════════════════════════════════════════════════ */}
           {state.step === 1 && state.phase === "form" && (
-            <div className="animate-fade-in">
+            <div className="animate-fade-in w-full">
               {/* Header */}
-              <div className="text-center mb-6">
-                <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center mx-auto mb-3">
-                  <Server className="h-6 w-6 text-primary" />
+              <div className="text-center mb-10">
+                <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-6">
+                  <Server className="h-7 w-7 text-primary" />
                 </div>
-                <h1 className="text-xl font-bold tracking-tight mb-1">
+                <h1 className="text-3xl font-bold tracking-tight mb-3">
                   Add your first Docker host
                 </h1>
                 <p className="text-muted-foreground text-sm leading-relaxed max-w-sm mx-auto">
@@ -352,31 +323,33 @@ export default function OnboardingPage() {
               </div>
 
               {/* Form Card */}
-              <div className="glass-card p-5 space-y-4">
+              <div className="bg-card border border-border rounded-xl shadow-lg p-8 space-y-6">
                 {/* ── Host Details ── */}
-                <div className="space-y-4">
+                <div className="space-y-5">
                   {/* Host Name */}
-                  <div className="space-y-1.5">
-                    <Label htmlFor="host-name">Host Name</Label>
+                  <div className="space-y-2">
+                    <Label htmlFor="host-name" className="text-base font-medium">Host Name</Label>
                     <Input
                       id="host-name"
                       placeholder="e.g. prod-server-01"
                       value={hostName}
                       onChange={(e) => setHostName(e.target.value)}
+                      className="h-11"
                       autoFocus
                     />
                   </div>
 
                   {/* URL */}
-                  <div className="space-y-1.5">
-                    <Label htmlFor="host-url">{connectionMode === "agent" ? "Agent URL" : "Tunnel URL"}</Label>
+                  <div className="space-y-2">
+                    <Label htmlFor="host-url" className="text-base font-medium">{connectionMode === "agent" ? "Agent URL" : "Tunnel URL"}</Label>
                     <Input
                       id="host-url"
                       placeholder={connectionMode === "agent" ? "https://your-host:9876" : "https://docker.your-team.cloudflareaccess.com"}
                       value={hostUrl}
                       onChange={(e) => setHostUrl(e.target.value)}
+                      className="h-11"
                     />
-                    <p className="text-xs text-muted-foreground">
+                    <p className="text-xs text-muted-foreground mt-1.5">
                       {connectionMode === "agent"
                         ? "The HTTPS URL where the Watchtower Agent is running."
                         : "The Cloudflare Tunnel public hostname that proxies the Docker socket."}
@@ -384,13 +357,14 @@ export default function OnboardingPage() {
                   </div>
 
                   {/* Socket Path */}
-                  <div className="space-y-1.5">
-                    <Label htmlFor="socket-path">Docker Socket Path <span className="text-muted-foreground font-normal">(optional)</span></Label>
+                  <div className="space-y-2">
+                    <Label htmlFor="socket-path" className="text-base font-medium">Docker Socket Path <span className="text-muted-foreground font-normal">(optional)</span></Label>
                     <Input
                       id="socket-path"
                       placeholder="/var/run/docker.sock"
                       value={socketPath}
                       onChange={(e) => setSocketPath(e.target.value)}
+                      className="h-11"
                     />
                   </div>
                 </div>
@@ -399,11 +373,11 @@ export default function OnboardingPage() {
                 <div className="border-t border-border" />
 
                 {/* ── Connection & Auth ── */}
-                <div className="space-y-4">
+                <div className="space-y-5">
                   {/* Connection Mode */}
-                  <div className="space-y-1.5">
-                    <Label>Connection Method</Label>
-                    <div className="grid grid-cols-2 gap-2.5">
+                  <div className="space-y-2">
+                    <Label className="text-base font-medium">Connection Method</Label>
+                    <div className="grid grid-cols-2 gap-3">
                       {CONNECTION_MODES.map((m) => {
                         const isSelected = connectionMode === m.value;
                         return (
@@ -411,7 +385,7 @@ export default function OnboardingPage() {
                             key={m.value}
                             type="button"
                             onClick={() => setConnectionMode(m.value)}
-                            className={`relative p-3.5 rounded-lg border text-left transition-all ${
+                            className={`relative p-4 rounded-xl border text-left transition-all ${
                               isSelected
                                 ? "border-primary bg-primary/5 ring-1 ring-primary/30"
                                 : "border-border hover:border-primary/40 hover:bg-muted/30"
@@ -422,9 +396,9 @@ export default function OnboardingPage() {
                                 <Check className="h-2.5 w-2.5 text-primary-foreground" />
                               </div>
                             )}
-                            <m.icon className={`h-4 w-4 mb-1.5 ${isSelected ? "text-primary" : "text-muted-foreground"}`} />
+                            <m.icon className={`h-5 w-5 mb-2 ${isSelected ? "text-primary" : "text-muted-foreground"}`} />
                             <div className={`text-sm font-medium ${isSelected ? "text-foreground" : "text-foreground/80"}`}>{m.label}</div>
-                            <div className="text-xs text-muted-foreground mt-0.5 leading-snug">{m.desc}</div>
+                            <div className="text-xs text-muted-foreground mt-1 leading-snug">{m.desc}</div>
                           </button>
                         );
                       })}
@@ -432,16 +406,17 @@ export default function OnboardingPage() {
                   </div>
 
                   {/* Agent API Key */}
-                  <div className="space-y-1.5">
-                    <Label htmlFor="agent-key">Agent API Key</Label>
+                  <div className="space-y-2">
+                    <Label htmlFor="agent-key" className="text-base font-medium">Agent API Key</Label>
                     <Input
                       id="agent-key"
                       type="password"
                       placeholder="Shared secret for authenticating with the agent"
                       value={agentApiKey}
                       onChange={(e) => setAgentApiKey(e.target.value)}
+                      className="h-11"
                     />
-                    <p className="text-xs text-muted-foreground">
+                    <p className="text-xs text-muted-foreground mt-1.5">
                       Stored securely and <strong>never returned to the browser</strong> after saving.
                     </p>
                   </div>
@@ -511,13 +486,13 @@ export default function OnboardingPage() {
 
           {/* Step 1: Saving / Testing */}
           {isStep1Submitting && (
-            <div className="animate-fade-in">
-              <div className="glass-card p-10 text-center space-y-5">
-                <div className="w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center mx-auto">
-                  <Loader2 className="h-7 w-7 text-primary animate-spin" />
+            <div className="animate-fade-in w-full">
+              <div className="bg-card border border-border rounded-xl shadow-lg p-10 text-center space-y-6">
+                <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mx-auto">
+                  <Loader2 className="h-8 w-8 text-primary animate-spin" />
                 </div>
-                <div>
-                  <h2 className="text-lg font-semibold mb-1">
+                <div className="space-y-2">
+                  <h2 className="text-xl font-semibold">
                     {state.phase === "saving" ? "Adding host…" : "Testing connection…"}
                   </h2>
                   <p className="text-sm text-muted-foreground">
@@ -534,13 +509,13 @@ export default function OnboardingPage() {
               STEP 2: Success / You're Ready
              ═══════════════════════════════════════════════════════════════ */}
           {state.step === 2 && (
-            <div className="animate-fade-in">
-              <div className="glass-card p-10 text-center space-y-5">
-                <div className="w-14 h-14 rounded-full bg-success/15 flex items-center justify-center mx-auto">
-                  <CheckCircle2 className="h-7 w-7 text-success" />
+            <div className="animate-fade-in w-full">
+              <div className="bg-card border border-border rounded-xl shadow-lg p-10 text-center space-y-6">
+                <div className="w-16 h-16 rounded-full bg-success/15 flex items-center justify-center mx-auto">
+                  <CheckCircle2 className="h-8 w-8 text-success" />
                 </div>
-                <div>
-                  <h2 className="text-xl font-semibold mb-1">You're all set!</h2>
+                <div className="space-y-2">
+                  <h2 className="text-2xl font-bold tracking-tight">You're all set!</h2>
                   <p className="text-sm text-muted-foreground leading-relaxed">
                     Your workspace is ready. Head to your dashboard to start monitoring.
                   </p>
@@ -559,10 +534,12 @@ export default function OnboardingPage() {
                   </div>
                 )}
 
-                <Button className="gap-2" size="lg" onClick={() => navigate("/app")}>
-                  Go to Dashboard
-                  <ArrowRight className="h-4 w-4" />
-                </Button>
+                <div className="pt-2">
+                  <Button className="w-full h-11 text-base gap-2" size="lg" onClick={() => navigate("/app")}>
+                    Go to Dashboard
+                    <ArrowRight className="h-4 w-4" />
+                  </Button>
+                </div>
               </div>
             </div>
           )}
