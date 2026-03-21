@@ -73,7 +73,6 @@ const App = () => (
                 <Route path="/docs" element={<DocsPage />} />
                 <Route path="/contact" element={<ContactPage />} />
                 {/* Auth */}
-                <Route path="/login/tasks/choose-organization" element={<RequireAppSubdomain><Navigate to="/onboarding" replace /></RequireAppSubdomain>} />
                 <Route path="/login/*" element={<RequireAppSubdomain><LoginPage /></RequireAppSubdomain>} />
                 <Route path="/signup" element={<RequireAppSubdomain><Navigate to="/login" replace /></RequireAppSubdomain>} />
                 <Route path="/beta-gate" element={<RequireAppSubdomain><BetaGatePage /></RequireAppSubdomain>} />

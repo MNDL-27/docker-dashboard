@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { useOrganizationList } from "@clerk/clerk-react";
+import { useOrganizationList, useAuth } from "@clerk/clerk-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -41,9 +41,19 @@ export default function OnboardingPage() {
   const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { isLoaded, orgId } = useAuth();
   const { createOrganization, setActive, userMemberships } = useOrganizationList({
     userMemberships: { infinite: true },
   });
+
+  /* ── Auto-advance to Step 1 if Clerk organization is already selected ── */
+  useEffect(() => {
+    // If the user already has an active Clerk org, but the DB webhook hasn't fired yet
+    // (causing `ProtectedRoute` to send them here), skip the duplicate org creation step.
+    if (isLoaded && orgId && state.step === 0 && state.phase === "form") {
+      setState({ step: 1, phase: "form" });
+    }
+  }, [isLoaded, orgId, state.step, state.phase]);
 
   /* ── Step 0 State ── */
   const [orgName, setOrgName] = useState("");
