@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import { LogoLink } from "@/components/shared/LogoLink";
 import { Button } from "@/components/ui/button";
 import {
   Box,
@@ -191,12 +192,12 @@ export default function DocsPage() {
       {/* Nav */}
       <nav className="border-b border-border bg-card/50 backdrop-blur-sm sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 h-14 flex items-center justify-between">
-          <Link to="/" className="flex items-center gap-2">
+          <LogoLink className="flex items-center gap-2">
             <div className="w-7 h-7 rounded-md bg-primary flex items-center justify-center">
               <Box className="h-4 w-4 text-primary-foreground" />
             </div>
             <span className="font-semibold tracking-tight">Docker Dashboard</span>
-          </Link>
+          </LogoLink>
           <div className="hidden md:flex items-center gap-6 text-sm">
             <Link to="/features" className="text-muted-foreground hover:text-foreground transition-colors">Features</Link>
             <Link to="/pricing" className="text-muted-foreground hover:text-foreground transition-colors">Pricing</Link>

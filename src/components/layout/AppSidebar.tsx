@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
+import { LogoLink } from "@/components/shared/LogoLink";
 import { cn } from "@/lib/utils";
 import {
   LayoutDashboard, Server, Box, Activity, FileText, Bell, AlertTriangle,
@@ -61,12 +62,12 @@ export function AppSidebar() {
     )}>
       {/* Logo */}
       <div className="flex items-center h-14 px-4 border-b border-border shrink-0">
-        <Link to="/app" className="flex items-center gap-2 overflow-hidden">
+        <LogoLink className="flex items-center gap-2 overflow-hidden">
           <div className="w-7 h-7 rounded-md bg-primary flex items-center justify-center shrink-0">
             <Box className="h-4 w-4 text-primary-foreground" />
           </div>
           {!collapsed && <span className="font-semibold text-sm tracking-tight whitespace-nowrap">Docker Dashboard</span>}
-        </Link>
+        </LogoLink>
       </div>
 
       {/* Nav */}

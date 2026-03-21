@@ -3,6 +3,7 @@ import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Box, ShieldCheck, LogOut, Mail } from "lucide-react";
 import { Link, Navigate, useNavigate } from "react-router-dom";
+import { LogoLink } from "@/components/shared/LogoLink";
 
 // ─── TEMPORARY DEV BYPASS ───
 // Set to `false` to re-enable the private beta approval gate.
@@ -87,11 +88,11 @@ export default function BetaGatePage() {
     <div className="min-h-screen flex items-center justify-center bg-background px-4">
       <div className="w-full max-w-md text-center space-y-8">
         {/* Logo */}
-        <Link to="/" className="inline-flex items-center gap-2">
+        <LogoLink className="inline-flex items-center gap-2">
           <div className="w-10 h-10 rounded-lg bg-primary flex items-center justify-center">
             <Box className="h-6 w-6 text-primary-foreground" />
           </div>
-        </Link>
+        </LogoLink>
 
         {/* Shield icon */}
         <div className="flex justify-center">

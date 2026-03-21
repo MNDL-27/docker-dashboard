@@ -10,7 +10,7 @@
 const APP_SUBDOMAIN = 'app.dockerdash.app';
 const DOCS_SUBDOMAIN = 'docs.dockerdash.app';
 
-function isLocalDev(): boolean {
+export function isLocalDev(): boolean {
   const host = window.location.hostname;
   return host === 'localhost' || host === '127.0.0.1' || host.endsWith('.local');
 }

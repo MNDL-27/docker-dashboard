@@ -1,5 +1,6 @@
 import { SignIn } from "@clerk/clerk-react";
 import { Link } from "react-router-dom";
+import { LogoLink } from "@/components/shared/LogoLink";
 import { Box, Server, Shield, Activity } from "lucide-react";
 import { LoginBackground } from "@/components/ui/LoginBackground";
 
@@ -21,12 +22,12 @@ export default function LoginPage() {
 
         <div className="relative z-10 w-full max-w-sm mx-auto flex-1 flex flex-col">
           {/* Logo Nav */}
-          <Link to="/" className="flex items-center gap-2 mb-16">
+          <LogoLink className="flex items-center gap-2 mb-16">
             <div className="w-8 h-8 rounded-md bg-primary flex items-center justify-center">
               <Box className="h-5 w-5 text-primary-foreground" />
             </div>
             <span className="font-semibold tracking-tight text-lg">Watchtower</span>
-          </Link>
+          </LogoLink>
 
           {/* Headline */}
           <div className="mb-12">
@@ -60,12 +61,12 @@ export default function LoginPage() {
       <div className="flex-1 flex flex-col relative w-full items-center justify-center p-4 sm:p-8">
         {/* Mobile Header (Shows only on small screens) */}
         <div className="md:hidden w-full max-w-[400px] mb-8 flex justify-center">
-          <Link to="/" className="flex items-center gap-2">
+          <LogoLink className="flex items-center gap-2">
             <div className="w-8 h-8 rounded-md bg-primary flex items-center justify-center">
               <Box className="h-5 w-5 text-primary-foreground" />
             </div>
             <span className="font-semibold tracking-tight text-lg">Watchtower</span>
-          </Link>
+          </LogoLink>
         </div>
 
         <div className="w-full max-w-[400px]">

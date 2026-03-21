@@ -1,5 +1,7 @@
-import { Link, Navigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { useAuth } from "@clerk/clerk-react";
+import { LogoLink } from "@/components/shared/LogoLink";
+import { isLocalDev } from "@/lib/hostname";
 import { Button } from "@/components/ui/button";
 import { Box, Server, Bell, FileText, Activity, Shield, Users, ArrowRight, Check, ChevronDown } from "lucide-react";
 
@@ -31,21 +33,17 @@ const faqs = [
 export default function LandingPage() {
   const { isLoaded, isSignedIn } = useAuth();
 
-  if (isLoaded && isSignedIn) {
-    return <Navigate to="/app" replace />;
-  }
-
   return (
     <div className="min-h-screen bg-background">
       {/* Nav */}
       <nav className="border-b border-border bg-card/50 backdrop-blur-sm sticky top-0 z-50">
         <div className="max-w-6xl mx-auto px-4 h-14 flex items-center justify-between">
-          <Link to="/" className="flex items-center gap-2">
+          <LogoLink className="flex items-center gap-2">
             <div className="w-7 h-7 rounded-md bg-primary flex items-center justify-center">
               <Box className="h-4 w-4 text-primary-foreground" />
             </div>
             <span className="font-semibold tracking-tight">Docker Dashboard</span>
-          </Link>
+          </LogoLink>
           <div className="hidden md:flex items-center gap-6 text-sm">
             <Link to="/features" className="text-muted-foreground hover:text-foreground transition-colors">Features</Link>
             <Link to="/pricing" className="text-muted-foreground hover:text-foreground transition-colors">Pricing</Link>
@@ -53,8 +51,14 @@ export default function LandingPage() {
             <Link to="/docs" className="text-muted-foreground hover:text-foreground transition-colors">Docs</Link>
           </div>
           <div className="flex items-center gap-2">
-            <Link to="/login"><Button variant="ghost" size="sm">Log in</Button></Link>
-            <Link to="/login"><Button size="sm">Start Free</Button></Link>
+            {isLoaded && isSignedIn ? (
+              <a href={isLocalDev() ? "/app" : "https://app.dockerdash.app"}><Button variant="default" size="sm">Go to App</Button></a>
+            ) : (
+              <>
+                <Link to="/login"><Button variant="ghost" size="sm">Log in</Button></Link>
+                <Link to="/login"><Button size="sm">Start Free</Button></Link>
+              </>
+            )}
           </div>
         </div>
       </nav>
@@ -75,8 +79,14 @@ export default function LandingPage() {
             centralized logs, smart alerts, and incident management — all from a beautiful SaaS dashboard.
           </p>
           <div className="flex items-center justify-center gap-3">
-            <Link to="/login"><Button size="lg" className="gap-2">Get Started Free <ArrowRight className="h-4 w-4" /></Button></Link>
-            <Link to="/contact"><Button size="lg" variant="outline">Book a Demo</Button></Link>
+            {isLoaded && isSignedIn ? (
+              <a href={isLocalDev() ? "/app" : "https://app.dockerdash.app"}><Button size="lg" className="gap-2">Go to Dashboard <ArrowRight className="h-4 w-4" /></Button></a>
+            ) : (
+              <>
+                <Link to="/login"><Button size="lg" className="gap-2">Get Started Free <ArrowRight className="h-4 w-4" /></Button></Link>
+                <Link to="/contact"><Button size="lg" variant="outline">Book a Demo</Button></Link>
+              </>
+            )}
           </div>
           <p className="text-xs text-muted-foreground mt-4">Free tier includes 2 hosts. No credit card required.</p>
         </div>
