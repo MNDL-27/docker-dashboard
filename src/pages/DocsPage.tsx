@@ -192,7 +192,7 @@ export default function DocsPage() {
       {/* Nav */}
       <nav className="border-b border-border bg-card/50 backdrop-blur-sm sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 h-14 flex items-center justify-between">
-          <LogoLink className="flex items-center gap-2">
+          <LogoLink forcePublic className="flex items-center gap-2">
             <div className="w-7 h-7 rounded-md bg-primary flex items-center justify-center">
               <Box className="h-4 w-4 text-primary-foreground" />
             </div>

@@ -696,8 +696,19 @@ AGENT_API_KEY="${agentApiKey || "your-secret-key-here"}" ./watchtower-dev-connec
                 </div>
 
                 <div className="pt-2">
-                  <Button className="w-full h-11 text-base gap-2" size="lg" onClick={() => navigate("/app")}>
-                    Go to Dashboard
+                  <Button
+                    className="w-full h-11 text-base gap-2"
+                    size="lg"
+                    onClick={() => {
+                      const pendingPlan = sessionStorage.getItem("dockerdash_pending_plan");
+                      if (pendingPlan) {
+                        navigate(`/app/billing?plan=${pendingPlan}`);
+                      } else {
+                        navigate("/app");
+                      }
+                    }}
+                  >
+                    {sessionStorage.getItem("dockerdash_pending_plan") ? "Continue to Billing" : "Go to Dashboard"}
                     <ArrowRight className="h-4 w-4" />
                   </Button>
                 </div>

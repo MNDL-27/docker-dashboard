@@ -10,7 +10,20 @@ const features = [
   { icon: Shield, title: "Secure Agent", desc: "Lightweight, TLS-encrypted proxy directly to docker.sock." },
 ];
 
+import { useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
+
 export default function LoginPage() {
+  const [searchParams] = useSearchParams();
+  
+  // Capture and persist plan intent
+  useEffect(() => {
+    const plan = searchParams.get("plan");
+    if (plan && plan !== "free" && plan !== "enterprise") {
+      sessionStorage.setItem("dockerdash_pending_plan", plan);
+    }
+  }, [searchParams]);
+
   return (
     <div className="min-h-screen flex flex-col md:flex-row bg-background relative overflow-hidden">
       <LoginBackground />

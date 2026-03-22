@@ -13,9 +13,12 @@ import FeaturesPage from "./pages/FeaturesPage";
 import PricingPage from "./pages/PricingPage";
 import SecurityPage from "./pages/SecurityPage";
 import DocsPage from "./pages/DocsPage";
+import LoginPage from "./pages/LoginPage";
+import TermsPage from "./pages/TermsPage";
+import PrivacyPage from "./pages/PrivacyPage";
+import RefundsPage from "./pages/RefundsPage";
 import ContactPage from "./pages/ContactPage";
 import { ClerkProvider } from "@clerk/clerk-react";
-import LoginPage from "./pages/LoginPage";
 import BetaGatePage from "./pages/BetaGatePage";
 import OnboardingPage from "./pages/OnboardingPage";
 import DashboardPage from "./pages/app/DashboardPage";
@@ -72,6 +75,9 @@ const App = () => (
                 <Route path="/security" element={<SecurityPage />} />
                 <Route path="/docs" element={<DocsPage />} />
                 <Route path="/contact" element={<ContactPage />} />
+                <Route path="/tos" element={<TermsPage />} />
+                <Route path="/privacy" element={<PrivacyPage />} />
+                <Route path="/refunds" element={<RefundsPage />} />
                 {/* Auth */}
                 <Route path="/login/*" element={<RequireAppSubdomain><LoginPage /></RequireAppSubdomain>} />
                 <Route path="/signup" element={<RequireAppSubdomain><Navigate to="/login" replace /></RequireAppSubdomain>} />

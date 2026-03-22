@@ -13,9 +13,11 @@ import { useAuth } from "@clerk/clerk-react";
  */
 export function LogoLink({ 
   className,
+  forcePublic,
   children 
 }: { 
   className?: string;
+  forcePublic?: boolean;
   children: React.ReactNode;
 }) {
   const { isLoaded, isSignedIn } = useAuth();
@@ -28,7 +30,9 @@ export function LogoLink({
   // Default to apex while auth loads to prevent wrong routing traps
   let targetUrl = isLocalDev() ? "/" : "https://dockerdash.app";
 
-  if (isLoaded) {
+  if (forcePublic) {
+    targetUrl = isLocalDev() ? "/" : "https://dockerdash.app";
+  } else if (isLoaded) {
     if (isSignedIn) {
       targetUrl = isLocalDev() ? "/app" : "https://app.dockerdash.app";
     } else {
