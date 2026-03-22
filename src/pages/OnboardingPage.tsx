@@ -462,7 +462,10 @@ export default function OnboardingPage() {
               <button
                 type="button"
                 className="w-full text-center text-xs text-muted-foreground hover:text-foreground transition-colors mt-3 py-1"
-                onClick={() => navigate("/app")}
+                onClick={() => {
+                  sessionStorage.removeItem("onboarding_resume");
+                  navigate("/app");
+                }}
               >
                 Skip for now
               </button>
