@@ -114,7 +114,79 @@ You'll land on the main dashboard, ready to add hosts.
 
 ---
 
-## 7. Add Your First Docker Host
+## 7. Install the Watchtower Agent on Linux
+
+Install the production agent on the Docker host before adding it in the dashboard:
+
+```sh
+curl -fsSL https://your-watchtower-host/watchtower-agent-install.sh -o watchtower-agent-install.sh
+chmod +x watchtower-agent-install.sh
+sudo ./watchtower-agent-install.sh
+```
+
+What the installer does:
+
+- Verifies `systemd`, `socat`, `curl`, and Docker socket access
+- Creates a dedicated `watchtower-agent` system user
+- Installs the runtime to `/opt/watchtower-agent/watchtower-agent.sh`
+- Writes `/etc/watchtower-agent/watchtower-agent.env` with `0600` permissions
+- Installs `/etc/systemd/system/watchtower-agent.service`
+- Enables the service at boot and starts it immediately
+
+Default config written by the installer:
+
+- `AGENT_BIND_ADDRESS=127.0.0.1`
+- `AGENT_PORT=9876`
+- `DOCKER_SOCKET=/var/run/docker.sock`
+
+Common lifecycle commands:
+
+```sh
+sudo systemctl status watchtower-agent
+sudo journalctl -u watchtower-agent -f
+sudo systemctl restart watchtower-agent
+sudo watchtower-agent-uninstall
+```
+
+To change the port or socket, re-run the installer:
+
+```sh
+sudo ./watchtower-agent-install.sh --port 9877 --docker-socket /var/run/docker.sock
+```
+
+The installer prompts for `AGENT_API_KEY` so the secret does not need to be part of the primary shell-history flow. If you need unattended automation, you can still pass `--api-key`.
+
+You can safely re-run the installer on the same host. It reuses the existing service account, rewrites the runtime, env file, and unit, then restarts the service.
+
+Preflight only:
+
+```sh
+sudo ./watchtower-agent-install.sh --check
+```
+
+Direct mode should stay behind HTTPS via a reverse proxy:
+
+```txt
+https://docker-agent.example.com -> http://127.0.0.1:9876
+```
+
+Cloudflare Tunnel mode should point the tunnel at `http://127.0.0.1:9876`.
+
+Uninstall:
+
+```sh
+sudo watchtower-agent-uninstall
+```
+
+The uninstaller stops and disables the service, removes installed files, and asks whether to keep or delete `/etc/watchtower-agent`.
+
+### Non-systemd fallback
+
+`watchtower-agent-install.sh` is the supported path for standard Linux hosts with `systemd`. If your host uses another init system, run `watchtower-agent.sh` under that supervisor instead. If you already manage host-level services in Docker, containerize the script and use Docker restart behavior such as `--restart unless-stopped`.
+
+---
+
+## 8. Add Your First Docker Host
 
 Navigate to **Infrastructure → Hosts** in the sidebar, then click **Connect Host**.
 
@@ -134,62 +206,7 @@ The **Agent API Key** field is mandatory in the UI. When testing locally against
 
 ---
 
-## 7A. Install the Watchtower Agent on Linux
-
-The production Linux path is a one-time installer that sets up a dedicated `watchtower-agent` system user, writes the agent config to `/etc/watchtower-agent/watchtower-agent.env`, installs the runtime into `/opt/watchtower-agent`, creates a `systemd` unit, enables it on boot, and starts it immediately.
-
-Run this on the Docker host:
-
-```sh
-curl -fsSL https://your-watchtower-url/watchtower-agent-install.sh -o watchtower-agent-install.sh
-sudo WATCHTOWER_AGENT_DOWNLOAD_BASE=https://your-watchtower-url bash ./watchtower-agent-install.sh
-```
-
-The installer will prompt for:
-
-- `AGENT_API_KEY`
-- `AGENT_PORT` (default `9876`)
-- `AGENT_BIND_ADDRESS` (default `0.0.0.0`; use `127.0.0.1` for Cloudflare Tunnel-only setups)
-- `DOCKER_SOCKET` (default `/var/run/docker.sock`)
-
-The installer verifies required dependencies (`systemd`, `curl`, `socat`), validates the Docker socket path, and adds the service user to the `docker` group when that group exists.
-
-### Operate the Agent
-
-```sh
-sudo systemctl status watchtower-agent
-sudo journalctl -u watchtower-agent -f
-sudo systemctl restart watchtower-agent
-```
-
-### Uninstall the Agent
-
-Preserve config and secrets:
-
-```sh
-sudo /opt/watchtower-agent/watchtower-agent-uninstall
-```
-
-Delete config and secrets too:
-
-```sh
-sudo /opt/watchtower-agent/watchtower-agent-uninstall --purge
-```
-
-### Troubleshooting
-
-- `systemctl status watchtower-agent` fails immediately: check `/etc/watchtower-agent/watchtower-agent.env` for a missing API key or invalid port.
-- Logs show Docker socket errors: verify `/var/run/docker.sock` exists and that the `watchtower-agent` service user can access it.
-- Connection tests fail from the dashboard: verify the reverse proxy or Cloudflare Tunnel points to the configured local agent port.
-- Host is tunnel-only: set `AGENT_BIND_ADDRESS=127.0.0.1` in `/etc/watchtower-agent/watchtower-agent.env` and restart the service.
-
-### Non-systemd Hosts
-
-If the host does not run `systemd`, use your existing service manager. If Docker is already your standard service wrapper on that host, run the same `watchtower-agent.sh` script under Docker and configure restart behavior such as `--restart unless-stopped`.
-
----
-
-## 8. How Polling Works
+## 9. How Polling Works
 
 The host health poller (`/api/host-health-poll`) pings all registered Docker hosts and updates their status in the database. The frontend auto-refreshes every **30 seconds** — no manual action needed after the initial setup.
 
@@ -247,10 +264,12 @@ If a host fails, `consecutive_failures` increments. After **3 consecutive failur
 | `NETLIFY_DATABASE_URL is required` | Missing `.env` or variable not set | Copy `.env.example` to `.env` and fill in all values |
 | `init-db.mjs` fails with "relation already exists" | Schema was already applied | Drop the `public` schema in Neon console, then re-run `node netlify/init-db.mjs` |
 | App loads but API calls return 401 | `JWT_SECRET` missing or wrong | Ensure `JWT_SECRET` is set in `.env` and restart `netlify dev` |
-| Hosts stay "unknown" forever | Poller never ran | The poller doesn't auto-run locally. See [How Polling Works](#8-how-polling-works) |
+| Hosts stay "unknown" forever | Poller never ran | The poller doesn't auto-run locally. See [How Polling Works](#9-how-polling-works) |
 | "API Key required" toast when adding host | Agent API Key field left blank | Enter any non-empty string for local/mock testing |
+| `watchtower-agent` will not start | The service user cannot access the Docker socket | Check `sudo journalctl -u watchtower-agent -n 50`, verify `/var/run/docker.sock` exists, and make sure the socket group is not `root`-only |
+| `watchtower-agent-install.sh` exits with a systemd error | The host does not use systemd | Use another service supervisor for `watchtower-agent.sh`, or containerize it and use Docker `--restart unless-stopped` |
 | `watchtower-agent` service fails on boot | Missing API key, bad port, or Docker socket path | Run `sudo systemctl status watchtower-agent` and inspect `/etc/watchtower-agent/watchtower-agent.env` |
-| Dashboard cannot reach a production host | Agent not exposed through HTTPS or tunnel, or wrong bind address | Check `sudo journalctl -u watchtower-agent -f`, reverse proxy/tunnel config, and `AGENT_BIND_ADDRESS` |
+| Dashboard cannot reach a production host | Agent not exposed through HTTPS or tunnel, or wrong bind address | Check `sudo journalctl -u watchtower-agent -f`, reverse proxy or tunnel config, and `AGENT_BIND_ADDRESS` in `/etc/watchtower-agent/watchtower-agent.env` |
 | `netlify dev` fails to start | Port 8888 already in use | Kill any other `netlify dev` process, or check for port conflicts |
 | Signup succeeds but login fails | Typo in password during signup | Re-register with a new email or reset the database |
 

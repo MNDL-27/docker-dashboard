@@ -15,7 +15,8 @@ usage() {
 Usage: watchtower-agent-uninstall.sh [options]
 
 Options:
-  --delete-config   Remove /etc/watchtower-agent and stored secrets
+  --purge           Remove /etc/watchtower-agent and stored secrets
+  --delete-config   Same as --purge
   --keep-config     Preserve /etc/watchtower-agent for reinstall
   --help            Show this help text
 EOF
@@ -30,11 +31,12 @@ require_root() {
   [ "$(id -u)" -eq 0 ] || fail "Run this uninstaller with sudo or as root"
 }
 
+HAD_INSTALL="false"
 DELETE_CONFIG=""
 
 while [ $# -gt 0 ]; do
   case "$1" in
-    --delete-config)
+    --purge|--delete-config)
       DELETE_CONFIG="true"
       shift
       ;;
@@ -53,6 +55,10 @@ while [ $# -gt 0 ]; do
 done
 
 require_root
+
+if [ -f "$SERVICE_FILE" ] || [ -f "$UNINSTALL_BIN" ] || [ -d "$INSTALL_DIR" ] || [ -d "$CONFIG_DIR" ]; then
+  HAD_INSTALL="true"
+fi
 
 if [ -z "$DELETE_CONFIG" ]; then
   if [ -t 0 ]; then
@@ -87,16 +93,21 @@ rm -rf "$INSTALL_DIR"
 
 if [ "$DELETE_CONFIG" = "true" ]; then
   rm -rf "$CONFIG_DIR"
+  echo "Deleted config in $CONFIG_DIR"
 else
   echo "Preserved config at $ENV_FILE"
 fi
 
-if id "$SERVICE_USER" >/dev/null 2>&1; then
+if [ "$DELETE_CONFIG" = "true" ] && id "$SERVICE_USER" >/dev/null 2>&1; then
   userdel "$SERVICE_USER" 2>/dev/null || true
 fi
 
-if getent group "$SERVICE_USER" >/dev/null 2>&1; then
+if [ "$DELETE_CONFIG" = "true" ] && getent group "$SERVICE_USER" >/dev/null 2>&1; then
   groupdel "$SERVICE_USER" 2>/dev/null || true
 fi
 
-echo "watchtower-agent has been removed."
+if [ "$HAD_INSTALL" = "true" ]; then
+  echo "watchtower-agent has been removed."
+else
+  echo "watchtower-agent was not installed; nothing needed removal."
+fi

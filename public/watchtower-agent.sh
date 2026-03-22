@@ -11,6 +11,18 @@ require_command() {
   command -v "$1" >/dev/null 2>&1 || fail "$1 is required but not installed"
 }
 
+check_config() {
+  [ -n "$AGENT_API_KEY" ] || fail "AGENT_API_KEY is required. Set it in /etc/watchtower-agent/watchtower-agent.env or export it before starting."
+  validate_port "$AGENT_PORT"
+  [ -n "$AGENT_BIND_ADDRESS" ] || fail "AGENT_BIND_ADDRESS must not be empty"
+  require_command socat
+  require_command curl
+  require_command awk
+  require_command tr
+  require_command sed
+  [ -S "$DOCKER_SOCKET" ] || fail "Docker socket not found at $DOCKER_SOCKET. Ensure Docker is running or update DOCKER_SOCKET."
+}
+
 validate_port() {
   case "$1" in
     ''|*[!0-9]*)
@@ -33,14 +45,16 @@ trap cleanup EXIT INT TERM
 
 AGENT_API_KEY="${AGENT_API_KEY:-}"
 AGENT_PORT="${AGENT_PORT:-9876}"
-AGENT_BIND="${AGENT_BIND:-127.0.0.1}"
+AGENT_BIND_ADDRESS="${AGENT_BIND_ADDRESS:-${AGENT_BIND:-127.0.0.1}}"
 DOCKER_SOCKET="${DOCKER_SOCKET:-/var/run/docker.sock}"
 
-[ -n "$AGENT_API_KEY" ] || fail "AGENT_API_KEY is required"
-validate_port "$AGENT_PORT"
-require_command socat
-require_command curl
-[ -S "$DOCKER_SOCKET" ] || fail "Docker socket not found at $DOCKER_SOCKET"
+if [ "${1:-}" = "--check" ]; then
+  check_config
+  echo "watchtower-agent configuration is valid."
+  exit 0
+fi
+
+check_config
 
 HANDLER_SCRIPT="$(mktemp "${TMPDIR:-/tmp}/watchtower-agent-handler.XXXXXX")"
 
@@ -80,7 +94,7 @@ if [ "$METHOD" = "OPTIONS" ]; then
   printf 'HTTP/1.1 204 No Content\r\n'
   printf 'Access-Control-Allow-Origin: *\r\n'
   printf 'Access-Control-Allow-Headers: X-Agent-Key, X-Docker-Socket, Content-Type\r\n'
-  printf 'Access-Control-Allow-Methods: GET, POST, OPTIONS\r\n'
+  printf 'Access-Control-Allow-Methods: GET, POST, DELETE, PUT, PATCH, OPTIONS\r\n'
   printf 'Content-Length: 0\r\n'
   printf '\r\n'
   exit 0
@@ -189,7 +203,7 @@ HANDLER_EOF
 chmod 0755 "$HANDLER_SCRIPT"
 export AGENT_API_KEY DOCKER_SOCKET
 
-echo "Starting watchtower-agent on ${AGENT_BIND}:${AGENT_PORT}"
+echo "Starting watchtower-agent on ${AGENT_BIND_ADDRESS}:${AGENT_PORT}"
 echo "Docker socket: ${DOCKER_SOCKET}"
 
-exec socat "TCP-LISTEN:${AGENT_PORT},bind=${AGENT_BIND},reuseaddr,fork" "EXEC:${HANDLER_SCRIPT}"
+exec socat "TCP-LISTEN:${AGENT_PORT},bind=${AGENT_BIND_ADDRESS},reuseaddr,fork" "EXEC:${HANDLER_SCRIPT}"

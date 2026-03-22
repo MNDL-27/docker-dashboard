@@ -78,14 +78,13 @@ function InfoBox({ variant = "info", children }: { variant?: "info" | "warning" 
 export default function SetupGuidePage() {
   const baseUrl = typeof window !== "undefined" ? window.location.origin : "https://dockerdash.mndl.eu.org";
   const installCommand = `curl -fsSL ${baseUrl}/watchtower-agent-install.sh -o watchtower-agent-install.sh
-sudo WATCHTOWER_AGENT_DOWNLOAD_BASE=${baseUrl} bash ./watchtower-agent-install.sh`;
-  const tunnelInstallCommand = `curl -fsSL ${baseUrl}/watchtower-agent-install.sh -o watchtower-agent-install.sh
-sudo WATCHTOWER_AGENT_DOWNLOAD_BASE=${baseUrl} AGENT_BIND_ADDRESS=127.0.0.1 bash ./watchtower-agent-install.sh`;
+chmod +x watchtower-agent-install.sh
+sudo ./watchtower-agent-install.sh`;
+  const tunnelInstallCommand = installCommand;
   const serviceCommands = `sudo systemctl status watchtower-agent
 sudo journalctl -u watchtower-agent -f
 sudo systemctl restart watchtower-agent
-sudo /opt/watchtower-agent/watchtower-agent-uninstall
-sudo /opt/watchtower-agent/watchtower-agent-uninstall --purge`;
+sudo watchtower-agent-uninstall`;
 
   return (
     <div className="space-y-6 animate-fade-in max-w-4xl">
@@ -152,8 +151,12 @@ sudo /opt/watchtower-agent/watchtower-agent-uninstall --purge`;
             <CopyBlock label="One-time Linux installer" code={installCommand} />
             <InfoBox>
               The installer prompts for the API key so it does not become the primary shell-history path for secrets.
-              Default port is <strong>9876</strong>.
+              Default bind and port are <strong>127.0.0.1:9876</strong>.
             </InfoBox>
+            <CopyBlock
+              label="Preflight only"
+              code={`sudo ./watchtower-agent-install.sh --check`}
+            />
           </StepCard>
 
           <StepCard step={3} title="Expose via HTTPS">
@@ -213,7 +216,7 @@ sudo /opt/watchtower-agent/watchtower-agent-uninstall --purge`;
 
           <StepCard step={2} title="Install the Agent on Your Host">
             <p className="text-sm text-muted-foreground">
-              Use the same installer, but bind the agent to localhost so only Cloudflare Tunnel can reach it.
+              Use the same installer. It already binds to localhost by default, which is what Cloudflare Tunnel needs.
             </p>
             <CopyBlock label="Install for tunnel-only access" code={tunnelInstallCommand} />
             <InfoBox>
@@ -237,7 +240,7 @@ sudo apt update && sudo apt install cloudflared`}
               label="Create and route tunnel"
               code={`cloudflared tunnel create watchtower-agent
 cloudflared tunnel route dns watchtower-agent docker.your-team.com
-cloudflared tunnel run --url http://localhost:9876 watchtower-agent`}
+cloudflared tunnel run --url http://127.0.0.1:9876 watchtower-agent`}
             />
           </StepCard>
 

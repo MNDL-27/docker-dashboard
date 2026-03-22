@@ -105,7 +105,8 @@ export default function OnboardingPage() {
   const addHost = useAddDockerHost();
   const baseUrl = typeof window !== "undefined" ? window.location.origin : "https://app.dockerdash.app";
   const quickInstallCommand = `curl -fsSL ${baseUrl}/watchtower-agent-install.sh -o watchtower-agent-install.sh
-sudo WATCHTOWER_AGENT_DOWNLOAD_BASE=${baseUrl} bash ./watchtower-agent-install.sh`;
+chmod +x watchtower-agent-install.sh
+sudo ./watchtower-agent-install.sh`;
 
   /* ── Resume onboarding after hard reload ── */
   useEffect(() => {
@@ -379,7 +380,7 @@ sudo WATCHTOWER_AGENT_DOWNLOAD_BASE=${baseUrl} bash ./watchtower-agent-install.s
                   Add your first Docker host
                 </h1>
                 <p className="text-muted-foreground text-sm leading-relaxed max-w-sm mx-auto">
-                  Connect via the Watchtower Agent — no open Docker ports required.
+                  Connect via the Watchtower Agent with a reverse proxy or Cloudflare Tunnel in front of it.
                 </p>
               </div>
 
@@ -476,7 +477,7 @@ sudo WATCHTOWER_AGENT_DOWNLOAD_BASE=${baseUrl} bash ./watchtower-agent-install.s
               <div className="mt-4 flex items-start gap-2.5 rounded-lg border border-border bg-muted/40 px-4 py-3">
                 <Info className="h-4 w-4 text-muted-foreground shrink-0 mt-0.5" />
                 <p className="text-xs text-muted-foreground leading-relaxed">
-                  The Watchtower Agent runs alongside Docker on your host. It requires no open ports and connects outbound over HTTPS.
+                  The Watchtower Agent runs alongside Docker on your host. Keep it on localhost and expose it through HTTPS or Cloudflare Tunnel.
                 </p>
               </div>
             </div>
@@ -570,7 +571,8 @@ sudo WATCHTOWER_AGENT_DOWNLOAD_BASE=${baseUrl} bash ./watchtower-agent-install.s
                     code={quickInstallCommand}
                   />
                   <p className="text-[10px] text-muted-foreground">
-                    Default port: 9876. For Cloudflare Tunnel only, rerun with <code className="bg-muted px-1 rounded">AGENT_BIND_ADDRESS=127.0.0.1</code>.
+                    The installer prompts for the same API key you enter here. Default bind and port:
+                    <code className="bg-muted px-1 rounded ml-1">127.0.0.1:9876</code>.
                   </p>
                 </div>
 
