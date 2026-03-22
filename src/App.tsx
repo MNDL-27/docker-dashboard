@@ -52,6 +52,19 @@ const DarkModeInit = ({ children }: { children: React.ReactNode }) => {
   return <>{children}</>;
 };
 
+const PaddleInitializer = ({ children }: { children: React.ReactNode }) => {
+  useEffect(() => {
+    const token = import.meta.env.VITE_PADDLE_CLIENT_TOKEN;
+    if (token && window.Paddle) {
+      window.Paddle.Initialize({ 
+        token,
+        environment: token.startsWith('live_') ? 'production' : 'sandbox'
+      });
+    }
+  }, []);
+  return <>{children}</>;
+};
+
 const App = () => (
   <ClerkProvider
     publishableKey={import.meta.env.VITE_CLERK_PUBLISHABLE_KEY}
@@ -64,7 +77,8 @@ const App = () => (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
         <DarkModeInit>
-          <Toaster />
+          <PaddleInitializer>
+            <Toaster />
             <Sonner />
             <BrowserRouter>
               <Routes>
@@ -107,7 +121,8 @@ const App = () => (
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </BrowserRouter>
-          </DarkModeInit>
+          </PaddleInitializer>
+        </DarkModeInit>
       </TooltipProvider>
     </QueryClientProvider>
   </ClerkProvider>
