@@ -23,7 +23,7 @@ export function DashboardAlerts({ alerts, className }: DashboardAlertsProps) {
       <div className="p-4 border-b border-white/5 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <ShieldAlert className="h-4 w-4 text-primary" />
-          <h3 className="text-sm font-semibold tracking-tight uppercase tracking-wider">Operational Issues</h3>
+          <h3 className="text-sm font-semibold uppercase tracking-wider">Operational Issues</h3>
         </div>
         <Badge variant="outline" className="text-[9px] font-black uppercase text-destructive border-destructive/20 bg-destructive/5 px-1.5 py-0 h-4">
           {alerts.length} NEW

@@ -76,7 +76,16 @@ function InfoBox({ variant = "info", children }: { variant?: "info" | "warning" 
 }
 
 export default function SetupGuidePage() {
-  const baseUrl = typeof window !== 'undefined' ? window.location.origin : 'https://dockerdash.mndl.eu.org';
+  const baseUrl = typeof window !== "undefined" ? window.location.origin : "https://dockerdash.mndl.eu.org";
+  const installCommand = `curl -fsSL ${baseUrl}/watchtower-agent-install.sh -o watchtower-agent-install.sh
+sudo WATCHTOWER_AGENT_DOWNLOAD_BASE=${baseUrl} bash ./watchtower-agent-install.sh`;
+  const tunnelInstallCommand = `curl -fsSL ${baseUrl}/watchtower-agent-install.sh -o watchtower-agent-install.sh
+sudo WATCHTOWER_AGENT_DOWNLOAD_BASE=${baseUrl} AGENT_BIND_ADDRESS=127.0.0.1 bash ./watchtower-agent-install.sh`;
+  const serviceCommands = `sudo systemctl status watchtower-agent
+sudo journalctl -u watchtower-agent -f
+sudo systemctl restart watchtower-agent
+sudo /opt/watchtower-agent/watchtower-agent-uninstall
+sudo /opt/watchtower-agent/watchtower-agent-uninstall --purge`;
 
   return (
     <div className="space-y-6 animate-fade-in max-w-4xl">
@@ -86,7 +95,6 @@ export default function SetupGuidePage() {
         breadcrumbs={[{ label: "Help", href: "/app/help" }, { label: "Setup Guide" }]}
       />
 
-      {/* Architecture overview */}
       <div className="glass-card p-6 space-y-4">
         <h2 className="text-lg font-semibold flex items-center gap-2">
           <ShieldCheck className="h-5 w-5 text-primary" />
@@ -96,7 +104,7 @@ export default function SetupGuidePage() {
           <div className="p-4 rounded-lg bg-muted/50 border border-border">
             <Globe className="h-6 w-6 text-primary mx-auto mb-2" />
             <div className="text-sm font-semibold">Watchtower Dashboard</div>
-            <div className="text-xs text-muted-foreground mt-1">Cloud-hosted UI & API</div>
+            <div className="text-xs text-muted-foreground mt-1">Cloud-hosted UI and API</div>
           </div>
           <div className="flex items-center justify-center">
             <ArrowRight className="h-5 w-5 text-muted-foreground hidden sm:block" />
@@ -105,12 +113,12 @@ export default function SetupGuidePage() {
           <div className="p-4 rounded-lg bg-muted/50 border border-border">
             <Server className="h-6 w-6 text-primary mx-auto mb-2" />
             <div className="text-sm font-semibold">Watchtower Agent</div>
-            <div className="text-xs text-muted-foreground mt-1">Runs on your host, proxies to Docker socket</div>
+            <div className="text-xs text-muted-foreground mt-1">Runs on your host and proxies to the Docker socket</div>
           </div>
         </div>
         <p className="text-sm text-muted-foreground leading-relaxed">
-          The Watchtower Agent is a lightweight HTTPS server that runs on each Docker host. It authenticates
-          incoming requests with a shared API key and proxies them to the local Docker socket.
+          The Watchtower Agent is a lightweight host service. It authenticates incoming requests with a shared API key,
+          forwards them to Docker over the local Unix socket, and stays under your control.
           <strong> Your Docker socket is never exposed directly to the internet.</strong>
         </p>
       </div>
@@ -125,45 +133,37 @@ export default function SetupGuidePage() {
           </TabsTrigger>
         </TabsList>
 
-        {/* ── Agent Direct ── */}
         <TabsContent value="agent" className="space-y-2">
           <StepCard step={1} title="Generate an API Key">
             <p className="text-sm text-muted-foreground">
               Create a strong random secret that will authenticate requests between the dashboard and your agent.
             </p>
             <CopyBlock code="openssl rand -hex 32" label="Generate a 256-bit key" />
-            <p className="text-sm text-muted-foreground">Save this key — you'll need it for both the agent config and when adding the host in Watchtower.</p>
+            <p className="text-sm text-muted-foreground">Save this key. You will use it during install and when adding the host in Watchtower.</p>
           </StepCard>
 
           <StepCard step={2} title="Install the Agent">
-            <InfoBox variant="warning">
-              A hardened production agent (Go binary) is coming soon. For now, use the dev connector for testing only.
-            </InfoBox>
             <p className="text-sm text-muted-foreground">
-              Download and run the dev connector on your Docker host to verify connectivity:
+              Run the one-time Linux installer on your Docker host. It creates a dedicated service user, installs the
+              agent into <code className="bg-muted px-1 rounded">/opt/watchtower-agent</code>, stores the config in
+              <code className="bg-muted px-1 rounded ml-1">/etc/watchtower-agent/watchtower-agent.env</code>, and
+              enables the service on boot.
             </p>
-            <CopyBlock
-              label="Dev connector (testing only)"
-              code={`# Download the dev connector
-curl -fsSL ${baseUrl}/watchtower-dev-connector.sh -o watchtower-dev-connector.sh
-chmod +x watchtower-dev-connector.sh
-
-# Run with your API key
-AGENT_API_KEY="your-secret-key-here" ./watchtower-dev-connector.sh`}
-            />
+            <CopyBlock label="One-time Linux installer" code={installCommand} />
             <InfoBox>
-              The dev connector listens on port <strong>9876</strong> by default. Override with <code className="bg-muted px-1 rounded">AGENT_PORT</code>.
+              The installer prompts for the API key so it does not become the primary shell-history path for secrets.
+              Default port is <strong>9876</strong>.
             </InfoBox>
           </StepCard>
 
-          <StepCard step={3} title="Expose via HTTPS (Required for Production)">
+          <StepCard step={3} title="Expose via HTTPS">
             <p className="text-sm text-muted-foreground">
-              The agent must be reachable over HTTPS. Use a reverse proxy like Caddy or nginx for TLS termination.
+              Direct agent mode must be reachable over HTTPS. Put the local agent behind a reverse proxy such as Caddy or nginx.
             </p>
             <CopyBlock
               label="Example Caddyfile"
               code={`docker-agent.example.com {
-    reverse_proxy localhost:9876
+    reverse_proxy 127.0.0.1:9876
 }`}
             />
             <CopyBlock
@@ -171,10 +171,10 @@ AGENT_API_KEY="your-secret-key-here" ./watchtower-dev-connector.sh`}
               code={`server {
     listen 443 ssl;
     server_name docker-agent.example.com;
-    
+
     ssl_certificate     /etc/ssl/certs/agent.crt;
     ssl_certificate_key /etc/ssl/private/agent.key;
-    
+
     location / {
         proxy_pass http://127.0.0.1:9876;
         proxy_set_header Host $host;
@@ -196,17 +196,15 @@ AGENT_API_KEY="your-secret-key-here" ./watchtower-dev-connector.sh`}
 
           <div className="pl-12">
             <InfoBox variant="success">
-              Done! Watchtower will test the connection automatically when you save the host.
+              Save the host and Watchtower will test the connection immediately.
             </InfoBox>
           </div>
         </TabsContent>
 
-        {/* ── Cloudflare Tunnel ── */}
         <TabsContent value="cloudflare" className="space-y-2">
           <InfoBox>
-            This mode routes traffic through a Cloudflare Tunnel to reach the same Watchtower Agent.
-            The agent still authenticates with an API key — CF Tunnel is just the transport layer.
-            No ports need to be opened on the host.
+            This mode reaches the same Watchtower Agent through a Cloudflare Tunnel. The API key still authenticates the
+            requests. The tunnel only changes how traffic reaches the host.
           </InfoBox>
 
           <StepCard step={1} title="Generate an API Key">
@@ -215,14 +213,13 @@ AGENT_API_KEY="your-secret-key-here" ./watchtower-dev-connector.sh`}
 
           <StepCard step={2} title="Install the Agent on Your Host">
             <p className="text-sm text-muted-foreground">
-              Same as the direct method — install and run the agent listening on localhost.
+              Use the same installer, but bind the agent to localhost so only Cloudflare Tunnel can reach it.
             </p>
-            <CopyBlock
-              label="Run on localhost only"
-              code={`AGENT_API_KEY="your-secret-key-here" \\
-AGENT_PORT=9876 \\
-./watchtower-dev-connector.sh`}
-            />
+            <CopyBlock label="Install for tunnel-only access" code={tunnelInstallCommand} />
+            <InfoBox>
+              You can change <code className="bg-muted px-1 rounded">AGENT_BIND_ADDRESS</code> later in
+              <code className="bg-muted px-1 rounded ml-1">/etc/watchtower-agent/watchtower-agent.env</code>.
+            </InfoBox>
           </StepCard>
 
           <StepCard step={3} title="Create a Cloudflare Tunnel">
@@ -246,8 +243,8 @@ cloudflared tunnel run --url http://localhost:9876 watchtower-agent`}
 
           <StepCard step={4} title="(Optional) Protect with CF Access">
             <p className="text-sm text-muted-foreground">
-              Add a Cloudflare Access policy to the tunnel hostname for an extra authentication layer.
-              Create a Service Token in the CF dashboard and note the Client ID and Secret.
+              Add a Cloudflare Access policy to the tunnel hostname for an extra authentication layer. Create a service token
+              in Cloudflare if you want Watchtower to present CF Access credentials too.
             </p>
           </StepCard>
 
@@ -265,22 +262,21 @@ cloudflared tunnel run --url http://localhost:9876 watchtower-agent`}
 
           <div className="pl-12">
             <InfoBox variant="success">
-              Done! The tunnel provides TLS and zero-trust access without opening any ports.
+              The tunnel provides TLS and private routing without opening inbound ports on the host.
             </InfoBox>
           </div>
         </TabsContent>
       </Tabs>
 
-      {/* Requirements */}
       <div className="glass-card p-6 space-y-3">
         <h2 className="text-lg font-semibold">Agent Requirements</h2>
         <div className="grid sm:grid-cols-2 gap-3">
           {[
+            { label: "Linux + systemd", desc: "The guided installer targets standard Linux hosts with systemd" },
             { label: "Docker", desc: "Docker Engine 20.10+ installed and running" },
-            { label: "Socket access", desc: "Agent process must be able to read /var/run/docker.sock" },
-            { label: "Outbound HTTPS", desc: "Not required — dashboard initiates all connections" },
-            { label: "Dev connector deps", desc: "socat + curl (production agent will be a single binary)" },
-          ].map(r => (
+            { label: "Socket access", desc: "The service user must be able to read /var/run/docker.sock" },
+            { label: "Runtime deps", desc: "bash, socat, and curl must already be installed on the host" },
+          ].map((r) => (
             <div key={r.label} className="flex items-start gap-2.5 p-3 rounded-lg bg-muted/30 border border-border">
               <CheckCircle2 className="h-4 w-4 text-primary shrink-0 mt-0.5" />
               <div>
@@ -290,6 +286,20 @@ cloudflared tunnel run --url http://localhost:9876 watchtower-agent`}
             </div>
           ))}
         </div>
+      </div>
+
+      <div className="glass-card p-6 space-y-3">
+        <h2 className="text-lg font-semibold">Operate the Service</h2>
+        <p className="text-sm text-muted-foreground">
+          After installation, these are the main commands for status, logs, restart, and uninstall.
+        </p>
+        <CopyBlock code={serviceCommands} label="Lifecycle commands" />
+        <InfoBox>
+          If your host does not use <code className="bg-muted px-1 rounded">systemd</code>, wrap
+          <code className="bg-muted px-1 rounded ml-1">watchtower-agent.sh</code> with your existing process manager. If you
+          already standardize on Docker-based host services, use restart behavior such as
+          <code className="bg-muted px-1 rounded ml-1">--restart unless-stopped</code>.
+        </InfoBox>
       </div>
     </div>
   );

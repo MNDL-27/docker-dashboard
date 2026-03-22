@@ -7,9 +7,7 @@ import {
   Loader2, 
   Plus, 
   Building2, 
-  ShieldCheck, 
   AlertCircle, 
-  Zap,
   Globe,
   Database,
   Terminal
@@ -180,7 +178,7 @@ export default function DashboardPage() {
         <KPICard label="Connected" value={stats.connectedCount} subtext="Active & healthy" status={stats.connectedCount === stats.hostsCount ? "success" : "warning"} trend={{ value: "Stable", type: "neutral" }} />
         <KPICard label="Unhealthy" value={stats.unhealthyCount} subtext="Critical attention" status={stats.unhealthyCount > 0 ? "destructive" : "success"} />
         <KPICard label="Containers" value={stats.containersCount} subtext="Total workloads" icon={Box} status="neutral" />
-        <KPICard label="Running" value={stats.runningCount} subtext="Productive tasks" icon={Activity} status="success" trend={{ value: "+2%", type: "positive" }} />
+        <KPICard label="Running" value={stats.runningCount} subtext="Productive tasks" icon={Activity} status="success" />
         <KPICard label="Issues" value={stats.alerts.length} subtext="Active alerts" icon={AlertCircle} status={stats.alerts.length > 0 ? "destructive" : "success"} />
       </div>
 

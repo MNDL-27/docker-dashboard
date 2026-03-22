@@ -1,6 +1,5 @@
 import { cn } from "@/lib/utils";
-import { Box, Play, Square, RefreshCcw, MoreVertical, ExternalLink } from "lucide-react";
-import { Progress } from "@/components/ui/progress";
+import { Box, Square, RefreshCcw, ExternalLink } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 
@@ -72,16 +71,12 @@ export function ContainersTable({ containers, isLoading, className }: Containers
                   </td>
                   <td className="px-4 py-3">
                     <div className="flex flex-col gap-1 w-24">
-                      <div className="flex items-center justify-between text-[10px] font-bold">
-                        <span className="text-muted-foreground opacity-50">7.2%</span>
-                      </div>
-                      <Progress value={7.2} className="h-1 bg-white/5" />
+                      <span className="text-[10px] text-muted-foreground font-medium">—</span>
                     </div>
                   </td>
                   <td className="px-4 py-3">
                     <div className="flex flex-col">
-                      <span className="text-[11px] font-semibold">124 MB</span>
-                      <span className="text-[9px] text-muted-foreground font-bold uppercase opacity-50 text-[8px]">Limit: 1 GB</span>
+                      <span className="text-[11px] font-semibold text-muted-foreground">—</span>
                     </div>
                   </td>
                   <td className="px-4 py-3 text-right">

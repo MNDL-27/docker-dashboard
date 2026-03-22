@@ -104,6 +104,8 @@ export default function OnboardingPage() {
 
   const addHost = useAddDockerHost();
   const baseUrl = typeof window !== "undefined" ? window.location.origin : "https://app.dockerdash.app";
+  const quickInstallCommand = `curl -fsSL ${baseUrl}/watchtower-agent-install.sh -o watchtower-agent-install.sh
+sudo WATCHTOWER_AGENT_DOWNLOAD_BASE=${baseUrl} bash ./watchtower-agent-install.sh`;
 
   /* ── Resume onboarding after hard reload ── */
   useEffect(() => {
@@ -560,16 +562,15 @@ export default function OnboardingPage() {
                     Quick agent install
                   </div>
                   <p className="text-xs text-muted-foreground leading-relaxed">
-                    If you haven't installed the agent yet, run this on your Docker host:
+                    If you have not installed the agent yet, run this once on your Linux Docker host. The installer will prompt
+                    for the API key and register the service with systemd.
                   </p>
                   <CopyBlock
-                    label="Dev connector (testing only)"
-                    code={`curl -fsSL ${baseUrl}/watchtower-dev-connector.sh -o watchtower-dev-connector.sh
-chmod +x watchtower-dev-connector.sh
-AGENT_API_KEY="${agentApiKey || "your-secret-key-here"}" ./watchtower-dev-connector.sh`}
+                    label="One-time Linux installer"
+                    code={quickInstallCommand}
                   />
                   <p className="text-[10px] text-muted-foreground">
-                    Default port: 9876. Override with <code className="bg-muted px-1 rounded">AGENT_PORT</code>.
+                    Default port: 9876. For Cloudflare Tunnel only, rerun with <code className="bg-muted px-1 rounded">AGENT_BIND_ADDRESS=127.0.0.1</code>.
                   </p>
                 </div>
 
