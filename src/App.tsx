@@ -52,14 +52,31 @@ const DarkModeInit = ({ children }: { children: React.ReactNode }) => {
   return <>{children}</>;
 };
 
+let paddleInitialized = false;
+
 const PaddleInitializer = ({ children }: { children: React.ReactNode }) => {
   useEffect(() => {
+    if (paddleInitialized) return;
+
     const token = import.meta.env.VITE_PADDLE_CLIENT_TOKEN;
-    if (token && window.Paddle) {
-      window.Paddle.Initialize({ 
-        token,
-        environment: token.startsWith('live_') ? 'production' : 'sandbox'
-      });
+    if (!token) {
+      console.warn("Paddle client token missing; skipping initialization.");
+      return;
+    }
+
+    if (!window.Paddle) {
+      console.warn("Paddle.js script not loaded yet; initialization will be retried on next mount or by safe interaction.");
+      return;
+    }
+
+    try {
+      const environment = token.startsWith('live_') ? 'production' : 'sandbox';
+      window.Paddle.Environment.set(environment);
+      window.Paddle.Initialize({ token });
+      paddleInitialized = true;
+      console.log(`Paddle.js initialized successfully in ${environment} mode.`);
+    } catch (error) {
+      console.error("Failed to initialize Paddle.js:", error);
     }
   }, []);
   return <>{children}</>;

@@ -2,7 +2,10 @@
 
 interface Window {
   Paddle?: {
-    Initialize: (options: { token: string; environment?: 'sandbox' | 'production' }) => void;
+    Environment: {
+      set: (env: 'sandbox' | 'production') => void;
+    };
+    Initialize: (options: { token: string }) => void;
     Checkout: {
       open: (options: {
         items: Array<{ priceId: string; quantity: number }>;
