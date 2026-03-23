@@ -55,6 +55,7 @@ export function FleetResourceChart({ orgId, className, maxDataPoints = MAX_DATA_
         <div className="flex items-center gap-2">
           <Activity className="h-4 w-4 text-primary" />
           <h3 className="text-sm font-semibold tracking-tight">Fleet Resource Trends</h3>
+          <span className="text-[10px] text-muted-foreground ml-1">(CPU: Docker semantics)</span>
         </div>
         {isLoading && (
           <div className="flex items-center gap-1.5">
@@ -66,6 +67,7 @@ export function FleetResourceChart({ orgId, className, maxDataPoints = MAX_DATA_
           <div className="flex items-center gap-1.5">
             <div className="w-2 h-2 rounded-full bg-primary" />
             <span className="text-[10px] font-bold text-muted-foreground uppercase opacity-70">CPU</span>
+            <span className="text-[8px] text-muted-foreground opacity-50" title="100% = 1 core, can exceed 100%">⚠</span>
           </div>
           <div className="flex items-center gap-1.5">
             <div className="w-2 h-2 rounded-full bg-success" />
@@ -100,7 +102,8 @@ export function FleetResourceChart({ orgId, className, maxDataPoints = MAX_DATA_
               tickLine={false} 
               tick={{ fontSize: 10, fill: 'rgba(255,255,255,0.4)', fontWeight: 600 }}
               unit="%"
-              domain={[0, 100]}
+              domain={[0, 'auto']}
+              allowDecimals={false}
             />
             <Tooltip 
               contentStyle={{ 
@@ -112,6 +115,12 @@ export function FleetResourceChart({ orgId, className, maxDataPoints = MAX_DATA_
                 boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.5)'
               }}
               itemStyle={{ color: '#fff' }}
+              formatter={(value: number, name: string) => {
+                if (name === 'CPU Usage') {
+                  return [`${value}% (${value >= 100 ? Math.round(value/100) + ' cores' : '1 core'})`, 'CPU (Docker semantics)'];
+                }
+                return [`${value}%`, 'Memory'];
+              }}
             />
             <Area 
               type="monotone" 
