@@ -27,4 +27,5 @@ export const dockerApi = {
   restartContainer: (hostId: string, containerId: string) =>
     invoke({ action: 'container-restart', hostId, containerId }),
   allContainers: (orgId: string) => invoke({ action: 'all-containers', orgId }),
+  allContainerStats: (orgId: string) => invoke({ action: 'all-container-stats', orgId }),
 };

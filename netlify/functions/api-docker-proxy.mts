@@ -175,6 +175,87 @@ export default async (req: Request) => {
       return new Response(JSON.stringify(allContainers), { headers });
     }
 
+    // ── Org-wide: fetch stats for all running containers ──
+    if (action === 'all-container-stats') {
+      if (!orgId) return new Response(JSON.stringify({ error: 'orgId required' }), { status: 400, headers });
+
+      const memberships = await sql`
+        SELECT 1 FROM organization_members WHERE organization_id = ${orgId} AND user_id = ${auth.userId}
+      `;
+      if (memberships.length === 0) return new Response(JSON.stringify({ error: 'Access denied' }), { status: 403, headers });
+
+      const hosts = await sql`SELECT * FROM docker_hosts WHERE organization_id = ${orgId} AND status = 'connected'`;
+      const allStats: any[] = [];
+
+      await mapConcurrent(hosts as any[], 5, async (host) => {
+        try {
+          const secretsRecord = await sql`
+            SELECT agent_api_key, cf_service_token_id, cf_service_token_secret 
+            FROM docker_host_secrets WHERE host_id = ${host.id}
+          `;
+          let secrets = secretsRecord[0] || null;
+          if (secrets) {
+            secrets = {
+              agent_api_key: decryptSecret(secrets.agent_api_key, host.id, 'agent_api_key'),
+              cf_service_token_id: decryptSecret(secrets.cf_service_token_id, host.id, 'cf_service_token_id'),
+              cf_service_token_secret: decryptSecret(secrets.cf_service_token_secret, host.id, 'cf_service_token_secret')
+            };
+          }
+
+          // Get running containers only (no need for exited container stats)
+          const listReq = buildRequest(host, secrets, '/containers/json', 'GET');
+          const listResp = await dockerFetch(listReq.url, listReq.method, listReq.headers, 3000);
+          if (!listResp.ok) return;
+          const containers = await listResp.json();
+          if (!Array.isArray(containers) || containers.length === 0) return;
+
+          // Cap at 20 containers per host to bound latency
+          const capped = containers.slice(0, 20);
+
+          await mapConcurrent(capped, 5, async (container: any) => {
+            try {
+              const cId = container.Id;
+              const statsReq = buildRequest(host, secrets, `/containers/${cId}/stats?stream=false`, 'GET');
+              const statsResp = await dockerFetch(statsReq.url, statsReq.method, statsReq.headers, 3000);
+              if (!statsResp.ok) return;
+              const s = await statsResp.json();
+
+              // CPU % calculation (same as Docker CLI)
+              const cpuDelta = (s.cpu_stats?.cpu_usage?.total_usage ?? 0) - (s.precpu_stats?.cpu_usage?.total_usage ?? 0);
+              const systemDelta = (s.cpu_stats?.system_cpu_usage ?? 0) - (s.precpu_stats?.system_cpu_usage ?? 0);
+              const onlineCpus = s.cpu_stats?.online_cpus || 1;
+              const cpuPercent = systemDelta > 0 ? (cpuDelta / systemDelta) * onlineCpus * 100 : 0;
+
+              // Memory
+              const memUsage = s.memory_stats?.usage ?? 0;
+              const memLimit = s.memory_stats?.limit ?? 0;
+
+              // Network I/O (sum across all interfaces)
+              let netRx = 0, netTx = 0;
+              if (s.networks) {
+                for (const iface of Object.values(s.networks) as any[]) {
+                  netRx += iface.rx_bytes ?? 0;
+                  netTx += iface.tx_bytes ?? 0;
+                }
+              }
+
+              allStats.push({
+                containerId: cId,
+                hostId: host.id,
+                cpu_percent: Math.round(cpuPercent * 100) / 100,
+                memory_usage: memUsage,
+                memory_limit: memLimit,
+                net_rx: netRx,
+                net_tx: netTx,
+              });
+            } catch (_) { /* skip container on error */ }
+          });
+        } catch (_) { /* skip host on error */ }
+      });
+
+      return new Response(JSON.stringify(allStats), { headers });
+    }
+
     // ── Host-specific actions ──
     if (!hostId) return new Response(JSON.stringify({ error: 'hostId required' }), { status: 400, headers });
 

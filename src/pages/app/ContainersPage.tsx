@@ -11,7 +11,7 @@ import {
 import { useState, useMemo } from "react";
 import { Link } from "react-router-dom";
 import { useOrganization } from "@clerk/clerk-react";
-import { useContainers, useDockerHosts } from "@/hooks/useDocker";
+import { useContainers, useDockerHosts, useAllContainerStats } from "@/hooks/useDocker";
 import { dockerApi } from "@/services/docker-api";
 import { cn } from "@/lib/utils";
 
@@ -31,9 +31,20 @@ function relativeAge(created?: number): string {
 
 function shortenImage(img: string): string {
   if (!img) return "—";
-  // strip "sha256:" prefix and registry prefix for display
   const parts = img.split("/");
   return parts[parts.length - 1] || img;
+}
+
+function formatBytes(bytes: number): string {
+  if (bytes === 0) return "0 B";
+  const k = 1024;
+  const sizes = ["B", "KB", "MB", "GB", "TB"];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return `${(bytes / Math.pow(k, i)).toFixed(i > 1 ? 1 : 0)} ${sizes[i]}`;
+}
+
+function formatNetIO(rx: number, tx: number): string {
+  return `${formatBytes(rx)} / ${formatBytes(tx)}`;
 }
 
 /* ─── status mapping ─── */
@@ -68,6 +79,7 @@ export default function ContainersPage() {
   const { organization: currentOrg } = useOrganization();
   const { data: hosts = [], isLoading: hostsLoading } = useDockerHosts(currentOrg?.id);
   const { data: rawContainers, isLoading: containersLoading, error } = useContainers(currentOrg?.id, hosts.length > 0);
+  const { data: rawStats } = useAllContainerStats(currentOrg?.id, hosts.length > 0);
 
   const [search, setSearch] = useState("");
   const [stateTab, setStateTab] = useState("all");
@@ -95,23 +107,42 @@ export default function ContainersPage() {
     return Array.from(set).sort();
   }, [containers]);
 
+  /* stats map: containerId → stats */
+  const statsMap = useMemo(() => {
+    const map = new Map<string, any>();
+    if (Array.isArray(rawStats)) {
+      rawStats.forEach((s: any) => map.set(s.containerId, s));
+    }
+    return map;
+  }, [rawStats]);
+
   /* KPI aggregations */
   const kpi = useMemo(() => {
     let running = 0, unhealthy = 0, restarting = 0;
+    let totalCpuPercent = 0, totalMemUsed = 0, totalMemLimit = 0;
     containers.forEach((c: any) => {
       if (c.State === "running") running++;
-      // Docker health status is nested in Status string
       const status = (c.Status || "").toLowerCase();
       if (status.includes("unhealthy") || c.State === "unhealthy") unhealthy++;
       if (c.State === "restarting") restarting++;
+      const s = statsMap.get(c.Id);
+      if (s) {
+        totalCpuPercent += s.cpu_percent || 0;
+        totalMemUsed += s.memory_usage || 0;
+        totalMemLimit += s.memory_limit || 0;
+      }
     });
     return {
       total: containers.length,
       running,
       unhealthy,
       restarting,
+      totalCpuPercent: Math.round(totalCpuPercent * 100) / 100,
+      totalMemUsed,
+      totalMemLimit,
+      hasStats: statsMap.size > 0,
     };
-  }, [containers]);
+  }, [containers, statsMap]);
 
   /* filtering */
   const filtered = useMemo(() => {
@@ -119,8 +150,9 @@ export default function ContainersPage() {
       // text search
       const name = (c.Names?.[0] || "").replace(/^\//, "").toLowerCase();
       const image = (c.Image || "").toLowerCase();
+      const hostName = (c._hostName || "").toLowerCase();
       const q = search.toLowerCase();
-      if (q && !name.includes(q) && !image.includes(q)) return false;
+      if (q && !name.includes(q) && !image.includes(q) && !hostName.includes(q)) return false;
       // state tab
       if (stateTab === "unhealthy") {
         const status = (c.Status || "").toLowerCase();
@@ -230,17 +262,17 @@ export default function ContainersPage() {
         />
         <KPICard
           label="Total CPU"
-          value="—"
-          subtext="list-level stats N/A"
+          value={kpi.hasStats ? `${kpi.totalCpuPercent}%` : "—"}
+          subtext={kpi.hasStats ? `across ${statsMap.size} containers` : "loading stats…"}
           icon={Cpu}
-          status="neutral"
+          status={kpi.totalCpuPercent > 80 ? "warning" : "neutral"}
         />
         <KPICard
           label="Total Memory"
-          value="—"
-          subtext="list-level stats N/A"
+          value={kpi.hasStats ? formatBytes(kpi.totalMemUsed) : "—"}
+          subtext={kpi.hasStats && kpi.totalMemLimit > 0 ? `of ${formatBytes(kpi.totalMemLimit)}` : "loading stats…"}
           icon={MemoryStick}
-          status="neutral"
+          status={kpi.hasStats && kpi.totalMemLimit > 0 && (kpi.totalMemUsed / kpi.totalMemLimit) > 0.85 ? "warning" : "neutral"}
         />
       </div>
 
@@ -250,7 +282,7 @@ export default function ContainersPage() {
         <div className="relative flex-1 max-w-sm">
           <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
           <Input
-            placeholder="Search containers or images…"
+            placeholder="Search containers, images, or hosts…"
             className="pl-8 h-8 text-sm"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
@@ -406,18 +438,36 @@ export default function ContainersPage() {
                     </td>
 
                     {/* CPU */}
-                    <td className="px-3 py-2 text-right text-xs text-muted-foreground tabular-nums hidden xl:table-cell">
-                      —
+                    <td className="px-3 py-2 text-right text-xs tabular-nums hidden xl:table-cell">
+                      {(() => {
+                        const s = statsMap.get(c.Id);
+                        if (!s || !isRunning) return <span className="text-muted-foreground">—</span>;
+                        return <span className={cn(s.cpu_percent > 80 ? "text-warning font-medium" : "text-muted-foreground")}>{s.cpu_percent}%</span>;
+                      })()}
                     </td>
 
                     {/* Memory */}
-                    <td className="px-3 py-2 text-right text-xs text-muted-foreground tabular-nums hidden xl:table-cell">
-                      —
+                    <td className="px-3 py-2 text-right text-xs tabular-nums hidden xl:table-cell">
+                      {(() => {
+                        const s = statsMap.get(c.Id);
+                        if (!s || !isRunning) return <span className="text-muted-foreground">—</span>;
+                        const pct = s.memory_limit > 0 ? Math.round((s.memory_usage / s.memory_limit) * 100) : 0;
+                        return (
+                          <span className={cn(pct > 85 ? "text-warning font-medium" : "text-muted-foreground")}>
+                            {formatBytes(s.memory_usage)}
+                            {s.memory_limit > 0 && <span className="text-muted-foreground/50"> / {formatBytes(s.memory_limit)}</span>}
+                          </span>
+                        );
+                      })()}
                     </td>
 
                     {/* Net I/O */}
-                    <td className="px-3 py-2 text-right text-xs text-muted-foreground tabular-nums hidden xl:table-cell">
-                      —
+                    <td className="px-3 py-2 text-right text-xs tabular-nums hidden xl:table-cell">
+                      {(() => {
+                        const s = statsMap.get(c.Id);
+                        if (!s || !isRunning) return <span className="text-muted-foreground">—</span>;
+                        return <span className="text-muted-foreground">{formatNetIO(s.net_rx, s.net_tx)}</span>;
+                      })()}
                     </td>
 
                     {/* Restarts */}

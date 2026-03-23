@@ -70,6 +70,15 @@ export function useContainers(orgId?: string | null, hasHosts = true) {
   });
 }
 
+export function useAllContainerStats(orgId?: string | null, hasHosts = true) {
+  return useQuery({
+    queryKey: ['all-container-stats', orgId],
+    queryFn: () => dockerApi.allContainerStats(orgId!),
+    enabled: !!orgId && hasHosts,
+    refetchInterval: 15000,
+  });
+}
+
 export function useHostContainers(hostId?: string | null) {
   return useQuery({
     queryKey: ['host-containers', hostId],
