@@ -324,15 +324,18 @@ while IFS= read -r header_line; do
   header_line="$(printf '%s' "$header_line" | tr -d '\r')"
   [ -z "$header_line" ] && break
 
-  case "$(printf '%s' "$header_line" | tr '[:upper:]' '[:lower:]')" in
-    x-agent-key:*)
-      AGENT_KEY="${header_line#*: }"
+  header_name="$(printf '%s' "$header_line" | cut -d: -f1 | tr '[:upper:]' '[:lower:]')"
+  header_value="$(printf '%s' "${header_line#*:}" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')"
+
+  case "$header_name" in
+    x-agent-key)
+      AGENT_KEY="$header_value"
       ;;
-    x-docker-socket:*)
-      DOCKER_SOCK_OVERRIDE="${header_line#*: }"
+    x-docker-socket)
+      DOCKER_SOCK_OVERRIDE="$header_value"
       ;;
-    content-length:*)
-      CONTENT_LENGTH="${header_line#*: }"
+    content-length)
+      CONTENT_LENGTH="$header_value"
       ;;
   esac
 done
@@ -401,8 +404,10 @@ tail -n +2 "$RESPONSE_HEADERS_FILE" | while IFS= read -r header_line; do
   header_line="$(printf '%s' "$header_line" | tr -d '\r')"
   [ -z "$header_line" ] && continue
 
-  case "$(printf '%s' "$header_line" | tr '[:upper:]' '[:lower:]')" in
-    content-length:*|transfer-encoding:*|connection:*|access-control-allow-origin:*)
+  header_name="$(printf '%s' "$header_line" | cut -d: -f1 | tr '[:upper:]' '[:lower:]')"
+
+  case "$header_name" in
+    content-length|transfer-encoding|connection|access-control-allow-origin)
       continue
       ;;
   esac

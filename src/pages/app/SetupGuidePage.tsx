@@ -76,7 +76,7 @@ function InfoBox({ variant = "info", children }: { variant?: "info" | "warning" 
 }
 
 export default function SetupGuidePage() {
-  const baseUrl = typeof window !== "undefined" ? window.location.origin : "https://dockerdash.mndl.eu.org";
+  const baseUrl = typeof window !== "undefined" && window.location.hostname !== "localhost" && window.location.hostname !== "127.0.0.1" ? window.location.origin : "https://app.dockerdash.app";
   const installCommand = `curl -fsSL ${baseUrl}/watchtower-agent-install.sh -o watchtower-agent-install.sh
 chmod +x watchtower-agent-install.sh
 sudo ./watchtower-agent-install.sh`;
@@ -152,6 +152,8 @@ sudo watchtower-agent-uninstall`;
             <InfoBox>
               The installer prompts for the API key so it does not become the primary shell-history path for secrets.
               Default bind and port are <strong>127.0.0.1:9876</strong>.
+              <br/><br/>
+              <strong>Requirements:</strong> The Docker socket (<code className="bg-muted px-1 rounded">/var/run/docker.sock</code>) must be owned by a non-root group (like <code className="bg-muted px-1 rounded">docker</code>) so the agent service user can be granted access.
             </InfoBox>
             <CopyBlock
               label="Preflight only"

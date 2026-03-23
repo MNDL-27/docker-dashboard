@@ -103,7 +103,7 @@ export default function OnboardingPage() {
   const [savedHostId, setSavedHostId] = useState<string | null>(null);
 
   const addHost = useAddDockerHost();
-  const baseUrl = typeof window !== "undefined" ? window.location.origin : "https://app.dockerdash.app";
+  const baseUrl = typeof window !== "undefined" && window.location.hostname !== "localhost" && window.location.hostname !== "127.0.0.1" ? window.location.origin : "https://app.dockerdash.app";
   const quickInstallCommand = `curl -fsSL ${baseUrl}/watchtower-agent-install.sh -o watchtower-agent-install.sh
 chmod +x watchtower-agent-install.sh
 sudo ./watchtower-agent-install.sh`;
@@ -114,7 +114,7 @@ sudo ./watchtower-agent-install.sh`;
     if (resume !== "connect-host") return;
     let cancelled = false;
     (async () => {
-      const maxWait = 15_000;
+      const maxWait = 30_000;
       const start = Date.now();
       let delay = 500;
       while (Date.now() - start < maxWait) {
