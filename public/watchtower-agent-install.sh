@@ -374,15 +374,14 @@ if [ "$CONTENT_LENGTH" -gt 0 ]; then
 fi
 
 # Handle /metrics endpoint for fleet dashboard
-# Returns: { cpu_time_ns: <ns>, system_time_ns: <ns>, memory_used: <bytes>, memory_limit: <bytes> }
-# cpu_time_ns = container CPU usage delta (total_usage delta)
-# system_time_ns = system CPU time delta from system_cpu_usage (aggregate across cores, NOT wall-clock)
-# Backend computes: cpu % = Σ cpu_time_ns / Σ system_time_ns × 100
+# Returns: { cpu_time_ns: <ns>, system_time_ns: <ns>, online_cpus: <num>, memory_used: <bytes>, memory_limit: <bytes> }
+# Backend computes: cpu % = Σ (cpu_time_ns / system_time_ns * online_cpus) × 100
+# This matches Docker's standard formula: (cpuDelta / systemDelta) * onlineCPUs * 100
 if [ "$PATH_RAW" = "/metrics" ]; then
   CONTAINERS_JSON=$(curl --silent --unix-socket "$SOCKET_PATH" "http://localhost/containers/json" 2>/dev/null)
   
   if [ -z "$CONTAINERS_JSON" ] || [ "$CONTAINERS_JSON" = "[]" ]; then
-    respond_json '200 OK' '{"cpu_time_ns":0,"system_time_ns":0,"memory_used":0,"memory_limit":0}'
+    respond_json '200 OK' '{"cpu_time_ns":0,"system_time_ns":0,"online_cpus":0,"memory_used":0,"memory_limit":0}'
     exit 0
   fi
   
@@ -392,6 +391,7 @@ if [ "$PATH_RAW" = "/metrics" ]; then
   TOTAL_SYSTEM_TIME_NS=0
   TOTAL_MEM_USED=0
   TOTAL_MEM_LIMIT=0
+  HOST_CORES=0
   MEASURED_SYSTEM_NS=0
   
   for CONTAINER_ID in $CONTAINER_IDS; do
@@ -402,6 +402,11 @@ if [ "$PATH_RAW" = "/metrics" ]; then
       PREV_CPU=$(echo "$STATS_JSON" | grep -oE '"precpu_stats":{"cpu_usage":{"total_usage":[0-9]+' | head -1 | sed 's/.*total_usage://' | tr -d '}')
       SYSTEM_USAGE=$(echo "$STATS_JSON" | grep -oE '"system_cpu_usage":[0-9]+' | head -1 | sed 's/.*://' | tr -d '}')
       PREV_SYSTEM=$(echo "$STATS_JSON" | grep -oE '"precpu_stats":{"system_cpu_usage":[0-9]+' | head -1 | sed 's/.*system_cpu_usage://' | tr -d '}')
+      ONLINE_CPUS=$(echo "$STATS_JSON" | grep -oE '"online_cpus":[0-9]+' | head -1 | sed 's/.*://' | tr -d '}')
+      
+      if [ -n "$ONLINE_CPUS" ] && [ "$HOST_CORES" = "0" ]; then
+        HOST_CORES=$ONLINE_CPUS
+      fi
       
       if [ -n "$SYSTEM_USAGE" ] && [ -n "$PREV_SYSTEM" ] && [ "$MEASURED_SYSTEM_NS" = "0" ]; then
         if [ "$SYSTEM_USAGE" -gt "$PREV_SYSTEM" ]; then
@@ -424,12 +429,16 @@ if [ "$PATH_RAW" = "/metrics" ]; then
     fi
   done
   
+  if [ "$HOST_CORES" = "0" ]; then
+    HOST_CORES=1
+  fi
+  
   if [ "$MEASURED_SYSTEM_NS" = "0" ]; then
-    respond_json '200 OK' '{"cpu_time_ns":0,"system_time_ns":0,"memory_used":'"$TOTAL_MEM_USED"',"memory_limit":'"$TOTAL_MEM_LIMIT"'}'
+    respond_json '200 OK' '{"cpu_time_ns":0,"system_time_ns":0,"online_cpus":'"$HOST_CORES"',"memory_used":'"$TOTAL_MEM_USED"',"memory_limit":'"$TOTAL_MEM_LIMIT"'}'
     exit 0
   fi
   
-  METRICS_JSON="{\"cpu_time_ns\":${TOTAL_CPU_TIME_NS},\"system_time_ns\":${MEASURED_SYSTEM_NS},\"memory_used\":${TOTAL_MEM_USED},\"memory_limit\":${TOTAL_MEM_LIMIT}}"
+  METRICS_JSON="{\"cpu_time_ns\":${TOTAL_CPU_TIME_NS},\"system_time_ns\":${MEASURED_SYSTEM_NS},\"online_cpus\":${HOST_CORES},\"memory_used\":${TOTAL_MEM_USED},\"memory_limit\":${TOTAL_MEM_LIMIT}}"
   respond_json '200 OK' "$METRICS_JSON"
   exit 0
 fi

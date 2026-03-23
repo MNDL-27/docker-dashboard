@@ -15,7 +15,7 @@ interface FleetMetricsPoint {
   memory: number;
 }
 
-async function fetchHostMetrics(hostUrl: string, apiKey: string, timeoutMs = 5000): Promise<{ cpu_time_ns: number; system_time_ns: number; memory_used: number; memory_limit: number } | null> {
+async function fetchHostMetrics(hostUrl: string, apiKey: string, timeoutMs = 5000): Promise<{ cpu_time_ns: number; system_time_ns: number; online_cpus: number; memory_used: number; memory_limit: number } | null> {
   try {
     const response = await fetch(`${hostUrl.replace(/\/$/, '')}/metrics`, {
       headers: {
@@ -27,10 +27,11 @@ async function fetchHostMetrics(hostUrl: string, apiKey: string, timeoutMs = 500
     if (!response.ok) return null;
 
     const data = await response.json();
-    // Agent returns: cpu_time_ns, system_time_ns, memory_used, memory_limit
+    // Agent returns: cpu_time_ns, system_time_ns, online_cpus, memory_used, memory_limit
     return { 
       cpu_time_ns: data.cpu_time_ns || 0,
       system_time_ns: data.system_time_ns || 0,
+      online_cpus: data.online_cpus || 1,
       memory_used: data.memory_used || 0,
       memory_limit: data.memory_limit || 0
     };
@@ -101,21 +102,25 @@ export default async (req: Request) => {
 
     const results = await Promise.all(metricsPromises);
 
-    // Aggregate: sum of cpu_time_ns and system_time_ns for correct formula
-    // NOTE: system_cpu_usage delta is ALREADY aggregate CPU time across all cores
-    // (not wall-clock). Docker formula: (cpuDelta / systemDelta) * 100
-    // So we do NOT multiply by cpu_cores - systemDelta already accounts for cores
-    let totalCpuTimeNs = 0;       // container CPU usage delta (sum across hosts)
-    let totalSystemTimeNs = 0;    // system CPU time delta (sum across hosts)
-    let totalMemoryUsed = 0;       // bytes
-    let totalMemoryLimit = 0;      // bytes
+    // Aggregate: use Docker's standard formula
+    // Docker Unix formula: (cpuDelta / systemDelta) * onlineCPUs * 100
+    // This gives CPU % where 100% = 1 core fully used
+    // For fleet: sum all host contributions
+    let totalCpuTimeNs = 0;       // container CPU delta (sum across hosts)
+    let totalSystemTimeNs = 0;   // system CPU time delta (sum across hosts)
+    let totalOnlineCpus = 0;     // sum of online CPUs across hosts
+    let totalMemoryUsed = 0;      // bytes
+    let totalMemoryLimit = 0;     // bytes
     let hostCount = 0;
 
     results.forEach((result) => {
       if (result && result.system_time_ns > 0) {
-        // system_time_ns from agent is system_cpu_usage delta (aggregate CPU time)
-        totalCpuTimeNs += result.cpu_time_ns;
+        // Docker formula per host: (cpu_time / system_time) * online_cpus
+        // Sum across hosts for fleet total
+        const hostCpuPercent = (result.cpu_time_ns / result.system_time_ns) * result.online_cpus;
+        totalCpuTimeNs += hostCpuPercent;  // This is now percentage units, not ns
         totalSystemTimeNs += result.system_time_ns;
+        totalOnlineCpus += result.online_cpus;
         totalMemoryUsed += result.memory_used;
         totalMemoryLimit += result.memory_limit;
         hostCount++;
@@ -123,8 +128,8 @@ export default async (req: Request) => {
     });
 
     // Compute percentages
-    // CPU: fleet CPU % = total_cpu_time_ns / total_system_time_ns * 100
-    // (systemDelta is aggregate CPU time, already accounts for multiple cores)
+    // CPU: Using Docker's formula - may exceed 100% on multi-core systems
+    // This represents total fleet CPU usage where 100% = 1 core per host
     // Memory: fleet % = total_used / total_limit * 100
     let cpuPercent = 0;
     let memPercent = 0;
@@ -135,12 +140,11 @@ export default async (req: Request) => {
         memPercent = Math.round((totalMemoryUsed / totalMemoryLimit) * 100);
       }
       
-      // CPU: using Docker's standard formula
-      // cpu % = cpu_time_delta / system_time_delta * 100
-      // system_delta is aggregate CPU time across all cores, not wall-clock
-      if (totalSystemTimeNs > 0) {
-        cpuPercent = Math.min(100, Math.round((totalCpuTimeNs / totalSystemTimeNs) * 100));
-      }
+      // CPU: Already computed as percentage units in aggregation
+      // This matches Docker's (cpuDelta/systemDelta)*onlineCpus*100
+      // Value represents aggregate CPU cores used across fleet
+      // Note: May exceed 100% on multi-core systems - this is correct per Docker semantics
+      cpuPercent = Math.round(totalCpuTimeNs);
     }
 
     const fleetMetrics: FleetMetricsPoint[] = [{
