@@ -15,7 +15,7 @@ interface FleetMetricsPoint {
   memory: number;
 }
 
-async function fetchHostMetrics(hostUrl: string, apiKey: string, timeoutMs = 5000): Promise<{ cpu_time_ns: number; cpu_cores: number; memory_used: number; memory_limit: number } | null> {
+async function fetchHostMetrics(hostUrl: string, apiKey: string, timeoutMs = 5000): Promise<{ cpu_time_ns: number; elapsed_ns: number; cpu_cores: number; memory_used: number; memory_limit: number } | null> {
   try {
     const response = await fetch(`${hostUrl.replace(/\/$/, '')}/metrics`, {
       headers: {
@@ -27,9 +27,10 @@ async function fetchHostMetrics(hostUrl: string, apiKey: string, timeoutMs = 500
     if (!response.ok) return null;
 
     const data = await response.json();
-    // Agent returns: cpu_time_ns, cpu_cores, memory_used, memory_limit
+    // Agent returns: cpu_time_ns, elapsed_ns, cpu_cores, memory_used, memory_limit
     return { 
-      cpu_time_ns: data.cpu_time_ns || 0, 
+      cpu_time_ns: data.cpu_time_ns || 0,
+      elapsed_ns: data.elapsed_ns || 0,
       cpu_cores: data.cpu_cores || 1,
       memory_used: data.memory_used || 0,
       memory_limit: data.memory_limit || 0
@@ -103,14 +104,16 @@ export default async (req: Request) => {
 
     // Aggregate RAW values from all successful hosts
     let totalCpuTimeNs = 0;       // nanoseconds (sum across hosts)
-    let totalCpuCores = 0;        // cores (sum across hosts - denominator for CPU %)
-    let totalMemoryUsed = 0;      // bytes (sum across hosts)
-    let totalMemoryLimit = 0;     // bytes (sum across hosts)
+    let totalElapsedNs = 0;       // measurement window in ns (sum across hosts)
+    let totalCpuCores = 0;        // cores (sum across hosts)
+    let totalMemoryUsed = 0;      // bytes
+    let totalMemoryLimit = 0;     // bytes
     let hostCount = 0;
 
     results.forEach((result) => {
       if (result) {
         totalCpuTimeNs += result.cpu_time_ns;
+        totalElapsedNs += result.elapsed_ns;
         totalCpuCores += result.cpu_cores;
         totalMemoryUsed += result.memory_used;
         totalMemoryLimit += result.memory_limit;
@@ -119,10 +122,8 @@ export default async (req: Request) => {
     });
 
     // Compute percentages from TOTALS
-    // Memory: fleet-wide percentage = total_used / total_limit * 100
-    // CPU: fleet-wide percentage = total_cpu_time_ns / (total_cores * interval_ns) * 100
-    // Using 10 second interval (polling interval): 10 * 1e9 = 10 billion ns
-    const INTERVAL_NS = 10_000_000_000; // 10 seconds in nanoseconds
+    // CPU: fleet CPU % = total_cpu_time_ns / (total_cores * total_elapsed_ns) * 100
+    // Memory: fleet % = total_used / total_limit * 100
     let cpuPercent = 0;
     let memPercent = 0;
     
@@ -132,11 +133,9 @@ export default async (req: Request) => {
         memPercent = Math.round((totalMemoryUsed / totalMemoryLimit) * 100);
       }
       
-      // CPU: true fleet CPU percentage
-      // cpu % = (cpu_time_ns used) / (total cores * available time) * 100
-      // This gives percentage of total fleet CPU capacity being used
-      if (totalCpuCores > 0 && INTERVAL_NS > 0) {
-        const maxCpuNs = totalCpuCores * INTERVAL_NS; // max CPU time available in interval
+      // CPU: true fleet CPU using REAL measured elapsed time
+      if (totalCpuCores > 0 && totalElapsedNs > 0) {
+        const maxCpuNs = totalCpuCores * totalElapsedNs;
         cpuPercent = Math.min(100, Math.round((totalCpuTimeNs / maxCpuNs) * 100));
       }
     }

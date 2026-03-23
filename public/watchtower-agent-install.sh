@@ -374,14 +374,13 @@ if [ "$CONTENT_LENGTH" -gt 0 ]; then
 fi
 
 # Handle /metrics endpoint for fleet dashboard
-# Returns RAW values for proper fleet-wide aggregation
-# Returns: { cpu_time_ns: <ns>, cpu_cores: <num>, memory_used: <bytes>, memory_limit: <bytes> }
-# Backend computes fleet CPU % = sum(cpu_time_ns) / sum(cpu_cores * interval_ns) * 100
+# Returns: { cpu_time_ns: <ns>, elapsed_ns: <ns>, cpu_cores: <num>, memory_used: <bytes>, memory_limit: <bytes> }
+# Backend computes: cpu % = sum(cpu_time_ns) / sum(cpu_cores * elapsed_ns) * 100
 if [ "$PATH_RAW" = "/metrics" ]; then
   CONTAINERS_JSON=$(curl --silent --unix-socket "$SOCKET_PATH" "http://localhost/containers/json" 2>/dev/null)
   
   if [ -z "$CONTAINERS_JSON" ] || [ "$CONTAINERS_JSON" = "[]" ]; then
-    respond_json '200 OK' '{"cpu_time_ns":0,"cpu_cores":0,"memory_used":0,"memory_limit":0}'
+    respond_json '200 OK' '{"cpu_time_ns":0,"elapsed_ns":0,"cpu_cores":0,"memory_used":0,"memory_limit":0}'
     exit 0
   fi
   
@@ -391,6 +390,7 @@ if [ "$PATH_RAW" = "/metrics" ]; then
   TOTAL_MEM_USED=0
   TOTAL_MEM_LIMIT=0
   HOST_CORES=0
+  MEASURED_ELAPSED_NS=0
   
   for CONTAINER_ID in $CONTAINER_IDS; do
     STATS_JSON=$(curl --silent --unix-socket "$SOCKET_PATH" "http://localhost/containers/${CONTAINER_ID}/stats?stream=false" 2>/dev/null)
@@ -398,10 +398,16 @@ if [ "$PATH_RAW" = "/metrics" ]; then
     if [ -n "$STATS_JSON" ]; then
       CPU_USAGE=$(echo "$STATS_JSON" | grep -oE '"cpu_usage":{"total_usage":[0-9]+' | head -1 | sed 's/.*total_usage://' | tr -d '}')
       PREV_CPU=$(echo "$STATS_JSON" | grep -oE '"precpu_stats":{"cpu_usage":{"total_usage":[0-9]+' | head -1 | sed 's/.*total_usage://' | tr -d '}')
+      SYSTEM_USAGE=$(echo "$STATS_JSON" | grep -oE '"system_cpu_usage":[0-9]+' | head -1 | sed 's/.*://' | tr -d '}')
+      PREV_SYSTEM=$(echo "$STATS_JSON" | grep -oE '"precpu_stats":{"system_cpu_usage":[0-9]+' | head -1 | sed 's/.*system_cpu_usage://' | tr -d '}')
       ONLINE_CPUS=$(echo "$STATS_JSON" | grep -oE '"online_cpus":[0-9]+' | head -1 | sed 's/.*://' | tr -d '}')
       
       if [ -n "$ONLINE_CPUS" ] && [ "$HOST_CORES" = "0" ]; then
         HOST_CORES=$ONLINE_CPUS
+      fi
+      
+      if [ -n "$SYSTEM_USAGE" ] && [ -n "$PREV_SYSTEM" ] && [ "$MEASURED_ELAPSED_NS" = "0" ]; then
+        MEASURED_ELAPSED_NS=$((SYSTEM_USAGE - PREV_SYSTEM))
       fi
       
       if [ -n "$CPU_USAGE" ] && [ -n "$PREV_CPU" ] && [ "$CPU_USAGE" -gt "$PREV_CPU" ]; then
@@ -423,7 +429,11 @@ if [ "$PATH_RAW" = "/metrics" ]; then
     HOST_CORES=1
   fi
   
-  METRICS_JSON="{\"cpu_time_ns\":${TOTAL_CPU_TIME_NS},\"cpu_cores\":${HOST_CORES},\"memory_used\":${TOTAL_MEM_USED},\"memory_limit\":${TOTAL_MEM_LIMIT}}"
+  if [ "$MEASURED_ELAPSED_NS" = "0" ]; then
+    MEASURED_ELAPSED_NS=1000000000
+  fi
+  
+  METRICS_JSON="{\"cpu_time_ns\":${TOTAL_CPU_TIME_NS},\"elapsed_ns\":${MEASURED_ELAPSED_NS},\"cpu_cores\":${HOST_CORES},\"memory_used\":${TOTAL_MEM_USED},\"memory_limit\":${TOTAL_MEM_LIMIT}}"
   respond_json '200 OK' "$METRICS_JSON"
   exit 0
 fi
