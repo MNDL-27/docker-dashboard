@@ -15,7 +15,7 @@ interface FleetMetricsPoint {
   memory: number;
 }
 
-async function fetchHostMetrics(hostUrl: string, apiKey: string, timeoutMs = 5000): Promise<{ cpu_time_ns: number; elapsed_ns: number; cpu_cores: number; memory_used: number; memory_limit: number } | null> {
+async function fetchHostMetrics(hostUrl: string, apiKey: string, timeoutMs = 5000): Promise<{ cpu_time_ns: number; system_time_ns: number; memory_used: number; memory_limit: number } | null> {
   try {
     const response = await fetch(`${hostUrl.replace(/\/$/, '')}/metrics`, {
       headers: {
@@ -27,11 +27,10 @@ async function fetchHostMetrics(hostUrl: string, apiKey: string, timeoutMs = 500
     if (!response.ok) return null;
 
     const data = await response.json();
-    // Agent returns: cpu_time_ns, elapsed_ns, cpu_cores, memory_used, memory_limit
+    // Agent returns: cpu_time_ns, system_time_ns, memory_used, memory_limit
     return { 
       cpu_time_ns: data.cpu_time_ns || 0,
-      elapsed_ns: data.elapsed_ns || 0,
-      cpu_cores: data.cpu_cores || 1,
+      system_time_ns: data.system_time_ns || 0,
       memory_used: data.memory_used || 0,
       memory_limit: data.memory_limit || 0
     };
@@ -102,18 +101,21 @@ export default async (req: Request) => {
 
     const results = await Promise.all(metricsPromises);
 
-    // Aggregate: sum of (cpu_cores * elapsed_ns) for correct multi-host denominator
-    let totalCpuTimeNs = 0;       // nanoseconds
-    let totalCpuCapacityNs = 0;  // cpu_cores * elapsed_ns (max available per host)
-    let totalMemoryUsed = 0;      // bytes
-    let totalMemoryLimit = 0;     // bytes
+    // Aggregate: sum of cpu_time_ns and system_time_ns for correct formula
+    // NOTE: system_cpu_usage delta is ALREADY aggregate CPU time across all cores
+    // (not wall-clock). Docker formula: (cpuDelta / systemDelta) * 100
+    // So we do NOT multiply by cpu_cores - systemDelta already accounts for cores
+    let totalCpuTimeNs = 0;       // container CPU usage delta (sum across hosts)
+    let totalSystemTimeNs = 0;    // system CPU time delta (sum across hosts)
+    let totalMemoryUsed = 0;       // bytes
+    let totalMemoryLimit = 0;      // bytes
     let hostCount = 0;
 
     results.forEach((result) => {
-      if (result && result.elapsed_ns > 0) {
-        // Skip hosts with invalid elapsed time
+      if (result && result.system_time_ns > 0) {
+        // system_time_ns from agent is system_cpu_usage delta (aggregate CPU time)
         totalCpuTimeNs += result.cpu_time_ns;
-        totalCpuCapacityNs += (result.cpu_cores * result.elapsed_ns);
+        totalSystemTimeNs += result.system_time_ns;
         totalMemoryUsed += result.memory_used;
         totalMemoryLimit += result.memory_limit;
         hostCount++;
@@ -121,7 +123,8 @@ export default async (req: Request) => {
     });
 
     // Compute percentages
-    // CPU: fleet CPU % = total_cpu_time_ns / total_cpu_capacity_ns * 100
+    // CPU: fleet CPU % = total_cpu_time_ns / total_system_time_ns * 100
+    // (systemDelta is aggregate CPU time, already accounts for multiple cores)
     // Memory: fleet % = total_used / total_limit * 100
     let cpuPercent = 0;
     let memPercent = 0;
@@ -132,9 +135,11 @@ export default async (req: Request) => {
         memPercent = Math.round((totalMemoryUsed / totalMemoryLimit) * 100);
       }
       
-      // CPU: using correct formula: Σ cpu_time_ns / Σ (cpu_cores * elapsed_ns)
-      if (totalCpuCapacityNs > 0) {
-        cpuPercent = Math.min(100, Math.round((totalCpuTimeNs / totalCpuCapacityNs) * 100));
+      // CPU: using Docker's standard formula
+      // cpu % = cpu_time_delta / system_time_delta * 100
+      // system_delta is aggregate CPU time across all cores, not wall-clock
+      if (totalSystemTimeNs > 0) {
+        cpuPercent = Math.min(100, Math.round((totalCpuTimeNs / totalSystemTimeNs) * 100));
       }
     }
 
