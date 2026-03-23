@@ -18,7 +18,7 @@ Options:
   --api-key VALUE         Set AGENT_API_KEY non-interactively
   --check                 Validate the current or provided configuration without installing
   --port VALUE            Set AGENT_PORT (default: 9876)
-  --bind-address VALUE    Set AGENT_BIND_ADDRESS (default: 127.0.0.1)
+  --bind-address VALUE    Set AGENT_BIND_ADDRESS (default: 0.0.0.0)
   --bind VALUE            Alias for --bind-address
   --docker-socket PATH    Set DOCKER_SOCKET (default: /var/run/docker.sock)
   --yes                   Accept defaults without prompting
@@ -273,7 +273,7 @@ trap cleanup EXIT INT TERM
 
 AGENT_API_KEY="${AGENT_API_KEY:-}"
 AGENT_PORT="${AGENT_PORT:-9876}"
-AGENT_BIND_ADDRESS="${AGENT_BIND_ADDRESS:-${AGENT_BIND:-127.0.0.1}}"
+AGENT_BIND_ADDRESS="${AGENT_BIND_ADDRESS:-${AGENT_BIND:-0.0.0.0}}"
 DOCKER_SOCKET="${DOCKER_SOCKET:-/var/run/docker.sock}"
 
 if [ "${1:-}" = "--check" ]; then
