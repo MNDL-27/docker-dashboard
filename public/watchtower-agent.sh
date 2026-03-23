@@ -143,8 +143,11 @@ if [ "$CONTENT_LENGTH" -gt 0 ]; then
 fi
 
 # Handle /metrics endpoint for fleet dashboard
+# Returns aggregated CPU and memory % from all running containers
+# CPU: Average CPU % across all containers (0-100% normalized)
+# Memory: Average memory usage % across all containers (0-100%)
 if [ "$PATH_RAW" = "/metrics" ]; then
-  # Get all containers and aggregate their CPU/memory
+  # Get all containers
   CONTAINERS_JSON=$(curl --silent --unix-socket "$SOCKET_PATH" "http://localhost/containers/json" 2>/dev/null)
   
   if [ -z "$CONTAINERS_JSON" ] || [ "$CONTAINERS_JSON" = "[]" ]; then
@@ -155,50 +158,56 @@ if [ "$PATH_RAW" = "/metrics" ]; then
   # Parse container IDs
   CONTAINER_IDS=$(echo "$CONTAINERS_JSON" | grep -oE '"Id":"[a-f0-9]+"' | head -20 | cut -d'"' -f4)
   
-  TOTAL_CPU=0
-  TOTAL_MEM=0
+  CPU_SUM=0
+  MEM_SUM=0
   CONTAINER_COUNT=0
   
   for CONTAINER_ID in $CONTAINER_IDS; do
-    # Get stats for each container (stream=false for single shot)
     STATS_JSON=$(curl --silent --unix-socket "$SOCKET_PATH" "http://localhost/containers/${CONTAINER_ID}/stats?stream=false" 2>/dev/null)
     
     if [ -n "$STATS_JSON" ]; then
-      # Calculate CPU percentage from stats
-      # CPU delta = cpu_stats.cpu_usage.total_usage - precpu_stats.cpu_usage.total_usage  
-      # System delta = cpu_stats.system_cpu_usage - precpu_stats.system_cpu_usage
+      # CPU: Calculate percentage - handle multi-core by normalizing to 100% max
       CPU_DELTA=$(echo "$STATS_JSON" | grep -oE '"cpu_usage":{"total_usage":[0-9]+' | head -1 | cut -d':' -f2)
       SYSTEM_DELTA=$(echo "$STATS_JSON" | grep -oE '"system_cpu_usage":[0-9]+' | head -1 | cut -d':' -f2)
+      ONLINE_CPUS=$(echo "$STATS_JSON" | grep -oE '"online_cpus":[0-9]+' | head -1 | cut -d':' -f2 || echo 1)
       
-      # Get memory usage
+      if [ -n "$CPU_DELTA" ] && [ -n "$SYSTEM_DELTA" ] && [ "$SYSTEM_DELTA" -gt 0 ]; then
+        # Normalize by online_cpus to get true percentage (0-100%)
+        CPU_RAW=$(echo "scale=4; ($CPU_DELTA / $SYSTEM_DELTA) * 100" | bc 2>/dev/null || echo 0)
+        if [ -n "$ONLINE_CPUS" ] && [ "$ONLINE_CPUS" -gt 0 ]; then
+          CPU_PERCENT=$(echo "scale=2; $CPU_RAW / $ONLINE_CPUS" | bc 2>/dev/null || echo "$CPU_RAW")
+        else
+          CPU_PERCENT=$CPU_RAW
+        fi
+        # Cap at 100%
+        CPU_PERCENT=$(echo "$CPU_PERCENT 100" | awk '{if($1>$2) print $2; else print $1}')
+        CPU_SUM=$(echo "$CPU_SUM + $CPU_PERCENT" | bc 2>/dev/null || echo "$CPU_SUM")
+      fi
+      
+      # Memory: usage/limit * 100
       MEM_USAGE=$(echo "$STATS_JSON" | grep -oE '"usage":[0-9]+' | head -1 | cut -d':' -f2)
       MEM_LIMIT=$(echo "$STATS_JSON" | grep -oE '"limit":[0-9]+' | head -1 | cut -d':' -f2)
       
-      if [ -n "$CPU_DELTA" ] && [ -n "$SYSTEM_DELTA" ] && [ "$SYSTEM_DELTA" -gt 0 ]; then
-        CPU_PERCENT=$(echo "scale=2; ($CPU_DELTA / $SYSTEM_DELTA) * 100" | bc 2>/dev/null || echo 0)
-        TOTAL_CPU=$(echo "$TOTAL_CPU + $CPU_PERCENT" | bc 2>/dev/null || echo "$TOTAL_CPU")
-      fi
-      
       if [ -n "$MEM_USAGE" ] && [ -n "$MEM_LIMIT" ] && [ "$MEM_LIMIT" -gt 0 ]; then
         MEM_PERCENT=$(echo "scale=2; ($MEM_USAGE / $MEM_LIMIT) * 100" | bc 2>/dev/null || echo 0)
-        TOTAL_MEM=$(echo "$TOTAL_MEM + $MEM_PERCENT" | bc 2>/dev/null || echo "$TOTAL_MEM")
+        # Cap at 100%
+        MEM_PERCENT=$(echo "$MEM_PERCENT 100" | awk '{if($1>$2) print $2; else print $1}')
+        MEM_SUM=$(echo "$MEM_SUM + $MEM_PERCENT" | bc 2>/dev/null || echo "$MEM_SUM")
         CONTAINER_COUNT=$((CONTAINER_COUNT + 1))
       fi
     fi
   done
   
-  # If no valid stats, return 0
-  if [ -z "$TOTAL_CPU" ] || [ "$TOTAL_CPU" = "0" ]; then
-    TOTAL_CPU=0
-  fi
-  if [ -z "$TOTAL_MEM" ] || [ "$TOTAL_MEM" = "0" ]; then
-    TOTAL_MEM=0
+  # Return AVERAGE across containers (not sum) for meaningful 0-100% range
+  if [ "$CONTAINER_COUNT" -gt 0 ]; then
+    AVG_CPU=$(echo "scale=0; $CPU_SUM / $CONTAINER_COUNT" | bc 2>/dev/null || echo 0)
+    AVG_MEM=$(echo "scale=0; $MEM_SUM / $CONTAINER_COUNT" | bc 2>/dev/null || echo 0)
+  else
+    AVG_CPU=0
+    AVG_MEM=0
   fi
   
-  TOTAL_CPU_INT=$(printf "%.0f" "$TOTAL_CPU" 2>/dev/null || echo 0)
-  TOTAL_MEM_INT=$(printf "%.0f" "$TOTAL_MEM" 2>/dev/null || echo 0)
-  
-  METRICS_JSON="{\"cpu\":${TOTAL_CPU_INT},\"memory\":${TOTAL_MEM_INT}}"
+  METRICS_JSON="{\"cpu\":${AVG_CPU},\"memory\":${AVG_MEM}}"
   respond_json '200 OK' "$METRICS_JSON"
   exit 0
 fi
