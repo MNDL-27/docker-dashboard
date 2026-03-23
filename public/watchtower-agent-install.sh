@@ -375,7 +375,8 @@ fi
 
 # Handle /metrics endpoint for fleet dashboard
 # Returns: { cpu_time_ns: <ns>, elapsed_ns: <ns>, cpu_cores: <num>, memory_used: <bytes>, memory_limit: <bytes> }
-# Backend computes: cpu % = sum(cpu_time_ns) / sum(cpu_cores * elapsed_ns) * 100
+# elapsed_ns = wall-clock time (from system_cpu_usage delta)
+# Backend computes: cpu % = Σ cpu_time_ns / Σ (cpu_cores × elapsed_ns) × 100
 if [ "$PATH_RAW" = "/metrics" ]; then
   CONTAINERS_JSON=$(curl --silent --unix-socket "$SOCKET_PATH" "http://localhost/containers/json" 2>/dev/null)
   
@@ -407,7 +408,9 @@ if [ "$PATH_RAW" = "/metrics" ]; then
       fi
       
       if [ -n "$SYSTEM_USAGE" ] && [ -n "$PREV_SYSTEM" ] && [ "$MEASURED_ELAPSED_NS" = "0" ]; then
-        MEASURED_ELAPSED_NS=$((SYSTEM_USAGE - PREV_SYSTEM))
+        if [ "$SYSTEM_USAGE" -gt "$PREV_SYSTEM" ]; then
+          MEASURED_ELAPSED_NS=$((SYSTEM_USAGE - PREV_SYSTEM))
+        fi
       fi
       
       if [ -n "$CPU_USAGE" ] && [ -n "$PREV_CPU" ] && [ "$CPU_USAGE" -gt "$PREV_CPU" ]; then
@@ -429,8 +432,10 @@ if [ "$PATH_RAW" = "/metrics" ]; then
     HOST_CORES=1
   fi
   
+  # If no valid elapsed time, return 0 - let backend skip this sample
   if [ "$MEASURED_ELAPSED_NS" = "0" ]; then
-    MEASURED_ELAPSED_NS=1000000000
+    respond_json '200 OK' '{"cpu_time_ns":0,"elapsed_ns":0,"cpu_cores":'"$HOST_CORES"',"memory_used":'"$TOTAL_MEM_USED"',"memory_limit":'"$TOTAL_MEM_LIMIT"'}'
+    exit 0
   fi
   
   METRICS_JSON="{\"cpu_time_ns\":${TOTAL_CPU_TIME_NS},\"elapsed_ns\":${MEASURED_ELAPSED_NS},\"cpu_cores\":${HOST_CORES},\"memory_used\":${TOTAL_MEM_USED},\"memory_limit\":${TOTAL_MEM_LIMIT}}"

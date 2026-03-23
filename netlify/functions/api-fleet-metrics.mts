@@ -102,27 +102,26 @@ export default async (req: Request) => {
 
     const results = await Promise.all(metricsPromises);
 
-    // Aggregate RAW values from all successful hosts
-    let totalCpuTimeNs = 0;       // nanoseconds (sum across hosts)
-    let totalElapsedNs = 0;       // measurement window in ns (sum across hosts)
-    let totalCpuCores = 0;        // cores (sum across hosts)
+    // Aggregate: sum of (cpu_cores * elapsed_ns) for correct multi-host denominator
+    let totalCpuTimeNs = 0;       // nanoseconds
+    let totalCpuCapacityNs = 0;  // cpu_cores * elapsed_ns (max available per host)
     let totalMemoryUsed = 0;      // bytes
     let totalMemoryLimit = 0;     // bytes
     let hostCount = 0;
 
     results.forEach((result) => {
-      if (result) {
+      if (result && result.elapsed_ns > 0) {
+        // Skip hosts with invalid elapsed time
         totalCpuTimeNs += result.cpu_time_ns;
-        totalElapsedNs += result.elapsed_ns;
-        totalCpuCores += result.cpu_cores;
+        totalCpuCapacityNs += (result.cpu_cores * result.elapsed_ns);
         totalMemoryUsed += result.memory_used;
         totalMemoryLimit += result.memory_limit;
         hostCount++;
       }
     });
 
-    // Compute percentages from TOTALS
-    // CPU: fleet CPU % = total_cpu_time_ns / (total_cores * total_elapsed_ns) * 100
+    // Compute percentages
+    // CPU: fleet CPU % = total_cpu_time_ns / total_cpu_capacity_ns * 100
     // Memory: fleet % = total_used / total_limit * 100
     let cpuPercent = 0;
     let memPercent = 0;
@@ -133,10 +132,9 @@ export default async (req: Request) => {
         memPercent = Math.round((totalMemoryUsed / totalMemoryLimit) * 100);
       }
       
-      // CPU: true fleet CPU using REAL measured elapsed time
-      if (totalCpuCores > 0 && totalElapsedNs > 0) {
-        const maxCpuNs = totalCpuCores * totalElapsedNs;
-        cpuPercent = Math.min(100, Math.round((totalCpuTimeNs / maxCpuNs) * 100));
+      // CPU: using correct formula: Σ cpu_time_ns / Σ (cpu_cores * elapsed_ns)
+      if (totalCpuCapacityNs > 0) {
+        cpuPercent = Math.min(100, Math.round((totalCpuTimeNs / totalCpuCapacityNs) * 100));
       }
     }
 

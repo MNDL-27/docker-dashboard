@@ -144,7 +144,8 @@ fi
 
 # Handle /metrics endpoint for fleet dashboard
 # Returns: { cpu_time_ns: <ns>, elapsed_ns: <ns>, cpu_cores: <num>, memory_used: <bytes>, memory_limit: <bytes> }
-# Backend computes: cpu % = sum(cpu_time_ns) / sum(cpu_cores * elapsed_ns) * 100
+# elapsed_ns = wall-clock time (from system_cpu_usage delta)
+# Backend computes: cpu % = Σ cpu_time_ns / Σ (cpu_cores × elapsed_ns) × 100
 if [ "$PATH_RAW" = "/metrics" ]; then
   CONTAINERS_JSON=$(curl --silent --unix-socket "$SOCKET_PATH" "http://localhost/containers/json" 2>/dev/null)
   
@@ -165,7 +166,10 @@ if [ "$PATH_RAW" = "/metrics" ]; then
     STATS_JSON=$(curl --silent --unix-socket "$SOCKET_PATH" "http://localhost/containers/${CONTAINER_ID}/stats?stream=false" 2>/dev/null)
     
     if [ -n "$STATS_JSON" ]; then
-      # Parse CPU deltas - these are paired (cpu_usage and system_cpu_usage give the true window)
+      # Parse CPU deltas from Docker stats
+      # cpu_usage.total_usage = container CPU in nanoseconds
+      # system_cpu_usage = host CPU in nanoseconds (cumulative, wall-clock)
+      # elapsed_ns = system_delta = system_cpu_usage - precpu_stats.system_cpu_usage
       CPU_USAGE=$(echo "$STATS_JSON" | grep -oE '"cpu_usage":{"total_usage":[0-9]+' | head -1 | sed 's/.*total_usage://' | tr -d '}')
       PREV_CPU=$(echo "$STATS_JSON" | grep -oE '"precpu_stats":{"cpu_usage":{"total_usage":[0-9]+' | head -1 | sed 's/.*total_usage://' | tr -d '}')
       SYSTEM_USAGE=$(echo "$STATS_JSON" | grep -oE '"system_cpu_usage":[0-9]+' | head -1 | sed 's/.*://' | tr -d '}')
@@ -176,18 +180,18 @@ if [ "$PATH_RAW" = "/metrics" ]; then
         HOST_CORES=$ONLINE_CPUS
       fi
       
-      # Measure the real elapsed window from first container (all containers share same host clock)
+      # elapsed_ns is wall-clock time from host system CPU delta
       if [ -n "$SYSTEM_USAGE" ] && [ -n "$PREV_SYSTEM" ] && [ "$MEASURED_ELAPSED_NS" = "0" ]; then
-        MEASURED_ELAPSED_NS=$((SYSTEM_USAGE - PREV_SYSTEM))
+        if [ "$SYSTEM_USAGE" -gt "$PREV_SYSTEM" ]; then
+          MEASURED_ELAPSED_NS=$((SYSTEM_USAGE - PREV_SYSTEM))
+        fi
       fi
       
-      # Calculate CPU time used
       if [ -n "$CPU_USAGE" ] && [ -n "$PREV_CPU" ] && [ "$CPU_USAGE" -gt "$PREV_CPU" ]; then
         CPU_DELTA=$((CPU_USAGE - PREV_CPU))
         TOTAL_CPU_TIME_NS=$((TOTAL_CPU_TIME_NS + CPU_DELTA))
       fi
       
-      # Memory: raw bytes
       MEM_USAGE=$(echo "$STATS_JSON" | grep -oE '"usage":[0-9]+' | head -1 | cut -d':' -f2)
       MEM_LIMIT=$(echo "$STATS_JSON" | grep -oE '"limit":[0-9]+' | head -1 | cut -d':' -f2)
       
@@ -202,9 +206,10 @@ if [ "$PATH_RAW" = "/metrics" ]; then
     HOST_CORES=1
   fi
   
-  # If no elapsed time measured (edge case), default to 1 second
+  # If no valid elapsed time, return 0 - let backend skip this sample
   if [ "$MEASURED_ELAPSED_NS" = "0" ]; then
-    MEASURED_ELAPSED_NS=1000000000
+    respond_json '200 OK' '{"cpu_time_ns":0,"elapsed_ns":0,"cpu_cores":'"$HOST_CORES"',"memory_used":'"$TOTAL_MEM_USED"',"memory_limit":'"$TOTAL_MEM_LIMIT"'}'
+    exit 0
   fi
   
   METRICS_JSON="{\"cpu_time_ns\":${TOTAL_CPU_TIME_NS},\"elapsed_ns\":${MEASURED_ELAPSED_NS},\"cpu_cores\":${HOST_CORES},\"memory_used\":${TOTAL_MEM_USED},\"memory_limit\":${TOTAL_MEM_LIMIT}}"
