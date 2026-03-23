@@ -187,7 +187,7 @@ export default function DashboardPage() {
           <HostHealthGrid hosts={hosts} />
         </div>
         <div className="lg:col-span-2 h-[350px]">
-          <FleetResourceChart hosts={hosts.map(h => ({ host_url: h.host_url }))} />
+          <FleetResourceChart orgId={organization?.id ?? null} />
         </div>
       </div>
 

@@ -1,37 +1,25 @@
-import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { Activity } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useState, useEffect } from "react";
 import { useFleetMetrics, type FleetMetrics } from "@/hooks/useFleetMetrics";
 
-// Extended type to include connection info - in production this would come from the API
-interface HostWithCredentials {
-  host_url: string;
-  connection_mode?: string;
-  agent_api_key?: string;
-  agentApiKey?: string;
-}
-
 interface FleetResourceChartProps {
-  hosts: HostWithCredentials[];
+  orgId: string | null;
   className?: string;
   maxDataPoints?: number;
 }
 
 const MAX_DATA_POINTS = 20;
 
-export function FleetResourceChart({ hosts, className, maxDataPoints = MAX_DATA_POINTS }: FleetResourceChartProps) {
+export function FleetResourceChart({ orgId, className, maxDataPoints = MAX_DATA_POINTS }: FleetResourceChartProps) {
   const [chartData, setChartData] = useState<FleetMetrics[]>([]);
-  const { data: newData } = useFleetMetrics(hosts);
+  const { data: newData, isLoading } = useFleetMetrics(orgId);
 
-  // Initialize with some data points if empty
+  // Initialize with some data points if empty (only once)
   useEffect(() => {
-    if (chartData.length === 0 && newData && newData.length > 0) {
-      // Start with current time
+    if (chartData.length === 0 && orgId) {
       const now = new Date();
-      const timeStr = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false });
-      
-      // Create initial historical data with slight variations
       const initialData: FleetMetrics[] = [];
       for (let i = maxDataPoints - 1; i >= 0; i--) {
         const date = new Date(now.getTime() - i * 60000);
@@ -44,14 +32,13 @@ export function FleetResourceChart({ hosts, className, maxDataPoints = MAX_DATA_
       }
       setChartData(initialData);
     }
-  }, [chartData.length, maxDataPoints]);
+  }, [orgId, maxDataPoints]);
 
   // Update with new data points as they come in
   useEffect(() => {
     if (newData && newData.length > 0) {
       setChartData((prev) => {
         const updated = [...prev, ...newData];
-        // Keep only the last N data points
         if (updated.length > maxDataPoints) {
           return updated.slice(-maxDataPoints);
         }
@@ -69,6 +56,12 @@ export function FleetResourceChart({ hosts, className, maxDataPoints = MAX_DATA_
           <Activity className="h-4 w-4 text-primary" />
           <h3 className="text-sm font-semibold tracking-tight">Fleet Resource Trends</h3>
         </div>
+        {isLoading && (
+          <div className="flex items-center gap-1.5">
+            <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
+            <span className="text-[10px] text-muted-foreground">Updating...</span>
+          </div>
+        )}
         <div className="flex items-center gap-3">
           <div className="flex items-center gap-1.5">
             <div className="w-2 h-2 rounded-full bg-primary" />

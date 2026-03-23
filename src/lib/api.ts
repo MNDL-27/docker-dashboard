@@ -12,10 +12,19 @@ export async function apiFetch(path: string, options: RequestInit = {}) {
     headers['Authorization'] = `Bearer ${token}`;
   }
 
-  const response = await fetch(`${API_BASE}${path}`, {
+  const fetchOptions: RequestInit = {
     ...options,
     headers,
-  });
+  };
+
+  // Handle body for POST/PUT requests
+  if (options.body && typeof options.body === 'string') {
+    fetchOptions.body = options.body;
+  } else if (options.body) {
+    fetchOptions.body = JSON.stringify(options.body);
+  }
+
+  const response = await fetch(`${API_BASE}${path}`, fetchOptions);
 
   if (!response.ok) {
     let errorData;
