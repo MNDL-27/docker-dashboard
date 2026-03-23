@@ -15,7 +15,7 @@ interface FleetMetricsPoint {
   memory: number;
 }
 
-async function fetchHostMetrics(hostUrl: string, apiKey: string, timeoutMs = 5000): Promise<{ cpu: number; memory: number } | null> {
+async function fetchHostMetrics(hostUrl: string, apiKey: string, timeoutMs = 5000): Promise<{ cpu_usage: number; memory_used: number; memory_limit: number } | null> {
   try {
     const response = await fetch(`${hostUrl.replace(/\/$/, '')}/metrics`, {
       headers: {
@@ -27,7 +27,12 @@ async function fetchHostMetrics(hostUrl: string, apiKey: string, timeoutMs = 500
     if (!response.ok) return null;
 
     const data = await response.json();
-    return { cpu: data.cpu || 0, memory: data.memory || 0 };
+    // Agent now returns raw values: cpu_usage (ns), memory_used (bytes), memory_limit (bytes)
+    return { 
+      cpu_usage: data.cpu_usage || 0, 
+      memory_used: data.memory_used || 0,
+      memory_limit: data.memory_limit || 0
+    };
   } catch {
     return null;
   }
@@ -95,24 +100,46 @@ export default async (req: Request) => {
 
     const results = await Promise.all(metricsPromises);
 
-    // Aggregate metrics
-    let totalCpu = 0;
-    let totalMem = 0;
+    // Aggregate RAW values from all successful hosts
+    let totalCpuUsage = 0;      // nanoseconds (sum across hosts)
+    let totalMemoryUsed = 0;    // bytes (sum across hosts)
+    let totalMemoryLimit = 0;   // bytes (sum across hosts)
     let hostCount = 0;
 
     results.forEach((result) => {
       if (result) {
-        totalCpu += result.cpu;
-        totalMem += result.memory;
+        totalCpuUsage += result.cpu_usage;
+        totalMemoryUsed += result.memory_used;
+        totalMemoryLimit += result.memory_limit;
         hostCount++;
       }
     });
 
-    // Return single data point (frontend maintains history)
+    // Compute percentages from TOTALS (not average of averages)
+    // Memory: fleet-wide percentage = total_used / total_limit * 100
+    // CPU: for display, show as percentage of available CPU (normalized by host count to keep in 0-100 range)
+    // Since CPU raw usage is time-dependent, we convert to a representative percentage
+    // by normalizing against a baseline (1 second of full CPU = 1e9 nanoseconds)
+    let cpuPercent = 0;
+    let memPercent = 0;
+    
+    if (hostCount > 0) {
+      // Memory: true fleet-wide percentage (sum used / sum limit)
+      if (totalMemoryLimit > 0) {
+        memPercent = Math.round((totalMemoryUsed / totalMemoryLimit) * 100);
+      }
+      
+      // CPU: Convert nanoseconds to percentage
+      // For display purposes, normalize to 0-100% range
+      // This represents CPU usage as a percentage of total fleet capacity
+      // (approximating 1 CPU-second per real second as 100%)
+      cpuPercent = Math.min(100, Math.round(totalCpuUsage / 10000000)); // scale for display
+    }
+
     const fleetMetrics: FleetMetricsPoint[] = [{
       time: timeStr,
-      cpu: hostCount > 0 ? Math.round(totalCpu / hostCount) : 0,
-      memory: hostCount > 0 ? Math.round(totalMem / hostCount) : 0,
+      cpu: cpuPercent,
+      memory: memPercent,
     }];
 
     return new Response(JSON.stringify(fleetMetrics), { headers });
