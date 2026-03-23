@@ -144,38 +144,48 @@ fi
 
 # Handle /metrics endpoint for fleet dashboard
 # Returns RAW values for proper fleet-wide aggregation
-# Returns: { cpu_usage: <nanoseconds>, memory_used: <bytes>, memory_limit: <bytes> }
-# Backend computes percentages from totals
+# Returns: { cpu_time_ns: <ns>, cpu_cores: <num>, memory_used: <bytes>, memory_limit: <bytes> }
+# Backend computes fleet CPU % = sum(cpu_time_ns) / sum(cpu_cores * interval_ns) * 100
 if [ "$PATH_RAW" = "/metrics" ]; then
   CONTAINERS_JSON=$(curl --silent --unix-socket "$SOCKET_PATH" "http://localhost/containers/json" 2>/dev/null)
   
   if [ -z "$CONTAINERS_JSON" ] || [ "$CONTAINERS_JSON" = "[]" ]; then
-    respond_json '200 OK' '{"cpu_usage":0,"memory_used":0,"memory_limit":0}'
+    respond_json '200 OK' '{"cpu_time_ns":0,"cpu_cores":0,"memory_used":0,"memory_limit":0}'
     exit 0
   fi
   
   CONTAINER_IDS=$(echo "$CONTAINERS_JSON" | grep -oE '"Id":"[a-f0-9]+"' | head -20 | cut -d'"' -f4)
   
-  TOTAL_CPU_USAGE=0
+  TOTAL_CPU_TIME_NS=0
   TOTAL_MEM_USED=0
   TOTAL_MEM_LIMIT=0
+  # Get host CPU cores (use first container's online_cpus as proxy for host)
+  HOST_CORES=0
   
   for CONTAINER_ID in $CONTAINER_IDS; do
     STATS_JSON=$(curl --silent --unix-socket "$SOCKET_PATH" "http://localhost/containers/${CONTAINER_ID}/stats?stream=false" 2>/dev/null)
     
     if [ -n "$STATS_JSON" ]; then
-      # CPU: raw usage delta (this is comparable across hosts if normalized by time)
-      CPU_USAGE=$(echo "$STATS_JSON" | grep -oE '"cpu_usage":{"total_usage":[0-9]+' | head -1 | cut -d':' -f3 | tr -d '}')
-      PREV_CPU_USAGE=$(echo "$STATS_JSON" | grep -oE '"precpu_stats":{"cpu_usage":{"total_usage":[0-9]+' | head -1 | sed 's/.*total_usage://' | tr -d '}')
+      # Get CPU deltas
+      CPU_USAGE=$(echo "$STATS_JSON" | grep -oE '"cpu_usage":{"total_usage":[0-9]+' | head -1 | sed 's/.*total_usage://' | tr -d '}')
+      PREV_CPU=$(echo "$STATS_JSON" | grep -oE '"precpu_stats":{"cpu_usage":{"total_usage":[0-9]+' | head -1 | sed 's/.*total_usage://' | tr -d '}')
+      SYSTEM_USAGE=$(echo "$STATS_JSON" | grep -oE '"system_cpu_usage":[0-9]+' | head -1 | sed 's/.*://' | tr -d '}')
+      PREV_SYSTEM=$(echo "$STATS_JSON" | grep -oE '"precpu_stats":{"system_cpu_usage":[0-9]+' | head -1 | sed 's/.*system_cpu_usage://' | tr -d '}')
+      ONLINE_CPUS=$(echo "$STATS_JSON" | grep -oE '"online_cpus":[0-9]+' | head -1 | sed 's/.*://' | tr -d '}')
+      
+      if [ -n "$ONLINE_CPUS" ] && [ "$HOST_CORES" = "0" ]; then
+        HOST_CORES=$ONLINE_CPUS
+      fi
+      
+      # Calculate CPU time used (in nanoseconds)
+      if [ -n "$CPU_USAGE" ] && [ -n "$PREV_CPU" ] && [ "$CPU_USAGE" -gt "$PREV_CPU" ]; then
+        CPU_DELTA=$((CPU_USAGE - PREV_CPU))
+        TOTAL_CPU_TIME_NS=$((TOTAL_CPU_TIME_NS + CPU_DELTA))
+      fi
       
       # Memory: raw bytes
       MEM_USAGE=$(echo "$STATS_JSON" | grep -oE '"usage":[0-9]+' | head -1 | cut -d':' -f2)
       MEM_LIMIT=$(echo "$STATS_JSON" | grep -oE '"limit":[0-9]+' | head -1 | cut -d':' -f2)
-      
-      if [ -n "$CPU_USAGE" ] && [ -n "$PREV_CPU_USAGE" ]; then
-        CPU_DELTA=$((CPU_USAGE - PREV_CPU_USAGE))
-        TOTAL_CPU_USAGE=$((TOTAL_CPU_USAGE + CPU_DELTA))
-      fi
       
       if [ -n "$MEM_USAGE" ] && [ -n "$MEM_LIMIT" ]; then
         TOTAL_MEM_USED=$((TOTAL_MEM_USED + MEM_USAGE))
@@ -184,9 +194,13 @@ if [ "$PATH_RAW" = "/metrics" ]; then
     fi
   done
   
-  # Return raw values - backend will compute percentages
-  # cpu_usage is in nanoseconds (can be large)
-  METRICS_JSON="{\"cpu_usage\":${TOTAL_CPU_USAGE},\"memory_used\":${TOTAL_MEM_USED},\"memory_limit\":${TOTAL_MEM_LIMIT}}"
+  # If no cores detected, default to 1
+  if [ "$HOST_CORES" = "0" ]; then
+    HOST_CORES=1
+  fi
+  
+  # Return raw values - backend will compute true percentage
+  METRICS_JSON="{\"cpu_time_ns\":${TOTAL_CPU_TIME_NS},\"cpu_cores\":${HOST_CORES},\"memory_used\":${TOTAL_MEM_USED},\"memory_limit\":${TOTAL_MEM_LIMIT}}"
   respond_json '200 OK' "$METRICS_JSON"
   exit 0
 fi
