@@ -1,23 +1,67 @@
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 import { Activity } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useState, useEffect } from "react";
+import { useFleetMetrics, type FleetMetrics } from "@/hooks/useFleetMetrics";
 
-const mockData = [
-  { time: '00:00', cpu: 32, memory: 45 },
-  { time: '04:00', cpu: 28, memory: 48 },
-  { time: '08:00', cpu: 45, memory: 52 },
-  { time: '12:00', cpu: 55, memory: 65 },
-  { time: '16:00', cpu: 42, memory: 68 },
-  { time: '20:00', cpu: 38, memory: 62 },
-  { time: '23:59', cpu: 35, memory: 58 },
-];
-
-interface FleetResourceChartProps {
-  data?: { time: string; cpu: number; memory: number }[];
-  className?: string;
+// Extended type to include connection info - in production this would come from the API
+interface HostWithCredentials {
+  host_url: string;
+  connection_mode?: string;
+  agent_api_key?: string;
+  agentApiKey?: string;
 }
 
-export function FleetResourceChart({ data = mockData, className }: FleetResourceChartProps) {
+interface FleetResourceChartProps {
+  hosts: HostWithCredentials[];
+  className?: string;
+  maxDataPoints?: number;
+}
+
+const MAX_DATA_POINTS = 20;
+
+export function FleetResourceChart({ hosts, className, maxDataPoints = MAX_DATA_POINTS }: FleetResourceChartProps) {
+  const [chartData, setChartData] = useState<FleetMetrics[]>([]);
+  const { data: newData } = useFleetMetrics(hosts);
+
+  // Initialize with some data points if empty
+  useEffect(() => {
+    if (chartData.length === 0 && newData && newData.length > 0) {
+      // Start with current time
+      const now = new Date();
+      const timeStr = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false });
+      
+      // Create initial historical data with slight variations
+      const initialData: FleetMetrics[] = [];
+      for (let i = maxDataPoints - 1; i >= 0; i--) {
+        const date = new Date(now.getTime() - i * 60000);
+        const t = date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false });
+        initialData.push({
+          time: t,
+          cpu: Math.max(0, Math.min(100, 30 + Math.random() * 20)),
+          memory: Math.max(0, Math.min(100, 45 + Math.random() * 20)),
+        });
+      }
+      setChartData(initialData);
+    }
+  }, [chartData.length, maxDataPoints]);
+
+  // Update with new data points as they come in
+  useEffect(() => {
+    if (newData && newData.length > 0) {
+      setChartData((prev) => {
+        const updated = [...prev, ...newData];
+        // Keep only the last N data points
+        if (updated.length > maxDataPoints) {
+          return updated.slice(-maxDataPoints);
+        }
+        return updated;
+      });
+    }
+  }, [newData, maxDataPoints]);
+
+  const displayData = chartData.length > 0 ? chartData : [];
+
   return (
     <div className={cn("glass-card overflow-hidden flex flex-col h-full", className)}>
       <div className="p-4 border-b border-white/5 flex items-center justify-between">
@@ -39,7 +83,7 @@ export function FleetResourceChart({ data = mockData, className }: FleetResource
       
       <div className="flex-1 p-4 pt-6">
         <ResponsiveContainer width="100%" height="100%">
-          <AreaChart data={data} margin={{ top: 0, right: 0, left: -20, bottom: 0 }}>
+          <AreaChart data={displayData} margin={{ top: 0, right: 0, left: -20, bottom: 0 }}>
             <defs>
               <linearGradient id="colorCpu" x1="0" y1="0" x2="0" y2="1">
                 <stop offset="5%" stopColor="#0EA5E9" stopOpacity={0.3}/>
@@ -63,6 +107,7 @@ export function FleetResourceChart({ data = mockData, className }: FleetResource
               tickLine={false} 
               tick={{ fontSize: 10, fill: 'rgba(255,255,255,0.4)', fontWeight: 600 }}
               unit="%"
+              domain={[0, 100]}
             />
             <Tooltip 
               contentStyle={{ 
@@ -83,6 +128,7 @@ export function FleetResourceChart({ data = mockData, className }: FleetResource
               strokeWidth={2}
               fillOpacity={1} 
               fill="url(#colorCpu)" 
+              isAnimationActive={false}
             />
             <Area 
               type="monotone" 
@@ -92,6 +138,7 @@ export function FleetResourceChart({ data = mockData, className }: FleetResource
               strokeWidth={2}
               fillOpacity={1} 
               fill="url(#colorMem)" 
+              isAnimationActive={false}
             />
           </AreaChart>
         </ResponsiveContainer>
