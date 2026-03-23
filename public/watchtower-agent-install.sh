@@ -239,6 +239,18 @@ require_command() {
   command -v "$1" >/dev/null 2>&1 || fail "$1 is required but not installed"
 }
 
+check_config() {
+  [ -n "$AGENT_API_KEY" ] || fail "AGENT_API_KEY is required. Set it in /etc/watchtower-agent/watchtower-agent.env or export it before starting."
+  validate_port "$AGENT_PORT"
+  [ -n "$AGENT_BIND_ADDRESS" ] || fail "AGENT_BIND_ADDRESS must not be empty"
+  require_command socat
+  require_command curl
+  require_command awk
+  require_command tr
+  require_command sed
+  [ -S "$DOCKER_SOCKET" ] || fail "Docker socket not found at $DOCKER_SOCKET. Ensure Docker is running or update DOCKER_SOCKET."
+}
+
 validate_port() {
   case "$1" in
     ''|*[!0-9]*)
