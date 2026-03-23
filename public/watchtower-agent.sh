@@ -144,39 +144,62 @@ fi
 
 # Handle /metrics endpoint for fleet dashboard
 if [ "$PATH_RAW" = "/metrics" ]; then
-  CPU_STATS_FILE="$(mktemp "${TMPDIR:-/tmp}/watchtower-cpu-stats.XXXXXX")"
-  MEM_STATS_FILE="$(mktemp "${TMPDIR:-/tmp}/watchtower-mem-stats.XXXXXX")"
+  # Get all containers and aggregate their CPU/memory
+  CONTAINERS_JSON=$(curl --silent --unix-socket "$SOCKET_PATH" "http://localhost/containers/json" 2>/dev/null)
   
-  # Get system-wide CPU stats
-  curl --silent --unix-socket "$SOCKET_PATH" "http://localhost/system_stats" >"$CPU_STATS_FILE" 2>/dev/null || echo '{"cpu_percent":0}'
-  curl --silent --unix-socket "$SOCKET_PATH" "http://localhost/memory" >"$MEM_STATS_FILE" 2>/dev/null || echo '{"usage_percent":0}'
+  if [ -z "$CONTAINERS_JSON" ] || [ "$CONTAINERS_JSON" = "[]" ]; then
+    respond_json '200 OK' '{"cpu":0,"memory":0}'
+    exit 0
+  fi
   
-  # Parse CPU percentage from stats
-  CPU_PERCENT=$(awk -F'"' '/cpu.*percent/ {gsub(/[^0-9.]/,"",$4); if($4>0) print int($4); else print 0}' "$CPU_STATS_FILE" 2>/dev/null || echo 0)
-  MEM_PERCENT=$(awk -F'"' '/usage.*percent|MemPerc/ {gsub(/[^0-9.]/,"",$2); if($2>0) print int($2); else print 0}' "$MEM_STATS_FILE" 2>/dev/null || echo 0)
+  # Parse container IDs
+  CONTAINER_IDS=$(echo "$CONTAINERS_JSON" | grep -oE '"Id":"[a-f0-9]+"' | head -20 | cut -d'"' -f4)
   
-  # Fallback: try alternative Docker stats parsing
-  if [ "$CPU_PERCENT" = "0" ] || [ -z "$CPU_PERCENT" ]; then
-    CONTAINER_STATS=$(curl --silent --unix-socket "$SOCKET_PATH" "http://localhost/containers/json" 2>/dev/null)
-    if [ -n "$CONTAINER_STATS" ]; then
-      CPU_PERCENT=$(echo "$CONTAINER_STATS" | awk -F'"' '/CPUPerc/ {gsub(/[^0-9.]/,"",$2); sum+=$2} END {print int(sum)}' 2>/dev/null || echo 0)
-      MEM_PERCENT=$(echo "$CONTAINER_STATS" | awk -F'"' '/MemPerc/ {gsub(/%/,"",$2); sum+=$2} END {print int(sum)}' 2>/dev/null || echo 0)
+  TOTAL_CPU=0
+  TOTAL_MEM=0
+  CONTAINER_COUNT=0
+  
+  for CONTAINER_ID in $CONTAINER_IDS; do
+    # Get stats for each container (stream=false for single shot)
+    STATS_JSON=$(curl --silent --unix-socket "$SOCKET_PATH" "http://localhost/containers/${CONTAINER_ID}/stats?stream=false" 2>/dev/null)
+    
+    if [ -n "$STATS_JSON" ]; then
+      # Calculate CPU percentage from stats
+      # CPU delta = cpu_stats.cpu_usage.total_usage - precpu_stats.cpu_usage.total_usage  
+      # System delta = cpu_stats.system_cpu_usage - precpu_stats.system_cpu_usage
+      CPU_DELTA=$(echo "$STATS_JSON" | grep -oE '"cpu_usage":{"total_usage":[0-9]+' | head -1 | cut -d':' -f2)
+      SYSTEM_DELTA=$(echo "$STATS_JSON" | grep -oE '"system_cpu_usage":[0-9]+' | head -1 | cut -d':' -f2)
+      
+      # Get memory usage
+      MEM_USAGE=$(echo "$STATS_JSON" | grep -oE '"usage":[0-9]+' | head -1 | cut -d':' -f2)
+      MEM_LIMIT=$(echo "$STATS_JSON" | grep -oE '"limit":[0-9]+' | head -1 | cut -d':' -f2)
+      
+      if [ -n "$CPU_DELTA" ] && [ -n "$SYSTEM_DELTA" ] && [ "$SYSTEM_DELTA" -gt 0 ]; then
+        CPU_PERCENT=$(echo "scale=2; ($CPU_DELTA / $SYSTEM_DELTA) * 100" | bc 2>/dev/null || echo 0)
+        TOTAL_CPU=$(echo "$TOTAL_CPU + $CPU_PERCENT" | bc 2>/dev/null || echo "$TOTAL_CPU")
+      fi
+      
+      if [ -n "$MEM_USAGE" ] && [ -n "$MEM_LIMIT" ] && [ "$MEM_LIMIT" -gt 0 ]; then
+        MEM_PERCENT=$(echo "scale=2; ($MEM_USAGE / $MEM_LIMIT) * 100" | bc 2>/dev/null || echo 0)
+        TOTAL_MEM=$(echo "$TOTAL_MEM + $MEM_PERCENT" | bc 2>/dev/null || echo "$TOTAL_MEM")
+        CONTAINER_COUNT=$((CONTAINER_COUNT + 1))
+      fi
     fi
+  done
+  
+  # If no valid stats, return 0
+  if [ -z "$TOTAL_CPU" ] || [ "$TOTAL_CPU" = "0" ]; then
+    TOTAL_CPU=0
+  fi
+  if [ -z "$TOTAL_MEM" ] || [ "$TOTAL_MEM" = "0" ]; then
+    TOTAL_MEM=0
   fi
   
-  # If still no data, use system info
-  if [ "$CPU_PERCENT" = "0" ] || [ -z "$CPU_PERCENT" ]; then
-    SYSTEM_INFO=$(curl --silent --unix-socket "$SOCKET_PATH" "http://localhost/info" 2>/dev/null)
-    CPU_PERCENT=$(echo "$SYSTEM_INFO" | awk 'BEGIN{srand(); print int(rand()*30+10)}')
-  fi
+  TOTAL_CPU_INT=$(printf "%.0f" "$TOTAL_CPU" 2>/dev/null || echo 0)
+  TOTAL_MEM_INT=$(printf "%.0f" "$TOTAL_MEM" 2>/dev/null || echo 0)
   
-  if [ -z "$MEM_PERCENT" ] || [ "$MEM_PERCENT" = "0" ]; then
-    MEM_PERCENT=50
-  fi
-  
-  METRICS_JSON="{\"cpu\":${CPU_PERCENT:-0},\"memory\":${MEM_PERCENT:-50}}"
+  METRICS_JSON="{\"cpu\":${TOTAL_CPU_INT},\"memory\":${TOTAL_MEM_INT}}"
   respond_json '200 OK' "$METRICS_JSON"
-  rm -f "$CPU_STATS_FILE" "$MEM_STATS_FILE"
   exit 0
 fi
 

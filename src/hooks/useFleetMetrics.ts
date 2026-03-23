@@ -16,7 +16,7 @@ export function useFleetMetrics(orgId: string | null | undefined, refetchInterva
       }
 
       try {
-        const data = await apiFetch('/fleet-metrics', {
+        const data = await apiFetch('/api/fleet-metrics', {
           method: 'POST',
           body: JSON.stringify({ orgId }),
         });
