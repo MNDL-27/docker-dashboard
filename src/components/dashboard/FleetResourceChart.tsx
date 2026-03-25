@@ -123,15 +123,15 @@ export function FleetResourceChart({ orgId, className, maxDataPoints = MAX_DATA_
                 }}
                 itemStyle={{ color: '#fff' }}
                 formatter={(value: number, name: string, payload: any) => {
-                  // Recharts tooltip payload structure: { payload: [{ payload: { ...dataPoint } }] }
-                  if (!payload || !payload.payload || payload.payload.length === 0) {
+                  if (!payload || !payload.payload) {
                     return [`${value}%`, ''];
                   }
-                  
-                  const dataPoint = payload.payload[0]?.payload;
-                  if (!dataPoint) {
+                  // Find the item in the payload that corresponds to the current series name
+                  const item = payload.payload.find((p: any) => p.name === name);
+                  if (!item || !item.payload) {
                     return [`${value}%`, ''];
                   }
+                  const dataPoint = item.payload;
                   
                   if (name === 'CPU Usage') {
                     const cpuPercent = value;
