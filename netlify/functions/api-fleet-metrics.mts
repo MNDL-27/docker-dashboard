@@ -13,6 +13,10 @@ interface FleetMetricsPoint {
   time: string;
   cpu: number;
   memory: number;
+  usedCores: number;
+  totalCores: number;
+  memoryUsed: number;
+  memoryLimit: number;
 }
 
 async function fetchHostMetrics(hostUrl: string, apiKey: string, timeoutMs = 5000): Promise<{ cpu_time_ns: number; system_time_ns: number; online_cpus: number; memory_used: number; memory_limit: number } | null> {
@@ -102,56 +106,59 @@ export default async (req: Request) => {
 
     const results = await Promise.all(metricsPromises);
 
-    // Aggregate: use Docker's standard formula
-    // Docker Unix formula: (cpuDelta / systemDelta) * onlineCPUs * 100
-    // This gives CPU % where 100% = 1 core fully used
-    // For fleet: sum all host contributions
-    let totalCpuTimeNs = 0;       // container CPU delta (sum across hosts)
-    let totalSystemTimeNs = 0;   // system CPU time delta (sum across hosts)
-    let totalOnlineCpus = 0;     // sum of online CPUs across hosts
-    let totalMemoryUsed = 0;      // bytes
-    let totalMemoryLimit = 0;     // bytes
-    let hostCount = 0;
+     // Aggregate: calculate fleet-wide CPU and memory utilization
+     // For CPU: 
+     //   Used cores = Σ[(cpu_time_ns / system_time_ns) * online_cpus] 
+     //   Total capacity = Σ[online_cpus]
+     //   Utilization % = (Used cores / Total capacity) * 100
+     // For Memory:
+     //   Utilization % = (totalMemoryUsed / totalMemoryLimit) * 100
+     let totalCpuUsedCores = 0;     // total CPU cores used across fleet
+     let totalCpuCapacityCores = 0; // total CPU cores available across fleet
+     let totalMemoryUsed = 0;       // bytes
+     let totalMemoryLimit = 0;      // bytes
+     let hostCount = 0;
 
-    results.forEach((result) => {
-      if (result && result.system_time_ns > 0) {
-        // Docker formula per host: (cpu_time / system_time) * online_cpus
-        // Sum across hosts for fleet total
-        const hostCpuPercent = (result.cpu_time_ns / result.system_time_ns) * result.online_cpus;
-        totalCpuTimeNs += hostCpuPercent;  // This is now percentage units, not ns
-        totalSystemTimeNs += result.system_time_ns;
-        totalOnlineCpus += result.online_cpus;
-        totalMemoryUsed += result.memory_used;
-        totalMemoryLimit += result.memory_limit;
-        hostCount++;
-      }
-    });
+     results.forEach((result) => {
+       if (result && result.system_time_ns > 0) {
+         // Calculate used cores for this host: (cpu_time_ns / system_time_ns) * online_cpus
+         const hostUsedCores = (result.cpu_time_ns / result.system_time_ns) * result.online_cpus;
+         // Add to fleet totals
+         totalCpuUsedCores += hostUsedCores;
+         totalCpuCapacityCores += result.online_cpus;
+         totalMemoryUsed += result.memory_used;
+         totalMemoryLimit += result.memory_limit;
+         hostCount++;
+       }
+     });
 
-    // Compute percentages
-    // CPU: Using Docker's formula - may exceed 100% on multi-core systems
-    // This represents total fleet CPU usage where 100% = 1 core per host
-    // Memory: fleet % = total_used / total_limit * 100
-    let cpuPercent = 0;
-    let memPercent = 0;
-    
-    if (hostCount > 0) {
-      // Memory: true fleet-wide percentage
-      if (totalMemoryLimit > 0) {
-        memPercent = Math.round((totalMemoryUsed / totalMemoryLimit) * 100);
-      }
-      
-      // CPU: Already computed as percentage units in aggregation
-      // This matches Docker's (cpuDelta/systemDelta)*onlineCpus*100
-      // Value represents aggregate CPU cores used across fleet
-      // Note: May exceed 100% on multi-core systems - this is correct per Docker semantics
-      cpuPercent = Math.round(totalCpuTimeNs);
-    }
+     // Compute percentages
+     // CPU: Fleet utilization percentage = (used cores / total capacity cores) * 100
+     // Memory: Fleet utilization percentage = (used memory / total memory) * 100
+     let cpuPercent = 0;
+     let memPercent = 0;
+     
+     if (hostCount > 0) {
+       // Memory: true fleet-wide percentage
+       if (totalMemoryLimit > 0) {
+         memPercent = Math.round((totalMemoryUsed / totalMemoryLimit) * 100);
+       }
+       
+       // CPU: Fleet CPU utilization percentage
+       if (totalCpuCapacityCores > 0) {
+         cpuPercent = Math.round((totalCpuUsedCores / totalCpuCapacityCores) * 100);
+       }
+     }
 
-    const fleetMetrics: FleetMetricsPoint[] = [{
-      time: timeStr,
-      cpu: cpuPercent,
-      memory: memPercent,
-    }];
+     const fleetMetrics: FleetMetricsPoint[] = [{
+       time: timeStr,
+       cpu: cpuPercent,
+       memory: memPercent,
+       usedCores: Math.round(totalCpuUsedCores * 100) / 100, // keep 2 decimal places for display
+       totalCores: Math.round(totalCpuCapacityCores * 100) / 100,
+       memoryUsed: totalMemoryUsed,
+       memoryLimit: totalMemoryLimit,
+     }];
 
     return new Response(JSON.stringify(fleetMetrics), { headers });
 

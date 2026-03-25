@@ -5,6 +5,10 @@ export interface FleetMetrics {
   time: string;
   cpu: number;
   memory: number;
+  usedCores: number;
+  totalCores: number;
+  memoryUsed: number;
+  memoryLimit: number;
 }
 
 export function useFleetMetrics(orgId: string | null | undefined, refetchInterval = 10000) {
