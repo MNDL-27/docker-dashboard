@@ -122,47 +122,48 @@ export function FleetResourceChart({ orgId, className, maxDataPoints = MAX_DATA_
                   boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.5)'
                 }}
                 itemStyle={{ color: '#fff' }}
-                formatter={(value: number, name: string, payload: any) => {
-                  if (!payload || !payload.payload) {
-                    return [`${value}%`, ''];
-                  }
-                  // Find the item in the payload that corresponds to the current series name
-                  const item = payload.payload.find((p: any) => p.name === name);
-                  if (!item || !item.payload) {
-                    return [`${value}%`, ''];
-                  }
-                  const dataPoint = item.payload;
-                  
-                  if (name === 'CPU Usage') {
-                    const cpuPercent = value;
-                    const usedCores = dataPoint?.usedCores ?? 0;
-                    const totalCores = dataPoint?.totalCores ?? 0;
-                    return [
-                      `CPU: ${cpuPercent}% of fleet`,
-                      `Load: ${usedCores.toFixed(2)} / ${totalCores.toFixed(2)} cores`
-                    ];
-                  }
-                  if (name === 'Memory Usage') {
-                    const memPercent = value;
-                    const memoryUsedBytes = dataPoint?.memoryUsed ?? 0;
-                    const memoryLimitBytes = dataPoint?.memoryLimit ?? 0;
-                    
-                    // Convert bytes to human readable format
-                    const formatBytes = (bytes: number): string => {
-                      if (bytes === 0) return '0 B';
-                      const k = 1024;
-                      const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
-                      const i = Math.floor(Math.log(bytes) / Math.log(k));
-                      return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
-                    };
-                    
-                    return [
-                      `Memory: ${memPercent}% of fleet`,
-                      `${formatBytes(memoryUsedBytes)} / ${formatBytes(memoryLimitBytes)}`
-                    ];
-                  }
-                  return [`${value}%`, ''];
-                }}
+                 formatter={(value: number, name: string, payload: any) => {
+                   // payload is an array of objects, each representing a data series
+                   if (!Array.isArray(payload)) {
+                     return [`${value}%`, ''];
+                   }
+                   // Find the item in the payload that corresponds to the current series name
+                   const item = payload.find((p: any) => p && p.name === name);
+                   if (!item || !item.payload) {
+                     return [`${value}%`, ''];
+                   }
+                   const dataPoint = item.payload;
+                   
+                   if (name === 'CPU Usage') {
+                     const cpuPercent = value;
+                     const usedCores = dataPoint?.usedCores ?? 0;
+                     const totalCores = dataPoint?.totalCores ?? 0;
+                     return [
+                       `CPU: ${cpuPercent}% of fleet`,
+                       `Load: ${usedCores.toFixed(2)} / ${totalCores.toFixed(2)} cores`
+                     ];
+                   }
+                   if (name === 'Memory Usage') {
+                     const memPercent = value;
+                     const memoryUsedBytes = dataPoint?.memoryUsed ?? 0;
+                     const memoryLimitBytes = dataPoint?.memoryLimit ?? 0;
+                     
+                     // Convert bytes to human readable format
+                     const formatBytes = (bytes: number): string => {
+                       if (bytes === 0) return '0 B';
+                       const k = 1024;
+                       const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
+                       const i = Math.floor(Math.log(bytes) / Math.log(k));
+                       return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+                     };
+                     
+                     return [
+                       `Memory: ${memPercent}% of fleet`,
+                       `${formatBytes(memoryUsedBytes)} / ${formatBytes(memoryLimitBytes)}`
+                     ];
+                   }
+                   return [`${value}%`, ''];
+                 }}
               />
             <Area 
               type="monotone" 
