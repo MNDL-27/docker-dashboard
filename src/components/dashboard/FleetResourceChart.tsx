@@ -12,6 +12,14 @@ interface FleetResourceChartProps {
 
 const MAX_DATA_POINTS = 20;
 
+function formatBytes(bytes: number): string {
+  if (bytes === 0) return '0 B';
+  const k = 1024;
+  const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+}
+
 export function FleetResourceChart({ orgId, className, maxDataPoints = MAX_DATA_POINTS }: FleetResourceChartProps) {
   const [chartData, setChartData] = useState<FleetMetrics[]>([]);
   const { data: newData, isLoading } = useFleetMetrics(orgId);
@@ -21,20 +29,21 @@ export function FleetResourceChart({ orgId, className, maxDataPoints = MAX_DATA_
      if (chartData.length === 0 && orgId) {
        const now = new Date();
        const initialData: FleetMetrics[] = [];
-       for (let i = maxDataPoints - 1; i >= 0; i--) {
-         const date = new Date(now.getTime() - i * 60000);
-         const t = date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false });
-         const cpu = Math.max(0, Math.min(100, 30 + Math.random() * 20));
-         const memory = Math.max(0, Math.min(100, 45 + Math.random() * 20));
+        for (let i = maxDataPoints - 1; i >= 0; i--) {
+          const date = new Date(now.getTime() - i * 60000);
+          const t = date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false });
+          const cpu = Math.max(0, Math.min(100, 30 + Math.random() * 20));
+          const memory = Math.max(0, Math.min(100, 45 + Math.random() * 20));
          // Mock data for new fields: assume 4 cores and 8GB memory for initial mock
-         const totalCoresMock = 4;
-         const memoryLimitMock = 8 * 1024 * 1024 * 1024; // 8GB in bytes
-         initialData.push({
-           time: t,
-           cpu: cpu,
-           memory: memory,
-           usedCores: (cpu / 100) * totalCoresMock,
-           totalCores: totalCoresMock,
+          const totalCoresMock = 4;
+          const memoryLimitMock = 8 * 1024 * 1024 * 1024; // 8GB in bytes
+          initialData.push({
+            timestamp: date.getTime(),
+            time: t,
+            cpu: cpu,
+            memory: memory,
+            usedCores: (cpu / 100) * totalCoresMock,
+            totalCores: totalCoresMock,
            memoryUsed: (memory / 100) * memoryLimitMock,
            memoryLimit: memoryLimitMock,
          });
@@ -47,10 +56,14 @@ export function FleetResourceChart({ orgId, className, maxDataPoints = MAX_DATA_
   useEffect(() => {
     if (newData && newData.length > 0) {
       setChartData((prev) => {
-        const updated = [...prev, ...newData];
+        const updated = [...prev, ...newData]
+          .filter((point) => Number.isFinite(point.timestamp))
+          .sort((a, b) => a.timestamp - b.timestamp);
+
         if (updated.length > maxDataPoints) {
           return updated.slice(-maxDataPoints);
         }
+
         return updated;
       });
     }
@@ -122,48 +135,37 @@ export function FleetResourceChart({ orgId, className, maxDataPoints = MAX_DATA_
                   boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.5)'
                 }}
                 itemStyle={{ color: '#fff' }}
-                 formatter={(value: number, name: string, payload: any) => {
-                   // payload is an array of objects, each representing a data series
-                   if (!Array.isArray(payload)) {
-                     return [`${value}%`, ''];
-                   }
-                   // Find the item in the payload that corresponds to the current series name
-                   const item = payload.find((p: any) => p && p.name === name);
-                   if (!item || !item.payload) {
-                     return [`${value}%`, ''];
-                   }
-                   const dataPoint = item.payload;
-                   
-                   if (name === 'CPU Usage') {
-                     const cpuPercent = value;
-                     const usedCores = dataPoint?.usedCores ?? 0;
-                     const totalCores = dataPoint?.totalCores ?? 0;
-                     return [
-                       `CPU: ${cpuPercent}% of fleet`,
-                       `Load: ${usedCores.toFixed(2)} / ${totalCores.toFixed(2)} cores`
-                     ];
-                   }
-                   if (name === 'Memory Usage') {
-                     const memPercent = value;
-                     const memoryUsedBytes = dataPoint?.memoryUsed ?? 0;
-                     const memoryLimitBytes = dataPoint?.memoryLimit ?? 0;
-                     
-                     // Convert bytes to human readable format
-                     const formatBytes = (bytes: number): string => {
-                       if (bytes === 0) return '0 B';
-                       const k = 1024;
-                       const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
-                       const i = Math.floor(Math.log(bytes) / Math.log(k));
-                       return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
-                     };
-                     
-                     return [
-                       `Memory: ${memPercent}% of fleet`,
-                       `${formatBytes(memoryUsedBytes)} / ${formatBytes(memoryLimitBytes)}`
-                     ];
-                   }
-                   return [`${value}%`, ''];
-                 }}
+                formatter={(value: number | string, name: string, entry: any) => {
+                  const numericValue = typeof value === 'number' ? value : Number(value);
+                  const percentValue = Number.isFinite(numericValue) ? numericValue : 0;
+                  const dataPoint = entry?.payload as FleetMetrics | undefined;
+
+                  if (!dataPoint) {
+                    return [`${percentValue}%`, name];
+                  }
+
+                  if (name === 'CPU Usage') {
+                    const usedCores = dataPoint.usedCores ?? 0;
+                    const totalCores = dataPoint.totalCores ?? 0;
+
+                    return [
+                      `${percentValue}% of fleet (Load: ${usedCores.toFixed(2)} / ${totalCores.toFixed(2)} cores)`,
+                      'CPU',
+                    ];
+                  }
+
+                  if (name === 'Memory Usage') {
+                    const memoryUsedBytes = dataPoint.memoryUsed ?? 0;
+                    const memoryLimitBytes = dataPoint.memoryLimit ?? 0;
+
+                    return [
+                      `${percentValue}% of fleet (${formatBytes(memoryUsedBytes)} / ${formatBytes(memoryLimitBytes)})`,
+                      'Memory',
+                    ];
+                  }
+
+                  return [`${percentValue}%`, name];
+                }}
               />
             <Area 
               type="monotone" 

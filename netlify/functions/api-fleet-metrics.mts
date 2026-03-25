@@ -10,6 +10,7 @@ const headers = {
 };
 
 interface FleetMetricsPoint {
+  timestamp: number;
   time: string;
   cpu: number;
   memory: number;
@@ -79,6 +80,7 @@ export default async (req: Request) => {
 
     // Fetch secrets and metrics for each host concurrently
     const now = new Date();
+    const timestamp = now.getTime();
     const timeStr = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false });
 
     const metricsPromises = hosts.map(async (host) => {
@@ -151,9 +153,10 @@ export default async (req: Request) => {
      }
 
      const fleetMetrics: FleetMetricsPoint[] = [{
-       time: timeStr,
-       cpu: cpuPercent,
-       memory: memPercent,
+        timestamp,
+        time: timeStr,
+        cpu: cpuPercent,
+        memory: memPercent,
        usedCores: Math.round(totalCpuUsedCores * 100) / 100, // keep 2 decimal places for display
        totalCores: Math.round(totalCpuCapacityCores * 100) / 100,
        memoryUsed: totalMemoryUsed,
