@@ -19,16 +19,16 @@ export function useFleetMetrics(orgId: string | null | undefined, refetchInterva
         return [];
       }
 
-      try {
-        const data = await apiFetch('/api/fleet-metrics', {
-          method: 'POST',
-          body: JSON.stringify({ orgId }),
-        });
-        return data as FleetMetrics[];
-      } catch (error) {
-        console.error('Failed to fetch fleet metrics:', error);
-        return [];
-      }
+       try {
+         const data = await apiFetch('/fleet-metrics', {
+           method: 'POST',
+           body: JSON.stringify({ orgId }),
+         });
+         return data as FleetMetrics[];
+       } catch (error) {
+         console.error('Failed to fetch fleet metrics:', error);
+         return [];
+       }
     },
     refetchInterval,
     enabled: !!orgId,

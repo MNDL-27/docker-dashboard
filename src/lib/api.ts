@@ -24,17 +24,18 @@ export async function apiFetch(path: string, options: RequestInit = {}) {
     fetchOptions.body = JSON.stringify(options.body);
   }
 
-  const response = await fetch(`${API_BASE}${path}`, fetchOptions);
+   const response = await fetch(`${API_BASE}${path}`, fetchOptions);
 
-  if (!response.ok) {
-    let errorData;
-    try {
-      errorData = await response.json();
-    } catch {
-      errorData = { error: await response.text() };
-    }
-    throw new Error(errorData.error || `HTTP error ${response.status}`);
-  }
+   if (!response.ok) {
+     const errorText = await response.text();
+     let errorData;
+     try {
+       errorData = JSON.parse(errorText);
+     } catch {
+       errorData = { error: errorText };
+     }
+     throw new Error(errorData.error || `HTTP error ${response.status}`);
+   }
 
-  return response.json();
+   return response.json();
 }
