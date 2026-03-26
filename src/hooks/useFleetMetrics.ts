@@ -10,6 +10,10 @@ export interface FleetMetrics {
   totalCores: number;
   memoryUsed: number;
   memoryLimit: number;
+  networkInBytesPerSec: number | null;
+  networkOutBytesPerSec: number | null;
+  diskReadBytesPerSec: number | null;
+  diskWriteBytesPerSec: number | null;
 }
 
 interface FleetMetricsApiPoint {
@@ -21,6 +25,14 @@ interface FleetMetricsApiPoint {
   totalCores?: number;
   memoryUsed?: number;
   memoryLimit?: number;
+  networkInBytesPerSec?: number;
+  networkOutBytesPerSec?: number;
+  diskReadBytesPerSec?: number;
+  diskWriteBytesPerSec?: number;
+  network_in_bytes_per_sec?: number;
+  network_out_bytes_per_sec?: number;
+  disk_read_bytes_per_sec?: number;
+  disk_write_bytes_per_sec?: number;
 }
 
 function toFiniteNumber(value: unknown): number | null {
@@ -56,6 +68,15 @@ function formatTimeLabel(timestamp: number): string {
   });
 }
 
+function normalizeOptionalRate(value: unknown): number | null {
+  const numeric = toFiniteNumber(value);
+  if (numeric === null || numeric < 0) {
+    return null;
+  }
+
+  return numeric;
+}
+
 function normalizeFleetMetricPoint(point: FleetMetricsApiPoint): FleetMetrics | null {
   const timestamp = toTimestamp(point.timestamp) ?? Date.now();
 
@@ -65,6 +86,10 @@ function normalizeFleetMetricPoint(point: FleetMetricsApiPoint): FleetMetrics | 
   const totalCores = toFiniteNumber(point.totalCores);
   const memoryUsed = toFiniteNumber(point.memoryUsed);
   const memoryLimit = toFiniteNumber(point.memoryLimit);
+  const networkInBytesPerSec = normalizeOptionalRate(point.networkInBytesPerSec ?? point.network_in_bytes_per_sec);
+  const networkOutBytesPerSec = normalizeOptionalRate(point.networkOutBytesPerSec ?? point.network_out_bytes_per_sec);
+  const diskReadBytesPerSec = normalizeOptionalRate(point.diskReadBytesPerSec ?? point.disk_read_bytes_per_sec);
+  const diskWriteBytesPerSec = normalizeOptionalRate(point.diskWriteBytesPerSec ?? point.disk_write_bytes_per_sec);
 
   if (
     cpu === null ||
@@ -111,6 +136,10 @@ function normalizeFleetMetricPoint(point: FleetMetricsApiPoint): FleetMetrics | 
     totalCores,
     memoryUsed,
     memoryLimit,
+    networkInBytesPerSec,
+    networkOutBytesPerSec,
+    diskReadBytesPerSec,
+    diskWriteBytesPerSec,
   };
 }
 

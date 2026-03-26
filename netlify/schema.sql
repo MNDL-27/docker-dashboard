@@ -20,11 +20,25 @@ CREATE TABLE IF NOT EXISTS public.organizations (
   name text NOT NULL,
   slug text UNIQUE NOT NULL,
   clerk_org_id text UNIQUE,
+  onboarding_status text NOT NULL DEFAULT 'not_started' CHECK (onboarding_status IN ('not_started', 'skipped', 'completed')),
   created_by uuid NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
   created_at timestamptz NOT NULL DEFAULT now(),
   updated_at timestamptz NOT NULL DEFAULT now()
 );
 ALTER TABLE public.organizations ADD COLUMN IF NOT EXISTS clerk_org_id text UNIQUE;
+ALTER TABLE public.organizations ADD COLUMN IF NOT EXISTS onboarding_status text;
+ALTER TABLE public.organizations
+  ALTER COLUMN onboarding_status SET DEFAULT 'not_started';
+UPDATE public.organizations
+SET onboarding_status = 'not_started'
+WHERE onboarding_status IS NULL;
+ALTER TABLE public.organizations
+  ALTER COLUMN onboarding_status SET NOT NULL;
+ALTER TABLE public.organizations
+  DROP CONSTRAINT IF EXISTS organizations_onboarding_status_check;
+ALTER TABLE public.organizations
+  ADD CONSTRAINT organizations_onboarding_status_check
+  CHECK (onboarding_status IN ('not_started', 'skipped', 'completed'));
 
 -- Step 4: Organization Members
 CREATE TABLE IF NOT EXISTS public.organization_members (

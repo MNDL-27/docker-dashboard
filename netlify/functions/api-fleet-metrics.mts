@@ -18,9 +18,39 @@ interface FleetMetricsPoint {
   totalCores: number;
   memoryUsed: number;
   memoryLimit: number;
+  networkInBytesPerSec: number | null;
+  networkOutBytesPerSec: number | null;
+  diskReadBytesPerSec: number | null;
+  diskWriteBytesPerSec: number | null;
 }
 
-async function fetchHostMetrics(hostUrl: string, apiKey: string, timeoutMs = 5000): Promise<{ cpu_time_ns: number; system_time_ns: number; online_cpus: number; memory_used: number; memory_limit: number } | null> {
+interface HostMetricsResponse {
+  cpu_time_ns: number;
+  system_time_ns: number;
+  online_cpus: number;
+  memory_used: number;
+  memory_limit: number;
+  network_in_bytes_per_sec: number | null;
+  network_out_bytes_per_sec: number | null;
+  disk_read_bytes_per_sec: number | null;
+  disk_write_bytes_per_sec: number | null;
+}
+
+function toFiniteNumber(value: unknown): number | null {
+  const numeric = typeof value === 'number' ? value : Number(value);
+  return Number.isFinite(numeric) ? numeric : null;
+}
+
+function normalizeOptionalRate(value: unknown): number | null {
+  const numeric = toFiniteNumber(value);
+  if (numeric === null || numeric < 0) {
+    return null;
+  }
+
+  return numeric;
+}
+
+async function fetchHostMetrics(hostUrl: string, apiKey: string, timeoutMs = 5000): Promise<HostMetricsResponse | null> {
   try {
     const response = await fetch(`${hostUrl.replace(/\/$/, '')}/metrics`, {
       headers: {
@@ -32,13 +62,17 @@ async function fetchHostMetrics(hostUrl: string, apiKey: string, timeoutMs = 500
     if (!response.ok) return null;
 
     const data = await response.json();
-    // Agent returns: cpu_time_ns, system_time_ns, online_cpus, memory_used, memory_limit
+    // Agent returns CPU/memory fields and may include optional network/disk rates.
     return { 
-      cpu_time_ns: data.cpu_time_ns || 0,
-      system_time_ns: data.system_time_ns || 0,
-      online_cpus: data.online_cpus || 1,
-      memory_used: data.memory_used || 0,
-      memory_limit: data.memory_limit || 0
+      cpu_time_ns: Math.max(0, toFiniteNumber(data.cpu_time_ns) ?? 0),
+      system_time_ns: Math.max(0, toFiniteNumber(data.system_time_ns) ?? 0),
+      online_cpus: Math.max(1, toFiniteNumber(data.online_cpus) ?? 1),
+      memory_used: Math.max(0, toFiniteNumber(data.memory_used) ?? 0),
+      memory_limit: Math.max(0, toFiniteNumber(data.memory_limit) ?? 0),
+      network_in_bytes_per_sec: normalizeOptionalRate(data.network_in_bytes_per_sec ?? data.networkInBytesPerSec),
+      network_out_bytes_per_sec: normalizeOptionalRate(data.network_out_bytes_per_sec ?? data.networkOutBytesPerSec),
+      disk_read_bytes_per_sec: normalizeOptionalRate(data.disk_read_bytes_per_sec ?? data.diskReadBytesPerSec),
+      disk_write_bytes_per_sec: normalizeOptionalRate(data.disk_write_bytes_per_sec ?? data.diskWriteBytesPerSec),
     };
   } catch {
     return null;
@@ -119,6 +153,14 @@ export default async (req: Request) => {
      let totalCpuCapacityCores = 0; // total CPU cores available across fleet
      let totalMemoryUsed = 0;       // bytes
      let totalMemoryLimit = 0;      // bytes
+     let networkInSum = 0;
+     let networkInCount = 0;
+     let networkOutSum = 0;
+     let networkOutCount = 0;
+     let diskReadSum = 0;
+     let diskReadCount = 0;
+     let diskWriteSum = 0;
+     let diskWriteCount = 0;
      let hostCount = 0;
 
      results.forEach((result) => {
@@ -127,12 +169,30 @@ export default async (req: Request) => {
          const hostUsedCores = (result.cpu_time_ns / result.system_time_ns) * result.online_cpus;
          // Add to fleet totals
          totalCpuUsedCores += hostUsedCores;
-         totalCpuCapacityCores += result.online_cpus;
-         totalMemoryUsed += result.memory_used;
-         totalMemoryLimit += result.memory_limit;
-         hostCount++;
-       }
-     });
+          totalCpuCapacityCores += result.online_cpus;
+          totalMemoryUsed += result.memory_used;
+          totalMemoryLimit += result.memory_limit;
+
+          if (result.network_in_bytes_per_sec !== null) {
+            networkInSum += result.network_in_bytes_per_sec;
+            networkInCount++;
+          }
+          if (result.network_out_bytes_per_sec !== null) {
+            networkOutSum += result.network_out_bytes_per_sec;
+            networkOutCount++;
+          }
+          if (result.disk_read_bytes_per_sec !== null) {
+            diskReadSum += result.disk_read_bytes_per_sec;
+            diskReadCount++;
+          }
+          if (result.disk_write_bytes_per_sec !== null) {
+            diskWriteSum += result.disk_write_bytes_per_sec;
+            diskWriteCount++;
+          }
+
+          hostCount++;
+        }
+      });
 
      // Compute percentages
      // CPU: Fleet utilization percentage = (used cores / total capacity cores) * 100
@@ -152,16 +212,20 @@ export default async (req: Request) => {
        }
      }
 
-     const fleetMetrics: FleetMetricsPoint[] = [{
-        timestamp,
-        time: timeStr,
-        cpu: cpuPercent,
-        memory: memPercent,
-       usedCores: Math.round(totalCpuUsedCores * 100) / 100, // keep 2 decimal places for display
-       totalCores: Math.round(totalCpuCapacityCores * 100) / 100,
-       memoryUsed: totalMemoryUsed,
-       memoryLimit: totalMemoryLimit,
-     }];
+      const fleetMetrics: FleetMetricsPoint[] = [{
+         timestamp,
+         time: timeStr,
+         cpu: cpuPercent,
+         memory: memPercent,
+        usedCores: Math.round(totalCpuUsedCores * 100) / 100, // keep 2 decimal places for display
+        totalCores: Math.round(totalCpuCapacityCores * 100) / 100,
+        memoryUsed: totalMemoryUsed,
+        memoryLimit: totalMemoryLimit,
+        networkInBytesPerSec: networkInCount > 0 ? networkInSum : null,
+        networkOutBytesPerSec: networkOutCount > 0 ? networkOutSum : null,
+        diskReadBytesPerSec: diskReadCount > 0 ? diskReadSum : null,
+        diskWriteBytesPerSec: diskWriteCount > 0 ? diskWriteSum : null,
+      }];
 
     return new Response(JSON.stringify(fleetMetrics), { headers });
 

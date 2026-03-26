@@ -7,9 +7,9 @@
 
 [dev]
   framework = "#custom"
-  command = "npm run dev"
-  targetPort = 8080
-  port = 8888
+  command = "npm run dev:vite -- --port 8081"
+  targetPort = 8081
+  port = 8080
 
 # Canonical domain: www.dockerdash.app → dockerdash.app (301)
 [[redirects]]

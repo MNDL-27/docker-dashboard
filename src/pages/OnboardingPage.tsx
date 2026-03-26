@@ -13,6 +13,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { useAddDockerHost } from "@/hooks/useDocker";
 import { dockerApi } from "@/services/docker-api";
 import type { ConnectionMode } from "@/types/database";
+import { apiFetch } from "@/lib/api";
 
 /* ── Step Labels (top-level) ── */
 const STEPS = ["Create Organization", "Connect Host", "You're Ready"] as const;
@@ -84,6 +85,7 @@ export default function OnboardingPage() {
   /* ── Auto-advance to Step 1 if Clerk organization is already selected ── */
   useEffect(() => {
     if (isLoaded && orgId && state.step === 0 && state.phase === "form") {
+      sessionStorage.removeItem("onboarding_resume");
       setState({ step: 1, phase: "basics" });
     }
   }, [isLoaded, orgId, state.step, state.phase]);
@@ -107,6 +109,32 @@ export default function OnboardingPage() {
   const quickInstallCommand = `curl -fsSL ${baseUrl}/watchtower-agent-install.sh -o watchtower-agent-install.sh
 chmod +x watchtower-agent-install.sh
 sudo ./watchtower-agent-install.sh`;
+
+  const markOnboardingStatus = async (status: "not_started" | "skipped" | "completed") => {
+    await apiFetch('/organizations', {
+      method: 'PATCH',
+      body: JSON.stringify({ onboardingStatus: status }),
+    });
+  };
+
+  const completeOnboardingAndNavigate = async () => {
+    try {
+      await markOnboardingStatus("completed");
+      sessionStorage.removeItem("onboarding_resume");
+      const pendingPlan = sessionStorage.getItem("dockerdash_pending_plan");
+      if (pendingPlan) {
+        navigate(`/app/billing?plan=${pendingPlan}`, { replace: true });
+      } else {
+        navigate("/app", { replace: true });
+      }
+    } catch (err) {
+      toast({
+        title: "Couldn't finalize onboarding",
+        description: err instanceof Error ? err.message : "Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
 
   /* ── Resume onboarding after hard reload ── */
   useEffect(() => {
@@ -465,9 +493,18 @@ sudo ./watchtower-agent-install.sh`;
               <button
                 type="button"
                 className="w-full text-center text-xs text-muted-foreground hover:text-foreground transition-colors mt-3 py-1"
-                onClick={() => {
-                  sessionStorage.removeItem("onboarding_resume");
-                  navigate("/app");
+                onClick={async () => {
+                  try {
+                    await markOnboardingStatus("skipped");
+                    sessionStorage.removeItem("onboarding_resume");
+                    navigate("/app", { replace: true });
+                  } catch (err) {
+                    toast({
+                      title: "Couldn't skip onboarding",
+                      description: err instanceof Error ? err.message : "Please try again.",
+                      variant: "destructive",
+                    });
+                  }
                 }}
               >
                 Skip for now
@@ -666,7 +703,7 @@ sudo ./watchtower-agent-install.sh`;
                   <Button
                     className="flex-1 h-11 text-base"
                     variant="secondary"
-                    onClick={() => navigate("/app")}
+                    onClick={completeOnboardingAndNavigate}
                   >
                     Finish Later
                     <ArrowRight className="h-4 w-4 ml-1" />
@@ -705,14 +742,7 @@ sudo ./watchtower-agent-install.sh`;
                   <Button
                     className="w-full h-11 text-base gap-2"
                     size="lg"
-                    onClick={() => {
-                      const pendingPlan = sessionStorage.getItem("dockerdash_pending_plan");
-                      if (pendingPlan) {
-                        navigate(`/app/billing?plan=${pendingPlan}`);
-                      } else {
-                        navigate("/app");
-                      }
-                    }}
+                    onClick={completeOnboardingAndNavigate}
                   >
                     {sessionStorage.getItem("dockerdash_pending_plan") ? "Continue to Billing" : "Go to Dashboard"}
                     <ArrowRight className="h-4 w-4" />

@@ -18,7 +18,8 @@ export function ProtectedRoute({
     status: "loading" | "resolved";
     isApproved: boolean;
     hasOrgs: boolean;
-  }>({ status: "loading", isApproved: false, hasOrgs: false });
+    needsOnboarding: boolean;
+  }>({ status: "loading", isApproved: false, hasOrgs: false, needsOnboarding: true });
 
   useEffect(() => {
     if (!isLoaded || !isSignedIn) return;
@@ -33,7 +34,7 @@ export function ProtectedRoute({
         });
         if (!res.ok) {
           // API error (user not synced yet, network issue, etc.) — treat as unapproved
-          if (!cancelled) setAuthState({ status: "resolved", isApproved: false, hasOrgs: false });
+          if (!cancelled) setAuthState({ status: "resolved", isApproved: false, hasOrgs: false, needsOnboarding: true });
           return;
         }
         const data = await res.json();
@@ -42,10 +43,11 @@ export function ProtectedRoute({
             status: "resolved",
             isApproved: !!data.user?.is_approved,
             hasOrgs: !!data.user?.has_orgs,
+            needsOnboarding: !!data.user?.needs_onboarding,
           });
         }
       } catch {
-        if (!cancelled) setAuthState({ status: "resolved", isApproved: false, hasOrgs: false });
+        if (!cancelled) setAuthState({ status: "resolved", isApproved: false, hasOrgs: false, needsOnboarding: true });
       }
     })();
 
@@ -74,18 +76,14 @@ export function ProtectedRoute({
   }
 
   // ── Priority 4: Onboarding gate (only for approved users) ──
-  // If hitting a main app route but user has no orgs, force them to onboarding
-  if (requireOnboarded && !authState.hasOrgs) {
+  // Main app routes require onboarding to be finished (completed or skipped)
+  if (requireOnboarded && authState.needsOnboarding) {
     return <Navigate to="/onboarding" replace />;
   }
 
-  // If hitting onboarding but user already has orgs, force them into the app
-  // — unless they're resuming onboarding after org creation (hard-reload flow)
-  if (!requireOnboarded && authState.hasOrgs) {
-    const resuming = typeof window !== "undefined" && sessionStorage.getItem("onboarding_resume");
-    if (!resuming) {
-      return <Navigate to="/app" replace />;
-    }
+  // If hitting onboarding but onboarding is already complete/skipped, force app
+  if (!requireOnboarded && !authState.needsOnboarding) {
+    return <Navigate to="/app" replace />;
   }
 
   // ── Priority 5: Render the requested route ──

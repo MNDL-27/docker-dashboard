@@ -4,6 +4,7 @@ export interface Organization {
   id: string;
   name: string;
   slug: string;
+  onboarding_status: 'not_started' | 'completed' | 'skipped';
   created_by: string;
   created_at: string;
   updated_at: string;

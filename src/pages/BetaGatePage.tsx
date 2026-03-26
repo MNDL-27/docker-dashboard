@@ -19,7 +19,8 @@ export default function BetaGatePage() {
     status: "loading" | "resolved";
     isApproved: boolean;
     hasOrgs: boolean;
-  }>({ status: "loading", isApproved: false, hasOrgs: false });
+    needsOnboarding: boolean;
+  }>({ status: "loading", isApproved: false, hasOrgs: false, needsOnboarding: true });
 
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
@@ -33,22 +34,23 @@ export default function BetaGatePage() {
           headers: { Authorization: `Bearer ${token}` },
         });
         if (!res.ok) {
-          setAppState({ status: "resolved", isApproved: false, hasOrgs: false });
+          setAppState({ status: "resolved", isApproved: false, hasOrgs: false, needsOnboarding: true });
           return;
         }
         const data = await res.json();
         const isApproved = !!data.user?.is_approved;
         const hasOrgs = !!data.user?.has_orgs;
-        setAppState({ status: "resolved", isApproved, hasOrgs });
+        const needsOnboarding = !!data.user?.needs_onboarding;
+        setAppState({ status: "resolved", isApproved, hasOrgs, needsOnboarding });
 
         // If approved, stop polling and redirect
         if (isApproved) {
           if (pollRef.current) clearInterval(pollRef.current);
           pollRef.current = null;
-          navigate(hasOrgs ? "/app" : "/onboarding", { replace: true });
+          navigate(needsOnboarding ? "/onboarding" : "/app", { replace: true });
         }
       } catch {
-        setAppState({ status: "resolved", isApproved: false, hasOrgs: false });
+        setAppState({ status: "resolved", isApproved: false, hasOrgs: false, needsOnboarding: true });
       }
     };
 
@@ -79,7 +81,7 @@ export default function BetaGatePage() {
 
   // ─── TEMPORARY DEV BYPASS: skip the gate, redirect forward ───
   if (BYPASS_BETA_GATE) {
-    return <Navigate to={appState.hasOrgs ? "/app" : "/onboarding"} replace />;
+    return <Navigate to={appState.needsOnboarding ? "/onboarding" : "/app"} replace />;
   }
 
   const email = user?.primaryEmailAddress?.emailAddress;

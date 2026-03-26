@@ -1,6 +1,7 @@
 import type { Config } from '@netlify/functions';
 import { sql } from './lib/db.mjs';
 import { requireAuth } from './lib/auth.mjs';
+import { ensureOnboardingSchema } from './lib/ensure-onboarding-schema.mjs';
 
 const headers = {
   'Access-Control-Allow-Origin': '*',
@@ -14,6 +15,7 @@ export default async (req: Request) => {
   }
 
   try {
+    await ensureOnboardingSchema();
     const authContext = await requireAuth(req, { requireOrg: false });
 
     if (req.method === 'GET') {
@@ -36,6 +38,46 @@ export default async (req: Request) => {
       `;
 
       return new Response(JSON.stringify({ id: orgId }), { headers });
+    }
+
+    if (req.method === 'PATCH') {
+      if (!authContext.orgId) {
+        return new Response(JSON.stringify({ error: 'Active org required' }), { status: 400, headers });
+      }
+
+      const body = await req.json();
+      const onboardingStatus = body?.onboardingStatus;
+      const allowedStatuses = ['not_started', 'skipped', 'completed'];
+
+      if (!allowedStatuses.includes(onboardingStatus)) {
+        return new Response(
+          JSON.stringify({ error: 'Invalid onboardingStatus. Allowed values: not_started, skipped, completed' }),
+          { status: 400, headers }
+        );
+      }
+
+      const memberships = await sql`
+        SELECT 1
+        FROM organization_members
+        WHERE organization_id = ${authContext.orgId} AND user_id = ${authContext.userId}
+      `;
+
+      if (memberships.length === 0) {
+        return new Response(JSON.stringify({ error: 'Access denied' }), { status: 403, headers });
+      }
+
+      const updated = await sql`
+        UPDATE organizations
+        SET onboarding_status = ${onboardingStatus}
+        WHERE id = ${authContext.orgId}
+        RETURNING id, clerk_org_id, onboarding_status
+      `;
+
+      if (updated.length === 0) {
+        return new Response(JSON.stringify({ error: 'Organization not found' }), { status: 404, headers });
+      }
+
+      return new Response(JSON.stringify(updated[0]), { headers });
     }
 
     return new Response(JSON.stringify({ error: 'Method not allowed' }), { status: 405, headers });

@@ -13,11 +13,127 @@ interface FleetResourceChartProps {
 const MAX_DATA_POINTS = 20;
 
 function formatBytes(bytes: number): string {
-  if (bytes === 0) return '0 B';
+  if (!Number.isFinite(bytes) || bytes <= 0) return '0.00 B';
   const k = 1024;
   const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
   const i = Math.floor(Math.log(bytes) / Math.log(k));
-  return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+  return `${(bytes / Math.pow(k, i)).toFixed(2)} ${sizes[i]}`;
+}
+
+function formatPercentage(value: number): string {
+  return Number.isFinite(value) ? value.toFixed(2) : '0.00';
+}
+
+function formatSpeed(bytesPerSecond: number | null | undefined): string {
+  if (!Number.isFinite(bytesPerSecond) || bytesPerSecond === null || bytesPerSecond === undefined || bytesPerSecond < 0) {
+    return 'N/A';
+  }
+
+  if (bytesPerSecond === 0) {
+    return '0.00 B/s';
+  }
+
+  const k = 1024;
+  const sizes = ['B/s', 'KB/s', 'MB/s', 'GB/s', 'TB/s'];
+  const i = Math.min(Math.floor(Math.log(bytesPerSecond) / Math.log(k)), sizes.length - 1);
+  return `${(bytesPerSecond / Math.pow(k, i)).toFixed(2)} ${sizes[i]}`;
+}
+
+interface FleetResourceTooltipProps {
+  active?: boolean;
+  label?: string;
+  payload?: Array<{
+    name?: string;
+    value?: number | string;
+    payload?: FleetMetrics;
+  }>;
+}
+
+function FleetResourceTooltip({ active, label, payload }: FleetResourceTooltipProps) {
+  if (!active || !payload || payload.length === 0) {
+    return null;
+  }
+
+  const dataPoint = payload[0]?.payload;
+  if (!dataPoint) {
+    return null;
+  }
+
+  const cpuEntry = payload.find((item) => item.name === 'CPU Usage');
+  const memoryEntry = payload.find((item) => item.name === 'Memory Usage');
+  const cpuPercent = Number.isFinite(Number(cpuEntry?.value)) ? Number(cpuEntry?.value) : dataPoint.cpu;
+  const memoryPercent = Number.isFinite(Number(memoryEntry?.value)) ? Number(memoryEntry?.value) : dataPoint.memory;
+
+  return (
+    <div
+      style={{
+        backgroundColor: 'rgba(13, 17, 23, 0.95)',
+        border: '1px solid rgba(255, 255, 255, 0.1)',
+        borderRadius: '8px',
+        fontSize: '12px',
+        color: '#fff',
+        boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.5)',
+        padding: '10px 12px',
+        minWidth: '280px',
+      }}
+    >
+      {label && (
+        <div style={{ fontSize: '10px', color: 'rgba(255,255,255,0.6)', fontWeight: 700, marginBottom: '6px' }}>
+          {label}
+        </div>
+      )}
+
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+        <div>
+          <span style={{ color: '#0EA5E9', fontWeight: 700 }}>CPU:</span>{' '}
+          <span>
+            {formatPercentage(cpuPercent)}% of fleet (Load: {dataPoint.usedCores.toFixed(2)} / {dataPoint.totalCores.toFixed(2)} cores)
+          </span>
+        </div>
+
+        <div>
+          <span style={{ color: '#10B981', fontWeight: 700 }}>Memory:</span>{' '}
+          <span>
+            {formatPercentage(memoryPercent)}% of fleet ({formatBytes(dataPoint.memoryUsed)} / {formatBytes(dataPoint.memoryLimit)})
+          </span>
+        </div>
+
+        <div>
+          <span style={{ color: 'rgba(255,255,255,0.75)', fontWeight: 700 }}>Network In:</span>{' '}
+          <span>{formatSpeed(dataPoint.networkInBytesPerSec)}</span>
+        </div>
+
+        <div>
+          <span style={{ color: 'rgba(255,255,255,0.75)', fontWeight: 700 }}>Network Out:</span>{' '}
+          <span>{formatSpeed(dataPoint.networkOutBytesPerSec)}</span>
+        </div>
+
+        <div>
+          <span style={{ color: 'rgba(255,255,255,0.75)', fontWeight: 700 }}>Disk Read:</span>{' '}
+          <span>{formatSpeed(dataPoint.diskReadBytesPerSec)}</span>
+        </div>
+
+        <div>
+          <span style={{ color: 'rgba(255,255,255,0.75)', fontWeight: 700 }}>Disk Write:</span>{' '}
+          <span>{formatSpeed(dataPoint.diskWriteBytesPerSec)}</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+interface CompactMetricProps {
+  label: string;
+  value: string;
+}
+
+function CompactMetric({ label, value }: CompactMetricProps) {
+  return (
+    <div className="rounded-md border border-white/10 bg-white/[0.02] px-2.5 py-2">
+      <div className="text-[10px] font-bold uppercase tracking-wide text-muted-foreground/80">{label}</div>
+      <div className="text-xs font-semibold tabular-nums text-foreground mt-0.5">{value}</div>
+    </div>
+  );
 }
 
 export function FleetResourceChart({ orgId, className, maxDataPoints = MAX_DATA_POINTS }: FleetResourceChartProps) {
@@ -37,20 +153,24 @@ export function FleetResourceChart({ orgId, className, maxDataPoints = MAX_DATA_
          // Mock data for new fields: assume 4 cores and 8GB memory for initial mock
           const totalCoresMock = 4;
           const memoryLimitMock = 8 * 1024 * 1024 * 1024; // 8GB in bytes
-          initialData.push({
-            timestamp: date.getTime(),
-            time: t,
-            cpu: cpu,
-            memory: memory,
-            usedCores: (cpu / 100) * totalCoresMock,
-            totalCores: totalCoresMock,
-           memoryUsed: (memory / 100) * memoryLimitMock,
-           memoryLimit: memoryLimitMock,
-         });
-       }
-       setChartData(initialData);
-     }
-   }, [orgId, maxDataPoints]);
+           initialData.push({
+             timestamp: date.getTime(),
+             time: t,
+             cpu: cpu,
+             memory: memory,
+             usedCores: (cpu / 100) * totalCoresMock,
+             totalCores: totalCoresMock,
+            memoryUsed: (memory / 100) * memoryLimitMock,
+            memoryLimit: memoryLimitMock,
+            networkInBytesPerSec: null,
+            networkOutBytesPerSec: null,
+            diskReadBytesPerSec: null,
+            diskWriteBytesPerSec: null,
+          });
+        }
+        setChartData(initialData);
+      }
+    }, [orgId, maxDataPoints]);
 
   // Update with new data points as they come in
   useEffect(() => {
@@ -70,6 +190,7 @@ export function FleetResourceChart({ orgId, className, maxDataPoints = MAX_DATA_
   }, [newData, maxDataPoints]);
 
   const displayData = chartData.length > 0 ? chartData : [];
+  const latestPoint = displayData.length > 0 ? displayData[displayData.length - 1] : undefined;
 
   return (
     <div className={cn("glass-card overflow-hidden flex flex-col h-full", className)}>
@@ -121,52 +242,11 @@ export function FleetResourceChart({ orgId, className, maxDataPoints = MAX_DATA_
               axisLine={false} 
               tickLine={false} 
               tick={{ fontSize: 10, fill: 'rgba(255,255,255,0.4)', fontWeight: 600 }}
-              unit="%"
               domain={[0, 'auto']}
               allowDecimals={false}
+              tickFormatter={(value: number | string) => `${formatPercentage(typeof value === 'number' ? value : Number(value))}%`}
             />
-              <Tooltip 
-                contentStyle={{ 
-                  backgroundColor: 'rgba(13, 17, 23, 0.95)', 
-                  borderColor: 'rgba(255, 255, 255, 0.1)',
-                  borderRadius: '8px',
-                  fontSize: '12px',
-                  color: '#fff',
-                  boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.5)'
-                }}
-                itemStyle={{ color: '#fff' }}
-                formatter={(value: number | string, name: string, entry: any) => {
-                  const numericValue = typeof value === 'number' ? value : Number(value);
-                  const percentValue = Number.isFinite(numericValue) ? numericValue : 0;
-                  const dataPoint = entry?.payload as FleetMetrics | undefined;
-
-                  if (!dataPoint) {
-                    return [`${percentValue}%`, name];
-                  }
-
-                  if (name === 'CPU Usage') {
-                    const usedCores = dataPoint.usedCores ?? 0;
-                    const totalCores = dataPoint.totalCores ?? 0;
-
-                    return [
-                      `${percentValue}% of fleet (Load: ${usedCores.toFixed(2)} / ${totalCores.toFixed(2)} cores)`,
-                      'CPU',
-                    ];
-                  }
-
-                  if (name === 'Memory Usage') {
-                    const memoryUsedBytes = dataPoint.memoryUsed ?? 0;
-                    const memoryLimitBytes = dataPoint.memoryLimit ?? 0;
-
-                    return [
-                      `${percentValue}% of fleet (${formatBytes(memoryUsedBytes)} / ${formatBytes(memoryLimitBytes)})`,
-                      'Memory',
-                    ];
-                  }
-
-                  return [`${percentValue}%`, name];
-                }}
-              />
+            <Tooltip content={<FleetResourceTooltip />} />
             <Area 
               type="monotone" 
               dataKey="cpu" 
@@ -189,6 +269,15 @@ export function FleetResourceChart({ orgId, className, maxDataPoints = MAX_DATA_
             />
           </AreaChart>
         </ResponsiveContainer>
+      </div>
+
+      <div className="px-4 pb-4 pt-2 border-t border-white/5">
+        <div className="grid grid-cols-2 gap-2">
+          <CompactMetric label="Network In" value={formatSpeed(latestPoint?.networkInBytesPerSec ?? null)} />
+          <CompactMetric label="Network Out" value={formatSpeed(latestPoint?.networkOutBytesPerSec ?? null)} />
+          <CompactMetric label="Disk Read" value={formatSpeed(latestPoint?.diskReadBytesPerSec ?? null)} />
+          <CompactMetric label="Disk Write" value={formatSpeed(latestPoint?.diskWriteBytesPerSec ?? null)} />
+        </div>
       </div>
     </div>
   );
