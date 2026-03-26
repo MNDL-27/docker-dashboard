@@ -5,6 +5,8 @@ export interface Organization {
   name: string;
   slug: string;
   onboarding_status: 'not_started' | 'completed' | 'skipped';
+  onboarding_skipped_at?: string | null;
+  onboarding_completed_at?: string | null;
   created_by: string;
   created_at: string;
   updated_at: string;

@@ -21,12 +21,16 @@ CREATE TABLE IF NOT EXISTS public.organizations (
   slug text UNIQUE NOT NULL,
   clerk_org_id text UNIQUE,
   onboarding_status text NOT NULL DEFAULT 'not_started' CHECK (onboarding_status IN ('not_started', 'skipped', 'completed')),
+  onboarding_skipped_at timestamptz,
+  onboarding_completed_at timestamptz,
   created_by uuid NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
   created_at timestamptz NOT NULL DEFAULT now(),
   updated_at timestamptz NOT NULL DEFAULT now()
 );
 ALTER TABLE public.organizations ADD COLUMN IF NOT EXISTS clerk_org_id text UNIQUE;
 ALTER TABLE public.organizations ADD COLUMN IF NOT EXISTS onboarding_status text;
+ALTER TABLE public.organizations ADD COLUMN IF NOT EXISTS onboarding_skipped_at timestamptz;
+ALTER TABLE public.organizations ADD COLUMN IF NOT EXISTS onboarding_completed_at timestamptz;
 ALTER TABLE public.organizations
   ALTER COLUMN onboarding_status SET DEFAULT 'not_started';
 UPDATE public.organizations
@@ -39,6 +43,35 @@ ALTER TABLE public.organizations
 ALTER TABLE public.organizations
   ADD CONSTRAINT organizations_onboarding_status_check
   CHECK (onboarding_status IN ('not_started', 'skipped', 'completed'));
+
+-- Backfill onboarding status from existing org activity:
+-- if an org already has hosts, onboarding is considered completed.
+DO $$
+BEGIN
+  IF EXISTS (
+    SELECT 1
+    FROM information_schema.tables
+    WHERE table_schema = 'public' AND table_name = 'docker_hosts'
+  ) THEN
+    UPDATE public.organizations o
+    SET
+      onboarding_status = 'completed',
+      onboarding_completed_at = COALESCE(o.onboarding_completed_at, now())
+    WHERE o.onboarding_status = 'not_started'
+    AND EXISTS (
+      SELECT 1 FROM public.docker_hosts h WHERE h.organization_id = o.id
+    );
+  END IF;
+END
+$$;
+
+UPDATE public.organizations
+SET onboarding_skipped_at = COALESCE(onboarding_skipped_at, updated_at)
+WHERE onboarding_status = 'skipped' AND onboarding_skipped_at IS NULL;
+
+UPDATE public.organizations
+SET onboarding_completed_at = COALESCE(onboarding_completed_at, updated_at)
+WHERE onboarding_status = 'completed' AND onboarding_completed_at IS NULL;
 
 -- Step 4: Organization Members
 CREATE TABLE IF NOT EXISTS public.organization_members (

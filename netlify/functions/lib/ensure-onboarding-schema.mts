@@ -24,9 +24,49 @@ export async function ensureOnboardingSchema() {
   `;
 
   await sql`
+    ALTER TABLE public.organizations
+    ADD COLUMN IF NOT EXISTS onboarding_skipped_at timestamptz
+  `;
+
+  await sql`
+    ALTER TABLE public.organizations
+    ADD COLUMN IF NOT EXISTS onboarding_completed_at timestamptz
+  `;
+
+  await sql`
     UPDATE public.organizations
     SET onboarding_status = 'not_started'
     WHERE onboarding_status IS NULL
+  `;
+
+  const dockerHostsTable = await sql`
+    SELECT to_regclass('public.docker_hosts') AS table_name
+  `;
+
+  if (dockerHostsTable[0]?.table_name) {
+    await sql`
+      UPDATE public.organizations o
+      SET
+        onboarding_status = 'completed',
+        onboarding_completed_at = COALESCE(o.onboarding_completed_at, now())
+      WHERE o.onboarding_status = 'not_started'
+      AND EXISTS (
+        SELECT 1 FROM public.docker_hosts h
+        WHERE h.organization_id = o.id
+      )
+    `;
+  }
+
+  await sql`
+    UPDATE public.organizations
+    SET onboarding_skipped_at = COALESCE(onboarding_skipped_at, updated_at)
+    WHERE onboarding_status = 'skipped' AND onboarding_skipped_at IS NULL
+  `;
+
+  await sql`
+    UPDATE public.organizations
+    SET onboarding_completed_at = COALESCE(onboarding_completed_at, updated_at)
+    WHERE onboarding_status = 'completed' AND onboarding_completed_at IS NULL
   `;
 
   await sql`

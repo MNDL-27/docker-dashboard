@@ -156,11 +156,19 @@ sudo ./watchtower-agent-install.sh`;
             });
             if (res.ok) {
               const data = await res.json();
-              if (data.user?.has_orgs) {
+              if (data.user?.has_orgs && data.user?.needs_onboarding) {
                 sessionStorage.removeItem("onboarding_resume");
                 if (!cancelled) {
                   toast({ title: "Organization created", description: "Now connect your first Docker host." });
                   setState({ step: 1, phase: "basics" });
+                }
+                return;
+              }
+
+              if (data.user?.has_orgs && !data.user?.needs_onboarding) {
+                sessionStorage.removeItem("onboarding_resume");
+                if (!cancelled) {
+                  navigate("/app", { replace: true });
                 }
                 return;
               }

@@ -2,6 +2,7 @@ import type { Config } from '@netlify/functions';
 import { sql } from './lib/db.mjs';
 import { requireAuth } from './lib/auth.mjs';
 import { encryptSecret } from './lib/crypto.mjs';
+import { ensureOnboardingSchema } from './lib/ensure-onboarding-schema.mjs';
 
 const headers = {
   'Access-Control-Allow-Origin': '*',
@@ -15,6 +16,7 @@ export default async (req: Request) => {
   }
 
   try {
+    await ensureOnboardingSchema();
     const auth = await requireAuth(req);
     const url = new URL(req.url);
     const hostId = url.searchParams.get('hostId');
@@ -57,6 +59,15 @@ export default async (req: Request) => {
         INSERT INTO docker_hosts (organization_id, name, host_url, connection_mode, docker_socket_path, created_by, status)
         VALUES (${orgId}, ${body.name}, ${body.host_url}, ${body.connection_mode}, ${body.docker_socket_path || '/var/run/docker.sock'}, ${auth.userId}, 'unknown')
         RETURNING *
+      `;
+
+      // Host exists => onboarding is completed for this org.
+      await sql`
+        UPDATE organizations
+        SET
+          onboarding_status = 'completed',
+          onboarding_completed_at = COALESCE(onboarding_completed_at, now())
+        WHERE id = ${orgId}
       `;
 
       if (body.secrets) {

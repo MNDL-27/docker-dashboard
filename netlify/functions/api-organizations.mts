@@ -68,9 +68,18 @@ export default async (req: Request) => {
 
       const updated = await sql`
         UPDATE organizations
-        SET onboarding_status = ${onboardingStatus}
+        SET
+          onboarding_status = ${onboardingStatus},
+          onboarding_skipped_at = CASE
+            WHEN ${onboardingStatus} = 'skipped' THEN COALESCE(onboarding_skipped_at, now())
+            ELSE onboarding_skipped_at
+          END,
+          onboarding_completed_at = CASE
+            WHEN ${onboardingStatus} = 'completed' THEN COALESCE(onboarding_completed_at, now())
+            ELSE onboarding_completed_at
+          END
         WHERE id = ${authContext.orgId}
-        RETURNING id, clerk_org_id, onboarding_status
+        RETURNING id, clerk_org_id, onboarding_status, onboarding_skipped_at, onboarding_completed_at
       `;
 
       if (updated.length === 0) {
