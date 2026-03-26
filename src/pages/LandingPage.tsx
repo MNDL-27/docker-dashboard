@@ -29,7 +29,7 @@ export default function LandingPage() {
                 Lightweight agents. Real-time control. One dashboard.
               </p>
               <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-4">
-                <Link to="/login">
+                <Link to="/sign-up">
                   <Button size="lg" className="h-14 px-8 text-lg font-semibold gap-2">
                     Get Started for Free <ArrowRight className="h-5 w-5" />
                   </Button>

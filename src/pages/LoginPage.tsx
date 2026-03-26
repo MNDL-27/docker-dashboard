@@ -87,6 +87,7 @@ export default function LoginPage() {
           <SignIn 
             routing="path" 
             path="/login" 
+            signUpUrl="/sign-up"
             forceRedirectUrl="/app"
             fallbackRedirectUrl="/app" 
             appearance={{
@@ -115,9 +116,9 @@ export default function LoginPage() {
                 formFieldLabel: "text-foreground font-medium",
                 formFieldInput: "bg-muted/50 border-border focus:ring-2 focus:ring-primary/20",
                 formButtonPrimary: "bg-primary text-primary-foreground hover:bg-primary/90 font-medium transition-colors",
-                footerAction: "hidden",
-                footerActionText: "hidden",
-                footerActionLink: "hidden",
+                footerAction: "text-muted-foreground",
+                footerActionText: "text-muted-foreground",
+                footerActionLink: "text-primary hover:text-primary/90",
                 identityPreviewText: "text-foreground",
                 identityPreviewEditButtonIcon: "text-muted-foreground hover:text-foreground",
               }

@@ -16,7 +16,7 @@ export function ProtectedRoute({
 }) {
   const { isLoaded, isSignedIn, getToken } = useAuth();
   const [authState, setAuthState] = useState<{
-    status: "loading" | "resolved" | "error";
+    status: "loading" | "resolved" | "error" | "unauthenticated";
     isApproved: boolean;
     hasOrgs: boolean;
     onboardingStatus: OnboardingStatus;
@@ -24,7 +24,12 @@ export function ProtectedRoute({
   }>({ status: "loading", isApproved: false, hasOrgs: false, onboardingStatus: null, needsOnboarding: true });
 
   useEffect(() => {
-    if (!isLoaded || !isSignedIn) return;
+    if (!isLoaded) return;
+
+    if (!isSignedIn) {
+      setAuthState({ status: "unauthenticated", isApproved: false, hasOrgs: false, onboardingStatus: null, needsOnboarding: true });
+      return;
+    }
 
     let cancelled = false;
 
@@ -34,9 +39,24 @@ export function ProtectedRoute({
       for (let attempt = 1; attempt <= maxAttempts; attempt++) {
         try {
           const token = await getToken();
+
+          if (!token) {
+            if (!cancelled) {
+              setAuthState({ status: "unauthenticated", isApproved: false, hasOrgs: false, onboardingStatus: null, needsOnboarding: true });
+            }
+            return;
+          }
+
           const res = await fetch("/api/auth/me", {
             headers: { Authorization: `Bearer ${token}` },
           });
+
+          if (res.status === 401) {
+            if (!cancelled) {
+              setAuthState({ status: "unauthenticated", isApproved: false, hasOrgs: false, onboardingStatus: null, needsOnboarding: true });
+            }
+            return;
+          }
 
           if (!res.ok) {
             throw new Error(`auth/me failed (${res.status})`);
@@ -76,8 +96,22 @@ export function ProtectedRoute({
     return () => { cancelled = true; };
   }, [isLoaded, isSignedIn, getToken]);
 
-  // ── Priority 1: Show loading while Clerk or auth/me is resolving ──
-  if (!isLoaded || (isSignedIn && authState.status === "loading")) {
+  // ── Priority 1: Show loading while Clerk is resolving ──
+  if (!isLoaded) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
+
+  // ── Priority 2: Redirect unauthenticated users to login ──
+  if (!isSignedIn || authState.status === "unauthenticated") {
+    return <Navigate to="/login" replace />;
+  }
+
+  // ── Priority 3: Show loading while authenticated auth/me check resolves ──
+  if (authState.status === "loading") {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
@@ -100,19 +134,14 @@ export function ProtectedRoute({
     );
   }
 
-  // ── Priority 2: Redirect unauthenticated users to login ──
-  if (!isSignedIn) {
-    return <Navigate to="/login" replace />;
-  }
-
-  // ── Priority 3: Redirect unapproved users to beta gate ──
+  // ── Priority 4: Redirect unapproved users to beta gate ──
   // This MUST happen before any onboarding/org checks.
   // An unapproved user must never reach onboarding, regardless of requireOnboarded.
   if (!BYPASS_BETA_GATE && !authState.isApproved) {
     return <Navigate to="/beta-gate" replace />;
   }
 
-  // ── Priority 4: Onboarding gate (only for approved users) ──
+  // ── Priority 5: Onboarding gate (only for approved users) ──
   // Main app routes require onboarding to be finished (completed or skipped)
   if (requireOnboarded && authState.needsOnboarding) {
     return <Navigate to="/onboarding" replace />;
@@ -123,7 +152,7 @@ export function ProtectedRoute({
     return <Navigate to="/app" replace />;
   }
 
-  // ── Priority 5: Render the requested route ──
+  // ── Priority 6: Render the requested route ──
   return <>{children}</>;
 }
 

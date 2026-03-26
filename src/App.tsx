@@ -14,6 +14,7 @@ import PricingPage from "./pages/PricingPage";
 import SecurityPage from "./pages/SecurityPage";
 import DocsPage from "./pages/DocsPage";
 import LoginPage from "./pages/LoginPage";
+import SignupPage from "./pages/SignupPage";
 import TermsPage from "./pages/TermsPage";
 import PrivacyPage from "./pages/PrivacyPage";
 import RefundsPage from "./pages/RefundsPage";
@@ -86,7 +87,7 @@ const App = () => (
   <ClerkProvider
     publishableKey={import.meta.env.VITE_CLERK_PUBLISHABLE_KEY}
     signInUrl="/login"
-    signUpUrl="/login"
+    signUpUrl="/sign-up"
     signInFallbackRedirectUrl="/app"
     signUpFallbackRedirectUrl="/app"
     afterSignOutUrl="/"
@@ -111,7 +112,8 @@ const App = () => (
                 <Route path="/refunds" element={<RefundsPage />} />
                 {/* Auth */}
                 <Route path="/login/*" element={<RequireAppSubdomain><LoginPage /></RequireAppSubdomain>} />
-                <Route path="/signup" element={<RequireAppSubdomain><Navigate to="/login" replace /></RequireAppSubdomain>} />
+                <Route path="/sign-up/*" element={<RequireAppSubdomain><SignupPage /></RequireAppSubdomain>} />
+                <Route path="/signup" element={<RequireAppSubdomain><Navigate to="/sign-up" replace /></RequireAppSubdomain>} />
                 <Route path="/beta-gate" element={<RequireAppSubdomain><BetaGatePage /></RequireAppSubdomain>} />
                 <Route path="/onboarding" element={<RequireAppSubdomain key="onboarding"><ProtectedRoute requireOnboarded={false}><OnboardingPage /></ProtectedRoute></RequireAppSubdomain>} />
                 {/* App Shell - Protected */}
