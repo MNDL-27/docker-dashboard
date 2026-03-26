@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Box, ShieldCheck, LogOut, Mail } from "lucide-react";
 import { Link, Navigate, useNavigate } from "react-router-dom";
 import { LogoLink } from "@/components/shared/LogoLink";
+import { deriveNeedsOnboarding, normalizeOnboardingStatus } from "@/lib/onboarding-gate";
 
 // ─── TEMPORARY DEV BYPASS ───
 // Set to `false` to re-enable the private beta approval gate.
@@ -40,7 +41,8 @@ export default function BetaGatePage() {
         const data = await res.json();
         const isApproved = !!data.user?.is_approved;
         const hasOrgs = !!data.user?.has_orgs;
-        const needsOnboarding = !!data.user?.needs_onboarding;
+        const onboardingStatus = normalizeOnboardingStatus(data.user?.onboarding_status);
+        const needsOnboarding = deriveNeedsOnboarding(hasOrgs, onboardingStatus);
         setAppState({ status: "resolved", isApproved, hasOrgs, needsOnboarding });
 
         // If approved, stop polling and redirect

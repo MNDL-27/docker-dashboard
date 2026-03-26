@@ -1,6 +1,7 @@
 import { Navigate } from "react-router-dom";
 import { useAuth } from "@clerk/clerk-react";
 import { useState, useEffect } from "react";
+import { deriveNeedsOnboarding, normalizeOnboardingStatus, type OnboardingStatus } from "@/lib/onboarding-gate";
 
 // ─── TEMPORARY DEV BYPASS ───
 // Set to `false` to re-enable the private beta approval gate.
@@ -15,11 +16,12 @@ export function ProtectedRoute({
 }) {
   const { isLoaded, isSignedIn, getToken } = useAuth();
   const [authState, setAuthState] = useState<{
-    status: "loading" | "resolved";
+    status: "loading" | "resolved" | "error";
     isApproved: boolean;
     hasOrgs: boolean;
+    onboardingStatus: OnboardingStatus;
     needsOnboarding: boolean;
-  }>({ status: "loading", isApproved: false, hasOrgs: false, needsOnboarding: true });
+  }>({ status: "loading", isApproved: false, hasOrgs: false, onboardingStatus: null, needsOnboarding: true });
 
   useEffect(() => {
     if (!isLoaded || !isSignedIn) return;
@@ -27,27 +29,47 @@ export function ProtectedRoute({
     let cancelled = false;
 
     (async () => {
-      try {
-        const token = await getToken();
-        const res = await fetch("/api/auth/me", {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        if (!res.ok) {
-          // API error (user not synced yet, network issue, etc.) — treat as unapproved
-          if (!cancelled) setAuthState({ status: "resolved", isApproved: false, hasOrgs: false, needsOnboarding: true });
-          return;
-        }
-        const data = await res.json();
-        if (!cancelled) {
-          setAuthState({
-            status: "resolved",
-            isApproved: !!data.user?.is_approved,
-            hasOrgs: !!data.user?.has_orgs,
-            needsOnboarding: !!data.user?.needs_onboarding,
+      const maxAttempts = 3;
+
+      for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+        try {
+          const token = await getToken();
+          const res = await fetch("/api/auth/me", {
+            headers: { Authorization: `Bearer ${token}` },
           });
+
+          if (!res.ok) {
+            throw new Error(`auth/me failed (${res.status})`);
+          }
+
+          const data = await res.json();
+          const hasOrgs = !!data.user?.has_orgs;
+          const onboardingStatus = normalizeOnboardingStatus(data.user?.onboarding_status);
+          const needsOnboarding = deriveNeedsOnboarding(hasOrgs, onboardingStatus);
+
+          if (!cancelled) {
+            setAuthState({
+              status: "resolved",
+              isApproved: !!data.user?.is_approved,
+              hasOrgs,
+              onboardingStatus,
+              needsOnboarding,
+            });
+          }
+          return;
+        } catch {
+          if (attempt < maxAttempts) {
+            await new Promise((resolve) => setTimeout(resolve, 300 * attempt));
+            continue;
+          }
+
+          if (!cancelled) {
+            setAuthState((prev) => ({
+              ...prev,
+              status: "error",
+            }));
+          }
         }
-      } catch {
-        if (!cancelled) setAuthState({ status: "resolved", isApproved: false, hasOrgs: false, needsOnboarding: true });
       }
     })();
 
@@ -59,6 +81,21 @@ export function ProtectedRoute({
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+      </div>
+    );
+  }
+
+  if (isSignedIn && authState.status === "error") {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center gap-3 bg-background px-4">
+        <p className="text-sm text-muted-foreground text-center">Unable to verify onboarding status right now.</p>
+        <button
+          type="button"
+          onClick={() => window.location.reload()}
+          className="text-sm font-medium text-primary hover:underline"
+        >
+          Retry
+        </button>
       </div>
     );
   }

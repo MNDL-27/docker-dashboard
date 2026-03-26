@@ -14,6 +14,7 @@ import { useAddDockerHost } from "@/hooks/useDocker";
 import { dockerApi } from "@/services/docker-api";
 import type { ConnectionMode } from "@/types/database";
 import { apiFetch } from "@/lib/api";
+import { deriveNeedsOnboarding, normalizeOnboardingStatus } from "@/lib/onboarding-gate";
 
 /* ── Step Labels (top-level) ── */
 const STEPS = ["Create Organization", "Connect Host", "You're Ready"] as const;
@@ -165,7 +166,11 @@ sudo ./watchtower-agent-install.sh`;
             });
             if (res.ok) {
               const data = await res.json();
-              if (data.user?.has_orgs && data.user?.needs_onboarding) {
+              const hasOrgs = !!data.user?.has_orgs;
+              const onboardingStatus = normalizeOnboardingStatus(data.user?.onboarding_status);
+              const needsOnboarding = deriveNeedsOnboarding(hasOrgs, onboardingStatus);
+
+              if (hasOrgs && needsOnboarding) {
                 if (!cancelled) {
                   toast({ title: "Organization created", description: "Now connect your first Docker host." });
                   setState({ step: 1, phase: "basics" });
@@ -173,7 +178,7 @@ sudo ./watchtower-agent-install.sh`;
                 return;
               }
 
-              if (!data.user?.needs_onboarding) {
+              if (!needsOnboarding) {
                 sessionStorage.removeItem("onboarding_resume");
                 if (!cancelled) {
                   navigate("/app", { replace: true });
