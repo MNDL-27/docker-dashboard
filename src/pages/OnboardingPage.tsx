@@ -85,7 +85,8 @@ export default function OnboardingPage() {
   /* ── Auto-advance to Step 1 if Clerk organization is already selected ── */
   useEffect(() => {
     if (isLoaded && orgId && state.step === 0 && state.phase === "form") {
-      sessionStorage.removeItem("onboarding_resume");
+      // Gate still controlled by backend route guard. This local step advance only
+      // applies while user is already on onboarding and org setup is in progress.
       setState({ step: 1, phase: "basics" });
     }
   }, [isLoaded, orgId, state.step, state.phase]);
@@ -111,9 +112,14 @@ chmod +x watchtower-agent-install.sh
 sudo ./watchtower-agent-install.sh`;
 
   const markOnboardingStatus = async (status: "not_started" | "skipped" | "completed") => {
+    const activeClerkOrgId = orgId ?? null;
+
     await apiFetch('/organizations', {
       method: 'PATCH',
-      body: JSON.stringify({ onboardingStatus: status }),
+      body: JSON.stringify({
+        onboardingStatus: status,
+        ...(activeClerkOrgId ? { clerkOrgId: activeClerkOrgId } : {}),
+      }),
     });
   };
 
@@ -130,7 +136,10 @@ sudo ./watchtower-agent-install.sh`;
     } catch (err) {
       toast({
         title: "Couldn't finalize onboarding",
-        description: err instanceof Error ? err.message : "Please try again.",
+        description:
+          err instanceof Error
+            ? err.message
+            : "Unable to persist onboarding state. Please select an organization and try again.",
         variant: "destructive",
       });
     }
@@ -157,7 +166,6 @@ sudo ./watchtower-agent-install.sh`;
             if (res.ok) {
               const data = await res.json();
               if (data.user?.has_orgs && data.user?.needs_onboarding) {
-                sessionStorage.removeItem("onboarding_resume");
                 if (!cancelled) {
                   toast({ title: "Organization created", description: "Now connect your first Docker host." });
                   setState({ step: 1, phase: "basics" });
@@ -165,7 +173,7 @@ sudo ./watchtower-agent-install.sh`;
                 return;
               }
 
-              if (data.user?.has_orgs && !data.user?.needs_onboarding) {
+              if (!data.user?.needs_onboarding) {
                 sessionStorage.removeItem("onboarding_resume");
                 if (!cancelled) {
                   navigate("/app", { replace: true });
@@ -509,7 +517,10 @@ sudo ./watchtower-agent-install.sh`;
                   } catch (err) {
                     toast({
                       title: "Couldn't skip onboarding",
-                      description: err instanceof Error ? err.message : "Please try again.",
+                      description:
+                        err instanceof Error
+                          ? err.message
+                          : "Unable to persist onboarding state. Please select an organization and try again.",
                       variant: "destructive",
                     });
                   }

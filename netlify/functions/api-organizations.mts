@@ -41,12 +41,9 @@ export default async (req: Request) => {
     }
 
     if (req.method === 'PATCH') {
-      if (!authContext.orgId) {
-        return new Response(JSON.stringify({ error: 'Active org required' }), { status: 400, headers });
-      }
-
       const body = await req.json();
       const onboardingStatus = body?.onboardingStatus;
+      const requestedClerkOrgId = typeof body?.clerkOrgId === 'string' ? body.clerkOrgId : null;
       const allowedStatuses = ['not_started', 'skipped', 'completed'];
 
       if (!allowedStatuses.includes(onboardingStatus)) {
@@ -56,10 +53,50 @@ export default async (req: Request) => {
         );
       }
 
+      let targetOrgId = authContext.orgId;
+      if (requestedClerkOrgId) {
+        const requestedOrgRows = await sql`
+          SELECT o.id
+          FROM organizations o
+          JOIN organization_members om ON o.id = om.organization_id
+          WHERE om.user_id = ${authContext.userId} AND o.clerk_org_id = ${requestedClerkOrgId}
+          LIMIT 1
+        `;
+
+        if (requestedOrgRows.length === 0) {
+          return new Response(JSON.stringify({ error: 'Requested organization not found for current user' }), { status: 404, headers });
+        }
+
+        targetOrgId = requestedOrgRows[0].id;
+      }
+
+      if (!targetOrgId) {
+        const membershipRows = await sql`
+          SELECT o.id
+          FROM organizations o
+          JOIN organization_members om ON o.id = om.organization_id
+          WHERE om.user_id = ${authContext.userId}
+          ORDER BY om.created_at ASC
+        `;
+
+        if (membershipRows.length === 0) {
+          return new Response(JSON.stringify({ error: 'No organization membership found' }), { status: 400, headers });
+        }
+
+        if (membershipRows.length > 1) {
+          return new Response(
+            JSON.stringify({ error: 'Multiple organizations found. Please select an active organization and retry.' }),
+            { status: 400, headers }
+          );
+        }
+
+        targetOrgId = membershipRows[0].id;
+      }
+
       const memberships = await sql`
         SELECT 1
         FROM organization_members
-        WHERE organization_id = ${authContext.orgId} AND user_id = ${authContext.userId}
+        WHERE organization_id = ${targetOrgId} AND user_id = ${authContext.userId}
       `;
 
       if (memberships.length === 0) {
@@ -78,7 +115,7 @@ export default async (req: Request) => {
             WHEN ${onboardingStatus} = 'completed' THEN COALESCE(onboarding_completed_at, now())
             ELSE onboarding_completed_at
           END
-        WHERE id = ${authContext.orgId}
+        WHERE id = ${targetOrgId}
         RETURNING id, clerk_org_id, onboarding_status, onboarding_skipped_at, onboarding_completed_at
       `;
 
