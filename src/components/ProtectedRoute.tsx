@@ -34,7 +34,7 @@ export function ProtectedRoute({
     let cancelled = false;
 
     (async () => {
-      const maxAttempts = 3;
+      const maxAttempts = 5;
 
       for (let attempt = 1; attempt <= maxAttempts; attempt++) {
         try {
@@ -54,7 +54,7 @@ export function ProtectedRoute({
           if (res.status === 202) {
             const data = await res.json().catch(() => ({}));
             if (data?.retry) {
-              await new Promise((resolve) => setTimeout(resolve, 1500));
+               await new Promise((resolve) => setTimeout(resolve, 2000));
               continue;
             }
           }
