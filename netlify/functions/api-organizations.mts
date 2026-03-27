@@ -129,6 +129,15 @@ export default async (req: Request) => {
     return new Response(JSON.stringify({ error: 'Method not allowed' }), { status: 405, headers });
 
   } catch (err: any) {
+    console.error('[api-organizations] caught error:', err?.message);
+
+    if (err?.code === 'SYNC_PENDING') {
+      return new Response(JSON.stringify({ error: err.message, retry: true }), {
+        status: 202,
+        headers,
+      });
+    }
+
     return new Response(JSON.stringify({ error: err.message || 'Unauthorized' }), { status: 401, headers });
   }
 };

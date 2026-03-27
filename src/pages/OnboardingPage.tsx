@@ -13,7 +13,6 @@ import { useToast } from "@/components/ui/use-toast";
 import { useAddDockerHost } from "@/hooks/useDocker";
 import { dockerApi } from "@/services/docker-api";
 import type { ConnectionMode } from "@/types/database";
-import { apiFetch } from "@/lib/api";
 import { deriveNeedsOnboarding, normalizeOnboardingStatus } from "@/lib/onboarding-gate";
 
 /* ── Step Labels (top-level) ── */
@@ -115,13 +114,42 @@ sudo ./watchtower-agent-install.sh`;
   const markOnboardingStatus = async (status: "not_started" | "skipped" | "completed") => {
     const activeClerkOrgId = orgId ?? null;
 
-    await apiFetch('/organizations', {
-      method: 'PATCH',
-      body: JSON.stringify({
-        onboardingStatus: status,
-        ...(activeClerkOrgId ? { clerkOrgId: activeClerkOrgId } : {}),
-      }),
-    });
+    const maxAttempts = 3;
+    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+      // @ts-expect-error window.Clerk is injected globally by ClerkProvider
+      const token = await window.Clerk?.session?.getToken();
+      if (!token) {
+        throw new Error("Unauthorized");
+      }
+
+      const res = await fetch('/api/organizations', {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          onboardingStatus: status,
+          ...(activeClerkOrgId ? { clerkOrgId: activeClerkOrgId } : {}),
+        }),
+      });
+
+      if (res.status === 202) {
+        const data = await res.json().catch(() => ({}));
+        if (data?.retry && attempt < maxAttempts) {
+          await new Promise((resolve) => setTimeout(resolve, 1500));
+          continue;
+        }
+        throw new Error(data?.error || "Sync pending. Your account is currently syncing.");
+      }
+
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data?.error || `HTTP error ${res.status}`);
+      }
+
+      return;
+    }
   };
 
   const completeOnboardingAndNavigate = async () => {
