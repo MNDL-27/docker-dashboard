@@ -20,7 +20,7 @@ export default async (req: Request) => {
   if (req.method !== 'GET') return new Response(JSON.stringify({ error: 'Method not allowed' }), { status: 405, headers });
 
   try {
-    const auth = await requireAuth(req, { requireApproved: false });
+    const auth = await requireAuth(req);
     if (!auth.userId) return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers });
 
     // Verify user is an admin

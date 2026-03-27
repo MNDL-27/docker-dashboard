@@ -3,10 +3,6 @@ import { useAuth } from "@clerk/clerk-react";
 import { useState, useEffect } from "react";
 import { deriveNeedsOnboarding, normalizeOnboardingStatus, type OnboardingStatus } from "@/lib/onboarding-gate";
 
-// ─── TEMPORARY DEV BYPASS ───
-// Set to `false` to re-enable the private beta approval gate.
-const BYPASS_BETA_GATE = true;
-
 export function ProtectedRoute({ 
   children, 
   requireOnboarded = true 
@@ -17,17 +13,16 @@ export function ProtectedRoute({
   const { isLoaded, isSignedIn, getToken } = useAuth();
   const [authState, setAuthState] = useState<{
     status: "loading" | "resolved" | "error" | "unauthenticated";
-    isApproved: boolean;
     hasOrgs: boolean;
     onboardingStatus: OnboardingStatus;
     needsOnboarding: boolean;
-  }>({ status: "loading", isApproved: false, hasOrgs: false, onboardingStatus: null, needsOnboarding: true });
+  }>({ status: "loading", hasOrgs: false, onboardingStatus: null, needsOnboarding: true });
 
   useEffect(() => {
     if (!isLoaded) return;
 
     if (!isSignedIn) {
-      setAuthState({ status: "unauthenticated", isApproved: false, hasOrgs: false, onboardingStatus: null, needsOnboarding: true });
+      setAuthState({ status: "unauthenticated", hasOrgs: false, onboardingStatus: null, needsOnboarding: true });
       return;
     }
 
@@ -42,7 +37,7 @@ export function ProtectedRoute({
 
           if (!token) {
             if (!cancelled) {
-              setAuthState({ status: "unauthenticated", isApproved: false, hasOrgs: false, onboardingStatus: null, needsOnboarding: true });
+              setAuthState({ status: "unauthenticated", hasOrgs: false, onboardingStatus: null, needsOnboarding: true });
             }
             return;
           }
@@ -61,7 +56,7 @@ export function ProtectedRoute({
 
           if (res.status === 401) {
             if (!cancelled) {
-              setAuthState({ status: "unauthenticated", isApproved: false, hasOrgs: false, onboardingStatus: null, needsOnboarding: true });
+              setAuthState({ status: "unauthenticated", hasOrgs: false, onboardingStatus: null, needsOnboarding: true });
             }
             return;
           }
@@ -78,7 +73,6 @@ export function ProtectedRoute({
           if (!cancelled) {
             setAuthState({
               status: "resolved",
-              isApproved: !!data.user?.is_approved,
               hasOrgs,
               onboardingStatus,
               needsOnboarding,
@@ -142,14 +136,7 @@ export function ProtectedRoute({
     );
   }
 
-  // ── Priority 4: Redirect unapproved users to beta gate ──
-  // This MUST happen before any onboarding/org checks.
-  // An unapproved user must never reach onboarding, regardless of requireOnboarded.
-  if (!BYPASS_BETA_GATE && !authState.isApproved) {
-    return <Navigate to="/beta-gate" replace />;
-  }
-
-  // ── Priority 5: Onboarding gate (only for approved users) ──
+  // ── Priority 4: Onboarding gate ──
   // Main app routes require onboarding to be finished (completed or skipped)
   if (requireOnboarded && authState.needsOnboarding) {
     return <Navigate to="/onboarding" replace />;
@@ -160,7 +147,7 @@ export function ProtectedRoute({
     return <Navigate to="/app" replace />;
   }
 
-  // ── Priority 6: Render the requested route ──
+  // ── Priority 5: Render the requested route ──
   return <>{children}</>;
 }
 

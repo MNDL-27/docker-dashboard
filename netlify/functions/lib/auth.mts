@@ -12,12 +12,10 @@ export interface AppAuthContext {
   orgId: string | null;  // The internal UUID, nullable if requireOrg is false
   clerkUserId: string;
   clerkOrgId: string | null;
-  isApproved: boolean; // Beta allowlist approval status
 }
 
 interface AuthOptions {
   requireOrg?: boolean;
-  requireApproved?: boolean; // default true – only auth-me sets false
 }
 
 type AppAuthErrorCode = 'SYNC_PENDING';
@@ -34,10 +32,9 @@ function makeAppAuthError(message: string, code?: AppAuthErrorCode): AppAuthErro
 
 export async function requireAuth(
   req: Request,
-  options: AuthOptions = { requireOrg: true, requireApproved: true }
+  options: AuthOptions = { requireOrg: true }
 ): Promise<AppAuthContext> {
   const requireOrg = options.requireOrg ?? true;
-  const requireApproved = options.requireApproved ?? true;
 
   if (process.env.NODE_ENV === 'test' && req.headers.get('x-test-bypass')) {
     return {
@@ -45,7 +42,6 @@ export async function requireAuth(
       orgId: req.headers.get('x-test-org-id') || '00000000-0000-0000-0000-000000000000',
       clerkUserId: 'clerk_test_user',
       clerkOrgId: 'clerk_test_org',
-      isApproved: req.headers.get('x-test-approved') !== 'false', // default true in tests
     };
   }
 
@@ -89,13 +85,6 @@ export async function requireAuth(
     throw makeAppAuthError('Sync pending. Your account is currently syncing.', 'SYNC_PENDING');
   }
 
-  const isApproved: boolean = userResult[0].is_approved === true;
-
-  // Block unapproved users from all protected routes (except auth-me which needs to return status)
-  if (requireApproved && !isApproved) {
-    throw new Error('Access denied: your account is pending approval for the private beta.');
-  }
-
   let orgId = null;
   if (clerkOrgId) {
     const orgResult = await sql`SELECT id FROM public.organizations WHERE clerk_org_id = ${clerkOrgId}`;
@@ -112,6 +101,5 @@ export async function requireAuth(
     orgId,
     clerkUserId,
     clerkOrgId,
-    isApproved,
   };
 }

@@ -32,7 +32,7 @@ export default async (req: Request) => {
 
   try {
     await ensureOnboardingSchema();
-    const authContext = await requireAuth(req, { requireOrg: false, requireApproved: false });
+    const authContext = await requireAuth(req, { requireOrg: false });
 
     const users = await sql`
       SELECT 
