@@ -174,6 +174,11 @@ sudo ./watchtower-agent-install.sh`;
     }
   };
 
+  const handleSkip = () => {
+    sessionStorage.removeItem('onboarding_resume');
+    navigate('/app', { replace: true });
+  };
+
   /* ── Resume onboarding after hard reload ── */
   useEffect(() => {
     const resume = sessionStorage.getItem("onboarding_resume");
@@ -551,22 +556,7 @@ sudo ./watchtower-agent-install.sh`;
               <button
                 type="button"
                 className="w-full text-center text-xs text-muted-foreground hover:text-foreground transition-colors mt-3 py-1"
-                onClick={async () => {
-                  try {
-                    await markOnboardingStatus("skipped");
-                    sessionStorage.removeItem("onboarding_resume");
-                    navigate("/app", { replace: true });
-                  } catch (err) {
-                    toast({
-                      title: "Couldn't skip onboarding",
-                      description:
-                        err instanceof Error
-                          ? err.message
-                          : "Unable to persist onboarding state. Please select an organization and try again.",
-                      variant: "destructive",
-                    });
-                  }
-                }}
+                onClick={handleSkip}
               >
                 Skip for now
               </button>
