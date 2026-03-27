@@ -44,7 +44,11 @@ export async function requireAuth(
   });
 
   if (!requestState.isSignedIn) {
-    throw new Error(`Unauthorized. Reason: ${requestState.reason || 'unknown'}, Message: ${requestState.message || 'none'}`);
+    const reason = requestState.reason || 'unknown';
+    const message = requestState.message || 'none';
+    const hasAuthHeader = req.headers.get('authorization') ? 'yes' : 'no';
+    console.error(`[requireAuth] 401 | reason=${reason} | message=${message} | has-auth-header=${hasAuthHeader}`);
+    throw new Error(`Unauthorized. Reason: ${reason}, Message: ${message}`);
   }
 
   const authData = requestState.toAuth();

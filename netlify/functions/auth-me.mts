@@ -3,13 +3,29 @@ import { sql } from './lib/db.mjs';
 import { requireAuth } from './lib/auth.mjs';
 import { ensureOnboardingSchema } from './lib/ensure-onboarding-schema.mjs';
 
-const headers = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-  'Content-Type': 'application/json'
-};
+const allowedOrigins = new Set([
+  'https://app.dockerdash.app',
+  'http://localhost:5173',
+  'http://localhost:8080',
+  'http://localhost:8081',
+  'http://localhost:8888',
+]);
+
+function buildHeaders(req: Request) {
+  const origin = req.headers.get('origin') || '';
+  const allowOrigin = allowedOrigins.has(origin) ? origin : 'https://app.dockerdash.app';
+  return {
+    'Access-Control-Allow-Origin': allowOrigin,
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+    'Access-Control-Allow-Credentials': 'true',
+    'Vary': 'Origin',
+    'Content-Type': 'application/json',
+  };
+}
 
 export default async (req: Request) => {
+  const headers = buildHeaders(req);
+
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers });
   }
