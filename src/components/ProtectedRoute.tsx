@@ -137,7 +137,7 @@ export function ProtectedRoute({
   }
 
   // ── Priority 4: Onboarding gate ──
-  if (!authState.hasOrgs) {
+  if (!authState.hasOrgs && window.location.pathname !== "/create-org") {
     return <Navigate to="/create-org" replace />;
   }
 
