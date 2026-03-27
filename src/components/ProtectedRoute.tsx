@@ -137,6 +137,11 @@ export function ProtectedRoute({
   }
 
   // ── Priority 4: Onboarding gate ──
+  if (!authState.hasOrgs) {
+    return <Navigate to="/create-org" replace />;
+  }
+
+  // ── Priority 5: Onboarding gate ──
   // Main app routes require onboarding to be finished (completed or skipped)
   if (requireOnboarded && authState.needsOnboarding) {
     return <Navigate to="/onboarding" replace />;
@@ -147,7 +152,7 @@ export function ProtectedRoute({
     return <Navigate to="/app" replace />;
   }
 
-  // ── Priority 5: Render the requested route ──
+  // ── Priority 6: Render the requested route ──
   return <>{children}</>;
 }
 

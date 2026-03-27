@@ -17,6 +17,6 @@ export function normalizeOnboardingStatus(value: unknown): OnboardingStatus {
  * - skipped/completed -> onboarding not required
  */
 export function deriveNeedsOnboarding(hasOrgs: boolean, onboardingStatus: OnboardingStatus): boolean {
-  if (!hasOrgs) return true;
+  if (!hasOrgs) return false;
   return onboardingStatus !== 'skipped' && onboardingStatus !== 'completed';
 }
