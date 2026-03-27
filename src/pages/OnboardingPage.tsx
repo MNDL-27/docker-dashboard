@@ -114,7 +114,7 @@ sudo ./watchtower-agent-install.sh`;
   const markOnboardingStatus = async (status: "not_started" | "skipped" | "completed") => {
     const activeClerkOrgId = orgId ?? null;
 
-    const maxAttempts = 3;
+    const maxAttempts = 5;
     for (let attempt = 1; attempt <= maxAttempts; attempt++) {
       // @ts-expect-error window.Clerk is injected globally by ClerkProvider
       const token = await window.Clerk?.session?.getToken();
@@ -137,7 +137,7 @@ sudo ./watchtower-agent-install.sh`;
       if (res.status === 202) {
         const data = await res.json().catch(() => ({}));
         if (data?.retry && attempt < maxAttempts) {
-          await new Promise((resolve) => setTimeout(resolve, 1500));
+          await new Promise((resolve) => setTimeout(resolve, 2000));
           continue;
         }
         throw new Error(data?.error || "Sync pending. Your account is currently syncing.");
@@ -196,7 +196,7 @@ sudo ./watchtower-agent-install.sh`;
             if (res.status === 202) {
               const syncState = await res.json().catch(() => ({}));
               if (syncState?.retry) {
-                await new Promise((r) => setTimeout(r, 1500));
+                await new Promise((r) => setTimeout(r, 2000));
                 continue;
               }
             }
