@@ -32,6 +32,7 @@ export default function CreateOrgPage() {
         throw new Error(data?.error || `Failed to create organization (${res.status})`);
       }
 
+      // Org created — go to onboarding to add first host
       navigate("/onboarding", { replace: true });
     } catch (err: any) {
       setError(err.message || "Something went wrong. Please try again.");
@@ -41,8 +42,9 @@ export default function CreateOrgPage() {
   };
 
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center px-4">
+    <div className="min-h-screen bg-zinc-950 text-zinc-100 flex items-center justify-center px-4">
       <div className="w-full max-w-md">
+        {/* Logo / Brand */}
         <div className="flex items-center justify-center mb-8">
           <div className="w-10 h-10 rounded-lg bg-primary/10 border border-primary/20 flex items-center justify-center mr-3">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-primary">
@@ -50,30 +52,34 @@ export default function CreateOrgPage() {
               <path d="M8 21h8M12 17v4" />
             </svg>
           </div>
-          <span className="text-lg font-semibold text-foreground">DockerDash</span>
+          <span className="text-lg font-semibold text-zinc-100">DockerDash</span>
         </div>
 
-        <div className="bg-card border border-border rounded-xl p-8 shadow-lg">
+        {/* Card */}
+        <div className="bg-zinc-900 border border-zinc-800 rounded-xl p-8 shadow-lg">
+          {/* Step indicator */}
           <div className="flex items-center gap-2 mb-6">
             <div className="flex items-center gap-1.5">
               <div className="w-6 h-6 rounded-full bg-primary text-primary-foreground text-xs flex items-center justify-center font-medium">1</div>
               <span className="text-xs text-primary font-medium">Create Workspace</span>
             </div>
-            <div className="flex-1 h-px bg-border" />
+            <div className="flex-1 h-px bg-zinc-800" />
             <div className="flex items-center gap-1.5">
-              <div className="w-6 h-6 rounded-full bg-muted text-muted-foreground text-xs flex items-center justify-center font-medium">2</div>
-              <span className="text-xs text-muted-foreground">Connect Host</span>
+              <div className="w-6 h-6 rounded-full bg-zinc-800 text-zinc-400 text-xs flex items-center justify-center font-medium">2</div>
+              <span className="text-xs text-zinc-400">Connect Host</span>
             </div>
           </div>
 
-          <h1 className="text-xl font-semibold text-foreground mb-1">Create your workspace</h1>
-          <p className="text-sm text-muted-foreground mb-6">
+          <h1 className="text-xl font-semibold text-zinc-100 mb-1">
+            Create your workspace
+          </h1>
+          <p className="text-sm text-zinc-400 mb-6">
             A workspace keeps your Docker hosts and team organized in one place.
           </p>
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label htmlFor="orgName" className="block text-sm font-medium text-foreground mb-1.5">
+              <label htmlFor="orgName" className="block text-sm font-medium text-zinc-100 mb-1.5">
                 Workspace name
               </label>
               <input
@@ -82,7 +88,7 @@ export default function CreateOrgPage() {
                 value={orgName}
                 onChange={(e) => setOrgName(e.target.value)}
                 placeholder="e.g. Acme Corp, My Projects"
-                className="w-full px-3 py-2 bg-background border border-border rounded-lg text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-colors"
+                className="w-full px-3 py-2 bg-zinc-950 border border-zinc-700 rounded-lg text-sm text-zinc-100 placeholder:text-zinc-500 focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary transition-colors"
                 autoFocus
                 disabled={loading}
               />
@@ -121,7 +127,7 @@ export default function CreateOrgPage() {
           </form>
         </div>
 
-        <p className="text-center text-xs text-muted-foreground mt-4">
+        <p className="text-center text-xs text-zinc-400 mt-4">
           You can rename your workspace later in settings.
         </p>
       </div>
