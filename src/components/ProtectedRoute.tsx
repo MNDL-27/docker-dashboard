@@ -51,6 +51,14 @@ export function ProtectedRoute({
             headers: { Authorization: `Bearer ${token}` },
           });
 
+          if (res.status === 202) {
+            const data = await res.json().catch(() => ({}));
+            if (data?.retry) {
+              await new Promise((resolve) => setTimeout(resolve, 1500));
+              continue;
+            }
+          }
+
           if (res.status === 401) {
             if (!cancelled) {
               setAuthState({ status: "unauthenticated", isApproved: false, hasOrgs: false, onboardingStatus: null, needsOnboarding: true });

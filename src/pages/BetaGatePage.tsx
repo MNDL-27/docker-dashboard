@@ -34,6 +34,14 @@ export default function BetaGatePage() {
         const res = await fetch("/api/auth/me", {
           headers: { Authorization: `Bearer ${token}` },
         });
+
+        if (res.status === 202) {
+          const data = await res.json().catch(() => ({}));
+          if (data?.retry) {
+            return;
+          }
+        }
+
         if (!res.ok) {
           setAppState({ status: "resolved", isApproved: false, hasOrgs: false, needsOnboarding: true });
           return;

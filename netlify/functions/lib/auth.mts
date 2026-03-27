@@ -20,6 +20,18 @@ interface AuthOptions {
   requireApproved?: boolean; // default true – only auth-me sets false
 }
 
+type AppAuthErrorCode = 'SYNC_PENDING';
+
+interface AppAuthError extends Error {
+  code?: AppAuthErrorCode;
+}
+
+function makeAppAuthError(message: string, code?: AppAuthErrorCode): AppAuthError {
+  const err: AppAuthError = new Error(message);
+  if (code) err.code = code;
+  return err;
+}
+
 export async function requireAuth(
   req: Request,
   options: AuthOptions = { requireOrg: true, requireApproved: true }
@@ -48,6 +60,13 @@ export async function requireAuth(
     const message = requestState.message || 'none';
     const hasAuthHeader = req.headers.get('authorization') ? 'yes' : 'no';
     console.error(`[requireAuth] 401 | reason=${reason} | message=${message} | has-auth-header=${hasAuthHeader}`);
+
+    const reasonLower = reason.toLowerCase();
+    const messageLower = message.toLowerCase();
+    if (reasonLower === 'session-token-outdated' || messageLower.includes('sync')) {
+      throw makeAppAuthError('Sync pending. Your account is currently syncing.', 'SYNC_PENDING');
+    }
+
     throw new Error(`Unauthorized. Reason: ${reason}, Message: ${message}`);
   }
 
@@ -66,7 +85,7 @@ export async function requireAuth(
 
   const userResult = await sql`SELECT id, is_approved FROM public.users WHERE clerk_user_id = ${clerkUserId}`;
   if (userResult.length === 0) {
-    throw new Error('Sync pending. Your account is currently syncing.');
+    throw makeAppAuthError('Sync pending. Your account is currently syncing.', 'SYNC_PENDING');
   }
 
   const isApproved: boolean = userResult[0].is_approved === true;

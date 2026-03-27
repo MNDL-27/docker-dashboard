@@ -77,6 +77,12 @@ export default async (req: Request) => {
     }), { headers });
 
   } catch (err: any) {
+    console.error('[auth-me] caught error:', err?.message);
+
+    if (err?.code === 'SYNC_PENDING') {
+      return new Response(JSON.stringify({ error: err.message, retry: true }), { status: 202, headers });
+    }
+
     return new Response(JSON.stringify({ error: err.message || 'Unauthorized' }), { status: 401, headers });
   }
 };

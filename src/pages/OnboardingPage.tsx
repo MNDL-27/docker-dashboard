@@ -164,6 +164,15 @@ sudo ./watchtower-agent-install.sh`;
             const res = await fetch("/api/auth/me", {
               headers: { Authorization: `Bearer ${token}` },
             });
+
+            if (res.status === 202) {
+              const syncState = await res.json().catch(() => ({}));
+              if (syncState?.retry) {
+                await new Promise((r) => setTimeout(r, 1500));
+                continue;
+              }
+            }
+
             if (res.ok) {
               const data = await res.json();
               const hasOrgs = !!data.user?.has_orgs;
