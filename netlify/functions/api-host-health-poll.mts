@@ -1,5 +1,11 @@
 import type { Config } from '@netlify/functions';
 import { sql } from './lib/db.mjs';
+import {
+  DEFAULT_UNHEALTHY_THRESHOLD,
+  parseStaleThresholdMinutes,
+  staleCutoffDate,
+  failureStatusForCount,
+} from './lib/host-health.mjs';
 
 const headers = {
   'Access-Control-Allow-Origin': '*',
@@ -7,7 +13,6 @@ const headers = {
   'Content-Type': 'application/json'
 };
 
-const UNHEALTHY_THRESHOLD = 3
 const PING_TIMEOUT_MS = 10000
 
 function buildPingRequest(
@@ -47,6 +52,18 @@ export default async (req: Request) => {
     }
 
     const hosts = await sql`SELECT * FROM docker_hosts`;
+
+    const staleThresholdMinutes = parseStaleThresholdMinutes(process.env.HOST_STALE_THRESHOLD_MINUTES)
+    const staleCutoff = staleCutoffDate(new Date(), staleThresholdMinutes)
+
+    const staleUpdate = await sql`
+      UPDATE docker_hosts
+      SET status = 'stale'
+      WHERE status = 'connected'
+        AND last_seen_at IS NOT NULL
+        AND last_seen_at < ${staleCutoff.toISOString()}
+      RETURNING id
+    `
 
     if (hosts.length === 0) {
       return new Response(JSON.stringify({ polled: 0, message: 'No hosts to poll' }), { headers })
@@ -101,7 +118,7 @@ export default async (req: Request) => {
       } catch (err: any) {
         const errorMsg = err.message || 'Unknown error'
         const newFailures = (host.consecutive_failures || 0) + 1
-        const newStatus = newFailures >= UNHEALTHY_THRESHOLD ? 'unhealthy' : 'error'
+        const newStatus = failureStatusForCount(newFailures, DEFAULT_UNHEALTHY_THRESHOLD)
 
         await sql`
           UPDATE docker_hosts 
@@ -115,7 +132,13 @@ export default async (req: Request) => {
       }
     }))
 
-    return new Response(JSON.stringify({ polled: hosts.length, results, timestamp: new Date().toISOString() }), { headers })
+    return new Response(JSON.stringify({
+      polled: hosts.length,
+      stale_marked: staleUpdate.length,
+      stale_threshold_minutes: staleThresholdMinutes,
+      results,
+      timestamp: new Date().toISOString()
+    }), { headers })
 
   } catch (error: any) {
     return new Response(JSON.stringify({ error: error.message }), { status: 500, headers })

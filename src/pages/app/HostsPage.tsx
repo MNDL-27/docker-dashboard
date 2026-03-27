@@ -93,6 +93,7 @@ export default function HostsPage() {
                     <td className="p-3">
                       <span className={`text-xs font-medium px-2 py-0.5 rounded-full inline-flex items-center gap-1 ${
                         h.status === 'connected' ? 'bg-success/15 text-success' :
+                        h.status === 'stale' ? 'bg-warning/15 text-warning' :
                         h.status === 'unhealthy' ? 'bg-destructive/15 text-destructive' :
                         h.status === 'error' ? 'bg-warning/15 text-warning' :
                         'bg-muted text-muted-foreground'

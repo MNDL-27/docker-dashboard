@@ -3,6 +3,7 @@ import { sql } from './lib/db.mjs';
 import { requireAuth } from './lib/auth.mjs';
 import { encryptSecret } from './lib/crypto.mjs';
 import { ensureOnboardingSchema } from './lib/ensure-onboarding-schema.mjs';
+import { parseStaleThresholdMinutes, staleCutoffDate } from './lib/host-health.mjs';
 
 const headers = {
   'Access-Control-Allow-Origin': '*',
@@ -21,9 +22,23 @@ export default async (req: Request) => {
     const url = new URL(req.url);
     const hostId = url.searchParams.get('hostId');
     const orgId = auth.orgId; // Clerk active org handles isolation
+    const staleThresholdMinutes = parseStaleThresholdMinutes(process.env.HOST_STALE_THRESHOLD_MINUTES);
+    const staleCutoff = staleCutoffDate(new Date(), staleThresholdMinutes).toISOString();
 
     if (req.method === 'GET') {
       if (hostId) {
+        await sql`
+          UPDATE docker_hosts h
+          SET status = 'stale'
+          FROM organization_members om
+          WHERE h.id = ${hostId}
+            AND h.organization_id = om.organization_id
+            AND om.user_id = ${auth.userId}
+            AND h.status = 'connected'
+            AND h.last_seen_at IS NOT NULL
+            AND h.last_seen_at < ${staleCutoff}
+        `;
+
         const hosts = await sql`
           SELECT h.* FROM docker_hosts h
           JOIN organization_members om ON h.organization_id = om.organization_id
@@ -34,6 +49,15 @@ export default async (req: Request) => {
       }
 
       if (!orgId) return new Response(JSON.stringify({ error: 'Active org required' }), { status: 400, headers });
+
+      await sql`
+        UPDATE docker_hosts
+        SET status = 'stale'
+        WHERE organization_id = ${orgId}
+          AND status = 'connected'
+          AND last_seen_at IS NOT NULL
+          AND last_seen_at < ${staleCutoff}
+      `;
 
       const hosts = await sql`
         SELECT h.* FROM docker_hosts h
