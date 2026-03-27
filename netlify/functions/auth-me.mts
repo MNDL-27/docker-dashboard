@@ -55,7 +55,7 @@ export default async (req: Request) => {
       JOIN organizations o ON o.id = om.organization_id
       WHERE om.user_id = ${authContext.userId}
       ORDER BY
-        CASE WHEN ${authContext.orgId} IS NOT NULL AND o.id = ${authContext.orgId} THEN 0 ELSE 1 END,
+        CASE WHEN ${authContext.orgId}::uuid IS NOT NULL AND o.id = ${authContext.orgId}::uuid THEN 0 ELSE 1 END,
         om.created_at ASC
     `;
 
