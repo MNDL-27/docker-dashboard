@@ -53,6 +53,7 @@ export async function requireAuth(
     secretKey: process.env.CLERK_SECRET_KEY,
     publishableKey: process.env.CLERK_PUBLISHABLE_KEY || process.env.VITE_CLERK_PUBLISHABLE_KEY,
     jwtKey: process.env.CLERK_JWT_KEY,
+    authorizedParties: ['https://app.dockerdash.app', 'http://localhost:5173'],
   });
 
   if (!requestState.isSignedIn) {
