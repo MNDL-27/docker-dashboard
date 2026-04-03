@@ -145,6 +145,15 @@ sudo ./watchtower-agent-install.sh`;
 
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
+        if (
+          res.status === 404 &&
+          typeof data?.error === "string" &&
+          data.error.toLowerCase().includes("requested organization not found") &&
+          attempt < maxAttempts
+        ) {
+          await new Promise((resolve) => setTimeout(resolve, 2000));
+          continue;
+        }
         throw new Error(data?.error || `HTTP error ${res.status}`);
       }
 

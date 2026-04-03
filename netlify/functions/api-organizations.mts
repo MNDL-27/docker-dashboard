@@ -54,6 +54,8 @@ export default async (req: Request) => {
       }
 
       let targetOrgId = authContext.orgId;
+      const activeClerkOrgId = authContext.clerkOrgId ?? null;
+
       if (requestedClerkOrgId) {
         const requestedOrgRows = await sql`
           SELECT o.id
@@ -64,6 +66,13 @@ export default async (req: Request) => {
         `;
 
         if (requestedOrgRows.length === 0) {
+          if (activeClerkOrgId === requestedClerkOrgId) {
+            return new Response(
+              JSON.stringify({ error: 'Organization sync pending. Please retry.', retry: true }),
+              { status: 202, headers }
+            );
+          }
+
           return new Response(JSON.stringify({ error: 'Requested organization not found for current user' }), { status: 404, headers });
         }
 
