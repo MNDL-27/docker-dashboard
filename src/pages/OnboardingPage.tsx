@@ -75,6 +75,7 @@ export default function OnboardingPage() {
       : { step: 0, phase: "form" }
   );
   const [error, setError] = useState<string | null>(null);
+  const [isSkipping, setIsSkipping] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
   const { isLoaded, orgId } = useAuth();
@@ -114,7 +115,8 @@ sudo ./watchtower-agent-install.sh`;
   const markOnboardingStatus = async (status: "not_started" | "skipped" | "completed") => {
     const activeClerkOrgId = orgId ?? userMemberships.data?.[0]?.organization?.id ?? null;
 
-    const maxAttempts = 5;
+    const maxAttempts = 20;
+    let delay = 750;
     for (let attempt = 1; attempt <= maxAttempts; attempt++) {
       // @ts-expect-error window.Clerk is injected globally by ClerkProvider
       const token = await window.Clerk?.session?.getToken();
@@ -137,7 +139,8 @@ sudo ./watchtower-agent-install.sh`;
       if (res.status === 202) {
         const data = await res.json().catch(() => ({}));
         if (data?.retry && attempt < maxAttempts) {
-          await new Promise((resolve) => setTimeout(resolve, 2000));
+          await new Promise((resolve) => setTimeout(resolve, delay));
+          delay = Math.min(Math.floor(delay * 1.35), 4000);
           continue;
         }
         throw new Error(data?.error || "Sync pending. Your account is currently syncing.");
@@ -151,7 +154,8 @@ sudo ./watchtower-agent-install.sh`;
           data.error.toLowerCase().includes("requested organization not found") &&
           attempt < maxAttempts
         ) {
-          await new Promise((resolve) => setTimeout(resolve, 2000));
+          await new Promise((resolve) => setTimeout(resolve, delay));
+          delay = Math.min(Math.floor(delay * 1.35), 4000);
           continue;
         }
         throw new Error(data?.error || `HTTP error ${res.status}`);
@@ -184,19 +188,22 @@ sudo ./watchtower-agent-install.sh`;
   };
 
   const handleSkip = async () => {
+    setIsSkipping(true);
+    setError(null);
     try {
       await markOnboardingStatus("skipped");
       sessionStorage.removeItem("onboarding_resume");
       navigate("/app", { replace: true });
     } catch (err) {
       toast({
-        title: "Couldn't skip onboarding",
+        title: "Still syncing your workspace",
         description:
           err instanceof Error
             ? err.message
-            : "Unable to persist onboarding state. Please try again.",
-        variant: "destructive",
+            : "We couldn't finish yet. Please wait a moment and try again.",
       });
+    } finally {
+      setIsSkipping(false);
     }
   };
 
@@ -576,10 +583,11 @@ sudo ./watchtower-agent-install.sh`;
               {/* Skip — outside the main card */}
               <button
                 type="button"
-                className="w-full text-center text-xs text-muted-foreground hover:text-foreground transition-colors mt-3 py-1"
+                className="w-full text-center text-xs text-muted-foreground hover:text-foreground transition-colors mt-3 py-1 disabled:opacity-50 disabled:cursor-not-allowed"
                 onClick={handleSkip}
+                disabled={isSkipping}
               >
-                Skip for now
+                {isSkipping ? "Skipping..." : "Skip for now"}
               </button>
 
               {/* Helper info card */}
