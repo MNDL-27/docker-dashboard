@@ -90,7 +90,7 @@ const App = () => (
     signUpUrl="/sign-up"
     signInFallbackRedirectUrl="/app"
     signUpFallbackRedirectUrl="/app"
-    afterSignOutUrl="/"
+    afterSignOutUrl="/app"
   >
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>

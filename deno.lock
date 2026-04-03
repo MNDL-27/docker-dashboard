@@ -54,7 +54,7 @@
         "npm:@vitejs/plugin-react-swc@^3.11.0",
         "npm:autoprefixer@^10.4.21",
         "npm:baseline-browser-mapping@^2.10.10",
-        "npm:caniuse-lite@^1.0.30001780",
+        "npm:caniuse-lite@^1.0.30001781",
         "npm:class-variance-authority@~0.7.1",
         "npm:clsx@^2.1.1",
         "npm:cmdk@^1.1.1",
