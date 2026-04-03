@@ -55,6 +55,13 @@ export default async (req: Request) => {
 
       let targetOrgId = authContext.orgId;
       const activeClerkOrgId = authContext.clerkOrgId ?? null;
+      const membershipRows = await sql`
+        SELECT o.id
+        FROM organizations o
+        JOIN organization_members om ON o.id = om.organization_id
+        WHERE om.user_id = ${authContext.userId}
+        ORDER BY om.created_at ASC
+      `;
 
       if (requestedClerkOrgId) {
         const requestedOrgRows = await sql`
@@ -66,7 +73,34 @@ export default async (req: Request) => {
         `;
 
         if (requestedOrgRows.length === 0) {
-          if (activeClerkOrgId === requestedClerkOrgId) {
+          const canCreatePendingOrg =
+            activeClerkOrgId === requestedClerkOrgId ||
+            (!activeClerkOrgId && membershipRows.length === 0);
+
+          if (canCreatePendingOrg) {
+            const pendingSlugBase = requestedClerkOrgId
+              .toLowerCase()
+              .replace(/[^a-z0-9]+/g, '-')
+              .replace(/^-+|-+$/g, '')
+              .slice(0, 40) || 'pending-org';
+            const pendingSlug = `${pendingSlugBase}-${Date.now().toString(36)}`;
+
+            const [createdOrg] = await sql`
+              INSERT INTO public.organizations (name, slug, clerk_org_id, created_by)
+              VALUES ('Pending organization', ${pendingSlug}, ${requestedClerkOrgId}, ${authContext.userId})
+              ON CONFLICT (clerk_org_id) DO UPDATE
+              SET updated_at = now()
+              RETURNING id
+            `;
+
+            await sql`
+              INSERT INTO public.organization_members (organization_id, user_id, role)
+              VALUES (${createdOrg.id}, ${authContext.userId}, 'owner')
+              ON CONFLICT (organization_id, user_id) DO NOTHING
+            `;
+
+            targetOrgId = createdOrg.id;
+          } else if (activeClerkOrgId === requestedClerkOrgId) {
             return new Response(
               JSON.stringify({ error: 'Organization sync pending. Please retry.', retry: true }),
               { status: 202, headers }
@@ -80,14 +114,6 @@ export default async (req: Request) => {
       }
 
       if (!targetOrgId) {
-        const membershipRows = await sql`
-          SELECT o.id
-          FROM organizations o
-          JOIN organization_members om ON o.id = om.organization_id
-          WHERE om.user_id = ${authContext.userId}
-          ORDER BY om.created_at ASC
-        `;
-
         if (membershipRows.length === 0) {
           return new Response(JSON.stringify({ error: 'No organization membership found' }), { status: 400, headers });
         }
