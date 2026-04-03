@@ -3,12 +3,12 @@ import { useAuth } from "@clerk/clerk-react";
 import { useState, useEffect } from "react";
 import { deriveNeedsOnboarding, normalizeOnboardingStatus, type OnboardingStatus } from "@/lib/onboarding-gate";
 
-export function ProtectedRoute({ 
-  children, 
-  requireOnboarded = true 
-}: { 
-  children: React.ReactNode, 
-  requireOnboarded?: boolean 
+export function ProtectedRoute({
+  children,
+  requireOnboarded = true,
+}: {
+  children: React.ReactNode;
+  requireOnboarded?: boolean;
 }) {
   const { isLoaded, isSignedIn, getToken } = useAuth();
   const [authState, setAuthState] = useState<{
@@ -49,7 +49,7 @@ export function ProtectedRoute({
           if (res.status === 202) {
             const data = await res.json().catch(() => ({}));
             if (data?.retry) {
-               await new Promise((resolve) => setTimeout(resolve, 2000));
+              await new Promise((resolve) => setTimeout(resolve, 2000));
               continue;
             }
           }
@@ -95,10 +95,11 @@ export function ProtectedRoute({
       }
     })();
 
-    return () => { cancelled = true; };
+    return () => {
+      cancelled = true;
+    };
   }, [isLoaded, isSignedIn, getToken]);
 
-  // ── Priority 1: Show loading while Clerk is resolving ──
   if (!isLoaded) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
@@ -107,12 +108,10 @@ export function ProtectedRoute({
     );
   }
 
-  // ── Priority 2: Redirect unauthenticated users to login ──
   if (!isSignedIn || authState.status === "unauthenticated") {
     return <Navigate to="/login" replace />;
   }
 
-  // ── Priority 3: Show loading while authenticated auth/me check resolves ──
   if (authState.status === "loading") {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
@@ -136,23 +135,18 @@ export function ProtectedRoute({
     );
   }
 
-  // ── Priority 4: Onboarding gate ──
-  if (!authState.hasOrgs && !window.location.pathname.startsWith('/create-org')) {
-    return <Navigate to="/create-org" replace />;
+  const pathname = window.location.pathname;
+  const isOnboardingRoute = pathname.startsWith("/onboarding");
+
+  if (!authState.hasOrgs || authState.needsOnboarding) {
+    if (!isOnboardingRoute) {
+      return <Navigate to="/onboarding" replace />;
+    }
   }
 
-  // ── Priority 5: Onboarding gate ──
-  // Main app routes require onboarding to be finished (completed or skipped)
-  if (requireOnboarded && authState.needsOnboarding) {
-    return <Navigate to="/onboarding" replace />;
-  }
-
-  // If hitting onboarding but onboarding is already complete/skipped, force app
-  if (!requireOnboarded && !authState.needsOnboarding) {
+  if (!requireOnboarded && authState.hasOrgs && !authState.needsOnboarding) {
     return <Navigate to="/app" replace />;
   }
 
-  // ── Priority 6: Render the requested route ──
   return <>{children}</>;
 }
-

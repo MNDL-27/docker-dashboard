@@ -112,7 +112,7 @@ chmod +x watchtower-agent-install.sh
 sudo ./watchtower-agent-install.sh`;
 
   const markOnboardingStatus = async (status: "not_started" | "skipped" | "completed") => {
-    const activeClerkOrgId = orgId ?? null;
+    const activeClerkOrgId = orgId ?? userMemberships.data?.[0]?.organization?.id ?? null;
 
     const maxAttempts = 5;
     for (let attempt = 1; attempt <= maxAttempts; attempt++) {
@@ -174,9 +174,21 @@ sudo ./watchtower-agent-install.sh`;
     }
   };
 
-  const handleSkip = () => {
-    sessionStorage.removeItem('onboarding_resume');
-    navigate('/app', { replace: true });
+  const handleSkip = async () => {
+    try {
+      await markOnboardingStatus("skipped");
+      sessionStorage.removeItem("onboarding_resume");
+      navigate("/app", { replace: true });
+    } catch (err) {
+      toast({
+        title: "Couldn't skip onboarding",
+        description:
+          err instanceof Error
+            ? err.message
+            : "Unable to persist onboarding state. Please try again.",
+        variant: "destructive",
+      });
+    }
   };
 
   /* ── Resume onboarding after hard reload ── */
@@ -286,7 +298,7 @@ sudo ./watchtower-agent-install.sh`;
       setError("Agent API key is required.");
       return;
     }
-    const clerkOrgId = userMemberships.data?.[0]?.organization?.id;
+    const clerkOrgId = orgId ?? userMemberships.data?.[0]?.organization?.id;
     if (!clerkOrgId) {
       setError("No active organization found. Please refresh the page.");
       return;

@@ -114,7 +114,7 @@ const App = () => (
                 <Route path="/login/*" element={<RequireAppSubdomain><LoginPage /></RequireAppSubdomain>} />
                 <Route path="/sign-up/*" element={<RequireAppSubdomain><SignupPage /></RequireAppSubdomain>} />
                 <Route path="/signup" element={<RequireAppSubdomain><Navigate to="/sign-up" replace /></RequireAppSubdomain>} />
-                <Route path="/create-org" element={<RequireAppSubdomain><ProtectedRoute requireOnboarded={false}><CreateOrgPage /></ProtectedRoute></RequireAppSubdomain>} />
+                <Route path="/create-org" element={<RequireAppSubdomain><CreateOrgPage /></RequireAppSubdomain>} />
                 <Route path="/onboarding" element={<RequireAppSubdomain key="onboarding"><ProtectedRoute requireOnboarded={false}><OnboardingPage /></ProtectedRoute></RequireAppSubdomain>} />
                 {/* App Shell - Protected */}
                 <Route path="/app" element={<RequireAppSubdomain key="app"><ProtectedRoute><AppShell /></ProtectedRoute></RequireAppSubdomain>}>
