@@ -470,6 +470,8 @@ while IFS= read -r header_line; do
   esac
 done
 
+SOCKET_PATH="${DOCKER_SOCK_OVERRIDE:-$DOCKER_SOCKET}"
+
 if [ "$AGENT_KEY" != "$AGENT_API_KEY" ]; then
   respond_json '401 Unauthorized' '{"error":"Invalid API key"}'
   exit 0
@@ -627,7 +629,6 @@ fi
 DOCKER_PATH="${PATH_RAW#/docker}"
 [ -n "$DOCKER_PATH" ] || DOCKER_PATH="/"
 
-SOCKET_PATH="${DOCKER_SOCK_OVERRIDE:-$DOCKER_SOCKET}"
 [ -S "$SOCKET_PATH" ] || {
   respond_json '500 Internal Server Error' "{\"error\":\"Docker socket not found at $SOCKET_PATH\"}"
   exit 0
@@ -685,7 +686,7 @@ cat "$RESPONSE_BODY_FILE"
 HANDLER_EOF
 
 chmod 0755 "$HANDLER_SCRIPT"
-export AGENT_API_KEY DOCKER_SOCKET
+export AGENT_API_KEY DOCKER_SOCKET WATCHTOWER_AGENT_VERSION WATCHTOWER_AGENT_STATE_DIR
 
 echo "Starting watchtower-agent on ${AGENT_BIND_ADDRESS}:${AGENT_PORT}"
 echo "Docker socket: ${DOCKER_SOCKET}"
