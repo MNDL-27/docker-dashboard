@@ -39,6 +39,7 @@ export interface DockerHost {
   docker_socket_path: string;
   status: string;
   docker_version: string | null;
+  agent_version: string | null;
   os_info: string | null;
   last_seen_at: string | null;
   consecutive_failures: number;

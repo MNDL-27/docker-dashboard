@@ -18,6 +18,7 @@ check_config() {
   require_command socat
   require_command curl
   require_command awk
+  require_command mkdir
   require_command tr
   require_command sed
   [ -S "$DOCKER_SOCKET" ] || fail "Docker socket not found at $DOCKER_SOCKET. Ensure Docker is running or update DOCKER_SOCKET."
@@ -47,6 +48,8 @@ AGENT_API_KEY="${AGENT_API_KEY:-}"
 AGENT_PORT="${AGENT_PORT:-9876}"
 AGENT_BIND_ADDRESS="${AGENT_BIND_ADDRESS:-${AGENT_BIND:-0.0.0.0}}"
 DOCKER_SOCKET="${DOCKER_SOCKET:-/var/run/docker.sock}"
+WATCHTOWER_AGENT_STATE_DIR="${WATCHTOWER_AGENT_STATE_DIR:-/var/lib/watchtower-agent}"
+WATCHTOWER_AGENT_VERSION="${WATCHTOWER_AGENT_VERSION:-1.0.0}"
 
 if [ "${1:-}" = "--check" ]; then
   check_config
@@ -80,6 +83,113 @@ cleanup_handler() {
 
 trap cleanup_handler EXIT INT TERM
 
+ensure_state_dir() {
+  mkdir -p "$WATCHTOWER_AGENT_STATE_DIR"
+}
+
+metrics_cache_file() {
+  printf '%s/metrics-cache' "$WATCHTOWER_AGENT_STATE_DIR"
+}
+
+read_cached_metrics() {
+  local cache_file
+  cache_file="$(metrics_cache_file)"
+
+  [ -f "$cache_file" ] || return 1
+
+  IFS='|' read -r \
+    cached_timestamp \
+    cached_cpu_time_ns \
+    cached_system_time_ns \
+    cached_network_in_bytes \
+    cached_network_out_bytes \
+    cached_disk_read_bytes \
+    cached_disk_write_bytes <"$cache_file" || return 1
+
+  case "$cached_timestamp" in ''|*[!0-9]*) return 1 ;; esac
+  case "$cached_cpu_time_ns" in ''|*[!0-9]*) return 1 ;; esac
+  case "$cached_system_time_ns" in ''|*[!0-9]*) return 1 ;; esac
+  case "$cached_network_in_bytes" in ''|*[!0-9]*) return 1 ;; esac
+  case "$cached_network_out_bytes" in ''|*[!0-9]*) return 1 ;; esac
+  case "$cached_disk_read_bytes" in ''|*[!0-9]*) return 1 ;; esac
+  case "$cached_disk_write_bytes" in ''|*[!0-9]*) return 1 ;; esac
+
+  printf '%s|%s|%s|%s|%s|%s|%s' \
+    "$cached_timestamp" \
+    "$cached_cpu_time_ns" \
+    "$cached_system_time_ns" \
+    "$cached_network_in_bytes" \
+    "$cached_network_out_bytes" \
+    "$cached_disk_read_bytes" \
+    "$cached_disk_write_bytes"
+}
+
+write_cached_metrics() {
+  local cache_file tmp_file
+  cache_file="$(metrics_cache_file)"
+  ensure_state_dir
+  tmp_file="$(mktemp "${TMPDIR:-/tmp}/watchtower-agent-metrics-cache.XXXXXX")"
+
+  printf '%s|%s|%s|%s|%s|%s|%s\n' \
+    "$1" \
+    "$2" \
+    "$3" \
+    "$4" \
+    "$5" \
+    "$6" \
+    "$7" >"$tmp_file"
+
+  mv "$tmp_file" "$cache_file"
+}
+
+sum_json_field_values() {
+  local json="$1"
+  local field="$2"
+  local matches
+
+  matches="$(printf '%s' "$json" | grep -oE "\"${field}\":[0-9]+" || true)"
+  if [ -z "$matches" ]; then
+    printf '0'
+    return 0
+  fi
+
+  printf '%s\n' "$matches" | cut -d':' -f2 | awk '{sum += $1} END {printf "%.0f", sum + 0}'
+}
+
+sum_blkio_op_values() {
+  local json="$1"
+  local op="$2"
+  local matches
+
+  matches="$(printf '%s' "$json" | grep -oE "\"op\":\"${op}\"[^}]*\"value\":[0-9]+" || true)"
+  if [ -z "$matches" ]; then
+    printf '0'
+    return 0
+  fi
+
+  printf '%s\n' "$matches" | grep -oE '"value":[0-9]+' | cut -d':' -f2 | awk '{sum += $1} END {printf "%.0f", sum + 0}'
+}
+
+calculate_rate() {
+  local current="$1"
+  local previous="$2"
+  local elapsed_ms="$3"
+
+  awk -v current="$current" -v previous="$previous" -v elapsed_ms="$elapsed_ms" 'BEGIN {
+    if (elapsed_ms <= 0) {
+      print 0
+      exit
+    }
+
+    delta = current - previous
+    if (delta < 0) {
+      delta = 0
+    }
+
+    printf "%.2f", delta / (elapsed_ms / 1000.0)
+  }'
+}
+
 IFS= read -r REQUEST_LINE || exit 0
 
 METHOD="$(printf '%s' "$REQUEST_LINE" | awk '{print $1}')"
@@ -97,6 +207,11 @@ if [ "$METHOD" = "OPTIONS" ]; then
   printf 'Access-Control-Allow-Methods: GET, POST, DELETE, PUT, PATCH, OPTIONS\r\n'
   printf 'Content-Length: 0\r\n'
   printf '\r\n'
+  exit 0
+fi
+
+if [ "$PATH_RAW" = "/agent/version" ]; then
+  respond_json '200 OK' "{\"agent_version\":\"${WATCHTOWER_AGENT_VERSION}\",\"version\":\"${WATCHTOWER_AGENT_VERSION}\"}"
   exit 0
 fi
 
@@ -150,66 +265,129 @@ fi
 # This matches Docker's standard formula: (cpuDelta / systemDelta) * onlineCPUs * 100
 if [ "$PATH_RAW" = "/metrics" ]; then
   CONTAINERS_JSON=$(curl --silent --unix-socket "$SOCKET_PATH" "http://localhost/containers/json" 2>/dev/null)
-  
+
   if [ -z "$CONTAINERS_JSON" ] || [ "$CONTAINERS_JSON" = "[]" ]; then
-    respond_json '200 OK' '{"cpu_time_ns":0,"system_time_ns":0,"online_cpus":0,"memory_used":0,"memory_limit":0}'
+    write_cached_metrics "$(date +%s%3N)" 0 0 0 0 0 0
+    respond_json '200 OK' '{"cpu_time_ns":0,"system_time_ns":0,"online_cpus":0,"memory_used":0,"memory_limit":0,"network_in_bytes_per_sec":null,"network_out_bytes_per_sec":null,"disk_read_bytes_per_sec":null,"disk_write_bytes_per_sec":null}'
     exit 0
   fi
-  
+
   CONTAINER_IDS=$(echo "$CONTAINERS_JSON" | grep -oE '"Id":"[a-f0-9]+"' | head -20 | cut -d'"' -f4)
-  
+
   TOTAL_CPU_TIME_NS=0
   TOTAL_SYSTEM_TIME_NS=0
   TOTAL_MEM_USED=0
   TOTAL_MEM_LIMIT=0
+  TOTAL_NETWORK_IN_BYTES=0
+  TOTAL_NETWORK_OUT_BYTES=0
+  TOTAL_DISK_READ_BYTES=0
+  TOTAL_DISK_WRITE_BYTES=0
   HOST_CORES=0
   MEASURED_SYSTEM_NS=0
-  
+
   for CONTAINER_ID in $CONTAINER_IDS; do
     STATS_JSON=$(curl --silent --unix-socket "$SOCKET_PATH" "http://localhost/containers/${CONTAINER_ID}/stats?stream=false" 2>/dev/null)
-    
+
     if [ -n "$STATS_JSON" ]; then
       CPU_USAGE=$(echo "$STATS_JSON" | grep -oE '"cpu_usage":{"total_usage":[0-9]+' | head -1 | sed 's/.*total_usage://' | tr -d '}')
       PREV_CPU=$(echo "$STATS_JSON" | grep -oE '"precpu_stats":{"cpu_usage":{"total_usage":[0-9]+' | head -1 | sed 's/.*total_usage://' | tr -d '}')
       SYSTEM_USAGE=$(echo "$STATS_JSON" | grep -oE '"system_cpu_usage":[0-9]+' | head -1 | sed 's/.*://' | tr -d '}')
       PREV_SYSTEM=$(echo "$STATS_JSON" | grep -oE '"precpu_stats":{"system_cpu_usage":[0-9]+' | head -1 | sed 's/.*system_cpu_usage://' | tr -d '}')
       ONLINE_CPUS=$(echo "$STATS_JSON" | grep -oE '"online_cpus":[0-9]+' | head -1 | sed 's/.*://' | tr -d '}')
-      
+
       if [ -n "$ONLINE_CPUS" ] && [ "$HOST_CORES" = "0" ]; then
         HOST_CORES=$ONLINE_CPUS
       fi
-      
+
       if [ -n "$SYSTEM_USAGE" ] && [ -n "$PREV_SYSTEM" ] && [ "$MEASURED_SYSTEM_NS" = "0" ]; then
         if [ "$SYSTEM_USAGE" -gt "$PREV_SYSTEM" ]; then
           MEASURED_SYSTEM_NS=$((SYSTEM_USAGE - PREV_SYSTEM))
         fi
       fi
-      
+
       if [ -n "$CPU_USAGE" ] && [ -n "$PREV_CPU" ] && [ "$CPU_USAGE" -gt "$PREV_CPU" ]; then
         CPU_DELTA=$((CPU_USAGE - PREV_CPU))
         TOTAL_CPU_TIME_NS=$((TOTAL_CPU_TIME_NS + CPU_DELTA))
       fi
-      
+
       MEM_USAGE=$(echo "$STATS_JSON" | grep -oE '"usage":[0-9]+' | head -1 | cut -d':' -f2)
       MEM_LIMIT=$(echo "$STATS_JSON" | grep -oE '"limit":[0-9]+' | head -1 | cut -d':' -f2)
-      
+
       if [ -n "$MEM_USAGE" ] && [ -n "$MEM_LIMIT" ]; then
         TOTAL_MEM_USED=$((TOTAL_MEM_USED + MEM_USAGE))
         TOTAL_MEM_LIMIT=$((TOTAL_MEM_LIMIT + MEM_LIMIT))
       fi
+
+      NETWORK_RX_BYTES=$(sum_json_field_values "$STATS_JSON" "rx_bytes")
+      NETWORK_TX_BYTES=$(sum_json_field_values "$STATS_JSON" "tx_bytes")
+      DISK_READ_BYTES=$(sum_blkio_op_values "$STATS_JSON" "Read")
+      DISK_WRITE_BYTES=$(sum_blkio_op_values "$STATS_JSON" "Write")
+
+      TOTAL_NETWORK_IN_BYTES=$((TOTAL_NETWORK_IN_BYTES + NETWORK_RX_BYTES))
+      TOTAL_NETWORK_OUT_BYTES=$((TOTAL_NETWORK_OUT_BYTES + NETWORK_TX_BYTES))
+      TOTAL_DISK_READ_BYTES=$((TOTAL_DISK_READ_BYTES + DISK_READ_BYTES))
+      TOTAL_DISK_WRITE_BYTES=$((TOTAL_DISK_WRITE_BYTES + DISK_WRITE_BYTES))
     fi
   done
-  
+
   if [ "$HOST_CORES" = "0" ]; then
     HOST_CORES=1
   fi
-  
-  if [ "$MEASURED_SYSTEM_NS" = "0" ]; then
-    respond_json '200 OK' '{"cpu_time_ns":0,"system_time_ns":0,"online_cpus":'"$HOST_CORES"',"memory_used":'"$TOTAL_MEM_USED"',"memory_limit":'"$TOTAL_MEM_LIMIT"'}'
-    exit 0
+
+  CURRENT_TIMESTAMP="$(date +%s%3N)"
+  PREVIOUS_SAMPLE="$(read_cached_metrics || true)"
+  PREVIOUS_TIMESTAMP=""
+  PREVIOUS_CPU_TIME_NS=0
+  PREVIOUS_SYSTEM_TIME_NS=0
+  PREVIOUS_NETWORK_IN_BYTES=0
+  PREVIOUS_NETWORK_OUT_BYTES=0
+  PREVIOUS_DISK_READ_BYTES=0
+  PREVIOUS_DISK_WRITE_BYTES=0
+
+  if [ -n "$PREVIOUS_SAMPLE" ]; then
+    IFS='|' read -r \
+      PREVIOUS_TIMESTAMP \
+      PREVIOUS_CPU_TIME_NS \
+      PREVIOUS_SYSTEM_TIME_NS \
+      PREVIOUS_NETWORK_IN_BYTES \
+      PREVIOUS_NETWORK_OUT_BYTES \
+      PREVIOUS_DISK_READ_BYTES \
+      PREVIOUS_DISK_WRITE_BYTES <<EOF
+$PREVIOUS_SAMPLE
+EOF
   fi
-  
-  METRICS_JSON="{\"cpu_time_ns\":${TOTAL_CPU_TIME_NS},\"system_time_ns\":${MEASURED_SYSTEM_NS},\"online_cpus\":${HOST_CORES},\"memory_used\":${TOTAL_MEM_USED},\"memory_limit\":${TOTAL_MEM_LIMIT}}"
+
+  ELAPSED_MS=0
+  if [ -n "$PREVIOUS_TIMESTAMP" ] && [ "$CURRENT_TIMESTAMP" -gt "$PREVIOUS_TIMESTAMP" ]; then
+    ELAPSED_MS=$((CURRENT_TIMESTAMP - PREVIOUS_TIMESTAMP))
+  fi
+
+  NETWORK_IN_RATE=null
+  NETWORK_OUT_RATE=null
+  DISK_READ_RATE=null
+  DISK_WRITE_RATE=null
+
+  if [ -n "$PREVIOUS_TIMESTAMP" ] && [ "$ELAPSED_MS" -gt 0 ]; then
+    NETWORK_IN_RATE="$(calculate_rate "$TOTAL_NETWORK_IN_BYTES" "$PREVIOUS_NETWORK_IN_BYTES" "$ELAPSED_MS")"
+    NETWORK_OUT_RATE="$(calculate_rate "$TOTAL_NETWORK_OUT_BYTES" "$PREVIOUS_NETWORK_OUT_BYTES" "$ELAPSED_MS")"
+    DISK_READ_RATE="$(calculate_rate "$TOTAL_DISK_READ_BYTES" "$PREVIOUS_DISK_READ_BYTES" "$ELAPSED_MS")"
+    DISK_WRITE_RATE="$(calculate_rate "$TOTAL_DISK_WRITE_BYTES" "$PREVIOUS_DISK_WRITE_BYTES" "$ELAPSED_MS")"
+  fi
+
+  if [ "$MEASURED_SYSTEM_NS" = "0" ]; then
+    MEASURED_SYSTEM_NS="$PREVIOUS_SYSTEM_TIME_NS"
+  fi
+
+  write_cached_metrics \
+    "$CURRENT_TIMESTAMP" \
+    "$TOTAL_CPU_TIME_NS" \
+    "$MEASURED_SYSTEM_NS" \
+    "$TOTAL_NETWORK_IN_BYTES" \
+    "$TOTAL_NETWORK_OUT_BYTES" \
+    "$TOTAL_DISK_READ_BYTES" \
+    "$TOTAL_DISK_WRITE_BYTES"
+
+  METRICS_JSON="{\"cpu_time_ns\":${TOTAL_CPU_TIME_NS},\"system_time_ns\":${MEASURED_SYSTEM_NS},\"online_cpus\":${HOST_CORES},\"memory_used\":${TOTAL_MEM_USED},\"memory_limit\":${TOTAL_MEM_LIMIT},\"network_in_bytes_per_sec\":${NETWORK_IN_RATE},\"network_out_bytes_per_sec\":${NETWORK_OUT_RATE},\"disk_read_bytes_per_sec\":${DISK_READ_RATE},\"disk_write_bytes_per_sec\":${DISK_WRITE_RATE}}"
   respond_json '200 OK' "$METRICS_JSON"
   exit 0
 fi

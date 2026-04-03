@@ -8,6 +8,7 @@ import { AddHostDialog } from "@/components/docker/AddHostDialog";
 import { dockerApi } from "@/services/docker-api";
 import { useToast } from "@/hooks/use-toast";
 import { useState } from "react";
+import { CURRENT_WATCHTOWER_AGENT_VERSION, isAgentVersionOutdated } from "@/lib/agent-version";
 
 export default function HostsPage() {
   const { organization: currentOrg } = useOrganization();
@@ -20,7 +21,17 @@ export default function HostsPage() {
     setTestingId(hostId);
     try {
       const result = await dockerApi.ping(hostId);
-      toast({ title: result.ok ? "✓ Connection successful" : "Connection failed", description: result.ok ? `Docker ${result.docker_version || ''}` : undefined });
+      toast({
+        title: result.ok ? "Connection successful" : "Connection failed",
+        description: result.ok
+          ? [
+              `Docker ${result.docker_version || "detected"}.`,
+              result.agent_version
+                ? `Agent ${result.agent_version}${result.agent_update_available ? ` is behind ${CURRENT_WATCHTOWER_AGENT_VERSION}` : ""}.`
+                : `Agent version not reported yet. Current release is ${CURRENT_WATCHTOWER_AGENT_VERSION}.`,
+            ].join(" ")
+          : undefined,
+      });
       refetch();
     } catch (e: any) {
       toast({ title: "Connection failed", description: e.message, variant: "destructive" });
@@ -71,6 +82,7 @@ export default function HostsPage() {
                 <th className="text-left p-3 font-medium text-muted-foreground text-xs">Status</th>
                 <th className="text-left p-3 font-medium text-muted-foreground text-xs hidden md:table-cell">URL</th>
                 <th className="text-left p-3 font-medium text-muted-foreground text-xs hidden lg:table-cell">Docker</th>
+                <th className="text-left p-3 font-medium text-muted-foreground text-xs hidden lg:table-cell">Agent</th>
                 <th className="text-left p-3 font-medium text-muted-foreground text-xs hidden lg:table-cell">Last Seen</th>
                 <th className="p-3 text-right text-xs font-medium text-muted-foreground">Actions</th>
               </tr>
@@ -79,6 +91,8 @@ export default function HostsPage() {
               {hosts.map(h => {
                 const ModeIcon = h.connection_mode === 'cloudflare_tunnel' ? CloudCog : Terminal;
                 const modeLabel = h.connection_mode === 'cloudflare_tunnel' ? 'CF Tunnel' : 'Agent';
+                const agentOutdated = isAgentVersionOutdated(h.agent_version);
+                const agentLabel = h.agent_version || 'Legacy';
                 return (
                   <tr key={h.id} className="border-b border-border last:border-0 hover:bg-accent/30 transition-colors">
                     <td className="p-3">
@@ -108,7 +122,27 @@ export default function HostsPage() {
                       )}
                     </td>
                     <td className="p-3 text-muted-foreground font-mono text-xs hidden md:table-cell">{h.host_url}</td>
-                    <td className="p-3 text-muted-foreground hidden lg:table-cell">{h.docker_version || '—'}</td>
+                    <td className="p-3 text-muted-foreground hidden lg:table-cell">{h.docker_version || '-'}</td>
+                    <td className="p-3 hidden lg:table-cell">
+                      <span
+                        className={`text-xs font-medium px-2 py-0.5 rounded-full inline-flex items-center gap-1 ${
+                          h.agent_version
+                            ? agentOutdated
+                              ? 'bg-amber-500/15 text-amber-400'
+                              : 'bg-success/15 text-success'
+                            : 'bg-muted text-muted-foreground'
+                        }`}
+                        title={
+                          h.agent_version
+                            ? agentOutdated
+                              ? `Update available. Current version is ${CURRENT_WATCHTOWER_AGENT_VERSION}.`
+                              : `Current version ${CURRENT_WATCHTOWER_AGENT_VERSION}.`
+                            : `Agent version not reported yet. Current version is ${CURRENT_WATCHTOWER_AGENT_VERSION}.`
+                        }
+                      >
+                        {agentLabel}
+                      </span>
+                    </td>
                     <td className="p-3 text-muted-foreground hidden lg:table-cell">
                       {h.last_seen_at ? new Date(h.last_seen_at).toLocaleString() : 'Never'}
                     </td>

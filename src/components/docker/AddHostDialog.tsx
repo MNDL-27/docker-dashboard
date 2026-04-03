@@ -9,6 +9,7 @@ import { useAddDockerHost } from "@/hooks/useDocker";
 import { dockerApi } from "@/services/docker-api";
 import { useToast } from "@/hooks/use-toast";
 import type { ConnectionMode } from "@/types/database";
+import { CURRENT_WATCHTOWER_AGENT_VERSION, isAgentVersionOutdated } from "@/lib/agent-version";
 
 interface AddHostDialogProps {
   orgId: string;
@@ -68,7 +69,17 @@ export function AddHostDialog({ orgId, trigger }: AddHostDialogProps) {
         const result = await dockerApi.ping(host.id);
         if (result.ok) {
           setTestStatus('success');
-          toast({ title: "Host connected!", description: `${name} is responding. Docker ${result.docker_version || 'detected'}.` });
+          const agentVersion = result.agent_version || null;
+          const agentOutdated = isAgentVersionOutdated(agentVersion);
+          toast({
+            title: "Host connected!",
+            description: [
+              `Docker ${result.docker_version || 'detected'}.`,
+              agentVersion
+                ? `Agent ${agentVersion}${agentOutdated ? ` is behind ${CURRENT_WATCHTOWER_AGENT_VERSION}` : ''}.`
+                : `Agent version not reported yet. Current release is ${CURRENT_WATCHTOWER_AGENT_VERSION}.`,
+            ].join(' '),
+          });
         } else {
           setTestStatus('error');
           setTestError('Docker API did not respond with OK');
@@ -154,7 +165,7 @@ export function AddHostDialog({ orgId, trigger }: AddHostDialogProps) {
             <Input placeholder="/var/run/docker.sock" value={socketPath} onChange={e => setSocketPath(e.target.value)} />
           </div>
 
-          {/* Agent API Key — required for both modes */}
+          {/* Agent API Key - required for both modes */}
           <div className="space-y-2">
             <Label>Agent API Key</Label>
             <Input
@@ -168,7 +179,7 @@ export function AddHostDialog({ orgId, trigger }: AddHostDialogProps) {
             </p>
           </div>
 
-          {/* Cloudflare Tunnel — additional CF Access headers */}
+          {/* Cloudflare Tunnel - additional CF Access headers */}
           {mode === 'cloudflare_tunnel' && (
             <>
               <div className="space-y-2">

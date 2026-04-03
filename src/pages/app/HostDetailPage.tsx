@@ -10,6 +10,7 @@ import type { DockerHost } from "@/types/database";
 import { Server, Box, Loader2, RefreshCw, Wifi, WifiOff, Terminal, CloudCog } from "lucide-react";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
+import { CURRENT_WATCHTOWER_AGENT_VERSION, isAgentVersionOutdated } from "@/lib/agent-version";
 
 export default function HostDetailPage() {
   const { id } = useParams();
@@ -32,7 +33,17 @@ export default function HostDetailPage() {
     setTesting(true);
     try {
       const result = await dockerApi.ping(id);
-      toast({ title: result.ok ? "✓ Connected" : "Connection failed" });
+      toast({
+        title: result.ok ? "Connected" : "Connection failed",
+        description: result.ok
+          ? [
+              `Docker ${result.docker_version || "detected"}.`,
+              result.agent_version
+                ? `Agent ${result.agent_version}${result.agent_update_available ? ` is behind ${CURRENT_WATCHTOWER_AGENT_VERSION}` : ""}.`
+                : `Agent version not reported yet. Current release is ${CURRENT_WATCHTOWER_AGENT_VERSION}.`,
+            ].join(" ")
+          : undefined,
+      });
       refetchHost();
     } catch (e: any) {
       toast({ title: "Connection failed", description: e.message, variant: "destructive" });
@@ -53,6 +64,9 @@ export default function HostDetailPage() {
   const runningCount = realContainers.filter((c: any) => c.State === 'running').length;
   const ModeIcon = host.connection_mode === 'cloudflare_tunnel' ? CloudCog : Terminal;
   const modeLabel = host.connection_mode === 'cloudflare_tunnel' ? 'Cloudflare Tunnel' : 'Agent';
+  const agentReported = !!host.agent_version;
+  const agentOutdated = agentReported && isAgentVersionOutdated(host.agent_version);
+  const agentLabel = host.agent_version || 'Legacy';
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -90,6 +104,47 @@ export default function HostDetailPage() {
         <MetricCard label="Docker" value={host.docker_version || 'Unknown'} icon={Server} />
       </div>
 
+      <div className={`glass-card p-4 border ${
+        !agentReported
+          ? 'border-border bg-muted/20'
+          : agentOutdated
+            ? 'border-amber-500/30 bg-amber-500/5'
+            : 'border-success/20 bg-success/5'
+      }`}>
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <h3 className="text-sm font-semibold">Agent version</h3>
+            <p className="text-sm text-muted-foreground mt-1">
+              {host.agent_version
+                ? `This host is running ${agentLabel}.`
+                : 'This host has not reported an agent version yet.'}
+            </p>
+          </div>
+          <span className={`text-xs font-medium px-2 py-0.5 rounded-full whitespace-nowrap ${
+            !agentReported
+              ? 'bg-muted text-muted-foreground'
+              : agentOutdated
+                ? 'bg-amber-500/15 text-amber-400'
+                : 'bg-success/15 text-success'
+          }`}>
+            {agentReported ? agentLabel : 'Version pending'}
+          </span>
+        </div>
+
+        {agentOutdated && (
+          <div className="mt-4 rounded-md border border-amber-500/20 bg-amber-500/10 p-3 text-sm">
+            <p className="font-medium text-amber-400">Update available</p>
+            <p className="text-muted-foreground mt-1">
+              Current agent version is <code className="px-1 rounded bg-background/60">{CURRENT_WATCHTOWER_AGENT_VERSION}</code>.
+              Rerun the installer on this host to refresh the agent without changing its config.
+            </p>
+            <code className="mt-2 block rounded-md bg-background/60 px-3 py-2 text-xs font-mono text-foreground overflow-x-auto">
+              sudo ./watchtower-agent-install.sh
+            </code>
+          </div>
+        )}
+      </div>
+
       {/* Host Details */}
       <div className="glass-card p-4">
         <h3 className="text-sm font-medium mb-3">Host Details</h3>
@@ -98,8 +153,9 @@ export default function HostDetailPage() {
             ["Name", host.name],
             ["URL", host.host_url],
             ["Mode", modeLabel],
-            ["Docker Version", host.docker_version || "—"],
-            ["OS", host.os_info || "—"],
+            ["Docker Version", host.docker_version || "-"],
+            ["Agent Version", host.agent_version || "-"],
+            ["OS", host.os_info || "-"],
             ["Socket", host.docker_socket_path || "/var/run/docker.sock"],
             ["Last Seen", host.last_seen_at ? new Date(host.last_seen_at).toLocaleString() : "Never"],
             ["Health Failures", String(host.consecutive_failures ?? 0)],

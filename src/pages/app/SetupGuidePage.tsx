@@ -146,12 +146,16 @@ sudo watchtower-agent-uninstall`;
               Run the one-time Linux installer on your Docker host. It creates a dedicated service user, installs the
               agent into <code className="bg-muted px-1 rounded">/opt/watchtower-agent</code>, stores the config in
               <code className="bg-muted px-1 rounded ml-1">/etc/watchtower-agent/watchtower-agent.env</code>, and
-              enables the service on boot.
+              enables the service on boot. The installed runtime reports its own agent version so the dashboard can
+              tell you when a host is behind.
             </p>
             <CopyBlock label="One-time Linux installer" code={installCommand} />
             <InfoBox>
               The installer prompts for the API key so it does not become the primary shell-history path for secrets.
               Default bind and port are <strong>127.0.0.1:9876</strong>.
+              <br/><br/>
+              To upgrade an existing host, rerun the same installer on that machine. It replaces the runtime in place
+              and preserves the stored config.
               <br/><br/>
               <strong>Requirements:</strong> The Docker socket (<code className="bg-muted px-1 rounded">/var/run/docker.sock</code>) must be owned by a non-root group (like <code className="bg-muted px-1 rounded">docker</code>) so the agent service user can be granted access.
             </InfoBox>

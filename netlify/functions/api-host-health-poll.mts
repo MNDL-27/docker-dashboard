@@ -6,6 +6,7 @@ import {
   staleCutoffDate,
   failureStatusForCount,
 } from './lib/host-health.mjs';
+import { CURRENT_WATCHTOWER_AGENT_VERSION, isAgentVersionOutdated } from './lib/agent-version.mts';
 
 const headers = {
   'Access-Control-Allow-Origin': '*',
@@ -35,7 +36,12 @@ function buildPingRequest(
     if (secrets?.cf_service_token_secret) reqHeaders['CF-Access-Client-Secret'] = secrets.cf_service_token_secret
   }
 
-  return { pingUrl: `${base}/docker/_ping`, versionUrl: `${base}/docker/version`, headers: reqHeaders }
+  return {
+    pingUrl: `${base}/docker/_ping`,
+    dockerVersionUrl: `${base}/docker/version`,
+    agentVersionUrl: `${base}/agent/version`,
+    headers: reqHeaders
+  }
 }
 
 export default async (req: Request) => {
@@ -79,7 +85,7 @@ export default async (req: Request) => {
         `;
         const secrets = secretsRecord[0] || null;
 
-        const { pingUrl, versionUrl, headers: reqHeaders } = buildPingRequest(host as any, secrets)
+        const { pingUrl, dockerVersionUrl, agentVersionUrl, headers: reqHeaders } = buildPingRequest(host as any, secrets)
 
         const pingResp = await fetch(pingUrl, {
           method: 'GET',
@@ -93,15 +99,26 @@ export default async (req: Request) => {
         await pingResp.text()
 
         let dockerVersion: string | null = null
+        let agentVersion: string | null = null
         let osInfo: string | null = null
         try {
-          const vResp = await fetch(versionUrl, { headers: reqHeaders, signal: AbortSignal.timeout(5000) })
+          const vResp = await fetch(dockerVersionUrl, { headers: reqHeaders, signal: AbortSignal.timeout(5000) })
           if (vResp.ok) {
             const vData = await vResp.json()
             dockerVersion = vData.Version || null
             osInfo = vData.Os ? `${vData.Os}/${vData.Arch}` : null
           }
         } catch (_) {}
+
+        try {
+          const agentResp = await fetch(agentVersionUrl, { headers: reqHeaders, signal: AbortSignal.timeout(5000) })
+          if (agentResp.ok) {
+            const agentData = await agentResp.json()
+            agentVersion = agentData.agent_version || agentData.version || null
+          }
+        } catch (_) {}
+
+        const agentNeedsUpdate = !!agentVersion && isAgentVersionOutdated(agentVersion)
 
         await sql`
           UPDATE docker_hosts 
@@ -110,11 +127,20 @@ export default async (req: Request) => {
               consecutive_failures = 0, 
               last_error = null,
               docker_version = COALESCE(${dockerVersion}, docker_version),
+              agent_version = COALESCE(${agentVersion}, agent_version),
               os_info = COALESCE(${osInfo}, os_info)
           WHERE id = ${host.id}
         `;
 
-        results.push({ hostId: host.id, name: host.name, status: 'connected' })
+        results.push({
+          hostId: host.id,
+          name: host.name,
+          status: 'connected',
+          docker_version: dockerVersion,
+          agent_version: agentVersion,
+          agent_update_available: agentNeedsUpdate,
+          current_agent_version: CURRENT_WATCHTOWER_AGENT_VERSION,
+        })
       } catch (err: any) {
         const errorMsg = err.message || 'Unknown error'
         const newFailures = (host.consecutive_failures || 0) + 1

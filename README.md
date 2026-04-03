@@ -128,10 +128,11 @@ What the installer does:
 
 - Verifies `systemd`, `socat`, `curl`, and Docker socket access
 - Creates a dedicated `watchtower-agent` system user
-- Installs the runtime to `/opt/watchtower-agent/watchtower-agent.sh`
+- Installs or updates the runtime to `/opt/watchtower-agent/watchtower-agent.sh`
 - Writes `/etc/watchtower-agent/watchtower-agent.env` with `0600` permissions
 - Installs `/etc/systemd/system/watchtower-agent.service`
 - Enables the service at boot and starts it immediately
+- Bakes the current agent version into the runtime so the dashboard can show update prompts
 
 Default config written by the installer:
 
@@ -153,6 +154,8 @@ To change the port or socket, re-run the installer:
 ```sh
 sudo ./watchtower-agent-install.sh --port 9877 --docker-socket /var/run/docker.sock
 ```
+
+To upgrade an existing host to a newer agent release, download the updated installer and run it again on that host. The installer is idempotent, so it refreshes the runtime in place without removing the stored config.
 
 The installer prompts for `AGENT_API_KEY` so the secret does not need to be part of the primary shell-history flow. If you need unattended automation, you can still pass `--api-key`.
 
@@ -250,8 +253,9 @@ After polling, a healthy host will show:
 | `consecutive_failures` | `0` |
 | `last_error` | `null` |
 | `docker_version` | e.g. `27.0.3` |
+| `agent_version` | e.g. `1.0.0` |
 
-In the UI, the host row displays a **green "connected" badge**, the Docker version, and the last-seen time. No error text is visible.
+In the UI, the host row displays a **green "connected" badge**, the Docker version, the agent version, and the last-seen time. If the agent version is older than the current release, the UI shows an update prompt.
 
 If a host fails, `consecutive_failures` increments. After **3 consecutive failures**, status escalates from `error` to `unhealthy` (red badge with error text).
 

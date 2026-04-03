@@ -1,5 +1,6 @@
 import type { Config } from '@netlify/functions';
 import { sql } from './lib/db.mjs';
+import { CURRENT_WATCHTOWER_AGENT_VERSION } from './lib/agent-version.mts';
 
 const headers = {
   'Access-Control-Allow-Origin': '*',
@@ -28,6 +29,13 @@ export default async (req: Request) => {
 
     if (path === '/docker/_ping' || path.endsWith('/_ping')) {
       return new Response('OK', { status: 200, headers });
+    }
+
+    if (path === '/agent/version' || path.endsWith('/agent/version')) {
+      return new Response(JSON.stringify({
+        agent_version: CURRENT_WATCHTOWER_AGENT_VERSION,
+        version: CURRENT_WATCHTOWER_AGENT_VERSION,
+      }), { status: 200, headers });
     }
 
     if (path === '/docker/version' || path.endsWith('/version')) {

@@ -2,6 +2,7 @@ import type { Config } from '@netlify/functions';
 import { sql } from './lib/db.mjs';
 import { requireAuth } from './lib/auth.mjs';
 import { decryptSecret } from './lib/crypto.mjs';
+import { CURRENT_WATCHTOWER_AGENT_VERSION, isAgentVersionOutdated } from './lib/agent-version.mts';
 
 const headers = {
   'Access-Control-Allow-Origin': '*',
@@ -26,6 +27,33 @@ function buildRequest(
   const reqHeaders: Record<string, string> = {};
 
   const url = `${base}/docker${dockerPath}`;
+
+  if (secrets?.agent_api_key) {
+    reqHeaders['X-Agent-Key'] = secrets.agent_api_key;
+  }
+
+  if (host.docker_socket_path && host.docker_socket_path !== '/var/run/docker.sock') {
+    reqHeaders['X-Docker-Socket'] = host.docker_socket_path;
+  }
+
+  if (host.connection_mode === 'cloudflare_tunnel') {
+    if (secrets?.cf_service_token_id) reqHeaders['CF-Access-Client-Id'] = secrets.cf_service_token_id;
+    if (secrets?.cf_service_token_secret) reqHeaders['CF-Access-Client-Secret'] = secrets.cf_service_token_secret;
+  }
+
+  return { url, method, headers: reqHeaders };
+}
+
+function buildAgentRequest(
+  host: { host_url: string; connection_mode: string; docker_socket_path: string },
+  secrets: { agent_api_key?: string; cf_service_token_id?: string; cf_service_token_secret?: string } | null,
+  agentPath: string,
+  method: string,
+) {
+  const base = host.host_url.replace(/\/$/, '');
+  const reqHeaders: Record<string, string> = {};
+
+  const url = `${base}${agentPath}`;
 
   if (secrets?.agent_api_key) {
     reqHeaders['X-Agent-Key'] = secrets.agent_api_key;
@@ -334,6 +362,7 @@ export default async (req: Request) => {
       const ok = dockerResponse.ok;
 
       let dockerVersion = null;
+      let agentVersion = null;
       let osInfo = null;
       try {
         const vReq = buildRequest(host as any, secrets, '/version', 'GET');
@@ -345,17 +374,36 @@ export default async (req: Request) => {
         }
       } catch (_) {}
 
+      try {
+        const aReq = buildAgentRequest(host as any, secrets, '/agent/version', 'GET');
+        const aResp = await dockerFetch(aReq.url, aReq.method, aReq.headers, 5000);
+        if (aResp.ok) {
+          const aData = await aResp.json();
+          agentVersion = aData.agent_version || aData.version || null;
+        }
+      } catch (_) {}
+
+      const agentNeedsUpdate = !!agentVersion && isAgentVersionOutdated(agentVersion);
+
       await sql`
         UPDATE docker_hosts 
         SET status = ${ok ? 'connected' : 'error'}, 
             last_seen_at = now(),
             docker_version = COALESCE(${dockerVersion}, docker_version),
+            agent_version = COALESCE(${agentVersion}, agent_version),
             os_info = COALESCE(${osInfo}, os_info)
         WHERE id = ${hostId}
       `;
 
       return new Response(JSON.stringify({
-        ok, status: text, docker_version: dockerVersion, os_info: osInfo, connection_mode: host.connection_mode
+        ok,
+        status: text,
+        docker_version: dockerVersion,
+        agent_version: agentVersion,
+        agent_update_available: agentNeedsUpdate,
+        current_agent_version: CURRENT_WATCHTOWER_AGENT_VERSION,
+        os_info: osInfo,
+        connection_mode: host.connection_mode
       }), { headers });
     }
 

@@ -93,6 +93,7 @@ CREATE TABLE IF NOT EXISTS public.docker_hosts (
   docker_socket_path text DEFAULT '/var/run/docker.sock',
   status text NOT NULL DEFAULT 'unknown',
   docker_version text,
+  agent_version text,
   os_info text,
   last_seen_at timestamptz,
   consecutive_failures integer NOT NULL DEFAULT 0,
