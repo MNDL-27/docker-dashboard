@@ -1,5 +1,6 @@
 import type { Config } from '@netlify/functions';
 import { sql } from './lib/db.mjs';
+import { decryptHostSecrets, SecretCryptoError } from './lib/crypto.mjs';
 import {
   DEFAULT_UNHEALTHY_THRESHOLD,
   parseStaleThresholdMinutes,
@@ -83,7 +84,7 @@ export default async (req: Request) => {
           SELECT agent_api_key, cf_service_token_id, cf_service_token_secret 
           FROM docker_host_secrets WHERE host_id = ${host.id}
         `;
-        const secrets = secretsRecord[0] || null;
+        const secrets = decryptHostSecrets(secretsRecord[0] || null, host.id);
 
         const { pingUrl, dockerVersionUrl, agentVersionUrl, headers: reqHeaders } = buildPingRequest(host as any, secrets)
 
@@ -154,7 +155,13 @@ export default async (req: Request) => {
           WHERE id = ${host.id}
         `;
 
-        results.push({ hostId: host.id, name: host.name, status: newStatus, error: errorMsg })
+        results.push({
+          hostId: host.id,
+          name: host.name,
+          status: newStatus,
+          error: errorMsg,
+          ...(err instanceof SecretCryptoError ? { code: err.code } : {}),
+        })
       }
     }))
 

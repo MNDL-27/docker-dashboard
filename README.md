@@ -59,9 +59,27 @@ HEALTH_POLL_SECRET="replace-with-another-random-string"
 # Shared secret that authorizes calls to the host health
 # polling endpoint. Used by the scheduled cron job (or
 # manual invocations in local dev).
+
+APP_ENCRYPTION_ACTIVE_KEY_ID="V1"
+# Key material for the active key id above. Must decode to
+# exactly 32 bytes as base64 or hex.
+APP_ENCRYPTION_KEY_V1="replace-with-a-32-byte-base64-or-hex-key"
+# Future rotation keys follow the same pattern:
+# APP_ENCRYPTION_KEY_V2="replace-with-your-next-32-byte-key"
 ```
 
 > **All four variables are required.** The app will not boot without `NETLIFY_DATABASE_URL` and `JWT_SECRET`.
+
+`APP_ENCRYPTION_KEY_V1` is a backend master key for values stored in `docker_host_secrets`. It is not the same thing as a host `AGENT_API_KEY`, and rerunning the host installer does not require rotating the backend master key.
+
+Safe rotation flow:
+
+1. Add a new `APP_ENCRYPTION_KEY_<KEY_ID>` env var.
+2. Set `APP_ENCRYPTION_ACTIVE_KEY_ID` to that new key id.
+3. Redeploy so Netlify functions load both the old and new keys.
+4. Run `POST /api/admin/migrate-secrets` to re-encrypt existing stored host secrets.
+5. Verify host ping, fleet metrics, and health polling still work.
+6. Remove the old key only after migration and verification are complete.
 
 ---
 

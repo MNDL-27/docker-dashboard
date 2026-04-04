@@ -1,7 +1,7 @@
 import type { Config } from '@netlify/functions';
 import { sql } from './lib/db.mjs';
 import { requireAuth } from './lib/auth.mjs';
-import { encryptSecret } from './lib/crypto.mjs';
+import { getActiveEncryptionKeyId, isSecretUsingActiveKey, reencryptSecret } from './lib/crypto.mjs';
 
 const headers = {
   'Access-Control-Allow-Origin': '*',
@@ -23,28 +23,32 @@ export default async (req: Request) => {
     // Fetch all secrets across all organizations/hosts
     const secrets = await sql`SELECT * FROM docker_host_secrets`;
     let migratedCount = 0;
-    let skippedCount = 0;
+    let alreadyCurrentCount = 0;
+    let failedCount = 0;
+    const failures: Array<{ hostId: string; field: string; error: string }> = [];
 
     for (const secret of secrets) {
-      let needsUpdate = false;
-      let newAgentKey = secret.agent_api_key;
-      let newCfId = secret.cf_service_token_id;
-      let newCfSecret = secret.cf_service_token_secret;
+      try {
+        const newAgentKey = secret.agent_api_key
+          ? reencryptSecret(secret.agent_api_key, secret.host_id, 'agent_api_key')
+          : null;
+        const newCfId = secret.cf_service_token_id
+          ? reencryptSecret(secret.cf_service_token_id, secret.host_id, 'cf_service_token_id')
+          : null;
+        const newCfSecret = secret.cf_service_token_secret
+          ? reencryptSecret(secret.cf_service_token_secret, secret.host_id, 'cf_service_token_secret')
+          : null;
 
-      if (secret.agent_api_key && !secret.agent_api_key.startsWith('v1:')) {
-        newAgentKey = encryptSecret(secret.agent_api_key, secret.host_id, 'agent_api_key');
-        needsUpdate = true;
-      }
-      if (secret.cf_service_token_id && !secret.cf_service_token_id.startsWith('v1:')) {
-        newCfId = encryptSecret(secret.cf_service_token_id, secret.host_id, 'cf_service_token_id');
-        needsUpdate = true;
-      }
-      if (secret.cf_service_token_secret && !secret.cf_service_token_secret.startsWith('v1:')) {
-        newCfSecret = encryptSecret(secret.cf_service_token_secret, secret.host_id, 'cf_service_token_secret');
-        needsUpdate = true;
-      }
+        const needsUpdate =
+          !!secret.agent_api_key && !isSecretUsingActiveKey(secret.agent_api_key) ||
+          !!secret.cf_service_token_id && !isSecretUsingActiveKey(secret.cf_service_token_id) ||
+          !!secret.cf_service_token_secret && !isSecretUsingActiveKey(secret.cf_service_token_secret);
 
-      if (needsUpdate) {
+        if (!needsUpdate) {
+          alreadyCurrentCount++;
+          continue;
+        }
+
         await sql`
           UPDATE docker_host_secrets 
           SET 
@@ -54,12 +58,24 @@ export default async (req: Request) => {
           WHERE id = ${secret.id}
         `;
         migratedCount++;
-      } else {
-        skippedCount++;
+      } catch (err: any) {
+        failedCount++;
+        failures.push({
+          hostId: secret.host_id,
+          field: 'docker_host_secrets',
+          error: err.message || 'Unknown error',
+        });
       }
     }
 
-    return new Response(JSON.stringify({ success: true, migratedCount, skippedCount }), { headers });
+    return new Response(JSON.stringify({
+      success: true,
+      activeKeyId: getActiveEncryptionKeyId(),
+      migratedCount,
+      alreadyCurrentCount,
+      failedCount,
+      failures,
+    }), { headers });
   } catch (err: any) {
     return new Response(JSON.stringify({ error: err.message }), { status: 500, headers });
   }

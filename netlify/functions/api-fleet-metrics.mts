@@ -1,7 +1,7 @@
 import type { Config } from '@netlify/functions';
 import { sql } from './lib/db.mjs';
 import { requireAuth } from './lib/auth.mjs';
-import { decryptSecret } from './lib/crypto.mts';
+import { decryptHostSecrets } from './lib/crypto.mjs';
 
 const headers = {
   'Access-Control-Allow-Origin': '*',
@@ -130,7 +130,8 @@ export default async (req: Request) => {
           return null;
         }
 
-        const apiKey = decryptSecret(secretsRecord[0].agent_api_key, host.id, 'agent_api_key');
+        const decryptedSecrets = decryptHostSecrets(secretsRecord[0], host.id);
+        const apiKey = decryptedSecrets?.agent_api_key;
         if (!apiKey) return null;
 
         const metrics = await fetchHostMetrics(host.host_url, apiKey);

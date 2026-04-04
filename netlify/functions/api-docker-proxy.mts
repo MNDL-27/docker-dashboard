@@ -1,7 +1,7 @@
 import type { Config } from '@netlify/functions';
 import { sql } from './lib/db.mjs';
 import { requireAuth } from './lib/auth.mjs';
-import { decryptSecret } from './lib/crypto.mjs';
+import { decryptHostSecrets, SecretCryptoError } from './lib/crypto.mjs';
 import { CURRENT_WATCHTOWER_AGENT_VERSION, isAgentVersionOutdated } from './lib/agent-version.mts';
 
 const headers = {
@@ -176,14 +176,7 @@ export default async (req: Request) => {
             SELECT agent_api_key, cf_service_token_id, cf_service_token_secret 
             FROM docker_host_secrets WHERE host_id = ${host.id}
           `;
-          let secrets = secretsRecord[0] || null;
-          if (secrets) {
-            secrets = {
-              agent_api_key: decryptSecret(secrets.agent_api_key, host.id, 'agent_api_key'),
-              cf_service_token_id: decryptSecret(secrets.cf_service_token_id, host.id, 'cf_service_token_id'),
-              cf_service_token_secret: decryptSecret(secrets.cf_service_token_secret, host.id, 'cf_service_token_secret')
-            };
-          }
+          const secrets = decryptHostSecrets(secretsRecord[0] || null, host.id);
 
           const { url, method, headers: reqHeaders } = buildRequest(host, secrets, '/containers/json?all=true', 'GET');
           const resp = await dockerFetch(url, method, reqHeaders, 5000); // 5s timeout
@@ -221,14 +214,7 @@ export default async (req: Request) => {
             SELECT agent_api_key, cf_service_token_id, cf_service_token_secret 
             FROM docker_host_secrets WHERE host_id = ${host.id}
           `;
-          let secrets = secretsRecord[0] || null;
-          if (secrets) {
-            secrets = {
-              agent_api_key: decryptSecret(secrets.agent_api_key, host.id, 'agent_api_key'),
-              cf_service_token_id: decryptSecret(secrets.cf_service_token_id, host.id, 'cf_service_token_id'),
-              cf_service_token_secret: decryptSecret(secrets.cf_service_token_secret, host.id, 'cf_service_token_secret')
-            };
-          }
+          const secrets = decryptHostSecrets(secretsRecord[0] || null, host.id);
 
           // Get running containers only (no need for exited container stats)
           const listReq = buildRequest(host, secrets, '/containers/json', 'GET');
@@ -302,14 +288,7 @@ export default async (req: Request) => {
       SELECT agent_api_key, cf_service_token_id, cf_service_token_secret 
       FROM docker_host_secrets WHERE host_id = ${hostId}
     `;
-    let secrets = secretsRecord[0] || null;
-    if (secrets) {
-      secrets = {
-        agent_api_key: decryptSecret(secrets.agent_api_key, host.id, 'agent_api_key'),
-        cf_service_token_id: decryptSecret(secrets.cf_service_token_id, host.id, 'cf_service_token_id'),
-        cf_service_token_secret: decryptSecret(secrets.cf_service_token_secret, host.id, 'cf_service_token_secret')
-      };
-    }
+    const secrets = decryptHostSecrets(secretsRecord[0] || null, host.id);
 
     let dockerPath: string;
     let method = 'GET';
@@ -439,6 +418,13 @@ export default async (req: Request) => {
     return new Response(JSON.stringify(await dockerResponse.json()), { headers });
 
   } catch (error: any) {
+    if (error instanceof SecretCryptoError) {
+      return new Response(JSON.stringify({
+        error: 'Secret storage failed',
+        details: error.message,
+        code: error.code,
+      }), { status: 500, headers });
+    }
     return new Response(JSON.stringify({ error: 'Docker connection failed', details: error.message }), { status: 502, headers });
   }
 };
