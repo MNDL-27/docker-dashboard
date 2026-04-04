@@ -22,6 +22,7 @@ import RefundsPage from "./pages/RefundsPage";
 import ContactPage from "./pages/ContactPage";
 import { ClerkProvider } from "@clerk/clerk-react";
 import OnboardingPage from "./pages/OnboardingPage";
+import { RequirePlatformAdmin } from "@/components/RequirePlatformAdmin";
 import DashboardPage from "./pages/app/DashboardPage";
 import HostsPage from "./pages/app/HostsPage";
 import HostDetailPage from "./pages/app/HostDetailPage";
@@ -133,7 +134,7 @@ const App = () => (
                   <Route path="members" element={<MembersPage />} />
                   <Route path="billing" element={<BillingPage />} />
                   <Route path="settings" element={<SettingsPage />} />
-                  <Route path="admin" element={<AdminPage />} />
+                  <Route path="admin" element={<RequirePlatformAdmin><AdminPage /></RequirePlatformAdmin>} />
                   <Route path="help" element={<HelpPage />} />
                   <Route path="setup-guide" element={<SetupGuidePage />} />
                 </Route>

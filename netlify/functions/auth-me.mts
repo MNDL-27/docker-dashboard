@@ -2,6 +2,7 @@ import type { Config } from '@netlify/functions';
 import { sql } from './lib/db.mjs';
 import { requireAuth } from './lib/auth.mjs';
 import { ensureOnboardingSchema } from './lib/ensure-onboarding-schema.mjs';
+import { isPlatformAdminEmail } from './lib/platform-admin.mjs';
 
 const allowedOrigins = new Set([
   'https://app.dockerdash.app',
@@ -73,6 +74,7 @@ export default async (req: Request) => {
         onboarding_status: onboardingStatus,
         active_org_id: effectiveOrg?.id ?? null,
         active_org_clerk_id: effectiveOrg?.clerk_org_id ?? null,
+        is_platform_admin: isPlatformAdminEmail(users[0].email),
       },
     }), { headers });
 

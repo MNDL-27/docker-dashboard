@@ -7,6 +7,7 @@ import {
   Rocket, CreditCard, Settings, HelpCircle, ChevronLeft, ChevronRight,
   Building2, Users, Shield, BookOpen
 } from "lucide-react";
+import { useViewerState } from "@/hooks/useViewerState";
 
 const navGroups = [
   {
@@ -54,6 +55,12 @@ const navGroups = [
 export function AppSidebar() {
   const [collapsed, setCollapsed] = useState(false);
   const location = useLocation();
+  const { data: viewer } = useViewerState();
+
+  const visibleGroups = navGroups.map((group) => ({
+    ...group,
+    items: group.items.filter((item) => item.href !== "/app/admin" || viewer?.is_platform_admin),
+  }));
 
   return (
     <aside className={cn(
@@ -72,7 +79,7 @@ export function AppSidebar() {
 
       {/* Nav */}
       <nav className="flex-1 overflow-y-auto py-2 px-2 space-y-4">
-        {navGroups.map((group) => (
+        {visibleGroups.map((group) => (
           <div key={group.label}>
             {!collapsed && (
               <span className="px-2 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/60 mb-1 block">

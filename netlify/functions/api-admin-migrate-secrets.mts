@@ -2,6 +2,7 @@ import type { Config } from '@netlify/functions';
 import { sql } from './lib/db.mjs';
 import { requireAuth } from './lib/auth.mjs';
 import { getActiveEncryptionKeyId, isSecretUsingActiveKey, reencryptSecret } from './lib/crypto.mjs';
+import { isPlatformAdminEmail } from './lib/platform-admin.mjs';
 
 const headers = {
   'Access-Control-Allow-Origin': '*',
@@ -15,10 +16,11 @@ export default async (req: Request) => {
 
   try {
     const auth = await requireAuth(req);
-    
-    // In a real product, we would verify the user is a super-admin.
-    // For this one-off migration, we require a valid login.
     if (!auth.userId) return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers });
+    const user = await sql`SELECT email FROM users WHERE id = ${auth.userId}`;
+    if (!user.length || !isPlatformAdminEmail(user[0].email)) {
+      return new Response(JSON.stringify({ error: 'Forbidden. Admin access required.' }), { status: 403, headers });
+    }
     
     // Fetch all secrets across all organizations/hosts
     const secrets = await sql`SELECT * FROM docker_host_secrets`;
