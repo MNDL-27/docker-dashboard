@@ -28,7 +28,9 @@ export default function HostsPage() {
               `Docker ${result.docker_version || "detected"}.`,
               result.agent_version
                 ? `Agent ${result.agent_version}${result.agent_update_available ? ` is behind ${CURRENT_WATCHTOWER_AGENT_VERSION}` : ""}.`
-                : `Agent version not reported yet. Current release is ${CURRENT_WATCHTOWER_AGENT_VERSION}.`,
+                : result.agent_version_error
+                  ? `Agent version not reported yet (${result.agent_version_error}). Current release is ${CURRENT_WATCHTOWER_AGENT_VERSION}.`
+                  : `Agent version not reported yet. Current release is ${CURRENT_WATCHTOWER_AGENT_VERSION}.`,
             ].join(" ")
           : undefined,
       });

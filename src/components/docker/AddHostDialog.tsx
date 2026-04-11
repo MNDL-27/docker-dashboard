@@ -30,13 +30,14 @@ export function AddHostDialog({ orgId, trigger }: AddHostDialogProps) {
 
   const [testStatus, setTestStatus] = useState<'idle' | 'testing' | 'success' | 'error'>('idle');
   const [testError, setTestError] = useState("");
+  const [testMessage, setTestMessage] = useState("");
   const addHost = useAddDockerHost();
   const { toast } = useToast();
 
   const resetForm = () => {
     setName(""); setHostUrl(""); setMode("agent"); setSocketPath("/var/run/docker.sock");
     setAgentApiKey(""); setCfServiceTokenId(""); setCfServiceTokenSecret("");
-    setTestStatus('idle'); setTestError("");
+    setTestStatus('idle'); setTestError(""); setTestMessage("");
   };
 
   const handleSave = async () => {
@@ -69,6 +70,7 @@ export function AddHostDialog({ orgId, trigger }: AddHostDialogProps) {
         const result = await dockerApi.ping(host.id);
         if (result.ok) {
           setTestStatus('success');
+          setTestMessage(result.agent_version_error || "");
           const agentVersion = result.agent_version || null;
           const agentOutdated = isAgentVersionOutdated(agentVersion);
           toast({
@@ -77,17 +79,21 @@ export function AddHostDialog({ orgId, trigger }: AddHostDialogProps) {
               `Docker ${result.docker_version || 'detected'}.`,
               agentVersion
                 ? `Agent ${agentVersion}${agentOutdated ? ` is behind ${CURRENT_WATCHTOWER_AGENT_VERSION}` : ''}.`
-                : `Agent version not reported yet. Current release is ${CURRENT_WATCHTOWER_AGENT_VERSION}.`,
+                : result.agent_version_error
+                  ? `Agent version not reported yet (${result.agent_version_error}). Current release is ${CURRENT_WATCHTOWER_AGENT_VERSION}.`
+                  : `Agent version not reported yet. Current release is ${CURRENT_WATCHTOWER_AGENT_VERSION}.`,
             ].join(' '),
           });
         } else {
           setTestStatus('error');
           setTestError('Docker API did not respond with OK');
+          setTestMessage('');
           toast({ title: "Host saved but unreachable", description: "Check URL and credentials.", variant: "destructive" });
         }
       } catch (e: any) {
         setTestStatus('error');
         setTestError(e.message);
+        setTestMessage('');
         toast({ title: "Host saved but connection failed", description: e.message, variant: "destructive" });
       }
 
@@ -214,7 +220,10 @@ export function AddHostDialog({ orgId, trigger }: AddHostDialogProps) {
           {testStatus === 'success' && (
             <div className="flex items-center gap-2 p-3 rounded-md bg-primary/10 border border-primary/20">
               <CheckCircle2 className="h-4 w-4 text-primary" />
-              <p className="text-xs text-primary">Connection successful!</p>
+              <div className="space-y-0.5">
+                <p className="text-xs text-primary">Connection successful!</p>
+                {testMessage && <p className="text-[11px] text-muted-foreground">{testMessage}</p>}
+              </div>
             </div>
           )}
 

@@ -2,9 +2,10 @@ import { cn } from "@/lib/utils";
 import { Box, Square, RefreshCcw, ExternalLink } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
+import type { DashboardContainerSummary } from "@/components/dashboard/dashboard-types";
 
 interface ContainersTableProps {
-  containers: Record<string, any>[];
+  containers: DashboardContainerSummary[];
   isLoading?: boolean;
   className?: string;
 }
@@ -21,7 +22,7 @@ export function ContainersTable({ containers, isLoading, className }: Containers
           VIEW ALL <ExternalLink className="h-3 w-3 ml-0.5" />
         </Link>
       </div>
-      
+
       <div className="flex-1 overflow-x-auto custom-scrollbar">
         <table className="w-full text-left border-collapse min-w-[600px]">
           <thead>
@@ -52,7 +53,7 @@ export function ContainersTable({ containers, isLoading, className }: Containers
                   <td className="px-4 py-3">
                     <div className="flex flex-col">
                       <span className="text-sm font-semibold truncate max-w-[180px]">
-                        {(container.Names?.[0] || 'unknown').replace(/^\//, '')}
+                        {(container.Names?.[0] || "unknown").replace(/^\//, "")}
                       </span>
                       <span className="text-[10px] text-muted-foreground font-medium truncate max-w-[180px]">
                         {container.Image}
@@ -61,22 +62,30 @@ export function ContainersTable({ containers, isLoading, className }: Containers
                   </td>
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-2">
-                      <div className={cn("w-1.5 h-1.5 rounded-full", 
-                        container.State === 'running' ? 'bg-success animate-pulse' : 'bg-destructive'
-                      )} />
-                      <span className={cn("text-[10px] font-bold uppercase", 
-                        container.State === 'running' ? 'text-success' : 'text-destructive'
-                      )}>{container.State}</span>
+                      <div
+                        className={cn(
+                          "w-1.5 h-1.5 rounded-full",
+                          container.State === "running" ? "bg-success animate-pulse" : "bg-destructive",
+                        )}
+                      />
+                      <span
+                        className={cn(
+                          "text-[10px] font-bold uppercase",
+                          container.State === "running" ? "text-success" : "text-destructive",
+                        )}
+                      >
+                        {container.State}
+                      </span>
                     </div>
                   </td>
                   <td className="px-4 py-3">
                     <div className="flex flex-col gap-1 w-24">
-                      <span className="text-[10px] text-muted-foreground font-medium">—</span>
+                      <span className="text-[10px] text-muted-foreground font-medium">-</span>
                     </div>
                   </td>
                   <td className="px-4 py-3">
                     <div className="flex flex-col">
-                      <span className="text-[11px] font-semibold text-muted-foreground">—</span>
+                      <span className="text-[11px] font-semibold text-muted-foreground">-</span>
                     </div>
                   </td>
                   <td className="px-4 py-3 text-right">
@@ -98,3 +107,4 @@ export function ContainersTable({ containers, isLoading, className }: Containers
     </div>
   );
 }
+

@@ -1,7 +1,9 @@
 import { PageHeader } from "@/components/shared/PageHeader";
-import { Construction, Check, ArrowRight, X, Loader2, Zap, Box } from "lucide-react";
-import { useSearchParams, useNavigate } from "react-router-dom";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
+import { useToast } from "@/hooks/use-toast";
+import { AlertTriangle, Construction, Check, ArrowRight, X, Loader2, Zap, Box } from "lucide-react";
+import { useSearchParams, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { useOrganization, useUser } from "@clerk/clerk-react";
 import { useQuery } from "@tanstack/react-query";
@@ -27,7 +29,11 @@ export default function BillingPage() {
   const navigate = useNavigate();
   const { organization } = useOrganization();
   const { user } = useUser();
+  const { toast } = useToast();
   const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
+  const [paddleStatus, setPaddleStatus] = useState<"checking" | "ready" | "unavailable">(() =>
+    typeof window !== "undefined" && window.Paddle ? "ready" : "checking",
+  );
 
   // Fetch real organization details including billing state
   const { data: orgDetails, isLoading, refetch } = useQuery({
@@ -47,6 +53,35 @@ export default function BillingPage() {
     }
   }, [searchParams, orgDetails]);
 
+  useEffect(() => {
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    if (window.Paddle) {
+      setPaddleStatus("ready");
+      return;
+    }
+
+    const paddleScript = document.querySelector<HTMLScriptElement>('script[src*="cdn.paddle.com/paddle/v2/paddle.js"]');
+    const markReady = () => setPaddleStatus("ready");
+    const markUnavailable = () => setPaddleStatus("unavailable");
+    const timeoutId = window.setTimeout(() => {
+      if (!window.Paddle) {
+        markUnavailable();
+      }
+    }, 4000);
+
+    paddleScript?.addEventListener("load", markReady);
+    paddleScript?.addEventListener("error", markUnavailable);
+
+    return () => {
+      window.clearTimeout(timeoutId);
+      paddleScript?.removeEventListener("load", markReady);
+      paddleScript?.removeEventListener("error", markUnavailable);
+    };
+  }, []);
+
   const handleClearPlan = () => {
     sessionStorage.removeItem("dockerdash_pending_plan");
     setSelectedPlan(null);
@@ -54,15 +89,31 @@ export default function BillingPage() {
   };
 
   const handleCheckout = () => {
-    if (!selectedPlan || !organization || !window.Paddle) return;
+    if (!selectedPlan || !organization) {
+      return;
+    }
 
-    const details = planDetails[selectedPlan as keyof typeof planDetails];
+    if (!window.Paddle) {
+      setPaddleStatus("unavailable");
+      toast({
+        title: "Checkout is unavailable",
+        description: "Paddle did not load in this browser. Disable blockers for Paddle and try again.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     const priceId = selectedPlan === 'pro' 
       ? import.meta.env.VITE_PADDLE_LAUNCH_PRICE_ID 
       : import.meta.env.VITE_PADDLE_SCALE_PRICE_ID;
 
     if (!priceId) {
       console.error("Missing Price ID for plan:", selectedPlan);
+      toast({
+        title: "Checkout is unavailable",
+        description: "The billing price ID is missing for this plan.",
+        variant: "destructive",
+      });
       return;
     }
 
@@ -167,6 +218,7 @@ export default function BillingPage() {
   // Checkout State View (User selected a plan but hasn't paid)
   if (selectedPlan && (selectedPlan === "pro" || selectedPlan === "team")) {
     const details = planDetails[selectedPlan as keyof typeof planDetails];
+    const paddleBlocked = paddleStatus === "unavailable";
     return (
       <div className="space-y-6 animate-fade-in">
         <PageHeader
@@ -187,6 +239,15 @@ export default function BillingPage() {
               </Button>
             </div>
             <div className="p-6 space-y-4">
+              {paddleBlocked && (
+                <Alert variant="destructive" className="bg-destructive/5">
+                  <AlertTriangle className="h-4 w-4" />
+                  <AlertTitle>Checkout blocked in this browser</AlertTitle>
+                  <AlertDescription>
+                    Paddle failed to load. Disable ad or privacy blockers for Paddle, then refresh and try again.
+                  </AlertDescription>
+                </Alert>
+              )}
               <ul className="space-y-2">
                 {details.features.map(f => (
                   <li key={f} className="flex items-center gap-2 text-sm">
@@ -194,9 +255,14 @@ export default function BillingPage() {
                   </li>
                 ))}
               </ul>
-              <Button className="w-full gap-2" onClick={handleCheckout}>
+              <Button className="w-full gap-2" onClick={handleCheckout} disabled={paddleStatus === "checking"}>
                 Proceed to Checkout <ArrowRight className="h-4 w-4" />
               </Button>
+              {paddleStatus === "checking" && (
+                <p className="text-xs text-muted-foreground text-center">
+                  Loading secure checkout...
+                </p>
+              )}
               <button 
                 onClick={handleClearPlan}
                 className="w-full text-xs text-muted-foreground hover:text-foreground transition-colors"

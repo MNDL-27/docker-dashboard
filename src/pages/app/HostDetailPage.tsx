@@ -16,6 +16,7 @@ export default function HostDetailPage() {
   const { id } = useParams();
   const { toast } = useToast();
   const [testing, setTesting] = useState(false);
+  const [lastAgentVersionDiagnostic, setLastAgentVersionDiagnostic] = useState<string | null>(null);
 
   const { data: host, isLoading: hostLoading, refetch: refetchHost } = useQuery({
     queryKey: ['docker-host', id],
@@ -40,13 +41,17 @@ export default function HostDetailPage() {
               `Docker ${result.docker_version || "detected"}.`,
               result.agent_version
                 ? `Agent ${result.agent_version}${result.agent_update_available ? ` is behind ${CURRENT_WATCHTOWER_AGENT_VERSION}` : ""}.`
-                : `Agent version not reported yet. Current release is ${CURRENT_WATCHTOWER_AGENT_VERSION}.`,
+                : result.agent_version_error
+                  ? `Agent version not reported yet (${result.agent_version_error}). Current release is ${CURRENT_WATCHTOWER_AGENT_VERSION}.`
+                  : `Agent version not reported yet. Current release is ${CURRENT_WATCHTOWER_AGENT_VERSION}.`,
             ].join(" ")
           : undefined,
       });
+      setLastAgentVersionDiagnostic(result.agent_version_error || null);
       refetchHost();
     } catch (e: any) {
       toast({ title: "Connection failed", description: e.message, variant: "destructive" });
+      setLastAgentVersionDiagnostic(null);
       refetchHost();
     }
     setTesting(false);
@@ -119,6 +124,11 @@ export default function HostDetailPage() {
                 ? `This host is running ${agentLabel}.`
                 : 'This host has not reported an agent version yet.'}
             </p>
+            {!host.agent_version && lastAgentVersionDiagnostic && (
+              <p className="mt-2 text-xs text-amber-400">
+                {lastAgentVersionDiagnostic}
+              </p>
+            )}
           </div>
           <span className={`text-xs font-medium px-2 py-0.5 rounded-full whitespace-nowrap ${
             !agentReported

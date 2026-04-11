@@ -71,6 +71,49 @@ function buildAgentRequest(
   return { url, method, headers: reqHeaders };
 }
 
+function trimDiagnostic(value: string, maxLength = 160) {
+  return value.length > maxLength ? `${value.slice(0, maxLength - 3)}...` : value;
+}
+
+async function fetchAgentVersionReport(
+  host: { id: string; host_url: string; connection_mode: string; docker_socket_path: string },
+  secrets: { agent_api_key?: string; cf_service_token_id?: string; cf_service_token_secret?: string } | null,
+) {
+  try {
+    const req = buildAgentRequest(host, secrets, '/agent/version', 'GET');
+    const resp = await dockerFetch(req.url, req.method, req.headers, 5000);
+
+    if (!resp.ok) {
+      const body = trimDiagnostic((await resp.text()).replace(/\s+/g, ' ').trim());
+      return {
+        agentVersion: null as string | null,
+        agentVersionError: trimDiagnostic(
+          body
+            ? `GET /agent/version returned ${resp.status}: ${body}`
+            : `GET /agent/version returned ${resp.status}`,
+        ),
+      };
+    }
+
+    const data = await resp.json();
+    const agentVersion = data.agent_version || data.version || null;
+
+    if (!agentVersion) {
+      return {
+        agentVersion: null as string | null,
+        agentVersionError: 'GET /agent/version did not include an agent version',
+      };
+    }
+
+    return { agentVersion, agentVersionError: null as string | null };
+  } catch (err: any) {
+    return {
+      agentVersion: null as string | null,
+      agentVersionError: trimDiagnostic(`GET /agent/version failed: ${err?.message || 'Unknown error'}`),
+    };
+  }
+}
+
 // Bounded concurrency helper for querying multiple hosts
 async function mapConcurrent<T, R>(items: T[], limit: number, fn: (item: T) => Promise<R>): Promise<R[]> {
   const results: R[] = [];
@@ -342,6 +385,7 @@ export default async (req: Request) => {
 
       let dockerVersion = null;
       let agentVersion = null;
+      let agentVersionError = null;
       let osInfo = null;
       try {
         const vReq = buildRequest(host as any, secrets, '/version', 'GET');
@@ -353,14 +397,16 @@ export default async (req: Request) => {
         }
       } catch (_) {}
 
-      try {
-        const aReq = buildAgentRequest(host as any, secrets, '/agent/version', 'GET');
-        const aResp = await dockerFetch(aReq.url, aReq.method, aReq.headers, 5000);
-        if (aResp.ok) {
-          const aData = await aResp.json();
-          agentVersion = aData.agent_version || aData.version || null;
-        }
-      } catch (_) {}
+      const agentVersionReport = await fetchAgentVersionReport(host as any, secrets);
+      agentVersion = agentVersionReport.agentVersion;
+      agentVersionError = agentVersionReport.agentVersionError;
+      if (agentVersionError) {
+        console.warn('[docker-proxy] agent version lookup failed', {
+          hostId: hostId,
+          hostUrl: host.host_url,
+          error: agentVersionError,
+        });
+      }
 
       const agentNeedsUpdate = !!agentVersion && isAgentVersionOutdated(agentVersion);
 
@@ -382,7 +428,8 @@ export default async (req: Request) => {
         agent_update_available: agentNeedsUpdate,
         current_agent_version: CURRENT_WATCHTOWER_AGENT_VERSION,
         os_info: osInfo,
-        connection_mode: host.connection_mode
+        connection_mode: host.connection_mode,
+        agent_version_error: agentVersionError,
       }), { headers });
     }
 

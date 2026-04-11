@@ -45,6 +45,48 @@ function buildPingRequest(
   }
 }
 
+function trimDiagnostic(value: string, maxLength = 160) {
+  return value.length > maxLength ? `${value.slice(0, maxLength - 3)}...` : value
+}
+
+async function fetchAgentVersionReport(
+  host: { id: string; host_url: string; connection_mode: string; docker_socket_path: string | null },
+  secrets: { agent_api_key?: string; cf_service_token_id?: string; cf_service_token_secret?: string } | null,
+) {
+  const { agentVersionUrl, headers: reqHeaders } = buildPingRequest(host, secrets)
+
+  try {
+    const agentResp = await fetch(agentVersionUrl, { headers: reqHeaders, signal: AbortSignal.timeout(5000) })
+    if (!agentResp.ok) {
+      const body = trimDiagnostic((await agentResp.text()).replace(/\s+/g, ' ').trim())
+      return {
+        agentVersion: null as string | null,
+        agentVersionError: trimDiagnostic(
+          body
+            ? `GET /agent/version returned ${agentResp.status}: ${body}`
+            : `GET /agent/version returned ${agentResp.status}`,
+        ),
+      }
+    }
+
+    const agentData = await agentResp.json()
+    const agentVersion = agentData.agent_version || agentData.version || null
+    if (!agentVersion) {
+      return {
+        agentVersion: null as string | null,
+        agentVersionError: 'GET /agent/version did not include an agent version',
+      }
+    }
+
+    return { agentVersion, agentVersionError: null as string | null }
+  } catch (err: any) {
+    return {
+      agentVersion: null as string | null,
+      agentVersionError: trimDiagnostic(`GET /agent/version failed: ${err?.message || 'Unknown error'}`),
+    }
+  }
+}
+
 export default async (req: Request) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers });
@@ -86,7 +128,7 @@ export default async (req: Request) => {
         `;
         const secrets = decryptHostSecrets(secretsRecord[0] || null, host.id);
 
-        const { pingUrl, dockerVersionUrl, agentVersionUrl, headers: reqHeaders } = buildPingRequest(host as any, secrets)
+        const { pingUrl, dockerVersionUrl, headers: reqHeaders } = buildPingRequest(host as any, secrets)
 
         const pingResp = await fetch(pingUrl, {
           method: 'GET',
@@ -101,6 +143,7 @@ export default async (req: Request) => {
 
         let dockerVersion: string | null = null
         let agentVersion: string | null = null
+        let agentVersionError: string | null = null
         let osInfo: string | null = null
         try {
           const vResp = await fetch(dockerVersionUrl, { headers: reqHeaders, signal: AbortSignal.timeout(5000) })
@@ -111,13 +154,16 @@ export default async (req: Request) => {
           }
         } catch (_) {}
 
-        try {
-          const agentResp = await fetch(agentVersionUrl, { headers: reqHeaders, signal: AbortSignal.timeout(5000) })
-          if (agentResp.ok) {
-            const agentData = await agentResp.json()
-            agentVersion = agentData.agent_version || agentData.version || null
-          }
-        } catch (_) {}
+        const agentVersionReport = await fetchAgentVersionReport(host as any, secrets)
+        agentVersion = agentVersionReport.agentVersion
+        agentVersionError = agentVersionReport.agentVersionError
+        if (agentVersionError) {
+          console.warn('[host-health-poll] agent version lookup failed', {
+            hostId: host.id,
+            hostUrl: host.host_url,
+            error: agentVersionError,
+          })
+        }
 
         const agentNeedsUpdate = !!agentVersion && isAgentVersionOutdated(agentVersion)
 
@@ -139,6 +185,7 @@ export default async (req: Request) => {
           status: 'connected',
           docker_version: dockerVersion,
           agent_version: agentVersion,
+          agent_version_error: agentVersionError,
           agent_update_available: agentNeedsUpdate,
           current_agent_version: CURRENT_WATCHTOWER_AGENT_VERSION,
         })
