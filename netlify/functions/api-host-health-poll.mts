@@ -8,6 +8,7 @@ import {
   failureStatusForCount,
 } from './lib/host-health.mjs';
 import { CURRENT_WATCHTOWER_AGENT_VERSION, isAgentVersionOutdated } from './lib/agent-version.mts';
+import { ensureDockerHostSchema } from './lib/ensure-docker-host-schema.mjs';
 
 const headers = {
   'Access-Control-Allow-Origin': '*',
@@ -93,6 +94,8 @@ export default async (req: Request) => {
   }
 
   try {
+    await ensureDockerHostSchema();
+
     const cronSecret = req.headers.get('x-cron-secret')
     const expectedSecret = process.env.HEALTH_POLL_SECRET
 

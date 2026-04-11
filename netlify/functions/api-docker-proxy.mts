@@ -3,6 +3,7 @@ import { sql } from './lib/db.mjs';
 import { requireAuth } from './lib/auth.mjs';
 import { decryptHostSecrets, SecretCryptoError } from './lib/crypto.mjs';
 import { CURRENT_WATCHTOWER_AGENT_VERSION, isAgentVersionOutdated } from './lib/agent-version.mts';
+import { ensureDockerHostSchema } from './lib/ensure-docker-host-schema.mjs';
 
 const headers = {
   'Access-Control-Allow-Origin': '*',
@@ -196,6 +197,8 @@ export default async (req: Request) => {
   }
 
   try {
+    await ensureDockerHostSchema();
+
     const auth = await requireAuth(req);
     const body = await req.json();
     const { action, hostId, containerId, params } = body;
