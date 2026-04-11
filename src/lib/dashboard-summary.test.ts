@@ -60,7 +60,7 @@ describe("buildDashboardStats", () => {
     const stats = buildDashboardStats(hosts, [
       { Id: "cont-1", State: "running", Names: ["/api"], Image: "api:latest" },
       { Id: "cont-2", State: "restarting", Names: ["/worker"], Image: "worker:latest" },
-      { Id: "cont-3", State: "paused", Names: ["/proxy"], Image: "proxy:latest" },
+      { Id: "cont-3", State: "exited", Names: ["/proxy"], Image: "proxy:latest" },
     ]);
 
     expect(stats.hostsCount).toBe(2);
@@ -69,13 +69,19 @@ describe("buildDashboardStats", () => {
     expect(stats.containersCount).toBe(3);
     expect(stats.runningCount).toBe(1);
     expect(stats.stoppedCount).toBe(2);
-    expect(stats.alerts).toHaveLength(2);
+    expect(stats.alerts).toHaveLength(3);
     expect(stats.alerts[0]).toMatchObject({
       id: "host-host-2",
       type: "host",
       severity: "error",
     });
     expect(stats.alerts[1]).toMatchObject({
+      id: "cont-exited-cont-3",
+      type: "container",
+      severity: "warning",
+      title: "Container Exited",
+    });
+    expect(stats.alerts[2]).toMatchObject({
       id: "cont-cont-2",
       type: "container",
       severity: "warning",

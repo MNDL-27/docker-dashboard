@@ -58,9 +58,8 @@ export function buildDashboardStats(hosts: DockerHost[], containers: unknown): D
   const connectedHosts = hosts.filter((host) => host.status === "connected");
   const unhealthyHosts = hosts.filter((host) => host.status === "error" || host.status === "disconnected");
   const runningContainers = normalizedContainers.filter((container) => container.State === "running");
-  const stoppedContainers = normalizedContainers.filter(
-    (container) => container.State !== "running" && container.State !== "exited",
-  );
+  const stoppedContainers = normalizedContainers.filter((container) => container.State !== "running");
+  const exitedContainers = normalizedContainers.filter((container) => container.State === "exited");
 
   const alerts: AlertItem[] = [
     ...unhealthyHosts.map((host) => ({
@@ -68,8 +67,16 @@ export function buildDashboardStats(hosts: DockerHost[], containers: unknown): D
       type: "host" as const,
       severity: "error" as const,
       title: "Host Disconnected",
-      description: `Host "${host.name}" is unresponsive. Check agent connectivity.`,
+        description: `Host "${host.name}" is unresponsive. Check agent connectivity.`,
       timestamp: host.last_seen_at ? "Seen recently" : "Never seen",
+    })),
+    ...exitedContainers.map((container) => ({
+      id: `cont-exited-${container.Id}`,
+      type: "container" as const,
+      severity: "warning" as const,
+      title: "Container Exited",
+      description: `${container.Names?.[0]?.replace("/", "") || "Container"} is stopped and needs review.`,
+      timestamp: "Current state",
     })),
     ...normalizedContainers
       .filter((container) => container.State === "restarting")
