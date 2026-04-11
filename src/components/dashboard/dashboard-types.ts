@@ -5,6 +5,7 @@ export interface AlertItem {
   title: string;
   description: string;
   timestamp: string;
+  href?: string;
 }
 
 export interface DashboardContainerSummary {
@@ -12,5 +13,7 @@ export interface DashboardContainerSummary {
   State: string;
   Names?: string[];
   Image?: string;
+  _hostId?: string;
+  _hostName?: string;
 }
 

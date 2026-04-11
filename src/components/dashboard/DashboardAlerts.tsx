@@ -3,6 +3,7 @@ import { AlertTriangle, Info, ShieldAlert, Clock, ChevronRight } from "lucide-re
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import type { AlertItem } from "@/components/dashboard/dashboard-types";
+import { Link } from "react-router-dom";
 
 interface DashboardAlertsProps {
   alerts: AlertItem[];
@@ -31,7 +32,11 @@ export function DashboardAlerts({ alerts, className }: DashboardAlertsProps) {
         ) : (
           <div className="divide-y divide-white/5">
             {alerts.map((alert) => (
-              <div key={alert.id} className="p-4 hover:bg-white/5 transition-colors cursor-pointer group relative">
+              <Link
+                key={alert.id}
+                to={alert.href || "/app/alerts"}
+                className="block p-4 hover:bg-white/5 transition-colors cursor-pointer group relative focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
+              >
                 <div
                   className={cn(
                     "absolute left-0 top-0 bottom-0 w-0.5",
@@ -58,15 +63,17 @@ export function DashboardAlerts({ alerts, className }: DashboardAlertsProps) {
                     <p className="text-[11px] text-muted-foreground line-clamp-2 leading-relaxed">{alert.description}</p>
                   </div>
                 </div>
-              </div>
+              </Link>
             ))}
           </div>
         )}
       </div>
 
       <div className="p-3 border-t border-white/5">
-        <Button variant="ghost" className="w-full text-[10px] font-black uppercase tracking-[0.2em] h-8 text-muted-foreground hover:text-primary">
+        <Button asChild variant="ghost" className="w-full text-[10px] font-black uppercase tracking-[0.2em] h-8 text-muted-foreground hover:text-primary">
+          <Link to="/app/alerts">
           EXPLORE ALL EVENTS <ChevronRight className="h-3 w-3 ml-1" />
+          </Link>
         </Button>
       </div>
     </div>

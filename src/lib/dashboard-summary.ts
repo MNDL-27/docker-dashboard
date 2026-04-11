@@ -48,6 +48,8 @@ export function normalizeDashboardContainers(containers: unknown): DashboardCont
         State: typeof container.State === "string" ? container.State : "unknown",
         Names: toStringArray(container.Names),
         Image: typeof container.Image === "string" ? container.Image : undefined,
+        _hostId: typeof container._hostId === "string" ? container._hostId : undefined,
+        _hostName: typeof container._hostName === "string" ? container._hostName : undefined,
       },
     ];
   });
@@ -67,8 +69,9 @@ export function buildDashboardStats(hosts: DockerHost[], containers: unknown): D
       type: "host" as const,
       severity: "error" as const,
       title: "Host Disconnected",
-        description: `Host "${host.name}" is unresponsive. Check agent connectivity.`,
+      description: `Host "${host.name}" is unresponsive. Check agent connectivity.`,
       timestamp: host.last_seen_at ? "Seen recently" : "Never seen",
+      href: `/app/hosts/${host.id}`,
     })),
     ...exitedContainers.map((container) => ({
       id: `cont-exited-${container.Id}`,
@@ -77,6 +80,7 @@ export function buildDashboardStats(hosts: DockerHost[], containers: unknown): D
       title: "Container Exited",
       description: `${container.Names?.[0]?.replace("/", "") || "Container"} is stopped and needs review.`,
       timestamp: "Current state",
+      href: container._hostId ? `/app/containers/${container.Id.substring(0, 12)}?host=${container._hostId}` : "/app/containers",
     })),
     ...normalizedContainers
       .filter((container) => container.State === "restarting")
@@ -87,6 +91,7 @@ export function buildDashboardStats(hosts: DockerHost[], containers: unknown): D
         title: "Container Restart Loop",
         description: `${container.Names?.[0]?.replace("/", "") || "Container"} is restarting frequently.`,
         timestamp: "Just now",
+        href: container._hostId ? `/app/containers/${container.Id.substring(0, 12)}?host=${container._hostId}` : "/app/containers",
       })),
   ];
 
