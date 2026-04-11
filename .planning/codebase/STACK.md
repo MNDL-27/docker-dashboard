@@ -1,72 +1,75 @@
 # Stack
 
-## Languages & Runtime
+## Runtime Shape
 
-| Layer | Language | Version |
-|-------|----------|---------|
-| Frontend | TypeScript | ^5.8.3 |
-| Backend (Netlify Functions) | TypeScript (.mts) | ^5.8.3 |
-| Database | SQL (PostgreSQL) | Neon Serverless |
-| Build tooling | Node.js | 20 (set in `netlify.toml`) |
+- Frontend: React 18 SPA built with Vite 5 and TypeScript 5, served as static assets.
+- Backend: Netlify Functions written as ESM TypeScript (`.mts`) behind `/api/*` and `/auth/*` rewrites.
+- Database: Neon Postgres reached with `@neondatabase/serverless`.
+- Host-side watcher: Bash-based Watchtower Agent distributed as static shell scripts from `public/` and installed onto Linux hosts as a `systemd` service.
 
-## Frontend Framework
+## Frontend
 
-- **React** ^18.3.1 — SPA with client-side routing
-- **Vite** ^5.4.19 — Build tool with `@vitejs/plugin-react-swc` for fast compilation
-- **React Router DOM** ^6.30.1 — Client-side routing with nested layout routes
+- React 18.3.1 with `react-router-dom` 6 for SPA routing and subdomain-aware entry routing in `src/App.tsx`.
+- `@tanstack/react-query` is the main data layer; host, container, and fleet polling are driven by query refetch intervals.
+- UI stack is Tailwind CSS 3 plus shadcn/ui-style Radix primitives in `src/components/ui/`.
+- Supporting UI libraries include `framer-motion`, `lucide-react`, `recharts`, `sonner`, and `three`.
+- Vite uses `@vitejs/plugin-react-swc`; `lovable-tagger` is enabled only in development.
 
-## UI Framework
+## Auth And Identity
 
-- **TailwindCSS** ^3.4.17 — Utility-first CSS with `tailwindcss-animate` plugin
-- **shadcn/ui** — ~50 Radix-based components in `src/components/ui/`
-- **class-variance-authority** ^0.7.1 — Component variant management
-- **Framer Motion** ^12.35.0 — Animations and transitions
-- **Lucide React** ^0.462.0 — Icon library
-- **Recharts** ^2.15.4 — Data visualization / charting
-- **Three.js** ^0.183.2 — 3D particle background on login page (`LoginBackground.tsx`)
+- Auth is Clerk, not custom JWT auth.
+- Frontend uses `@clerk/clerk-react` via `ClerkProvider`.
+- Netlify functions use `@clerk/backend` to authenticate bearer tokens and map Clerk IDs to local `users` and `organizations` rows.
+- The app still keeps its own org/member tables in Postgres for authorization and app state.
 
-## State Management & Data Fetching
+## Backend And Serverless
 
-- **TanStack React Query** ^5.83.0 — Server state management, caching, polling
-- **React Hook Form** ^7.61.1 + **Zod** ^3.25.76 — Form management and validation
-- No global client-side state management library (component-local state + React Query)
+- Netlify Functions live in `netlify/functions/`.
+- Main app APIs cover orgs, members, profile, docker hosts, docker proxying, fleet metrics, host health polling, billing webhook handling, and admin utilities.
+- Shared backend helpers in `netlify/functions/lib/` handle DB access, Clerk auth, onboarding checks, host-health status transitions, encryption, platform admin checks, and agent version comparison.
 
-## Backend
+## Data And Persistence
 
-- **Netlify Functions** — Serverless functions in `netlify/functions/` (`.mts` extension)
-- **@neondatabase/serverless** ^1.0.2 — Database client (tagged template literal SQL)
-- **@clerk/backend** ^3.2.0 — Server-side auth verification
-- **svix** ^1.88.0 — Webhook signature verification for Clerk events
-- **Node.js crypto** — AES-256-GCM encryption for secrets at rest
+- Postgres schema is defined in `netlify/schema.sql`, with migrations in `db-migrations/`.
+- Core app tables: `users`, `organizations`, `organization_members`, `docker_hosts`, `docker_host_secrets`, `mock_agent_config`.
+- Sensitive host credentials are stored separately from host metadata in `docker_host_secrets`.
+- Host secret values are encrypted in the app layer with AES-256-GCM and key rotation support via `APP_ENCRYPTION_ACTIVE_KEY_ID` and `APP_ENCRYPTION_KEY_*`.
 
-## Authentication
+## Watcher / Agent Subsystem
 
-- **Clerk** — Full auth provider
-  - Frontend: `@clerk/clerk-react` ^5.61.3
-  - Backend: `@clerk/backend` ^3.2.0
-  - Webhook sync via Svix
+- Distributed artifacts:
+  - `public/watchtower-agent-install.sh`
+  - `public/watchtower-agent.sh`
+  - `public/watchtower-agent-uninstall.sh`
+  - `public/watchtower-dev-connector.sh` as a legacy shim
+- The dashboard surfaces install commands from `OnboardingPage` and `SetupGuidePage`, defaulting to `https://app.dockerdash.app/watchtower-agent-install.sh` outside local dev.
+- The installer writes the runtime to `/opt/watchtower-agent/watchtower-agent.sh`, protected config to `/etc/watchtower-agent/watchtower-agent.env`, and a `systemd` unit at `/etc/systemd/system/watchtower-agent.service`.
+- The runtime is a small Bash HTTP server built with `socat` plus `curl` against the local Docker Unix socket.
+- Auth between dashboard backend and agent is a shared `AGENT_API_KEY` sent as `X-Agent-Key`.
+- Optional socket overrides are sent as `X-Docker-Socket`.
+- The agent exposes:
+  - `/docker/*` as a proxy to the local Docker Engine API
+  - `/agent/version` for installer/runtime version reporting
+  - `/metrics` for fleet CPU, memory, network, and disk aggregation
 
-## Configuration Files
+## Deployment And Hosting
 
-| File | Purpose |
-|------|---------|
-| `vite.config.ts` | Vite build config, `@` path alias to `./src` |
-| `tailwind.config.ts` | Dark mode (class-based), custom color tokens via CSS vars |
-| `netlify.toml` | Build settings, API redirect rules, dev server config |
-| `tsconfig.json` / `tsconfig.app.json` / `tsconfig.node.json` | TypeScript config |
-| `eslint.config.js` | Flat ESLint config with React rules |
-| `postcss.config.js` | PostCSS with TailwindCSS + Autoprefixer |
-| `components.json` | shadcn/ui configuration |
-| `.env` / `.env.example` | Environment variables |
+- Netlify hosts the SPA and functions.
+- `netlify.toml` defines:
+  - build command `npm run build`
+  - publish directory `dist`
+  - API rewrites to Netlify functions
+  - host-based redirects for `dockerdash.app`, `www.dockerdash.app`, and `docs.dockerdash.app`
+- Local development uses `netlify dev` on port 8080 with Vite served behind it on port 8081.
 
-## Package Manager
+## Billing And Other App Services
 
-- **npm** (primary, `package-lock.json` present)
-- **Bun** lockfiles also present (`bun.lock`, `bun.lockb`) — likely used locally
+- Billing UI is wired to Paddle client-side initialization through `VITE_PADDLE_CLIENT_TOKEN`.
+- Clerk webhooks are verified with Svix.
 
-## Dev Dependencies (Notable)
+## Testing And Tooling
 
-- **Vitest** ^3.2.4 — Test runner with jsdom environment
-- **@testing-library/react** ^16.0.0 — React component testing
-- **netlify-cli** ^24.2.0 — Local Netlify dev server
-- **lovable-tagger** ^1.1.13 — Component tagging (dev-only Vite plugin)
+- Vitest with jsdom is configured for frontend tests.
+- Testing Library packages are installed.
+- ESLint uses the flat config format with React hooks and refresh plugins.
+- `npm` is the practical package manager in repo scripts; Bun lockfiles also exist but are secondary.

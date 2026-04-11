@@ -1,153 +1,264 @@
 # Structure
 
-## Directory Layout
+## Top-Level Layout
 
-```
+```text
 docker-watchtower-dash/
-├── netlify/                        # Backend (serverless)
-│   ├── functions/                  # Netlify Functions (API endpoints)
-│   │   ├── lib/                    # Shared backend utilities
-│   │   │   ├── auth.mts            # Clerk JWT verification + auth context
-│   │   │   ├── crypto.mts          # AES-256-GCM encrypt/decrypt
-│   │   │   └── db.mts              # Neon database client
-│   │   ├── api-clerk-webhook.mts   # Clerk webhook event handler
-│   │   ├── api-docker-hosts.mts    # Host CRUD (GET/POST/DELETE)
-│   │   ├── api-docker-proxy.mts    # Docker Engine API proxy (320 lines)
-│   │   ├── api-host-health-poll.mts# Cron health checker
-│   │   ├── api-members.mts         # Organization members
-│   │   ├── api-organizations.mts   # Organization management
-│   │   ├── api-profile.mts         # User profile
-│   │   ├── api-admin-stats.mts     # Admin statistics
-│   │   ├── api-admin-migrate-secrets.mts # Secret migration utility
-│   │   ├── api-mock-docker-agent.mts # Mock agent for testing
-│   │   └── auth-me.mts            # Auth session check
-│   ├── schema.sql                  # Database schema (PostgreSQL)
-│   ├── init-db.mjs                 # Schema bootstrap script
-│   └── check-db.mjs               # DB connection verify script
-├── src/                            # Frontend source
-│   ├── App.tsx                     # Root component + routing
-│   ├── main.tsx                    # React entry point
-│   ├── index.css                   # Global styles + CSS custom properties
-│   ├── App.css                     # App-level styles
-│   ├── components/                 # React components
-│   │   ├── ui/                     # shadcn/ui primitives (~50 files)
-│   │   │   └── LoginBackground.tsx # Three.js particle background
-│   │   ├── layout/                 # App shell components
-│   │   │   ├── AppShell.tsx        # Sidebar + content layout
-│   │   │   ├── AppSidebar.tsx      # Navigation sidebar
-│   │   │   └── AppTopBar.tsx       # Top bar with org switcher
-│   │   ├── docker/                 # Docker-specific components
-│   │   │   └── AddHostDialog.tsx   # Host creation form dialog
-│   │   ├── shared/                 # Reusable business components
-│   │   │   ├── EmptyState.tsx      # Empty state placeholder
-│   │   │   ├── MetricCard.tsx      # Dashboard metric card
-│   │   │   ├── PageHeader.tsx      # Page header with title/actions
-│   │   │   └── StatusBadge.tsx     # Status indicator badge
-│   │   ├── settings/               # Settings components
-│   │   │   └── ProfileSettings.tsx # Profile settings (placeholder)
-│   │   ├── NavLink.tsx             # Navigation link component
-│   │   ├── ProtectedRoute.tsx      # Auth/onboarding gate
-│   │   ├── RequireAppSubdomain.tsx # Hostname enforcer (redirects to app.dockerdash.app)
-│   │   └── AppRootRedirect.tsx    # Root redirect for app subdomain (auth → /app or /login)
-│   ├── hooks/                      # Custom React hooks
-│   │   ├── useDocker.ts            # Docker host/container queries & mutations
-│   │   ├── use-toast.ts            # Toast notification hook
-│   │   └── use-mobile.tsx          # Mobile viewport detection
-│   ├── services/                   # API service layers
-│   │   └── docker-api.ts           # Docker API client (typed actions)
-│   ├── lib/                        # Utilities
-│   │   ├── api.ts                  # apiFetch() — Clerk-authenticated fetch wrapper
-│   │   ├── hostname.ts             # Subdomain detection (isAppSubdomain, isDocsSubdomain)
-│   │   └── utils.ts                # cn() utility (clsx + tailwind-merge)
-│   ├── types/                      # TypeScript type definitions
-│   │   └── database.ts             # Organization, DockerHost, OrgMember types
-│   ├── contexts/                   # React contexts (empty — unused)
-│   ├── test/                       # Test infrastructure
-│   │   ├── setup.ts                # Vitest setup (jsdom matchers)
-│   │   └── example.test.ts         # Placeholder test
-│   └── pages/                      # Page components
-│       ├── LandingPage.tsx         # Marketing homepage
-│       ├── FeaturesPage.tsx        # Features page
-│       ├── PricingPage.tsx         # Pricing page
-│       ├── SecurityPage.tsx        # Security page
-│       ├── DocsPage.tsx            # Documentation page
-│       ├── ContactPage.tsx         # Contact page
-│       ├── LoginPage.tsx           # Clerk sign-in page
-│       ├── SignupPage.tsx          # Redirects to /login
-│       ├── BetaGatePage.tsx        # Beta approval waiting gate
-│       ├── OnboardingPage.tsx      # Onboarding wizard (org + host setup)
-│       ├── Index.tsx               # Redirects to /
-│       ├── NotFound.tsx            # 404 page
-│       └── app/                    # Authenticated app pages
-│           ├── DashboardPage.tsx   # Main dashboard with metrics
-│           ├── HostsPage.tsx       # Host management
-│           ├── HostDetailPage.tsx  # Individual host detail
-│           ├── ContainersPage.tsx  # Container listing
-│           ├── ContainerDetailPage.tsx # Container detail (inspect/stats/logs)
-│           ├── MonitoringPage.tsx  # Monitoring (placeholder)
-│           ├── LogsPage.tsx        # Aggregated logs viewer
-│           ├── AlertsPage.tsx      # Alerts (placeholder)
-│           ├── IncidentsPage.tsx   # Incidents (placeholder)
-│           ├── DeploymentsPage.tsx # Deployments (placeholder)
-│           ├── MembersPage.tsx     # Organization members
-│           ├── OrganizationsPage.tsx # Organization management
-│           ├── SettingsPage.tsx    # Settings page
-│           ├── BillingPage.tsx     # Billing (placeholder)
-│           ├── AdminPage.tsx       # Admin panel
-│           ├── HelpPage.tsx        # Help & support
-│           └── SetupGuidePage.tsx  # Setup guide for new users
-├── public/                         # Static assets
-├── db-migrations/                  # Database migration files
-├── dist/                           # Build output
-├── index.html                      # HTML entry point
-├── package.json                    # Dependencies & scripts
-├── netlify.toml                    # Netlify config
-├── vite.config.ts                  # Vite build config
-├── vitest.config.ts                # Vitest test config
-├── tailwind.config.ts              # Tailwind CSS config
-├── eslint.config.js                # ESLint config
-└── tsconfig*.json                  # TypeScript configs
+├── src/                     Frontend SPA
+├── netlify/                 Netlify functions, schema, DB scripts
+├── public/                  Static assets and host agent/install scripts
+├── shared/                  Cross-runtime shared constants
+├── db-migrations/           Incremental SQL migrations
+├── .planning/codebase/      Codebase map documents
+├── dist/                    Vite build output
+├── netlify.toml             Netlify build + rewrite rules
+├── package.json             Scripts and dependency graph
+└── README.md                Setup and operational docs
 ```
 
-## Key Locations
+## Frontend Structure
 
-| Need to... | Look in |
-|------------|---------|
-| Add an API endpoint | `netlify/functions/api-*.mts` |
-| Add a new app page | `src/pages/app/` + route in `src/App.tsx` |
-| Add a marketing page | `src/pages/` + route in `src/App.tsx` |
-| Add a UI component | `src/components/ui/` (shadcn) or `src/components/shared/` |
-| Add a Docker feature | `src/services/docker-api.ts` + `src/hooks/useDocker.ts` |
-| Change auth logic | `src/components/ProtectedRoute.tsx` + `netlify/functions/lib/auth.mts` |
-| Modify DB schema | `netlify/schema.sql` + types in `src/types/database.ts` |
-| Add environment vars | `.env` + `.env.example` |
+### `src/App.tsx`
 
-## Naming Conventions
+Primary composition root:
 
-- Frontend pages: `PascalCase.tsx` (e.g., `DashboardPage.tsx`)
-- Backend functions: `kebab-case.mts` prefixed with `api-` or `auth-` (e.g., `api-docker-proxy.mts`)
-- Hooks: `camelCase.ts` prefixed with `use` (e.g., `useDocker.ts`)
-- Components: `PascalCase.tsx`
-- Types: `camelCase.ts` with PascalCase interfaces
-- Backend libs: `camelCase.mts` (e.g., `auth.mts`, `crypto.mts`)
+- initializes Clerk
+- initializes React Query
+- wires React Router
+- routes app vs docs vs marketing by hostname
+- mounts authenticated `/app` shell
 
-## Routing Structure
+This is the entry point for understanding how setup routes lead into the watcher flow.
 
-### Domain-Scoped Routing
+### `src/pages/`
 
-| Domain | Available Routes |
-|--------|------------------|
-| `dockerdash.app` | `/`, `/features`, `/pricing`, `/security`, `/docs`, `/contact` |
-| `app.dockerdash.app` | All routes (product: `/app/*`, auth: `/login`, `/signup`, `/beta-gate`, `/onboarding`) |
-| `docs.dockerdash.app` | `/` → DocsPage (SPA rewrite) |
-| `www.dockerdash.app` | 301 → `dockerdash.app` (Netlify) |
-| `localhost` | All routes (dev fallback) |
+Main page groups:
 
-### Marketing (unauthenticated)
-`/`, `/features`, `/pricing`, `/security`, `/docs`, `/contact`
+- public marketing and legal pages
+- `OnboardingPage.tsx` for org creation + first host registration
+- `LoginPage.tsx` and `SignupPage.tsx`
+- `DocsPage.tsx` and operational docs surfaces
 
-### Auth (app.dockerdash.app only)
-`/login/*`, `/signup` (→ redirect to login), `/beta-gate`, `/onboarding`
+### `src/pages/app/`
 
-### App (protected, nested under `<AppShell>`)
-`/app`, `/app/hosts`, `/app/hosts/:id`, `/app/containers`, `/app/containers/:id`, `/app/monitoring`, `/app/logs`, `/app/alerts`, `/app/incidents`, `/app/incidents/:id`, `/app/deployments`, `/app/members`, `/app/billing`, `/app/settings`, `/app/organizations`, `/app/admin`, `/app/help`, `/app/setup-guide`
+Authenticated product pages:
+
+- `DashboardPage.tsx`
+- `HostsPage.tsx`
+- `HostDetailPage.tsx`
+- `ContainersPage.tsx`
+- `ContainerDetailPage.tsx`
+- `SetupGuidePage.tsx`
+- `AdminPage.tsx`
+
+Watcher-relevant pages:
+
+- `HostsPage.tsx` shows registered hosts and connection state
+- `HostDetailPage.tsx` shows agent version and status details
+- `SetupGuidePage.tsx` explains install and exposure patterns
+- `DashboardPage.tsx` consumes fleet metrics and health summaries
+
+### `src/components/docker/`
+
+- `AddHostDialog.tsx` is the reusable host registration UI outside onboarding
+
+This is the most important frontend component for the host registration path.
+
+### `src/hooks/`
+
+Key hooks:
+
+- `useDocker.ts`
+  - host list query
+  - add/delete host mutations
+  - container and stats polling
+- `useFleetMetrics.ts`
+  - fetches aggregated org-level metrics from `/api/fleet-metrics`
+- `useViewerState.ts`
+  - auth/viewer profile state
+
+### `src/services/`
+
+- `docker-api.ts` is the typed browser API client for host actions routed through `/api/docker-proxy`
+
+### `src/lib/`
+
+Key utilities:
+
+- `api.ts`: browser fetch wrapper that injects Clerk token
+- `hostname.ts`: subdomain detection
+- `host-health-state.ts`: UI state helpers for host freshness/status
+- `onboarding-gate.ts`: onboarding state derivation
+- `agent-version.ts`: current-version comparison logic for UI prompts
+
+### `src/types/`
+
+- `database.ts` contains the app-facing TypeScript shapes for `DockerHost`, `Organization`, and related entities
+
+## Backend Structure
+
+### `netlify/functions/`
+
+This folder is the server-side control plane. Each file is a Netlify function exposed through `netlify.toml`.
+
+#### Auth and user state
+
+- `auth-me.mts`
+- `api-profile.mts`
+- `api-members.mts`
+- `api-organizations.mts`
+- `api-clerk-webhook.mts`
+
+#### Host and watcher control plane
+
+- `api-docker-hosts.mts`
+  - host CRUD
+  - onboarding completion side effects
+  - encrypted secret writes to `docker_host_secrets`
+- `api-docker-proxy.mts`
+  - host-scoped Docker action proxy
+  - org-wide container fan-out
+  - ping/version enrichment and host status updates
+- `api-host-health-poll.mts`
+  - scheduled health poller
+  - status/error/staleness lifecycle
+- `api-fleet-metrics.mts`
+  - org-wide host metrics aggregation
+- `api-admin-migrate-secrets.mts`
+  - re-encrypts stored host secrets using the active key
+- `api-mock-docker-agent.mts`
+  - local/dev agent substitute
+
+#### Billing/admin utilities
+
+- `api-billing-webhook.mts`
+- `api-admin-stats.mts`
+
+### `netlify/functions/lib/`
+
+Core server-side helpers:
+
+- `auth.mts`
+  - Clerk request verification
+  - internal user/org resolution
+- `db.mts`
+  - Neon SQL client
+- `crypto.mts`
+  - host secret encryption/decryption
+  - key rotation support
+- `host-health.mjs`
+  - stale/unhealthy state transitions
+- `agent-version.mts`
+  - canonical agent version comparison
+- `ensure-onboarding-schema.mts`
+  - compatibility guard for onboarding-related columns/tables
+- `platform-admin.mts`
+  - admin authorization helper
+
+## Host Runtime Structure
+
+### `public/watchtower-agent.sh`
+
+Standalone agent runtime. Responsibilities:
+
+- validate local env and dependencies
+- accept inbound HTTP over `socat`
+- authenticate `X-Agent-Key`
+- optionally switch Docker socket path via `X-Docker-Socket`
+- expose `/agent/version`
+- expose `/metrics`
+- proxy `/docker/*` to Docker Unix socket
+
+### `public/watchtower-agent-install.sh`
+
+Production install/update entry point. Responsibilities:
+
+- preflight checks
+- create service account and directories
+- write env file and systemd service
+- embed current runtime script
+- install uninstaller
+- restart and validate service
+
+### `public/watchtower-agent-uninstall.sh`
+
+Cleanup path for installed agent service.
+
+### `public/watchtower-dev-connector.sh`
+
+Legacy shim pointing users toward the supported installer/runtime flow.
+
+## Shared and Schema Structure
+
+### `shared/`
+
+- `agent-version.ts`
+
+Shared current-version constant to keep UI and functions aligned on upgrade prompts.
+
+### `netlify/schema.sql`
+
+Canonical base schema. Watcher-relevant tables:
+
+- `docker_hosts`
+  - host metadata, status, versions, last seen, failure counters
+- `docker_host_secrets`
+  - encrypted API key and optional Cloudflare credentials
+- `organization_members`
+  - tenant access enforcement
+- `organizations`
+  - onboarding state
+
+### `db-migrations/`
+
+Current notable watcher-related migrations:
+
+- `20260404000000_add_agent_version_to_docker_hosts.sql`
+- earlier migrations for billing foundation and beta allowlist
+
+## Runtime Path by File
+
+```text
+src/App.tsx
+  -> src/pages/OnboardingPage.tsx or src/components/docker/AddHostDialog.tsx
+  -> src/hooks/useDocker.ts
+  -> src/lib/api.ts
+  -> /api/docker-hosts
+  -> netlify/functions/api-docker-hosts.mts
+  -> netlify/functions/lib/auth.mts
+  -> netlify/functions/lib/crypto.mts
+  -> netlify/schema.sql tables: docker_hosts + docker_host_secrets
+
+save-and-test continues:
+  -> src/services/docker-api.ts ping()
+  -> /api/docker-proxy
+  -> netlify/functions/api-docker-proxy.mts
+  -> decrypted host secrets + request header construction
+  -> remote {host_url}/docker/_ping and /agent/version
+  -> public/watchtower-agent.sh
+  -> local Docker Unix socket
+  -> docker_hosts status/version updates
+
+ongoing status:
+  -> /api/host-health-poll
+  -> netlify/functions/api-host-health-poll.mts
+  -> host ping + version fan-out
+  -> docker_hosts health transitions
+
+ongoing metrics:
+  -> src/hooks/useFleetMetrics.ts
+  -> /api/fleet-metrics
+  -> netlify/functions/api-fleet-metrics.mts
+  -> remote {host_url}/metrics
+  -> public/watchtower-agent.sh
+  -> Docker stats aggregation
+  -> dashboard charts/cards
+```
+
+## Structure Notes / Drift From Older Map
+
+- Older structure docs referenced custom JWT auth and empty `contexts/`; current auth is Clerk-driven and server-side org resolution is central.
+- The host agent is a first-class part of the repo now and belongs in the structure map, not just README docs.
+- The watcher flow is split across two different backend paths:
+  - `/api/docker-proxy` for interactive host/container actions
+  - `/api/host-health-poll` and `/api/fleet-metrics` for scheduled and aggregate updates

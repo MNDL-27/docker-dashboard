@@ -1,110 +1,58 @@
 # Conventions
 
-## Code Style
+## Baseline
 
-### TypeScript
-- **Strict mode:** Enabled via `tsconfig.app.json`
-- **Path aliases:** `@/` maps to `./src/` (configured in both Vite and TypeScript)
-- **Type assertions:** Preferred over `as` where possible, but `as` is common (e.g., `data as DockerHost[]`)
-- **`@ts-expect-error`:** Used sparingly (e.g., `window.Clerk` global access in `api.ts`)
-- **Unused vars:** ESLint rule disabled (`@typescript-eslint/no-unused-vars: "off"`)
+- Frontend code is TypeScript-first with React function components, TanStack Query for async state, and `@/` path aliases wired through Vite and Vitest.
+- Netlify functions use ESM `.mts` files with a consistent `export default async (req: Request)` entrypoint and `export const config: Config = { path: ... }`.
+- Shared agent version logic is intentionally centralized in [`shared/agent-version.ts`](../../shared/agent-version.ts), then re-exported into both frontend and Netlify code.
+- Styling is utility-first Tailwind with shadcn/ui primitives; component variants are typically handled with `class-variance-authority` and `cn()`.
 
-### React Patterns
-- **Functional components only** — No class components anywhere in codebase
-- **Named exports** for components that have co-located logic (e.g., `ProtectedRoute`)
-- **Default exports** for page components (e.g., `export default LandingPage`)
-- **Hooks:** Custom hooks prefixed with `use`, co-located in `src/hooks/`
-- **No context providers** — `src/contexts/` exists but is empty; state managed via React Query + component-local state
+## TypeScript And React Patterns
 
-### Component Organization
-```typescript
-// Typical component structure:
-import { ... } from "react";             // React imports
-import { ... } from "@/components/ui/..."; // UI component imports
-import { ... } from "@/hooks/...";        // Hook imports
-import { ... } from "@/lib/...";          // Utility imports
+- Pages default-export a `*Page` component from `src/pages/**`.
+- Hooks live in `src/hooks/` and wrap TanStack Query or mutation flows rather than exposing raw fetch logic to pages.
+- Service modules such as [`src/services/docker-api.ts`](../../src/services/docker-api.ts) are thin API wrappers over [`src/lib/api.ts`](../../src/lib/api.ts).
+- Query keys are simple string arrays like `['docker-hosts', orgId]`; refetch intervals are encoded close to the hook.
+- Type assertions are used when crossing the API boundary; there is not a strong runtime validation layer on the frontend.
 
-export function ComponentName() {
-  // hooks
-  // derived state
-  // handlers
-  // return JSX
-}
-```
+## Backend Function Shape
 
-## Naming Conventions
+- Netlify handlers generally follow this shape:
+  - define CORS/JSON headers at module scope
+  - early-return for `OPTIONS`
+  - authenticate via [`requireAuth`](../../netlify/functions/lib/auth.mts) unless the endpoint is intentionally public
+  - return plain JSON payloads and ad-hoc `{ error, details? }` error objects
+- SQL is written inline with tagged Neon queries in the handler rather than hidden behind repository classes.
+- Cross-cutting helpers live under `netlify/functions/lib/` and are imported directly into handlers.
 
-| Entity | Convention | Example |
-|--------|-----------|---------|
-| Page component | PascalCase + `Page` suffix | `DashboardPage.tsx` |
-| UI component | PascalCase | `MetricCard.tsx` |
-| Hook | camelCase, `use` prefix | `useDocker.ts` |
-| Service | kebab-case | `docker-api.ts` |
-| Backend function | `api-` + kebab-case + `.mts` | `api-docker-proxy.mts` |
-| Backend lib | camelCase + `.mts` | `auth.mts` |
-| Type file | camelCase + `.ts` | `database.ts` |
-| CSS variable | `--kebab-case` | `--primary-foreground` |
+## Naming And File Layout
 
-## Styling Patterns
+- `api-*.mts` is the convention for HTTP handlers under `netlify/functions/`.
+- Shared server utilities use lower camel or descriptive kebab naming depending on age of the filebase; the repo is not fully uniform here.
+- Public operational assets for the host agent live in `public/` so they can be served directly to installing hosts.
+- Database evolution is tracked in `db-migrations/`, while bootstrap schema assets remain under `netlify/`.
 
-- **TailwindCSS** with dark mode via `class` strategy
-- **CSS custom properties** for theming (defined in `index.css`, consumed via `hsl(var(--...))`)
-- **`cn()` utility** (`src/lib/utils.ts`) — `clsx` + `tailwind-merge` for conditional class merging
-- **class-variance-authority (CVA)** for component variants (buttons, badges, etc.)
-- **No inline styles** — All styling via Tailwind utilities
-- **Dark-first:** App initializes in dark mode via `DarkModeInit` component
+## Linting And Quality Guardrails
 
-## Error Handling
+- ESLint is configured through [`eslint.config.js`](../../eslint.config.js) with the base TypeScript recommended rules plus React Hooks and React Refresh rules.
+- `@typescript-eslint/no-unused-vars` is disabled repo-wide, which lowers friction but also makes dead parameters and abandoned refactors easier to miss.
+- There is no dedicated formatting tool checked in, so style consistency depends on editor defaults and contributor discipline.
+- The repo currently has some stale docs and generated-looking text, so documentation should not be treated as authoritative without checking the code.
 
-### Frontend
-- `apiFetch()` throws `Error` on non-OK responses with parsed error message
-- React Query `onError` callbacks for mutation feedback
-- Toast notifications (`sonner`) for user-facing error messages
-- `ProtectedRoute` catches auth failures → redirect to `/login`
+## Watcher-Specific Conventions
 
-### Backend
-- Functions return structured JSON errors: `{ error: string, details?: string }`
-- HTTP status codes: 400 (bad request), 401/403 (auth), 404 (not found), 502 (proxy failure), 504 (timeout), 413 (payload too large)
-- `requireAuth()` throws on auth failure → caught in function handler → JSON error response
-- Crypto module: fails fast on startup if encryption key is misconfigured
+- The watcher agent is implemented as shell, not Node or Go. The production runtime contract is the HTTP surface exposed by [`public/watchtower-agent.sh`](../../public/watchtower-agent.sh).
+- The installer at [`public/watchtower-agent-install.sh`](../../public/watchtower-agent-install.sh) embeds its own copy of the runtime script instead of sourcing or packaging the public script. That is a major maintenance constraint: every agent behavior change must be kept in sync twice.
+- Agent requests are header-driven:
+  - `X-Agent-Key` authenticates requests from Netlify to the host agent.
+  - `X-Docker-Socket` optionally overrides the Docker socket path.
+- The backend assumes the agent exposes both `/docker/*` proxy routes and `/agent/version`; that contract is duplicated again in [`netlify/functions/api-mock-docker-agent.mts`](../../netlify/functions/api-mock-docker-agent.mts).
 
-## API Conventions
+## Quality Gaps To Respect
 
-### Netlify Function Pattern
-```typescript
-import type { Config } from '@netlify/functions';
-import { requireAuth } from './lib/auth.mjs';
-import { sql } from './lib/db.mjs';
-
-export default async (req: Request) => {
-  if (req.method === 'OPTIONS') return new Response(null, { headers });
-  try {
-    const auth = await requireAuth(req);
-    // ... business logic ...
-    return new Response(JSON.stringify(result), { headers });
-  } catch (error: any) {
-    return new Response(JSON.stringify({ error: error.message }), { status: ... });
-  }
-};
-
-export const config: Config = { path: '/api/endpoint-name' };
-```
-
-### Frontend Data Fetching Pattern
-```typescript
-// Hook wrapping TanStack Query
-export function useDockerHosts(orgId?: string | null) {
-  return useQuery({
-    queryKey: ['docker-hosts', orgId],
-    queryFn: async () => (await apiFetch(`/docker-hosts?orgId=${orgId}`)) as DockerHost[],
-    enabled: !!orgId,
-    refetchInterval: 30000,
-  });
-}
-```
-
-## Git Conventions
-
-- Standard `.gitignore` excluding `node_modules/`, `dist/`, `.env`
-- No branch naming conventions observed (main branch)
-- Build/error log files committed (likely unintentional: `build.log`, `error.log`, etc.)
+- The public agent script and the installer-embedded runtime have already drifted:
+  - the installer copy trims header values more defensively before matching `X-Agent-Key`, `X-Docker-Socket`, and `Content-Length`
+  - the public script still uses the older `case "header: value"` parsing, which is more brittle against formatting differences
+- The agent parses Docker JSON with `grep`, `sed`, `cut`, and `awk` instead of a JSON parser. That keeps dependencies light, but it makes correctness depend on Docker response shape and whitespace assumptions.
+- Because the installer writes the runtime via heredoc, reviewing watcher changes requires checking both the public script and the embedded copy, not just one file.
+- Any future watcher work should prefer a single source of truth for the runtime or an automated sync check; otherwise regressions are likely to recur.

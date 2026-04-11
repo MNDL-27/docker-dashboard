@@ -1,89 +1,160 @@
 # Concerns
 
-## Technical Debt
+## Current Risk Summary
 
-### 1. Build Log Files Committed to Repo
-- Files: `build.log`, `build2.log`, `build3.log`, `build-final.log`, `error.log`
-- **Impact:** Clutters repo, shouldn't be in version control
-- **Fix:** Add `*.log` to `.gitignore`, remove from tracking
+This repo contains the full watcher path:
+- Browser client in `src/`
+- Netlify API/functions in `netlify/functions/`
+- Host agent installer/runtime scripts in `public/watchtower-agent*.sh`
 
-### 2. Empty Contexts Directory
-- Path: `src/contexts/` — directory exists but is empty
-- **Impact:** Dead code / misleading structure
-- **Fix:** Remove or use for future state management needs
+The highest current risks are watcher-specific:
+- Fleet metrics are incomplete or silently wrong for some valid host configurations.
+- Manual dashboard actions mutate host health state, which can hide outages.
+- The host agent trusts broad request inputs once the shared API key is known.
+- Observability UX can render synthetic data that looks real when backend metrics fail.
 
-### 3. Placeholder Pages
-- Multiple app pages are minimal placeholders: `MonitoringPage`, `AlertsPage`, `IncidentsPage`, `DeploymentsPage`, `BillingPage`
-- **Impact:** Users see incomplete features in navigation
-- **Fix:** Either implement or hide from sidebar until ready
+## High-Risk Concerns
 
-### 4. Multiple Lock Files
-- Both `package-lock.json` and `bun.lock`/`bun.lockb` exist
-- **Impact:** Potential dependency resolution conflicts between npm and Bun
-- **Fix:** Standardize on one package manager, remove the other's lockfile
+### 1. Fleet metrics break for Cloudflare Access and non-default Docker socket hosts
+- Evidence:
+  - `netlify/functions/api-fleet-metrics.mts`
+  - `public/watchtower-agent.sh`
+- `fetchHostMetrics()` only sends `X-Agent-Key` to `/metrics`.
+- It does not forward:
+  - `CF-Access-Client-Id`
+  - `CF-Access-Client-Secret`
+  - `X-Docker-Socket`
+- Result:
+  - Tunnel hosts protected by Cloudflare Access can pass health checks but fail fleet metrics.
+  - Hosts configured with a non-default Docker socket path can pass ping but report broken or empty metrics.
+- Impact:
+  - Fleet charts can undercount healthy hosts.
+  - Operators can trust a dashboard that is missing part of the fleet.
 
-### 5. Dev Bypass Flag Hardcoded
-- `BYPASS_BETA_GATE = true` in `src/components/ProtectedRoute.tsx`
-- **Impact:** Beta approval gate permanently disabled — no access control for private beta
-- **Fix:** Move to environment variable or remove before production launch
+### 2. Fleet metrics under-report busy hosts by sampling only the first 20 containers
+- Evidence:
+  - `public/watchtower-agent.sh`
+  - `public/watchtower-agent-install.sh`
+- The `/metrics` implementation caps container inspection with `head -20`.
+- Result:
+  - CPU, memory, network, and disk figures are partial on dense hosts.
+- Impact:
+  - Fleet-level resource charts become materially incorrect on real production hosts.
+  - The error is silent; there is no field indicating the sample was truncated.
 
-## Security Considerations
+### 3. Dashboard can show mock resource history when the real metrics pipeline is failing
+- Evidence:
+  - `src/components/dashboard/FleetResourceChart.tsx`
+  - `src/hooks/useFleetMetrics.ts`
+- If the chart has no data, it seeds fabricated CPU/memory points.
+- `useFleetMetrics()` also swallows backend failures and returns `[]`.
+- Result:
+  - Broken metrics collection can look like healthy low-variance telemetry.
+- Impact:
+  - This is an observability correctness failure, not just a UX issue.
+  - Operators can make decisions from invented data.
 
-### Strengths
-- ✓ AES-256-GCM encryption for Docker host secrets at rest
-- ✓ AAD binding prevents ciphertext field swapping between hosts
-- ✓ Clerk JWT verification on all protected endpoints
-- ✓ Organization membership checks for data access
-- ✓ Svix webhook signature verification
-- ✓ Container ID sanitization against injection attacks
-- ✓ Payload size limits (4MB) on Docker proxy responses
-- ✓ Request timeouts (3-8s) prevent hanging connections
-- ✓ `HEALTH_POLL_SECRET` protects cron endpoint
+### 4. Manual dashboard probes overwrite operational health state
+- Evidence:
+  - `netlify/functions/api-docker-proxy.mts`
+  - `src/components/docker/AddHostDialog.tsx`
+  - `src/pages/app/HostsPage.tsx`
+  - `src/pages/app/HostDetailPage.tsx`
+- `action === 'ping'` updates `docker_hosts.status` and `last_seen_at`.
+- Org-wide container fetches also set host status directly.
+- Result:
+  - A manual “Test connection” or an incidental container refresh changes the same status fields used by scheduled health polling.
+  - Failed manual probes still advance `last_seen_at`.
+- Impact:
+  - Staleness semantics are blurred.
+  - Health status no longer means “last successful scheduled heartbeat”.
 
-### Concerns
-- **CORS:** `Access-Control-Allow-Origin: *` in Docker proxy — overly permissive for SaaS
-- **Global Clerk access:** `window.Clerk?.session?.getToken()` bypasses React context — fragile pattern
-- **Test bypass in auth:** `x-test-bypass` header accepted if `NODE_ENV === 'test'` — must ensure never leaked to production
+### 5. Agent permits caller-controlled socket override with full Docker API proxying
+- Evidence:
+  - `public/watchtower-agent.sh`
+  - `netlify/functions/api-docker-proxy.mts`
+- The agent accepts `X-Docker-Socket` and proxies arbitrary Docker paths once `X-Agent-Key` matches.
+- The backend intentionally forwards stored `docker_socket_path`.
+- Result:
+  - Anyone holding the shared agent key can ask the agent to target alternate local Unix sockets.
+  - The trust boundary is “knows the shared secret”, not “allowed to access only one daemon”.
+- Impact:
+  - This increases blast radius if an agent key leaks.
+  - It also makes misconfiguration more dangerous than a fixed-socket agent design.
 
-## Performance Considerations
+## Medium-Risk Concerns
 
-### Strengths
-- ✓ SWC compiler (fast builds via `@vitejs/plugin-react-swc`)
-- ✓ React Query polling with configurable intervals (10-30s)
-- ✓ Bounded concurrency (max 5 parallel) for multi-host Docker fetches
-- ✓ Neon serverless — auto-scaling database connections
+### 6. CORS is permissive on both agent and serverless proxy layers
+- Evidence:
+  - `public/watchtower-agent.sh`
+  - `netlify/functions/api-docker-proxy.mts`
+  - `netlify/functions/api-docker-hosts.mts`
+  - `netlify/functions/api-fleet-metrics.mts`
+- Responses use `Access-Control-Allow-Origin: *`.
+- The backend still requires auth, but the cross-origin posture is broader than necessary for a SaaS control plane.
+- Impact:
+  - Increases attack surface and makes future auth mistakes more costly.
 
-### Concerns
-- **N+1 queries in Docker proxy:** For `all-containers`, each host requires a separate DB query for secrets
-- **No API response caching** — Every TanStack Query refetch hits the backend
-- **Large container lists:** No pagination on container listings — could be slow for hosts with hundreds of containers
-- **Three.js on login:** 3D particle background adds bundle size and GPU usage for a login page
+### 7. Agent version drift detection is strict string equality only
+- Evidence:
+  - `shared/agent-version.ts`
+- `isAgentVersionOutdated()` returns true for any string not exactly equal to `1.0.0`.
+- Result:
+  - Valid semver variants such as build metadata, patch suffixes, or forward-compatible versions are treated as outdated.
+- Impact:
+  - False positives in upgrade banners and host lists.
 
-## Fragile Areas
+### 8. Host creation is write-first, test-later
+- Evidence:
+  - `src/components/docker/AddHostDialog.tsx`
+  - `netlify/functions/api-docker-hosts.mts`
+- The UI persists a host before connection testing.
+- Result:
+  - Bad URLs, wrong keys, or unreachable agents still create durable DB records.
+- Impact:
+  - Noise in host inventory and onboarding friction.
 
-### 1. Onboarding Flow
-- Complex multi-step wizard in `OnboardingPage.tsx` (~25KB, largest component)
-- Hard-reload trick for session refresh after org creation (`sessionStorage` flag)
-- Fragile interaction between `ProtectedRoute` auth checks and onboarding state
+### 9. Health polling fans out to every host at once
+- Evidence:
+  - `netlify/functions/api-host-health-poll.mts`
+- The cron job uses `Promise.allSettled(hosts.map(...))` with no concurrency cap.
+- Result:
+  - Large fleets can create bursty outbound traffic and function runtime pressure.
+- Impact:
+  - Scaling risk and noisy timeout behavior as fleet size grows.
 
-### 2. Clerk ↔ DB Sync
-- Webhook is the only sync mechanism — missed events cause permanent desync
-- No retry/reconciliation mechanism if webhook fails
-- `auth.mts` throws "Sync pending" if Clerk ID not found in DB — race condition on signup
+### 10. Secret decryption or key rotation issues can surface as watcher outages
+- Evidence:
+  - `netlify/functions/lib/crypto.mts`
+  - `netlify/functions/api-docker-proxy.mts`
+  - `netlify/functions/api-host-health-poll.mts`
+- Secret encryption is stronger than the previous map suggested, but the runtime hard-depends on correct keyring env configuration.
+- Result:
+  - Missing active keys, unknown legacy keys, or auth-tag mismatch incidents turn into host connectivity failures.
+- Impact:
+  - Operationally safe, but brittle without key rotation runbooks and alarms.
 
-### 3. Docker Proxy Timeout Handling
-- Different timeout values per action (3-8s) — could cause UX confusion when agents are slow
-- 4MB payload limit silently truncates large log outputs
-- No circuit breaker — repeatedly failing hosts still get polled
+## Testing and Verification Gaps
 
-### 4. Type Safety Gaps
-- `dockerApi` functions return `any` types from backend
-- No runtime validation of API responses (rely on TypeScript at compile time only)
-- Backend SQL queries return untyped `any[]`
+### 11. Watcher-critical paths are effectively untested in-repo
+- Evidence:
+  - `src/test/setup.ts`
+  - no watcher-specific tests under `src/` or `netlify/functions/`
+- Missing automated coverage for:
+  - agent `/metrics` behavior
+  - Docker log frame parsing
+  - Cloudflare Tunnel metrics path
+  - stale/error/unhealthy state transitions
+  - encryption key rotation and decrypt fallback
+- Impact:
+  - Regressions in the watcher path are likely to be discovered in production.
 
-## Known Issues
+## Suggested Next Focus
 
-- **502 on empty state:** Dashboard previously crashed with 502 when user has zero hosts (documented as fixed)
-- **Onboarding 401 bug:** Session continuation after org creation was fragile (documented as fixed via hard-reload strategy)
-- **Missing `is_approved` column:** Referenced in code (`auth.mts`, `ProtectedRoute.tsx`) but not in `schema.sql` — likely added via migration
-- **Missing `beta_allowlist` table:** Referenced in webhook handler but not in `schema.sql` — likely added via migration
+1. Fix `api-fleet-metrics.mts` to send CF Access headers and `X-Docker-Socket`, then add coverage for tunnel and custom-socket hosts.
+2. Remove synthetic chart seeding from `FleetResourceChart.tsx` and replace it with an explicit “no live metrics” state.
+3. Separate health polling state from ad hoc UI probes so `last_seen_at` only means successful scheduled health.
+4. Tighten the agent trust boundary:
+   - disable arbitrary socket overrides by default
+   - restrict allowed sockets to an explicit allowlist if override support must remain
+5. Rework `/metrics` so it either reports complete host totals or explicitly reports sampling/truncation metadata.
