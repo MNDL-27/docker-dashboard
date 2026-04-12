@@ -56,3 +56,63 @@ export interface OrgMemberProfile {
   role: string;
   joined_at: string;
 }
+
+export type AlertSeverity = 'info' | 'warning' | 'error' | 'critical';
+export type AlertStatus = 'open' | 'acknowledged' | 'resolved';
+export type IncidentStatus = 'open' | 'investigating' | 'resolved';
+export type AlertConditionType = 'host_offline' | 'container_exited' | 'container_restart_loop' | 'cpu_usage' | 'memory_usage';
+
+export interface AlertRule {
+  id: string;
+  organization_id: string;
+  name: string;
+  condition_type: AlertConditionType;
+  resource_scope: Record<string, unknown>;
+  threshold_value: number | null;
+  threshold_window_minutes: number;
+  severity: AlertSeverity;
+  notification_channels: string[];
+  enabled: boolean;
+  created_by: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface AlertEvent {
+  id: string;
+  organization_id: string;
+  rule_id: string | null;
+  incident_id: string | null;
+  fingerprint: string;
+  source_type: 'host' | 'container' | 'metric' | 'system';
+  source_ref: string;
+  title: string;
+  message: string;
+  severity: AlertSeverity;
+  status: AlertStatus;
+  metadata: Record<string, unknown>;
+  first_seen_at: string;
+  last_seen_at: string;
+  acknowledged_at: string | null;
+  acknowledged_by: string | null;
+  resolved_at: string | null;
+  resolved_by: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface Incident {
+  id: string;
+  organization_id: string;
+  source_alert_event_id: string | null;
+  title: string;
+  summary: string | null;
+  severity: AlertSeverity;
+  status: IncidentStatus;
+  metadata: Record<string, unknown>;
+  opened_by: string;
+  opened_at: string;
+  resolved_at: string | null;
+  created_at: string;
+  updated_at: string;
+}

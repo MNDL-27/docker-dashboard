@@ -1,0 +1,80 @@
+import type { Config } from '@netlify/functions';
+import { requireAuth } from './lib/auth.mjs';
+import { getOrganizationRole, listAlertEvents, listAlertRules, listIncidents, requireOrganizationAdmin } from './lib/alerts.mjs';
+
+const headers = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+  'Content-Type': 'application/json',
+};
+
+export default async (req: Request) => {
+  if (req.method === 'OPTIONS') {
+    return new Response(null, { headers });
+  }
+
+  try {
+    const auth = await requireAuth(req);
+    const role = await getOrganizationRole(auth);
+
+    if (req.method === 'GET') {
+      const url = new URL(req.url);
+      const severity = url.searchParams.get('severity');
+      const status = url.searchParams.get('status');
+      const [alerts, rules, incidents] = await Promise.all([
+        listAlertEvents(auth, { severity, status }),
+        listAlertRules(auth),
+        listIncidents(auth),
+      ]);
+
+      const activeAlerts = alerts.filter((alert) => alert.resolved_at === null);
+      const summary = {
+        total_alerts: activeAlerts.length,
+        critical_alerts: activeAlerts.filter((alert) => alert.severity === 'critical').length,
+        enabled_rules: rules.filter((rule) => rule.enabled).length,
+        open_incidents: incidents.filter((incident: any) => incident.status !== 'resolved').length,
+      };
+
+      return new Response(JSON.stringify({ alerts, summary, role, can_manage: ['owner', 'admin'].includes(role) }), { headers });
+    }
+
+    if (req.method === 'POST') {
+      await requireOrganizationAdmin(auth);
+      const body = await req.json();
+      if (!body?.id || !body?.action) {
+        return new Response(JSON.stringify({ error: 'Alert id and action required' }), { status: 400, headers });
+      }
+
+      if (body.action === 'acknowledge') {
+        const [alert] = await sql`
+          UPDATE alert_events
+          SET status = 'acknowledged', acknowledged_at = COALESCE(acknowledged_at, now()), acknowledged_by = ${auth.userId}
+          WHERE id = ${body.id} AND organization_id = ${auth.orgId}
+          RETURNING *
+        `;
+        return new Response(JSON.stringify(alert), { headers });
+      }
+
+      if (body.action === 'resolve') {
+        const [alert] = await sql`
+          UPDATE alert_events
+          SET status = 'resolved', resolved_at = COALESCE(resolved_at, now()), resolved_by = ${auth.userId}
+          WHERE id = ${body.id} AND organization_id = ${auth.orgId}
+          RETURNING *
+        `;
+        return new Response(JSON.stringify(alert), { headers });
+      }
+
+      return new Response(JSON.stringify({ error: 'Unsupported action' }), { status: 400, headers });
+    }
+
+    return new Response(JSON.stringify({ error: 'Method not allowed' }), { status: 405, headers });
+  } catch (error: any) {
+    const status = /Admin access required|Access denied/.test(error?.message || '') ? 403 : 500;
+    return new Response(JSON.stringify({ error: error?.message || 'Failed to process alerts' }), { status, headers });
+  }
+};
+
+export const config: Config = {
+  path: '/api/alerts',
+};
