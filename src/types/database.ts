@@ -116,3 +116,33 @@ export interface Incident {
   created_at: string;
   updated_at: string;
 }
+
+export type AlertDeliveryKind = 'alert' | 'test';
+
+export interface AlertDeliveryAttempt {
+  id: string;
+  organization_id: string;
+  webhook_destination_id: string;
+  alert_event_id: string | null;
+  delivery_kind: AlertDeliveryKind;
+  event_type: string;
+  succeeded: boolean;
+  http_status: number | null;
+  error_summary: string | null;
+  response_excerpt: string | null;
+  attempted_at: string;
+  created_at: string;
+}
+
+export interface WebhookDestination {
+  id: string;
+  organization_id: string;
+  name: string;
+  url: string;
+  signing_secret_preview: string;
+  enabled: boolean;
+  created_by: string;
+  created_at: string;
+  updated_at: string;
+  latest_attempt?: AlertDeliveryAttempt | null;
+}

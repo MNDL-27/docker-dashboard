@@ -17,3 +17,9 @@ export interface AlertRuleFormValues {
   notification_channels: string[];
   enabled: boolean;
 }
+
+export interface WebhookDestinationFormValues {
+  name: string;
+  url: string;
+  enabled: boolean;
+}

@@ -19,12 +19,14 @@ export function AlertRulesPanel({
   rules,
   canManage,
   saving,
+  webhookDestinationsCount,
   onCreate,
   onUpdate,
 }: {
   rules: AlertRule[];
   canManage: boolean;
   saving?: boolean;
+  webhookDestinationsCount?: number;
   onCreate: (values: AlertRuleFormValues) => void;
   onUpdate: (ruleId: string, values: Partial<AlertRuleFormValues>) => void;
 }) {
@@ -90,7 +92,14 @@ export function AlertRulesPanel({
         </div>
       </div>
 
-      <AlertRuleDialog open={open} onOpenChange={setOpen} rule={editingRule} saving={saving} onSubmit={handleSubmit} />
+      <AlertRuleDialog
+        open={open}
+        onOpenChange={setOpen}
+        rule={editingRule}
+        saving={saving}
+        webhookDestinationsCount={webhookDestinationsCount}
+        onSubmit={handleSubmit}
+      />
     </>
   );
 }

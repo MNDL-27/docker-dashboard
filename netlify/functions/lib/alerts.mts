@@ -1,6 +1,7 @@
 import { sql } from './db.mjs';
 import { decryptHostSecrets } from './crypto.mjs';
 import type { AppAuthContext } from './auth.mjs';
+import { deliverAlertWebhooks } from './webhook-destinations.mjs';
 
 type OrgRole = 'owner' | 'admin' | 'member' | 'viewer' | string;
 type AlertSeverity = 'info' | 'warning' | 'error' | 'critical';
@@ -429,7 +430,7 @@ export async function syncAlertEvents(auth: AppAuthContext) {
       continue;
     }
 
-    await sql`
+    const insertedRows = await sql`
       INSERT INTO alert_events (
         organization_id, rule_id, fingerprint, source_type, source_ref,
         title, message, severity, status, metadata, first_seen_at, last_seen_at
@@ -438,18 +439,24 @@ export async function syncAlertEvents(auth: AppAuthContext) {
         ${auth.orgId}, ${signal.ruleId}, ${signal.fingerprint}, ${signal.sourceType}, ${signal.sourceRef},
         ${signal.title}, ${signal.message}, ${signal.severity}, 'open', ${JSON.stringify(signal.metadata)}, now(), now()
       )
+      RETURNING *
     `;
+    await deliverAlertWebhooks(auth, insertedRows[0] as AlertEventRow, 'alert.opened');
   }
 
   const activeFingerprints = new Set(derivedSignals.map((signal) => signal.fingerprint));
   const staleEvents = activeEvents.filter((event) => !activeFingerprints.has(event.fingerprint));
 
   for (const event of staleEvents) {
-    await sql`
+    const resolvedRows = await sql`
       UPDATE alert_events
       SET status = 'resolved', resolved_at = COALESCE(resolved_at, now()), updated_at = now()
       WHERE id = ${event.id}
+      RETURNING *
     `;
+    if (resolvedRows[0]) {
+      await deliverAlertWebhooks(auth, resolvedRows[0] as AlertEventRow, 'alert.resolved');
+    }
   }
 }
 

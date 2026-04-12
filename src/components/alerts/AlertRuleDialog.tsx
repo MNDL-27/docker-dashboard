@@ -19,7 +19,7 @@ const CONDITION_OPTIONS: Array<{ value: AlertConditionType; label: string }> = [
 ];
 
 const SEVERITY_OPTIONS: AlertSeverity[] = ["info", "warning", "error", "critical"];
-const CHANNEL_OPTIONS = ["slack", "email"];
+const CHANNEL_OPTIONS = ["slack", "email", "webhook"];
 
 function toInitialValues(rule?: AlertRule | null): AlertRuleFormValues {
   return {
@@ -38,12 +38,14 @@ export function AlertRuleDialog({
   onOpenChange,
   rule,
   saving,
+  webhookDestinationsCount,
   onSubmit,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   rule?: AlertRule | null;
   saving?: boolean;
+  webhookDestinationsCount?: number;
   onSubmit: (values: AlertRuleFormValues) => void;
 }) {
   const [values, setValues] = useState<AlertRuleFormValues>(toInitialValues(rule));
@@ -143,6 +145,9 @@ export function AlertRuleDialog({
                 );
               })}
             </div>
+            {values.notification_channels.includes("webhook") && (webhookDestinationsCount ?? 0) === 0 ? (
+              <p className="text-xs text-warning">No webhook destinations are configured yet. Rules can still be saved, but deliveries won&apos;t be sent until Settings &gt; Webhooks is configured.</p>
+            ) : null}
           </div>
 
           <div className="flex items-center justify-between rounded-lg border border-border px-4 py-3 md:col-span-2">
