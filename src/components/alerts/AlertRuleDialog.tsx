@@ -38,6 +38,7 @@ export function AlertRuleDialog({
   onOpenChange,
   rule,
   saving,
+  slackDestinationsCount,
   webhookDestinationsCount,
   onSubmit,
 }: {
@@ -45,6 +46,7 @@ export function AlertRuleDialog({
   onOpenChange: (open: boolean) => void;
   rule?: AlertRule | null;
   saving?: boolean;
+  slackDestinationsCount?: number;
   webhookDestinationsCount?: number;
   onSubmit: (values: AlertRuleFormValues) => void;
 }) {
@@ -145,6 +147,9 @@ export function AlertRuleDialog({
                 );
               })}
             </div>
+            {values.notification_channels.includes("slack") && (slackDestinationsCount ?? 0) === 0 ? (
+              <p className="text-xs text-warning">No Slack destinations are configured yet. Rules can still be saved, but Slack notifications won&apos;t be sent until Settings &gt; Notifications is configured.</p>
+            ) : null}
             {values.notification_channels.includes("webhook") && (webhookDestinationsCount ?? 0) === 0 ? (
               <p className="text-xs text-warning">No webhook destinations are configured yet. Rules can still be saved, but deliveries won&apos;t be sent until Settings &gt; Webhooks is configured.</p>
             ) : null}

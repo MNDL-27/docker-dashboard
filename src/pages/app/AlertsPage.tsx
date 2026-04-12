@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { useOrganization } from "@clerk/clerk-react";
-import { BellRing, Loader2, ServerCrash, Webhook } from "lucide-react";
+import { BellRing, Loader2, MessageSquareShare, ServerCrash, Webhook } from "lucide-react";
 import { Link } from "react-router-dom";
 
 import { AddHostDialog } from "@/components/docker/AddHostDialog";
@@ -14,6 +14,7 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useDockerHosts } from "@/hooks/useDocker";
 import { useAcknowledgeAlert, useAlertRules, useAlertsWorkspace, useCreateAlertRule, useCreateIncident, useIncidentsFeed, useResolveAlert, useUpdateAlertRule } from "@/hooks/useAlerts";
+import { useSlackDestinations } from "@/hooks/useSlackDestinations";
 import { useWebhookDestinations } from "@/hooks/useWebhookDestinations";
 import { useToast } from "@/hooks/use-toast";
 import type { AlertEvent } from "@/types/database";
@@ -33,6 +34,7 @@ export default function AlertsPage() {
   });
   const rulesQuery = useAlertRules(currentOrg?.id);
   const incidentsQuery = useIncidentsFeed(currentOrg?.id);
+  const slackDestinationsQuery = useSlackDestinations(currentOrg?.id);
   const webhookDestinationsQuery = useWebhookDestinations(currentOrg?.id);
 
   const acknowledgeMutation = useAcknowledgeAlert();
@@ -45,6 +47,7 @@ export default function AlertsPage() {
   const rules = rulesQuery.data ?? [];
   const incidents = incidentsQuery.data?.incidents ?? [];
   const history = incidentsQuery.data?.history ?? [];
+  const slackDestinations = slackDestinationsQuery.data?.destinations ?? [];
   const webhookDestinations = webhookDestinationsQuery.data?.destinations ?? [];
   const canManage = alertsQuery.data?.can_manage ?? false;
   const summary = alertsQuery.data?.summary ?? {
@@ -54,9 +57,11 @@ export default function AlertsPage() {
     open_incidents: 0,
   };
 
-  const loading = hostsQuery.isLoading || alertsQuery.isLoading || rulesQuery.isLoading || incidentsQuery.isLoading || webhookDestinationsQuery.isLoading;
+  const loading = hostsQuery.isLoading || alertsQuery.isLoading || rulesQuery.isLoading || incidentsQuery.isLoading || slackDestinationsQuery.isLoading || webhookDestinationsQuery.isLoading;
   const hasHosts = (hostsQuery.data?.length ?? 0) > 0;
+  const enabledSlackDestinationsCount = slackDestinations.filter((destination) => destination.enabled).length;
   const enabledWebhookDestinationsCount = webhookDestinations.filter((destination) => destination.enabled).length;
+  const hasSlackRules = rules.some((rule) => rule.notification_channels.includes("slack"));
   const hasWebhookRules = rules.some((rule) => rule.notification_channels.includes("webhook"));
 
   const handleMutationError = (message: string, error: unknown) => {
@@ -211,6 +216,27 @@ export default function AlertsPage() {
             pendingId={pendingAlertId}
           />
 
+          {hasSlackRules && enabledSlackDestinationsCount === 0 ? (
+            <div className="rounded-xl border border-warning/30 bg-warning/10 p-4">
+              <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                <div className="flex items-start gap-3">
+                  <div className="rounded-full bg-warning/15 p-2">
+                    <MessageSquareShare className="h-4 w-4 text-warning" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium">Slack notifications are enabled on one or more rules, but no Slack destinations are configured.</p>
+                    <p className="text-xs text-muted-foreground">Those rules will keep evaluating normally, but Slack messages will not be sent until an organization-level destination is added.</p>
+                  </div>
+                </div>
+                {canManage ? (
+                  <Button asChild size="sm" variant="outline">
+                    <Link to="/app/settings?tab=Notifications">Open Notifications</Link>
+                  </Button>
+                ) : null}
+              </div>
+            </div>
+          ) : null}
+
           {hasWebhookRules && enabledWebhookDestinationsCount === 0 ? (
             <div className="rounded-xl border border-warning/30 bg-warning/10 p-4">
               <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
@@ -237,6 +263,7 @@ export default function AlertsPage() {
               rules={rules}
               canManage={canManage}
               saving={createRuleMutation.isPending || updateRuleMutation.isPending}
+              slackDestinationsCount={enabledSlackDestinationsCount}
               webhookDestinationsCount={enabledWebhookDestinationsCount}
               onCreate={handleCreateRule}
               onUpdate={handleUpdateRule}

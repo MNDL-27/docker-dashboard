@@ -19,6 +19,7 @@ export function AlertRulesPanel({
   rules,
   canManage,
   saving,
+  slackDestinationsCount,
   webhookDestinationsCount,
   onCreate,
   onUpdate,
@@ -26,6 +27,7 @@ export function AlertRulesPanel({
   rules: AlertRule[];
   canManage: boolean;
   saving?: boolean;
+  slackDestinationsCount?: number;
   webhookDestinationsCount?: number;
   onCreate: (values: AlertRuleFormValues) => void;
   onUpdate: (ruleId: string, values: Partial<AlertRuleFormValues>) => void;
@@ -97,6 +99,7 @@ export function AlertRulesPanel({
         onOpenChange={setOpen}
         rule={editingRule}
         saving={saving}
+        slackDestinationsCount={slackDestinationsCount}
         webhookDestinationsCount={webhookDestinationsCount}
         onSubmit={handleSubmit}
       />

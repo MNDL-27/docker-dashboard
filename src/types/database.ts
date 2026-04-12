@@ -146,3 +146,15 @@ export interface WebhookDestination {
   updated_at: string;
   latest_attempt?: AlertDeliveryAttempt | null;
 }
+
+export interface SlackDestination {
+  id: string;
+  organization_id: string;
+  name: string;
+  webhook_url_preview: string;
+  enabled: boolean;
+  created_by: string;
+  created_at: string;
+  updated_at: string;
+  latest_attempt?: AlertDeliveryAttempt | null;
+}

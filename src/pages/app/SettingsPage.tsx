@@ -3,12 +3,14 @@ import { useState } from "react";
 import { ProfileSettings } from "@/components/settings/ProfileSettings";
 import { Construction } from "lucide-react";
 import { useSearchParams } from "react-router-dom";
+import { SlackDestinationsPanel } from "@/components/settings/SlackDestinationsPanel";
 import { WebhookDestinationsPanel } from "@/components/settings/WebhookDestinationsPanel";
+import { useCreateSlackDestination, useSlackDestinations, useTestSlackDestination, useUpdateSlackDestination } from "@/hooks/useSlackDestinations";
 import { useToast } from "@/hooks/use-toast";
 import { useOrganization } from "@clerk/clerk-react";
 import { useCreateWebhookDestination, useTestWebhookDestination, useUpdateWebhookDestination, useWebhookDestinations } from "@/hooks/useWebhookDestinations";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import type { WebhookDestinationFormValues } from "@/types/alerts";
+import type { SlackDestinationFormValues, WebhookDestinationFormValues } from "@/types/alerts";
 
 const tabs = ["Profile", "General", "API Keys", "Webhooks", "Notifications", "Audit Logs", "Danger Zone"];
 
@@ -20,11 +22,18 @@ export default function SettingsPage() {
   const [tab, setTab] = useState(requestedTab && tabs.includes(requestedTab) ? requestedTab : "Profile");
   const [latestSecret, setLatestSecret] = useState<{ destinationName: string; value: string } | null>(null);
 
+  const slackDestinationsQuery = useSlackDestinations(currentOrg?.id);
+  const createSlackMutation = useCreateSlackDestination();
+  const updateSlackMutation = useUpdateSlackDestination();
+  const testSlackMutation = useTestSlackDestination();
   const webhookDestinationsQuery = useWebhookDestinations(currentOrg?.id);
   const createWebhookMutation = useCreateWebhookDestination();
   const updateWebhookMutation = useUpdateWebhookDestination();
   const testWebhookMutation = useTestWebhookDestination();
 
+  const slackDestinations = slackDestinationsQuery.data?.destinations ?? [];
+  const slackCanManage = slackDestinationsQuery.data?.can_manage ?? false;
+  const slackSaving = createSlackMutation.isPending || updateSlackMutation.isPending;
   const webhookDestinations = webhookDestinationsQuery.data?.destinations ?? [];
   const canManage = webhookDestinationsQuery.data?.can_manage ?? false;
   const webhookSaving = createWebhookMutation.isPending || updateWebhookMutation.isPending;
@@ -46,6 +55,39 @@ export default function SettingsPage() {
       description: error instanceof Error ? error.message : "Unknown error",
       variant: "destructive",
     });
+  };
+
+  const handleCreateSlack = async (values: SlackDestinationFormValues) => {
+    try {
+      await createSlackMutation.mutateAsync(values);
+      toast({ title: "Slack destination created" });
+    } catch (error) {
+      handleWebhookError("Failed to create Slack destination", error);
+    }
+  };
+
+  const handleUpdateSlack = async (id: string, values: Partial<SlackDestinationFormValues>) => {
+    try {
+      await updateSlackMutation.mutateAsync({ id, values });
+      toast({ title: "Slack destination updated" });
+    } catch (error) {
+      handleWebhookError("Failed to update Slack destination", error);
+    }
+  };
+
+  const handleTestSlack = async (id: string) => {
+    try {
+      const attempt = await testSlackMutation.mutateAsync(id);
+      toast({
+        title: attempt.succeeded ? "Slack test delivered" : "Slack test failed",
+        description: attempt.succeeded
+          ? attempt.http_status ? `Slack responded with ${attempt.http_status}.` : "Slack accepted the test message."
+          : attempt.error_summary ?? "Slack did not accept the test message.",
+        variant: attempt.succeeded ? "default" : "destructive",
+      });
+    } catch (error) {
+      handleWebhookError("Failed to send Slack test", error);
+    }
   };
 
   const handleCreateWebhook = async (values: WebhookDestinationFormValues) => {
@@ -124,7 +166,19 @@ export default function SettingsPage() {
           />
         </TabsContent>
 
-        {tabs.filter((currentTab) => !["Profile", "Webhooks"].includes(currentTab)).map((currentTab) => (
+        <TabsContent value="Notifications">
+          <SlackDestinationsPanel
+            destinations={slackDestinations}
+            canManage={slackCanManage}
+            saving={slackSaving}
+            testingId={testSlackMutation.isPending ? testSlackMutation.variables : null}
+            onCreate={handleCreateSlack}
+            onUpdate={handleUpdateSlack}
+            onTest={handleTestSlack}
+          />
+        </TabsContent>
+
+        {tabs.filter((currentTab) => !["Profile", "Webhooks", "Notifications"].includes(currentTab)).map((currentTab) => (
           <TabsContent key={currentTab} value={currentTab}>
             <div className="glass-card p-12 text-center">
               <Construction className="h-10 w-10 text-muted-foreground mx-auto mb-3" />

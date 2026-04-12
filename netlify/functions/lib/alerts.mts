@@ -1,6 +1,7 @@
 import { sql } from './db.mjs';
 import { decryptHostSecrets } from './crypto.mjs';
 import type { AppAuthContext } from './auth.mjs';
+import { deliverSlackAlerts } from './slack-delivery.mjs';
 import { deliverAlertWebhooks } from './webhook-destinations.mjs';
 
 type OrgRole = 'owner' | 'admin' | 'member' | 'viewer' | string;
@@ -441,6 +442,7 @@ export async function syncAlertEvents(auth: AppAuthContext) {
       )
       RETURNING *
     `;
+    await deliverSlackAlerts(auth, insertedRows[0] as AlertEventRow, 'alert.opened');
     await deliverAlertWebhooks(auth, insertedRows[0] as AlertEventRow, 'alert.opened');
   }
 
@@ -455,6 +457,7 @@ export async function syncAlertEvents(auth: AppAuthContext) {
       RETURNING *
     `;
     if (resolvedRows[0]) {
+      await deliverSlackAlerts(auth, resolvedRows[0] as AlertEventRow, 'alert.resolved');
       await deliverAlertWebhooks(auth, resolvedRows[0] as AlertEventRow, 'alert.resolved');
     }
   }

@@ -23,3 +23,9 @@ export interface WebhookDestinationFormValues {
   url: string;
   enabled: boolean;
 }
+
+export interface SlackDestinationFormValues {
+  name: string;
+  webhook_url: string;
+  enabled: boolean;
+}

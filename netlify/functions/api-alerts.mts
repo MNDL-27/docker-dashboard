@@ -3,6 +3,7 @@ import { requireAuth } from './lib/auth.mjs';
 import { sql } from './lib/db.mjs';
 import { ensureAlertsSchema } from './lib/ensure-alerts-schema.mjs';
 import { getOrganizationRole, listAlertEvents, listAlertRules, listIncidents, requireOrganizationAdmin } from './lib/alerts.mjs';
+import { deliverSlackAlerts } from './lib/slack-delivery.mjs';
 import { deliverAlertWebhooks } from './lib/webhook-destinations.mjs';
 
 const headers = {
@@ -56,7 +57,10 @@ export default async (req: Request) => {
           WHERE id = ${body.id} AND organization_id = ${auth.orgId}
           RETURNING *
         `;
-        if (alert) await deliverAlertWebhooks(auth, alert, 'alert.acknowledged');
+        if (alert) {
+          await deliverSlackAlerts(auth, alert, 'alert.acknowledged');
+          await deliverAlertWebhooks(auth, alert, 'alert.acknowledged');
+        }
         return new Response(JSON.stringify(alert), { headers });
       }
 
@@ -67,7 +71,10 @@ export default async (req: Request) => {
           WHERE id = ${body.id} AND organization_id = ${auth.orgId}
           RETURNING *
         `;
-        if (alert) await deliverAlertWebhooks(auth, alert, 'alert.resolved');
+        if (alert) {
+          await deliverSlackAlerts(auth, alert, 'alert.resolved');
+          await deliverAlertWebhooks(auth, alert, 'alert.resolved');
+        }
         return new Response(JSON.stringify(alert), { headers });
       }
 
