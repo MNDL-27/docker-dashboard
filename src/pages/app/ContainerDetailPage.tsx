@@ -1,11 +1,12 @@
 import { PageHeader } from "@/components/shared/PageHeader";
 import { MetricCard } from "@/components/shared/MetricCard";
+import { LogConsole } from "@/components/docker/LogConsole";
 import { Button } from "@/components/ui/button";
 import { useParams, useSearchParams } from "react-router-dom";
 import { useContainerInspect, useContainerStats, useContainerLogs } from "@/hooks/useDocker";
 import { dockerApi } from "@/services/docker-api";
 import { useToast } from "@/hooks/use-toast";
-import { Cpu, HardDrive, RotateCcw, Clock, Loader2, Play, Square, RefreshCw } from "lucide-react";
+import { Cpu, HardDrive, RotateCcw, Loader2, Play, Square } from "lucide-react";
 import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 
@@ -154,27 +155,14 @@ export default function ContainerDetailPage() {
       )}
 
       {tab === "Logs" && (
-        <div>
-          <div className="flex items-center justify-between mb-3">
-            <h3 className="text-sm font-medium">Container Logs (last 200 lines)</h3>
-            <Button size="sm" variant="outline" onClick={() => refetchLogs()} className="gap-1.5">
-              <RefreshCw className="h-3 w-3" />Refresh
-            </Button>
-          </div>
-          {logsLoading ? (
-            <div className="flex items-center justify-center h-32"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>
-          ) : logs.length === 0 ? (
-            <div className="glass-card p-8 text-center text-muted-foreground text-sm">No logs available.</div>
-          ) : (
-            <div className="glass-card overflow-hidden font-mono text-xs max-h-[500px] overflow-y-auto">
-              {logs.map((line, i) => (
-                <div key={i} className="px-4 py-1 border-b border-border last:border-0 hover:bg-accent/30 whitespace-pre-wrap break-all">
-                  {line}
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
+        <LogConsole
+          logs={logs}
+          loading={logsLoading}
+          title="Container Logs"
+          emptyMessage="No logs available for this container."
+          heightClassName="h-[500px]"
+          onRefresh={() => refetchLogs()}
+        />
       )}
 
       {tab === "Environment" && (

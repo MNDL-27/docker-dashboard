@@ -1,7 +1,7 @@
+import { LogConsole } from "@/components/docker/LogConsole";
 import { PageHeader } from "@/components/shared/PageHeader";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Search, Loader2, RefreshCw, FileText } from "lucide-react";
+import { Loader2, RefreshCw, FileText } from "lucide-react";
 import { useState } from "react";
 import { useOrganization } from "@clerk/clerk-react";
 import { useDockerHosts } from "@/hooks/useDocker";
@@ -16,7 +16,6 @@ export default function LogsPage() {
   const [containers, setContainers] = useState<any[]>([]);
   const [logs, setLogs] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
-  const [search, setSearch] = useState("");
 
   const connectedHosts = hosts.filter(h => h.status === 'connected');
 
@@ -42,8 +41,6 @@ export default function LogsPage() {
     }
     setLoading(false);
   };
-
-  const filteredLogs = search ? logs.filter(l => l.toLowerCase().includes(search.toLowerCase())) : logs;
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -86,21 +83,16 @@ export default function LogsPage() {
             </Button>
           </div>
 
-          {logs.length > 0 && (
-            <div className="relative flex-1 max-w-md">
-              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
-              <Input placeholder="Filter logs..." className="pl-8 h-8 text-sm" value={search} onChange={e => setSearch(e.target.value)} />
-            </div>
-          )}
-
           {logs.length > 0 ? (
-            <div className="glass-card overflow-hidden font-mono text-xs max-h-[600px] overflow-y-auto">
-              {filteredLogs.map((line, i) => (
-                <div key={i} className="px-4 py-1 border-b border-border last:border-0 hover:bg-accent/30 whitespace-pre-wrap break-all">
-                  {line}
-                </div>
-              ))}
-            </div>
+            <LogConsole
+              logs={logs}
+              loading={loading}
+              title="Fetched Logs"
+              emptyMessage='Click "Fetch Logs" to load container logs.'
+              heightClassName="h-[600px]"
+              onRefresh={handleFetchLogs}
+              refreshLabel="Fetch Again"
+            />
           ) : selectedContainer && !loading ? (
             <div className="glass-card p-8 text-center text-muted-foreground text-sm">Click "Fetch Logs" to load container logs.</div>
           ) : null}
