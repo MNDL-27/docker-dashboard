@@ -74,13 +74,25 @@ export function LogConsole({
   refreshLabel = "Refresh",
 }: LogConsoleProps) {
   const [search, setSearch] = useState("");
+  const [timestampFilter, setTimestampFilter] = useState("");
+  const [activeTone, setActiveTone] = useState<LogTone | null>(null);
 
   const parsedLogs = useMemo(() => logs.map(parseLogLine), [logs]);
   const filteredLogs = useMemo(() => {
-    if (!search.trim()) return parsedLogs;
-    const needle = search.toLowerCase();
-    return parsedLogs.filter((line) => line.raw.toLowerCase().includes(needle));
-  }, [parsedLogs, search]);
+    const messageNeedle = search.trim().toLowerCase();
+    const timestampNeedle = timestampFilter.trim().toLowerCase();
+
+    return parsedLogs.filter((line) => {
+      const matchesTone = !activeTone || line.tone === activeTone;
+      const matchesMessage = !messageNeedle || line.raw.toLowerCase().includes(messageNeedle);
+      const matchesTimestamp =
+        !timestampNeedle ||
+        line.timestamp?.toLowerCase().includes(timestampNeedle) ||
+        line.relativeTime?.toLowerCase().includes(timestampNeedle);
+
+      return matchesTone && matchesMessage && matchesTimestamp;
+    });
+  }, [activeTone, parsedLogs, search, timestampFilter]);
 
   const severityCounts = useMemo(
     () =>
@@ -94,6 +106,12 @@ export function LogConsole({
     [parsedLogs],
   );
 
+  const severityMeta: Array<{ tone: LogTone; label: string; count: number; icon: typeof XCircle }> = [
+    { tone: "error", label: "errors", count: severityCounts.error, icon: XCircle },
+    { tone: "warning", label: "warnings", count: severityCounts.warning, icon: AlertTriangle },
+    { tone: "info", label: "info", count: severityCounts.info, icon: Info },
+  ];
+
   return (
     <div className="glass-card overflow-hidden">
       <div className="border-b border-border bg-card/90 px-4 py-3">
@@ -106,37 +124,59 @@ export function LogConsole({
             <div className="flex flex-wrap items-center gap-2 text-[11px] text-muted-foreground">
               <span>{filteredLogs.length} visible</span>
               <span>{logs.length} total</span>
-              <span className="inline-flex items-center gap-1 rounded-full border border-destructive/20 bg-destructive/10 px-2 py-0.5 text-destructive">
-                <XCircle className="h-3 w-3" />
-                {severityCounts.error} errors
-              </span>
-              <span className="inline-flex items-center gap-1 rounded-full border border-warning/20 bg-warning/10 px-2 py-0.5 text-warning">
-                <AlertTriangle className="h-3 w-3" />
-                {severityCounts.warning} warnings
-              </span>
-              <span className="inline-flex items-center gap-1 rounded-full border border-primary/20 bg-primary/10 px-2 py-0.5 text-primary">
-                <Info className="h-3 w-3" />
-                {severityCounts.info} info
-              </span>
+              {severityMeta.map(({ tone, label, count, icon: Icon }) => (
+                <button
+                  key={tone}
+                  type="button"
+                  onClick={() => setActiveTone((current) => (current === tone ? null : tone))}
+                  className={cn(
+                    "inline-flex items-center gap-1 rounded-full border px-2 py-0.5 transition-colors",
+                    toneBadgeStyles[tone],
+                    activeTone === tone && "ring-1 ring-current",
+                    activeTone && activeTone !== tone && "opacity-50",
+                  )}
+                  title={activeTone === tone ? `Clear ${label} filter` : `Filter to ${label}`}
+                >
+                  <Icon className="h-3 w-3" />
+                  {count} {label}
+                </button>
+              ))}
+              {activeTone ? (
+                <button
+                  type="button"
+                  onClick={() => setActiveTone(null)}
+                  className="rounded-full border border-border px-2 py-0.5 text-[11px] text-muted-foreground transition-colors hover:bg-accent"
+                >
+                  Clear level
+                </button>
+              ) : null}
             </div>
           </div>
 
-          <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+          <div className="flex flex-col gap-2 lg:min-w-[28rem]">
             <div className="relative min-w-[220px] flex-1 sm:w-72">
               <Search className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
               <Input
                 value={search}
                 onChange={(event) => setSearch(event.target.value)}
-                placeholder="Filter log lines..."
+                placeholder="Filter message text..."
                 className="h-9 border-white/10 bg-background/70 pl-8 text-sm"
               />
             </div>
-            {onRefresh ? (
-              <Button size="sm" variant="outline" onClick={onRefresh} className="gap-1.5">
-                <RefreshCw className="h-3.5 w-3.5" />
-                {refreshLabel}
-              </Button>
-            ) : null}
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+              <Input
+                value={timestampFilter}
+                onChange={(event) => setTimestampFilter(event.target.value)}
+                placeholder="Filter timestamp or time ago..."
+                className="h-9 border-white/10 bg-background/70 text-sm"
+              />
+              {onRefresh ? (
+                <Button size="sm" variant="outline" onClick={onRefresh} className="gap-1.5">
+                  <RefreshCw className="h-3.5 w-3.5" />
+                  {refreshLabel}
+                </Button>
+              ) : null}
+            </div>
           </div>
         </div>
       </div>
