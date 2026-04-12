@@ -1,13 +1,15 @@
 import { useMemo, useState } from "react";
 import { formatDistanceToNowStrict, parseISO, isValid } from "date-fns";
-import { Search, AlertTriangle, Info, TerminalSquare, RefreshCw, XCircle } from "lucide-react";
+import { Search, AlertTriangle, Clock3, Info, TerminalSquare, RefreshCw, XCircle } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 
 type LogTone = "error" | "warning" | "info" | "neutral";
+type TimeRangeValue = "all" | "5m" | "15m" | "1h" | "6h" | "24h";
 
 interface LogConsoleProps {
   logs: string[];
@@ -23,9 +25,19 @@ interface ParsedLogLine {
   raw: string;
   message: string;
   timestamp: string | null;
+  timestampDate: Date | null;
   relativeTime: string | null;
   tone: LogTone;
 }
+
+const timeRangeOptions: Array<{ value: TimeRangeValue; label: string; minutes: number | null }> = [
+  { value: "all", label: "All time", minutes: null },
+  { value: "5m", label: "Last 5m", minutes: 5 },
+  { value: "15m", label: "Last 15m", minutes: 15 },
+  { value: "1h", label: "Last 1h", minutes: 60 },
+  { value: "6h", label: "Last 6h", minutes: 360 },
+  { value: "24h", label: "Last 24h", minutes: 1440 },
+];
 
 function parseLogLine(line: string): ParsedLogLine {
   const match = line.match(/^(\d{4}-\d{2}-\d{2}T[^\s]+)\s+(.*)$/);
@@ -33,9 +45,10 @@ function parseLogLine(line: string): ParsedLogLine {
   const message = match?.[2] ?? line;
   const lower = message.toLowerCase();
   const parsedTimestamp = timestamp ? parseISO(timestamp) : null;
+  const timestampDate = parsedTimestamp && isValid(parsedTimestamp) ? parsedTimestamp : null;
   const relativeTime =
-    parsedTimestamp && isValid(parsedTimestamp)
-      ? formatDistanceToNowStrict(parsedTimestamp, { addSuffix: true })
+    timestampDate
+      ? formatDistanceToNowStrict(timestampDate, { addSuffix: true })
       : null;
 
   let tone: LogTone = "neutral";
@@ -47,7 +60,7 @@ function parseLogLine(line: string): ParsedLogLine {
     tone = "info";
   }
 
-  return { raw: line, message, timestamp, relativeTime, tone };
+  return { raw: line, message, timestamp, timestampDate, relativeTime, tone };
 }
 
 const toneStyles: Record<LogTone, string> = {
@@ -76,11 +89,14 @@ export function LogConsole({
   const [search, setSearch] = useState("");
   const [timestampFilter, setTimestampFilter] = useState("");
   const [activeTone, setActiveTone] = useState<LogTone | null>(null);
+  const [timeRange, setTimeRange] = useState<TimeRangeValue>("all");
 
   const parsedLogs = useMemo(() => logs.map(parseLogLine), [logs]);
   const filteredLogs = useMemo(() => {
     const messageNeedle = search.trim().toLowerCase();
     const timestampNeedle = timestampFilter.trim().toLowerCase();
+    const selectedRange = timeRangeOptions.find((option) => option.value === timeRange);
+    const cutoff = selectedRange?.minutes ? Date.now() - selectedRange.minutes * 60_000 : null;
 
     return parsedLogs.filter((line) => {
       const matchesTone = !activeTone || line.tone === activeTone;
@@ -89,10 +105,12 @@ export function LogConsole({
         !timestampNeedle ||
         line.timestamp?.toLowerCase().includes(timestampNeedle) ||
         line.relativeTime?.toLowerCase().includes(timestampNeedle);
+      const matchesTimeRange =
+        !cutoff || (line.timestampDate ? line.timestampDate.getTime() >= cutoff : false);
 
-      return matchesTone && matchesMessage && matchesTimestamp;
+      return matchesTone && matchesMessage && matchesTimestamp && matchesTimeRange;
     });
-  }, [activeTone, parsedLogs, search, timestampFilter]);
+  }, [activeTone, parsedLogs, search, timeRange, timestampFilter]);
 
   const severityCounts = useMemo(
     () =>
@@ -153,7 +171,7 @@ export function LogConsole({
             </div>
           </div>
 
-          <div className="flex flex-col gap-2 lg:min-w-[28rem]">
+          <div className="flex flex-col gap-3 lg:min-w-[34rem]">
             <div className="relative min-w-[220px] flex-1 sm:w-72">
               <Search className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
               <Input
@@ -163,19 +181,56 @@ export function LogConsole({
                 className="h-9 border-white/10 bg-background/70 pl-8 text-sm"
               />
             </div>
-            <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-              <Input
-                value={timestampFilter}
-                onChange={(event) => setTimestampFilter(event.target.value)}
-                placeholder="Filter timestamp or time ago..."
-                className="h-9 border-white/10 bg-background/70 text-sm"
-              />
-              {onRefresh ? (
-                <Button size="sm" variant="outline" onClick={onRefresh} className="gap-1.5">
-                  <RefreshCw className="h-3.5 w-3.5" />
-                  {refreshLabel}
-                </Button>
-              ) : null}
+            <div className="rounded-xl border border-white/10 bg-background/40 p-2.5">
+              <div className="mb-2 flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.22em] text-muted-foreground">
+                <Clock3 className="h-3.5 w-3.5" />
+                Time Window
+              </div>
+              <div className="flex flex-col gap-2">
+                <div className="flex flex-wrap gap-2">
+                  {timeRangeOptions.map((option) => (
+                    <button
+                      key={option.value}
+                      type="button"
+                      onClick={() => setTimeRange(option.value)}
+                      className={cn(
+                        "rounded-full border px-3 py-1.5 text-xs font-medium transition-colors",
+                        timeRange === option.value
+                          ? "border-primary/50 bg-primary/15 text-primary shadow-[0_0_0_1px_rgba(34,211,238,0.15)]"
+                          : "border-white/10 bg-background/60 text-muted-foreground hover:bg-accent hover:text-foreground",
+                      )}
+                    >
+                      {option.label}
+                    </button>
+                  ))}
+                </div>
+                <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+                  <Select value={timeRange} onValueChange={(value) => setTimeRange(value as TimeRangeValue)}>
+                    <SelectTrigger className="h-9 border-white/10 bg-background/70 text-sm sm:w-[160px]">
+                      <SelectValue placeholder="Choose range" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {timeRangeOptions.map((option) => (
+                        <SelectItem key={option.value} value={option.value}>
+                          {option.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Input
+                    value={timestampFilter}
+                    onChange={(event) => setTimestampFilter(event.target.value)}
+                    placeholder="Match exact timestamp or relative label..."
+                    className="h-9 border-white/10 bg-background/70 text-sm"
+                  />
+                  {onRefresh ? (
+                    <Button size="sm" variant="outline" onClick={onRefresh} className="gap-1.5">
+                      <RefreshCw className="h-3.5 w-3.5" />
+                      {refreshLabel}
+                    </Button>
+                  ) : null}
+                </div>
+              </div>
             </div>
           </div>
         </div>
