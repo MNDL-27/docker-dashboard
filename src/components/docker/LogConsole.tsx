@@ -1,4 +1,5 @@
 import { useMemo, useState } from "react";
+import { formatDistanceToNowStrict, parseISO, isValid } from "date-fns";
 import { Search, AlertTriangle, Info, TerminalSquare, RefreshCw, XCircle } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -22,6 +23,7 @@ interface ParsedLogLine {
   raw: string;
   message: string;
   timestamp: string | null;
+  relativeTime: string | null;
   tone: LogTone;
 }
 
@@ -30,6 +32,11 @@ function parseLogLine(line: string): ParsedLogLine {
   const timestamp = match?.[1] ?? null;
   const message = match?.[2] ?? line;
   const lower = message.toLowerCase();
+  const parsedTimestamp = timestamp ? parseISO(timestamp) : null;
+  const relativeTime =
+    parsedTimestamp && isValid(parsedTimestamp)
+      ? formatDistanceToNowStrict(parsedTimestamp, { addSuffix: true })
+      : null;
 
   let tone: LogTone = "neutral";
   if (/\b(error|fatal|panic|exception|failed|traceback)\b/.test(lower)) {
@@ -40,7 +47,7 @@ function parseLogLine(line: string): ParsedLogLine {
     tone = "info";
   }
 
-  return { raw: line, message, timestamp, tone };
+  return { raw: line, message, timestamp, relativeTime, tone };
 }
 
 const toneStyles: Record<LogTone, string> = {
@@ -162,8 +169,13 @@ export function LogConsole({
 
                 <div className="min-w-0 space-y-1">
                   {line.timestamp ? (
-                    <div className="font-mono text-[10px] uppercase tracking-[0.18em] text-primary/80">
-                      {line.timestamp}
+                    <div className="flex flex-wrap items-center gap-x-3 gap-y-1 font-mono text-[10px] uppercase tracking-[0.18em] text-primary/80">
+                      <span>{line.timestamp}</span>
+                      {line.relativeTime ? (
+                        <span className="rounded-full border border-white/10 bg-white/[0.04] px-2 py-0.5 text-[9px] tracking-[0.22em] text-muted-foreground">
+                          {line.relativeTime}
+                        </span>
+                      ) : null}
                     </div>
                   ) : null}
                   <pre className="whitespace-pre-wrap break-words font-mono text-[12px] leading-6 text-foreground/92">
