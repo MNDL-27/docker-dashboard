@@ -1,5 +1,7 @@
 import type { Config } from '@netlify/functions';
 import { requireAuth } from './lib/auth.mjs';
+import { sql } from './lib/db.mjs';
+import { ensureAlertsSchema } from './lib/ensure-alerts-schema.mjs';
 import { getOrganizationRole, listAlertEvents, listAlertRules, listIncidents, requireOrganizationAdmin } from './lib/alerts.mjs';
 
 const headers = {
@@ -14,6 +16,7 @@ export default async (req: Request) => {
   }
 
   try {
+    await ensureAlertsSchema();
     const auth = await requireAuth(req);
     const role = await getOrganizationRole(auth);
 
