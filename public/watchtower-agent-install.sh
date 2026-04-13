@@ -299,7 +299,7 @@ AGENT_PORT="${AGENT_PORT:-9876}"
 AGENT_BIND_ADDRESS="${AGENT_BIND_ADDRESS:-${AGENT_BIND:-0.0.0.0}}"
 DOCKER_SOCKET="${DOCKER_SOCKET:-/var/run/docker.sock}"
 WATCHTOWER_AGENT_STATE_DIR="${WATCHTOWER_AGENT_STATE_DIR:-/var/lib/watchtower-agent}"
-WATCHTOWER_AGENT_VERSION="${WATCHTOWER_AGENT_VERSION:-1.0.2}"
+WATCHTOWER_AGENT_VERSION="${WATCHTOWER_AGENT_VERSION:-1.0.3}"
 
 if [ "${1:-}" = "--check" ]; then
   check_config
@@ -538,8 +538,21 @@ if [ "$PATH_RAW" = "/metrics" ]; then
   HOST_CORES=0
   MEASURED_SYSTEM_NS=0
 
+  STATS_TMPDIR="$(mktemp -d "${TMPDIR:-/tmp}/wt-stats.XXXXXX")"
+
   for CONTAINER_ID in $CONTAINER_IDS; do
-    STATS_JSON=$(curl --silent --max-time 3 --unix-socket "$SOCKET_PATH" "http://localhost/containers/${CONTAINER_ID}/stats?stream=false&one-shot=true" 2>/dev/null)
+    (
+      curl --silent --max-time 5 --unix-socket "$SOCKET_PATH" \
+        "http://localhost/containers/${CONTAINER_ID}/stats?stream=false" \
+        2>/dev/null > "${STATS_TMPDIR}/${CONTAINER_ID}.json" || true
+    ) &
+  done
+  wait
+
+  for CONTAINER_ID in $CONTAINER_IDS; do
+    STATS_FILE="${STATS_TMPDIR}/${CONTAINER_ID}.json"
+    [ -f "$STATS_FILE" ] && [ -s "$STATS_FILE" ] || continue
+    STATS_JSON="$(cat "$STATS_FILE")"
 
     if [ -n "$STATS_JSON" ]; then
       CPU_USAGE=$(echo "$STATS_JSON" | grep -oE '"cpu_usage":{"total_usage":[0-9]+' | head -1 | grep -oE '[0-9]+$' || true)
@@ -563,8 +576,8 @@ if [ "$PATH_RAW" = "/metrics" ]; then
         TOTAL_CPU_TIME_NS=$((TOTAL_CPU_TIME_NS + CPU_DELTA))
       fi
 
-      MEM_USAGE=$(echo "$STATS_JSON" | grep -oE '"usage":[0-9]+' | head -1 | cut -d':' -f2 || true)
-      MEM_LIMIT=$(echo "$STATS_JSON" | grep -oE '"limit":[0-9]+' | head -1 | cut -d':' -f2 || true)
+      MEM_USAGE=$(echo "$STATS_JSON" | grep -oE '"usage":[0-9]+' | head -1 | grep -oE '[0-9]+$' || true)
+      MEM_LIMIT=$(echo "$STATS_JSON" | grep -oE '"limit":[0-9]+' | head -1 | grep -oE '[0-9]+$' || true)
 
       if [ -n "$MEM_USAGE" ] && [ -n "$MEM_LIMIT" ]; then
         TOTAL_MEM_USED=$((TOTAL_MEM_USED + MEM_USAGE))
@@ -582,6 +595,9 @@ if [ "$PATH_RAW" = "/metrics" ]; then
       TOTAL_DISK_WRITE_BYTES=$((TOTAL_DISK_WRITE_BYTES + DISK_WRITE_BYTES))
     fi
   done
+
+  rm -rf "$STATS_TMPDIR"
+
 
   if [ "$HOST_CORES" = "0" ]; then
     HOST_CORES=1
