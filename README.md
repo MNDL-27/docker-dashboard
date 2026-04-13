@@ -137,9 +137,10 @@ You'll land on the main dashboard, ready to add hosts.
 Install the production agent on the Docker host before adding it in the dashboard:
 
 ```sh
-curl -fsSL https://your-watchtower-host/watchtower-agent-install.sh -o watchtower-agent-install.sh
+curl -fsSL "https://app.dockerdash.app/watchtower-agent-install.sh?v=1.0.1" -o watchtower-agent-install.sh
+echo "31E75B953E258CF90F5DE12BBAC6F4B80C268CB05A9E09EE657CA887C2B6FC43  watchtower-agent-install.sh" | sha256sum -c -
 chmod +x watchtower-agent-install.sh
-sudo ./watchtower-agent-install.sh
+sudo ./watchtower-agent-install.sh --expected-version "1.0.1"
 ```
 
 What the installer does:
@@ -173,9 +174,11 @@ To change the port or socket, re-run the installer:
 sudo ./watchtower-agent-install.sh --port 9877 --docker-socket /var/run/docker.sock
 ```
 
-To upgrade an existing host to a newer agent release, download the updated installer and run it again on that host. The installer is idempotent, so it refreshes the runtime in place without removing the stored config.
+To upgrade an existing host, download the current hosted installer again and run it on that host. The installer is idempotent, so it refreshes the runtime in place without removing the stored config and now prints the previous and installed runtime versions after a successful restart.
 
 The installer prompts for `AGENT_API_KEY` so the secret does not need to be part of the primary shell-history flow. If you need unattended automation, you can still pass `--api-key`.
+
+The hosted updater flow currently serves the installer from `https://app.dockerdash.app` with a version query string and checksum verification. This avoids private-repo download failures on hosts that cannot read GitHub raw assets directly.
 
 You can safely re-run the installer on the same host. It reuses the existing service account, rewrites the runtime, env file, and unit, then restarts the service.
 
@@ -271,7 +274,7 @@ After polling, a healthy host will show:
 | `consecutive_failures` | `0` |
 | `last_error` | `null` |
 | `docker_version` | e.g. `27.0.3` |
-| `agent_version` | e.g. `1.0.0` |
+| `agent_version` | e.g. `1.0.1` |
 
 In the UI, the host row displays a **green "connected" badge**, the Docker version, the agent version, and the last-seen time. If the agent version is older than the current release, the UI shows an update prompt.
 
@@ -291,6 +294,7 @@ If a host fails, `consecutive_failures` increments. After **3 consecutive failur
 | `watchtower-agent` will not start | The service user cannot access the Docker socket | Check `sudo journalctl -u watchtower-agent -n 50`, verify `/var/run/docker.sock` exists, and make sure the socket group is not `root`-only |
 | `watchtower-agent-install.sh` exits with a systemd error | The host does not use systemd | Use another service supervisor for `watchtower-agent.sh`, or containerize it and use Docker `--restart unless-stopped` |
 | `watchtower-agent` service fails on boot | Missing API key, bad port, or Docker socket path | Run `sudo systemctl status watchtower-agent` and inspect `/etc/watchtower-agent/watchtower-agent.env` |
+| Host updater command returns GitHub `404` | The repo is private or release artifacts were not published | Use the app-hosted installer URL from the dashboard or README instead of GitHub raw/release URLs |
 | Dashboard cannot reach a production host | Agent not exposed through HTTPS or tunnel, or wrong bind address | Check `sudo journalctl -u watchtower-agent -f`, reverse proxy or tunnel config, and `AGENT_BIND_ADDRESS` in `/etc/watchtower-agent/watchtower-agent.env` |
 | `netlify dev` fails to start | Port 8888 already in use | Kill any other `netlify dev` process, or check for port conflicts |
 | Signup succeeds but login fails | Typo in password during signup | Re-register with a new email or reset the database |

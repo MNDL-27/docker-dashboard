@@ -149,7 +149,7 @@ sudo watchtower-agent-uninstall`;
             </p>
             <CopyBlock label={`Pinned installer (${CURRENT_WATCHTOWER_AGENT_RELEASE.tag})`} code={installCommand} />
             <InfoBox>
-              The command downloads the installer from the GitHub release, verifies its SHA-256 checksum, and then runs it.
+              The command downloads the installer from the Dockerdash-hosted asset URL, verifies its SHA-256 checksum, and then runs it.
               The installer prompts for the API key so it does not become the primary shell-history path for secrets.
               Default bind and port are <strong>127.0.0.1:9876</strong>.
               <br/><br/>
