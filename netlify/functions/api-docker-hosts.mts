@@ -2,7 +2,7 @@ import type { Config } from '@netlify/functions';
 import { sql } from './lib/db.mjs';
 import { requireAuth } from './lib/auth.mjs';
 import { assertHostProxyAllowed, assertOrganizationWriteAllowed } from './lib/access-controls.mjs';
-import { encryptSecret } from './lib/crypto.mjs';
+import { decryptHostSecrets, encryptSecret } from './lib/crypto.mjs';
 import { ensureOnboardingSchema } from './lib/ensure-onboarding-schema.mjs';
 import { parseStaleThresholdMinutes, staleCutoffDate } from './lib/host-health.mjs';
 
@@ -26,6 +26,24 @@ export default async (req: Request) => {
     const staleThresholdMinutes = parseStaleThresholdMinutes(process.env.HOST_STALE_THRESHOLD_MINUTES);
     const staleCutoff = staleCutoffDate(new Date(), staleThresholdMinutes).toISOString();
 
+    async function requireOrgAdmin(targetOrgId: string) {
+      await assertOrganizationWriteAllowed({
+        organizationId: targetOrgId,
+        isPlatformAdmin: auth.isPlatformAdmin,
+      });
+
+      const members = await sql`
+        SELECT role FROM organization_members
+        WHERE organization_id = ${targetOrgId} AND user_id = ${auth.userId}
+      `;
+
+      if (members.length === 0 || !['owner', 'admin'].includes(members[0].role)) {
+        return false;
+      }
+
+      return true;
+    }
+
     if (req.method === 'GET') {
       if (hostId) {
         await sql`
@@ -46,7 +64,32 @@ export default async (req: Request) => {
           WHERE h.id = ${hostId} AND om.user_id = ${auth.userId}
         `;
         if (hosts.length === 0) return new Response(JSON.stringify({ error: 'Not found' }), { status: 404, headers });
-        return new Response(JSON.stringify(hosts[0]), { headers });
+
+        const includeSecrets = url.searchParams.get('includeSecrets') === 'true';
+        if (!includeSecrets) {
+          return new Response(JSON.stringify(hosts[0]), { headers });
+        }
+
+        const isAdmin = await requireOrgAdmin(hosts[0].organization_id);
+        if (!isAdmin) {
+          return new Response(JSON.stringify({ error: 'Admin access required for active org' }), { status: 403, headers });
+        }
+
+        const secretsRecord = await sql`
+          SELECT agent_api_key, cf_service_token_id, cf_service_token_secret
+          FROM docker_host_secrets
+          WHERE host_id = ${hostId}
+        `;
+        const secrets = decryptHostSecrets(secretsRecord[0] || null, hostId);
+
+        return new Response(JSON.stringify({
+          ...hosts[0],
+          secrets: {
+            agentApiKey: secrets?.agent_api_key || '',
+            cfServiceTokenId: secrets?.cf_service_token_id || '',
+            cfServiceTokenSecret: secrets?.cf_service_token_secret || '',
+          },
+        }), { headers });
       }
 
       if (!orgId) return new Response(JSON.stringify({ error: 'Active org required' }), { status: 400, headers });
@@ -72,16 +115,8 @@ export default async (req: Request) => {
     if (req.method === 'POST') {
       const body = await req.json();
       if (!orgId) return new Response(JSON.stringify({ error: 'Active org required' }), { status: 400, headers });
-      await assertOrganizationWriteAllowed({
-        organizationId: orgId,
-        isPlatformAdmin: auth.isPlatformAdmin,
-      });
-      
-      const members = await sql`
-        SELECT role FROM organization_members 
-        WHERE organization_id = ${orgId} AND user_id = ${auth.userId}
-      `;
-      if (members.length === 0 || !['owner', 'admin'].includes(members[0].role)) {
+      const isAdmin = await requireOrgAdmin(orgId);
+      if (!isAdmin) {
         return new Response(JSON.stringify({ error: 'Admin access required for active org' }), { status: 403, headers });
       }
 
@@ -112,6 +147,59 @@ export default async (req: Request) => {
       }
 
       return new Response(JSON.stringify(host), { headers });
+    }
+
+    if (req.method === 'PATCH') {
+      if (!hostId) return new Response(JSON.stringify({ error: 'hostId required' }), { status: 400, headers });
+      await assertHostProxyAllowed({ hostId, isPlatformAdmin: auth.isPlatformAdmin });
+
+      const hostRecords = await sql`
+        SELECT h.* FROM docker_hosts h
+        JOIN organization_members om ON h.organization_id = om.organization_id
+        WHERE h.id = ${hostId} AND om.user_id = ${auth.userId}
+      `;
+
+      if (hostRecords.length === 0) {
+        return new Response(JSON.stringify({ error: 'Not found' }), { status: 404, headers });
+      }
+
+      const host = hostRecords[0];
+      const isAdmin = await requireOrgAdmin(host.organization_id);
+      if (!isAdmin) {
+        return new Response(JSON.stringify({ error: 'Admin access required for active org' }), { status: 403, headers });
+      }
+
+      const body = await req.json();
+
+      const [updatedHost] = await sql`
+        UPDATE docker_hosts
+        SET
+          name = ${body.name},
+          host_url = ${body.host_url},
+          connection_mode = ${body.connection_mode},
+          docker_socket_path = ${body.docker_socket_path || '/var/run/docker.sock'},
+          updated_at = now()
+        WHERE id = ${hostId}
+        RETURNING *
+      `;
+
+      if (body.secrets) {
+        const encryptedAgentKey = body.secrets.agentApiKey ? encryptSecret(body.secrets.agentApiKey, host.id, 'agent_api_key') : null;
+        const encryptedCfId = body.secrets.cfServiceTokenId ? encryptSecret(body.secrets.cfServiceTokenId, host.id, 'cf_service_token_id') : null;
+        const encryptedCfSecret = body.secrets.cfServiceTokenSecret ? encryptSecret(body.secrets.cfServiceTokenSecret, host.id, 'cf_service_token_secret') : null;
+
+        await sql`
+          INSERT INTO docker_host_secrets (host_id, agent_api_key, cf_service_token_id, cf_service_token_secret)
+          VALUES (${host.id}, ${encryptedAgentKey}, ${encryptedCfId}, ${encryptedCfSecret})
+          ON CONFLICT (host_id)
+          DO UPDATE SET
+            agent_api_key = EXCLUDED.agent_api_key,
+            cf_service_token_id = EXCLUDED.cf_service_token_id,
+            cf_service_token_secret = EXCLUDED.cf_service_token_secret
+        `;
+      }
+
+      return new Response(JSON.stringify(updatedHost), { headers });
     }
 
     if (req.method === 'DELETE') {

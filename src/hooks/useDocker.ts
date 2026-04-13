@@ -61,6 +61,40 @@ export function useDeleteDockerHost() {
   });
 }
 
+export function useUpdateDockerHost() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ hostId, name, hostUrl, connectionMode, dockerSocketPath, secrets }: {
+      hostId: string;
+      name: string;
+      hostUrl: string;
+      connectionMode: ConnectionMode;
+      dockerSocketPath?: string;
+      secrets: {
+        agentApiKey?: string;
+        cfServiceTokenId?: string;
+        cfServiceTokenSecret?: string;
+      };
+    }) => {
+      const data = await apiFetch(`/docker-hosts?hostId=${hostId}`, {
+        method: 'PATCH',
+        body: JSON.stringify({
+          name,
+          host_url: hostUrl,
+          connection_mode: connectionMode,
+          docker_socket_path: dockerSocketPath || '/var/run/docker.sock',
+          secrets,
+        }),
+      });
+      return data as DockerHost;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['docker-hosts'] });
+    },
+  });
+}
+
 export function useContainers(orgId?: string | null, hasHosts = true) {
   return useQuery({
     queryKey: ['containers', orgId],

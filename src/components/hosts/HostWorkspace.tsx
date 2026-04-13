@@ -7,6 +7,7 @@ import {
   Box,
   CloudCog,
   Loader2,
+  Pencil,
   Plus,
   RefreshCw,
   Search,
@@ -465,6 +466,18 @@ export function HostWorkspace() {
                       {testing ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
                       Test Connection
                     </Button>
+                    {currentOrg && selectedHost ? (
+                      <AddHostDialog
+                        orgId={currentOrg.id}
+                        host={selectedHost}
+                        trigger={
+                          <Button variant="outline" className="gap-2">
+                            <Pencil className="h-4 w-4" />
+                            Edit Host
+                          </Button>
+                        }
+                      />
+                    ) : null}
                     <Button variant="destructive" className="gap-2" onClick={handleDelete}>
                       <Trash2 className="h-4 w-4" />
                       Remove Host
