@@ -13,7 +13,7 @@ describe("watchtower agent release helpers", () => {
     expect(command).toContain(CURRENT_WATCHTOWER_AGENT_RELEASE.assetBaseUrl);
     expect(command).toContain(CURRENT_WATCHTOWER_AGENT_RELEASE.installerSha256);
     expect(command).toContain(`--expected-version "${CURRENT_WATCHTOWER_AGENT_RELEASE.version}"`);
-    expect(command).toContain("/raw.githubusercontent.com/");
+    expect(command).toContain("https://app.dockerdash.app/watchtower-agent-install.sh?v=1.0.1");
     expect(command).not.toContain("/main/");
   });
 

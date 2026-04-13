@@ -29,15 +29,16 @@ export interface WatchtowerAgentReleaseResponse {
 const WATCHTOWER_AGENT_GITHUB_OWNER = "MNDL-27";
 const WATCHTOWER_AGENT_GITHUB_REPO = "docker-watchtower-dash";
 const WATCHTOWER_AGENT_SOURCE_REF = "b6512ebb0078a2d44dffdbef42ac95b40d0d6739";
+const WATCHTOWER_AGENT_APP_BASE_URL = "https://app.dockerdash.app";
 
 export const CURRENT_WATCHTOWER_AGENT_RELEASE: WatchtowerAgentRelease = {
   version: "1.0.1",
   tag: "v1.0.1",
-  sourceLabel: `GitHub commit ${WATCHTOWER_AGENT_SOURCE_REF.slice(0, 7)}`,
+  sourceLabel: "Dockerdash hosted installer",
   published: false,
-  releaseUrl: `https://github.com/${WATCHTOWER_AGENT_GITHUB_OWNER}/${WATCHTOWER_AGENT_GITHUB_REPO}/tree/${WATCHTOWER_AGENT_SOURCE_REF}/public`,
+  releaseUrl: `${WATCHTOWER_AGENT_APP_BASE_URL}/watchtower-agent-install.sh?v=1.0.1`,
   releaseNotesUrl: `https://github.com/${WATCHTOWER_AGENT_GITHUB_OWNER}/${WATCHTOWER_AGENT_GITHUB_REPO}/commit/${WATCHTOWER_AGENT_SOURCE_REF}`,
-  assetBaseUrl: `https://raw.githubusercontent.com/${WATCHTOWER_AGENT_GITHUB_OWNER}/${WATCHTOWER_AGENT_GITHUB_REPO}/${WATCHTOWER_AGENT_SOURCE_REF}/public`,
+  assetBaseUrl: WATCHTOWER_AGENT_APP_BASE_URL,
   installerAssetName: "watchtower-agent-install.sh",
   runtimeAssetName: "watchtower-agent.sh",
   uninstallAssetName: "watchtower-agent-uninstall.sh",
@@ -50,7 +51,7 @@ export function buildWatchtowerAgentAssetUrl(
   assetName: string,
   release: WatchtowerAgentRelease = CURRENT_WATCHTOWER_AGENT_RELEASE,
 ) {
-  return `${release.assetBaseUrl}/${assetName}`;
+  return `${release.assetBaseUrl}/${assetName}?v=${encodeURIComponent(release.version)}`;
 }
 
 export function buildWatchtowerAgentInstallCommand(

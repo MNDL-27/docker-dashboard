@@ -326,7 +326,7 @@ function AgentUpdateDialog({
               <ExternalLink className="h-3.5 w-3.5" />
             </a>
             . Installer checksum: <code className="rounded bg-background px-1.5 py-0.5">{CURRENT_WATCHTOWER_AGENT_RELEASE.installerSha256}</code>
-            {!CURRENT_WATCHTOWER_AGENT_RELEASE.published ? " Release assets are not published yet, so this command uses a commit-pinned raw GitHub file." : ""}
+            {!CURRENT_WATCHTOWER_AGENT_RELEASE.published ? " Release assets are not published yet, so this command uses the current Dockerdash-hosted installer asset." : ""}
           </div>
 
           <AgentCommandBlock label="Pinned upgrade command" command={installCommand} />
