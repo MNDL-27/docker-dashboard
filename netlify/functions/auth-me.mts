@@ -2,6 +2,7 @@ import type { Config } from '@netlify/functions';
 import { sql } from './lib/db.mjs';
 import { requireAuth } from './lib/auth.mjs';
 import { ensureOnboardingSchema } from './lib/ensure-onboarding-schema.mjs';
+import { ensureAdminSchema } from './lib/ensure-admin-schema.mjs';
 import { isPlatformAdminEmail } from './lib/platform-admin.mjs';
 
 const allowedOrigins = new Set([
@@ -33,12 +34,20 @@ export default async (req: Request) => {
 
   try {
     await ensureOnboardingSchema();
+    await ensureAdminSchema();
     const authContext = await requireAuth(req, { requireOrg: false });
 
     const users = await sql`
       SELECT 
-        u.id, u.email, u.full_name, u.avatar_url, u.is_approved
+        u.id,
+        u.email,
+        u.full_name,
+        u.avatar_url,
+        u.is_approved,
+        COALESCE(uac.is_suspended, false) AS is_suspended,
+        COALESCE(uac.is_hard_disabled, false) AS is_hard_disabled
       FROM users u
+      LEFT JOIN user_access_controls uac ON uac.user_id = u.id
       WHERE u.id = ${authContext.userId}
     `;
 
@@ -75,6 +84,8 @@ export default async (req: Request) => {
         active_org_id: effectiveOrg?.id ?? null,
         active_org_clerk_id: effectiveOrg?.clerk_org_id ?? null,
         is_platform_admin: isPlatformAdminEmail(users[0].email),
+        is_suspended: Boolean(users[0].is_suspended),
+        is_hard_disabled: Boolean(users[0].is_hard_disabled),
       },
     }), { headers });
 

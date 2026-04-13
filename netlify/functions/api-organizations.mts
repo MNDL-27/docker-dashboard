@@ -1,6 +1,7 @@
 import type { Config } from '@netlify/functions';
 import { sql } from './lib/db.mjs';
 import { requireAuth } from './lib/auth.mjs';
+import { assertOrganizationWriteAllowed } from './lib/access-controls.mjs';
 import { ensureOnboardingSchema } from './lib/ensure-onboarding-schema.mjs';
 
 const headers = {
@@ -137,6 +138,11 @@ export default async (req: Request) => {
       if (memberships.length === 0) {
         return new Response(JSON.stringify({ error: 'Access denied' }), { status: 403, headers });
       }
+
+      await assertOrganizationWriteAllowed({
+        organizationId: targetOrgId,
+        isPlatformAdmin: authContext.isPlatformAdmin,
+      });
 
       const updated = await sql`
         UPDATE organizations

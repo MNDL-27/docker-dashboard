@@ -1,11 +1,16 @@
 import { sql } from './db.mjs';
 import { clerkClient } from './clerk.mjs';
+import { assertTenantAccessAllowed } from './access-controls.mjs';
+import { ensureAdminSchema } from './ensure-admin-schema.mjs';
+import { isPlatformAdminEmail } from './platform-admin.mjs';
 
 export interface AppAuthContext {
   userId: string; // The internal UUID
   orgId: string | null;  // The internal UUID, nullable if requireOrg is false
   clerkUserId: string;
   clerkOrgId: string | null;
+  isPlatformAdmin: boolean;
+  email: string;
 }
 
 interface AuthOptions {
@@ -36,6 +41,8 @@ export async function requireAuth(
       orgId: req.headers.get('x-test-org-id') || '00000000-0000-0000-0000-000000000000',
       clerkUserId: 'clerk_test_user',
       clerkOrgId: 'clerk_test_org',
+      isPlatformAdmin: req.headers.get('x-test-platform-admin') === 'true',
+      email: req.headers.get('x-test-email') || 'test@example.com',
     };
   }
 
@@ -74,10 +81,13 @@ export async function requireAuth(
   const clerkUserId = authData.userId;
   const clerkOrgId = authData.orgId || null;
 
-  const userResult = await sql`SELECT id, is_approved FROM public.users WHERE clerk_user_id = ${clerkUserId}`;
+  await ensureAdminSchema();
+  const userResult = await sql`SELECT id, email, is_approved FROM public.users WHERE clerk_user_id = ${clerkUserId}`;
   if (userResult.length === 0) {
     throw makeAppAuthError('Sync pending. Your account is currently syncing.', 'SYNC_PENDING');
   }
+
+  const isPlatformAdmin = isPlatformAdminEmail(userResult[0].email);
 
   let orgId = null;
   if (clerkOrgId) {
@@ -90,10 +100,19 @@ export async function requireAuth(
     }
   }
 
+  await assertTenantAccessAllowed({
+    userId: userResult[0].id,
+    organizationId: orgId,
+    isPlatformAdmin,
+    isApproved: Boolean(userResult[0].is_approved),
+  });
+
   return {
     userId: userResult[0].id,
     orgId,
     clerkUserId,
     clerkOrgId,
+    isPlatformAdmin,
+    email: userResult[0].email,
   };
 }

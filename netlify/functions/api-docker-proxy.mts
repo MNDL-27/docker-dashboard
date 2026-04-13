@@ -1,6 +1,7 @@
 import type { Config } from '@netlify/functions';
 import { sql } from './lib/db.mjs';
 import { requireAuth } from './lib/auth.mjs';
+import { assertHostProxyAllowed, assertOrganizationWriteAllowed } from './lib/access-controls.mjs';
 import { decryptHostSecrets, SecretCryptoError } from './lib/crypto.mjs';
 import { CURRENT_WATCHTOWER_AGENT_VERSION, isAgentVersionOutdated } from './lib/agent-version.mts';
 import { ensureDockerHostSchema } from './lib/ensure-docker-host-schema.mjs';
@@ -213,7 +214,13 @@ export default async (req: Request) => {
       `;
       if (memberships.length === 0) return new Response(JSON.stringify({ error: 'Access denied' }), { status: 403, headers });
 
-      const hosts = await sql`SELECT * FROM docker_hosts WHERE organization_id = ${orgId}`;
+      const hosts = await sql`
+        SELECT h.*
+        FROM docker_hosts h
+        LEFT JOIN docker_host_admin_controls hac ON hac.host_id = h.id
+        WHERE h.organization_id = ${orgId}
+          AND COALESCE(hac.is_quarantined, false) = false
+      `;
       const allContainers: any[] = [];
 
       await mapConcurrent(hosts as any[], 5, async (host) => {
@@ -251,7 +258,14 @@ export default async (req: Request) => {
       `;
       if (memberships.length === 0) return new Response(JSON.stringify({ error: 'Access denied' }), { status: 403, headers });
 
-      const hosts = await sql`SELECT * FROM docker_hosts WHERE organization_id = ${orgId} AND status = 'connected'`;
+      const hosts = await sql`
+        SELECT h.*
+        FROM docker_hosts h
+        LEFT JOIN docker_host_admin_controls hac ON hac.host_id = h.id
+        WHERE h.organization_id = ${orgId}
+          AND h.status = 'connected'
+          AND COALESCE(hac.is_quarantined, false) = false
+      `;
       const allStats: any[] = [];
 
       await mapConcurrent(hosts as any[], 5, async (host) => {
@@ -329,6 +343,7 @@ export default async (req: Request) => {
       return new Response(JSON.stringify({ error: 'Host not found or access denied' }), { status: 404, headers });
     }
     const host = hostRecords[0];
+    await assertHostProxyAllowed({ hostId, isPlatformAdmin: auth.isPlatformAdmin });
 
     const secretsRecord = await sql`
       SELECT agent_api_key, cf_service_token_id, cf_service_token_secret 
@@ -380,6 +395,14 @@ export default async (req: Request) => {
     }
 
     const reqData = buildRequest(host as any, secrets, dockerPath, method);
+
+    if (['container-start', 'container-stop', 'container-restart'].includes(action)) {
+      await assertOrganizationWriteAllowed({
+        organizationId: host.organization_id,
+        isPlatformAdmin: auth.isPlatformAdmin,
+      });
+    }
+
     const dockerResponse = await dockerFetch(reqData.url, reqData.method, reqData.headers, timeoutMs);
 
     if (action === 'ping') {

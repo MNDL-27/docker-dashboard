@@ -1,6 +1,7 @@
 import type { Config } from '@netlify/functions';
 import { sql } from './lib/db.mjs';
 import { requireAuth } from './lib/auth.mjs';
+import { assertHostProxyAllowed, assertOrganizationWriteAllowed } from './lib/access-controls.mjs';
 import { encryptSecret } from './lib/crypto.mjs';
 import { ensureOnboardingSchema } from './lib/ensure-onboarding-schema.mjs';
 import { parseStaleThresholdMinutes, staleCutoffDate } from './lib/host-health.mjs';
@@ -70,6 +71,11 @@ export default async (req: Request) => {
 
     if (req.method === 'POST') {
       const body = await req.json();
+      if (!orgId) return new Response(JSON.stringify({ error: 'Active org required' }), { status: 400, headers });
+      await assertOrganizationWriteAllowed({
+        organizationId: orgId,
+        isPlatformAdmin: auth.isPlatformAdmin,
+      });
       
       const members = await sql`
         SELECT role FROM organization_members 
@@ -110,6 +116,7 @@ export default async (req: Request) => {
 
     if (req.method === 'DELETE') {
       if (!hostId) return new Response(JSON.stringify({ error: 'hostId required' }), { status: 400, headers });
+      await assertHostProxyAllowed({ hostId, isPlatformAdmin: auth.isPlatformAdmin });
       
       // Delete will cascade to secrets, but we must verify org admin first
       await sql`

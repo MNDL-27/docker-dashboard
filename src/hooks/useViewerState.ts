@@ -13,6 +13,8 @@ export interface ViewerState {
   active_org_id: string | null;
   active_org_clerk_id: string | null;
   is_platform_admin: boolean;
+  is_suspended: boolean;
+  is_hard_disabled: boolean;
 }
 
 export function useViewerState() {
