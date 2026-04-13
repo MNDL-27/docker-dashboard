@@ -17,6 +17,7 @@ Usage: watchtower-agent-install.sh [options]
 Options:
   --api-key VALUE         Set AGENT_API_KEY non-interactively
   --check                 Validate the current or provided configuration without installing
+  --expected-version VAL  Fail if the installed runtime version does not match this value
   --port VALUE            Set AGENT_PORT (default: 9876)
   --bind-address VALUE    Set AGENT_BIND_ADDRESS (default: 0.0.0.0)
   --bind VALUE            Alias for --bind-address
@@ -85,6 +86,15 @@ quote_env_value() {
   printf "'%s'" "$(printf '%s' "$1" | sed "s/'/'\\\\''/g")"
 }
 
+extract_runtime_version() {
+  local file_path="$1"
+  if [ ! -f "$file_path" ]; then
+    return 0
+  fi
+
+  sed -n 's/^WATCHTOWER_AGENT_VERSION="${WATCHTOWER_AGENT_VERSION:-\([^"]*\)}"$/\1/p' "$file_path" | head -1
+}
+
 prompt_hidden() {
   local prompt="$1"
   local value=""
@@ -99,6 +109,7 @@ DEFAULT_DOCKER_SOCKET="/var/run/docker.sock"
 FLAG_YES="false"
 FLAG_CHECK="false"
 CLI_API_KEY=""
+CLI_EXPECTED_VERSION=""
 CLI_PORT=""
 CLI_BIND_ADDRESS=""
 CLI_DOCKER_SOCKET=""
@@ -113,6 +124,11 @@ while [ $# -gt 0 ]; do
     --check)
       FLAG_CHECK="true"
       shift
+      ;;
+    --expected-version)
+      [ $# -ge 2 ] || fail "--expected-version requires a value"
+      CLI_EXPECTED_VERSION="$2"
+      shift 2
       ;;
     --port)
       [ $# -ge 2 ] || fail "--port requires a value"
@@ -161,6 +177,7 @@ AGENT_PORT_VALUE="${CLI_PORT:-${AGENT_PORT:-$DEFAULT_PORT}}"
 AGENT_BIND_ADDRESS_VALUE="${CLI_BIND_ADDRESS:-${AGENT_BIND_ADDRESS:-${AGENT_BIND:-$DEFAULT_BIND_ADDRESS}}}"
 DOCKER_SOCKET_VALUE="${CLI_DOCKER_SOCKET:-${DOCKER_SOCKET:-$DEFAULT_DOCKER_SOCKET}}"
 STATE_DIR_VALUE="${WATCHTOWER_AGENT_STATE_DIR:-/var/lib/watchtower-agent}"
+EXPECTED_VERSION_VALUE="${CLI_EXPECTED_VERSION:-${WATCHTOWER_AGENT_EXPECTED_VERSION:-}}"
 
 validate_port "$AGENT_PORT_VALUE"
 validate_bind_address "$AGENT_BIND_ADDRESS_VALUE"
@@ -199,6 +216,8 @@ if [ -f "$SERVICE_FILE" ] || [ -f "$ENV_FILE" ] || [ -f "${INSTALL_DIR}/watchtow
 else
   log "No existing watchtower-agent install detected; performing a fresh install"
 fi
+
+PREVIOUS_RUNTIME_VERSION="$(extract_runtime_version "${INSTALL_DIR}/watchtower-agent.sh" || true)"
 
 if ! getent group "$SERVICE_USER" >/dev/null 2>&1; then
   log "Creating system group ${SERVICE_USER}"
@@ -280,7 +299,7 @@ AGENT_PORT="${AGENT_PORT:-9876}"
 AGENT_BIND_ADDRESS="${AGENT_BIND_ADDRESS:-${AGENT_BIND:-0.0.0.0}}"
 DOCKER_SOCKET="${DOCKER_SOCKET:-/var/run/docker.sock}"
 WATCHTOWER_AGENT_STATE_DIR="${WATCHTOWER_AGENT_STATE_DIR:-/var/lib/watchtower-agent}"
-WATCHTOWER_AGENT_VERSION="${WATCHTOWER_AGENT_VERSION:-1.0.0}"
+WATCHTOWER_AGENT_VERSION="${WATCHTOWER_AGENT_VERSION:-1.0.1}"
 
 if [ "${1:-}" = "--check" ]; then
   check_config
@@ -866,7 +885,16 @@ if ! systemctl --quiet is-active "${SERVICE_NAME}.service"; then
   fail "watchtower-agent.service did not start cleanly. Inspect: sudo systemctl status ${SERVICE_NAME} && sudo journalctl -u ${SERVICE_NAME} -n 50"
 fi
 
-log "watchtower-agent installed"
+INSTALLED_RUNTIME_VERSION="$(extract_runtime_version "${INSTALL_DIR}/watchtower-agent.sh" || true)"
+if [ -n "$EXPECTED_VERSION_VALUE" ] && [ "$INSTALLED_RUNTIME_VERSION" != "$EXPECTED_VERSION_VALUE" ]; then
+  fail "Installed runtime version ${INSTALLED_RUNTIME_VERSION:-unknown} does not match expected version ${EXPECTED_VERSION_VALUE}"
+fi
+
+if [ -n "$PREVIOUS_RUNTIME_VERSION" ] && [ "$PREVIOUS_RUNTIME_VERSION" != "$INSTALLED_RUNTIME_VERSION" ]; then
+  log "watchtower-agent upgraded from ${PREVIOUS_RUNTIME_VERSION} to ${INSTALLED_RUNTIME_VERSION}"
+else
+  log "watchtower-agent installed (${INSTALLED_RUNTIME_VERSION:-unknown})"
+fi
 cat <<EOF
 
 Service name: ${SERVICE_NAME}

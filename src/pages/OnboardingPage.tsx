@@ -13,6 +13,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { useAddDockerHost } from "@/hooks/useDocker";
 import { dockerApi } from "@/services/docker-api";
 import type { ConnectionMode } from "@/types/database";
+import { buildWatchtowerAgentInstallCommand } from "@/lib/agent-release";
 import { deriveNeedsOnboarding, normalizeOnboardingStatus } from "@/lib/onboarding-gate";
 
 /* ── Step Labels (top-level) ── */
@@ -107,10 +108,7 @@ export default function OnboardingPage() {
   const [savedHostId, setSavedHostId] = useState<string | null>(null);
 
   const addHost = useAddDockerHost();
-  const baseUrl = typeof window !== "undefined" && window.location.hostname !== "localhost" && window.location.hostname !== "127.0.0.1" ? window.location.origin : "https://app.dockerdash.app";
-  const quickInstallCommand = `curl -fsSL ${baseUrl}/watchtower-agent-install.sh -o watchtower-agent-install.sh
-chmod +x watchtower-agent-install.sh
-sudo ./watchtower-agent-install.sh`;
+  const quickInstallCommand = buildWatchtowerAgentInstallCommand();
 
   const markOnboardingStatus = async (status: "not_started" | "skipped" | "completed") => {
     const activeClerkOrgId = orgId ?? userMemberships.data?.[0]?.organization?.id ?? null;

@@ -1,5 +1,22 @@
 import { apiFetch } from "@/lib/api";
 
+export interface DockerHostPingResult {
+  ok: boolean;
+  status: string;
+  docker_version: string | null;
+  agent_version: string | null;
+  agent_version_error: string | null;
+  agent_update_available: boolean;
+  current_agent_version: string | null;
+  latest_agent_version: string | null;
+  upgrade_command: string | null;
+  release_url: string | null;
+  release_notes_url: string | null;
+  checksum: string | null;
+  os_info: string | null;
+  connection_mode: string;
+}
+
 async function invoke(body: Record<string, unknown>) {
   const data = await apiFetch('/docker-proxy', {
     method: 'POST',
@@ -10,7 +27,7 @@ async function invoke(body: Record<string, unknown>) {
 }
 
 export const dockerApi = {
-  ping: (hostId: string) => invoke({ action: 'ping', hostId }),
+  ping: (hostId: string) => invoke({ action: 'ping', hostId }) as Promise<DockerHostPingResult>,
   hostMetrics: (hostId: string) => invoke({ action: 'host-metrics', hostId }),
   info: (hostId: string) => invoke({ action: 'info', hostId }),
   version: (hostId: string) => invoke({ action: 'version', hostId }),

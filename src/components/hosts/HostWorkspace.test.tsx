@@ -15,7 +15,7 @@ const hosts = [
     docker_socket_path: "/var/run/docker.sock",
     status: "connected",
     docker_version: "26.1",
-    agent_version: "1.0.0",
+    agent_version: "1.0.1",
     os_info: "linux/amd64",
     last_seen_at: "2026-04-13T10:00:00.000Z",
     consecutive_failures: 0,
@@ -33,7 +33,7 @@ const hosts = [
     docker_socket_path: "/var/run/docker.sock",
     status: "connected",
     docker_version: "26.1",
-    agent_version: "1.0.0",
+    agent_version: "1.0.1",
     os_info: "linux/arm64",
     last_seen_at: "2026-04-13T10:00:00.000Z",
     consecutive_failures: 0,
@@ -188,5 +188,18 @@ describe("HostWorkspace", () => {
     expect(screen.getByText(/upgrade the agent and test the connection again/i)).toBeInTheDocument();
     expect(screen.getByText(/upstream status: 404/i)).toBeInTheDocument();
     expect(screen.queryByText(/no cpu metrics yet/i)).not.toBeInTheDocument();
+  });
+
+  it("shows an update CTA when the selected host is behind the latest release", () => {
+    mockUseDockerHosts.mockReturnValue({
+      data: [{ ...hosts[0], agent_version: "1.0.0" }],
+      isLoading: false,
+      refetch: vi.fn(),
+    });
+
+    renderWorkspace("/app/hosts");
+
+    expect(screen.getByRole("button", { name: /update agent/i })).toBeInTheDocument();
+    expect(screen.getByText(/agent 1.0.0 is behind 1.0.1/i)).toBeInTheDocument();
   });
 });

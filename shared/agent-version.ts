@@ -1,9 +1,12 @@
-export const CURRENT_WATCHTOWER_AGENT_VERSION = "1.0.0";
+import { CURRENT_WATCHTOWER_AGENT_RELEASE } from "./watchtower-agent-release.ts";
 
-export function isAgentVersionOutdated(agentVersion: string | null | undefined): boolean {
-  if (!agentVersion) {
-    return true;
-  }
+export {
+  CURRENT_WATCHTOWER_AGENT_RELEASE,
+  buildWatchtowerAgentAssetUrl,
+  buildWatchtowerAgentInstallCommand,
+  buildWatchtowerAgentReleaseResponse,
+  buildWatchtowerAgentVerifyCommand,
+  isAgentVersionOutdated,
+} from "./watchtower-agent-release.ts";
 
-  return agentVersion.trim() !== CURRENT_WATCHTOWER_AGENT_VERSION;
-}
+export const CURRENT_WATCHTOWER_AGENT_VERSION = CURRENT_WATCHTOWER_AGENT_RELEASE.version;

@@ -7,6 +7,7 @@ import {
   ArrowRight, AlertTriangle, Lock, Globe, CheckCheck
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { buildWatchtowerAgentInstallCommand, CURRENT_WATCHTOWER_AGENT_RELEASE } from "@/lib/agent-release";
 
 function CopyBlock({ code, label }: { code: string; label?: string }) {
   const [copied, setCopied] = useState(false);
@@ -76,10 +77,7 @@ function InfoBox({ variant = "info", children }: { variant?: "info" | "warning" 
 }
 
 export default function SetupGuidePage() {
-  const baseUrl = typeof window !== "undefined" && window.location.hostname !== "localhost" && window.location.hostname !== "127.0.0.1" ? window.location.origin : "https://app.dockerdash.app";
-  const installCommand = `curl -fsSL ${baseUrl}/watchtower-agent-install.sh -o watchtower-agent-install.sh
-chmod +x watchtower-agent-install.sh
-sudo ./watchtower-agent-install.sh`;
+  const installCommand = buildWatchtowerAgentInstallCommand();
   const tunnelInstallCommand = installCommand;
   const serviceCommands = `sudo systemctl status watchtower-agent
 sudo journalctl -u watchtower-agent -f
@@ -143,14 +141,15 @@ sudo watchtower-agent-uninstall`;
 
           <StepCard step={2} title="Install the Agent">
             <p className="text-sm text-muted-foreground">
-              Run the one-time Linux installer on your Docker host. It creates a dedicated service user, installs the
+              Run the pinned Linux installer for release <strong>{CURRENT_WATCHTOWER_AGENT_RELEASE.version}</strong> on your Docker host. It creates a dedicated service user, installs the
               agent into <code className="bg-muted px-1 rounded">/opt/watchtower-agent</code>, stores the config in
               <code className="bg-muted px-1 rounded ml-1">/etc/watchtower-agent/watchtower-agent.env</code>, and
               enables the service on boot. The installed runtime reports its own agent version so the dashboard can
               tell you when a host is behind.
             </p>
-            <CopyBlock label="One-time Linux installer" code={installCommand} />
+            <CopyBlock label={`Pinned installer (${CURRENT_WATCHTOWER_AGENT_RELEASE.tag})`} code={installCommand} />
             <InfoBox>
+              The command downloads the installer from the GitHub release, verifies its SHA-256 checksum, and then runs it.
               The installer prompts for the API key so it does not become the primary shell-history path for secrets.
               Default bind and port are <strong>127.0.0.1:9876</strong>.
               <br/><br/>

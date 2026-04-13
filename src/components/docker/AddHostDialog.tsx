@@ -135,16 +135,17 @@ export function AddHostDialog({ orgId, trigger, host }: AddHostDialogProps) {
           setTestStatus('success');
           setTestMessage(result.agent_version_error || "");
           const agentVersion = result.agent_version || null;
+          const latestVersion = result.latest_agent_version || CURRENT_WATCHTOWER_AGENT_VERSION;
           const agentOutdated = isAgentVersionOutdated(agentVersion);
           toast({
             title: isEditing ? "Host updated!" : "Host connected!",
             description: [
               `Docker ${result.docker_version || 'detected'}.`,
               agentVersion
-                ? `Agent ${agentVersion}${agentOutdated ? ` is behind ${CURRENT_WATCHTOWER_AGENT_VERSION}` : ''}.`
+                ? `Agent ${agentVersion}${agentOutdated ? ` is behind ${latestVersion}` : ''}.`
                 : result.agent_version_error
-                  ? `Agent version not reported yet (${result.agent_version_error}). Current release is ${CURRENT_WATCHTOWER_AGENT_VERSION}.`
-                  : `Agent version not reported yet. Current release is ${CURRENT_WATCHTOWER_AGENT_VERSION}.`,
+                  ? `Agent version not reported yet (${result.agent_version_error}). Current release is ${latestVersion}.`
+                  : `Agent version not reported yet. Current release is ${latestVersion}.`,
             ].join(' '),
           });
         } else {

@@ -7,7 +7,8 @@ import {
   staleCutoffDate,
   failureStatusForCount,
 } from './lib/host-health.mjs';
-import { CURRENT_WATCHTOWER_AGENT_VERSION, isAgentVersionOutdated } from './lib/agent-version.mts';
+import { isAgentVersionOutdated } from './lib/agent-version.mts';
+import { buildWatchtowerAgentReleaseResponse } from './lib/agent-release.mts';
 import { ensureDockerHostSchema } from './lib/ensure-docker-host-schema.mjs';
 
 const headers = {
@@ -168,6 +169,7 @@ export default async (req: Request) => {
           })
         }
 
+        const releaseResponse = buildWatchtowerAgentReleaseResponse(agentVersion)
         const agentNeedsUpdate = !!agentVersion && isAgentVersionOutdated(agentVersion)
 
         await sql`
@@ -189,8 +191,8 @@ export default async (req: Request) => {
           docker_version: dockerVersion,
           agent_version: agentVersion,
           agent_version_error: agentVersionError,
+          ...releaseResponse,
           agent_update_available: agentNeedsUpdate,
-          current_agent_version: CURRENT_WATCHTOWER_AGENT_VERSION,
         })
       } catch (err: any) {
         const errorMsg = err.message || 'Unknown error'

@@ -3,7 +3,8 @@ import { sql } from './lib/db.mjs';
 import { requireAuth } from './lib/auth.mjs';
 import { assertHostProxyAllowed, assertOrganizationWriteAllowed } from './lib/access-controls.mjs';
 import { decryptHostSecrets, SecretCryptoError } from './lib/crypto.mjs';
-import { CURRENT_WATCHTOWER_AGENT_VERSION, isAgentVersionOutdated } from './lib/agent-version.mts';
+import { isAgentVersionOutdated } from './lib/agent-version.mts';
+import { buildWatchtowerAgentReleaseResponse } from './lib/agent-release.mts';
 import { ensureDockerHostSchema } from './lib/ensure-docker-host-schema.mjs';
 
 const headers = {
@@ -582,6 +583,7 @@ export default async (req: Request) => {
         });
       }
 
+      const releaseResponse = buildWatchtowerAgentReleaseResponse(agentVersion);
       const agentNeedsUpdate = !!agentVersion && isAgentVersionOutdated(agentVersion);
 
       await sql`
@@ -599,11 +601,11 @@ export default async (req: Request) => {
         status: text,
         docker_version: dockerVersion,
         agent_version: agentVersion,
-        agent_update_available: agentNeedsUpdate,
-        current_agent_version: CURRENT_WATCHTOWER_AGENT_VERSION,
         os_info: osInfo,
         connection_mode: host.connection_mode,
         agent_version_error: agentVersionError,
+        ...releaseResponse,
+        agent_update_available: agentNeedsUpdate,
       }), { headers });
     }
 

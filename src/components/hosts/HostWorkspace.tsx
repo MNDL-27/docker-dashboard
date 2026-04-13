@@ -6,6 +6,8 @@ import {
   Activity,
   Box,
   CloudCog,
+  Copy,
+  ExternalLink,
   Loader2,
   Pencil,
   Plus,
@@ -21,6 +23,7 @@ import {
 import { AddHostDialog } from "@/components/docker/AddHostDialog";
 import { PageHeader } from "@/components/shared/PageHeader";
 import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
@@ -30,6 +33,11 @@ import { useToast } from "@/hooks/use-toast";
 import { dockerApi } from "@/services/docker-api";
 import type { DockerHost } from "@/types/database";
 import { CURRENT_WATCHTOWER_AGENT_VERSION, isAgentVersionOutdated } from "@/lib/agent-version";
+import {
+  CURRENT_WATCHTOWER_AGENT_RELEASE,
+  buildWatchtowerAgentInstallCommand,
+  buildWatchtowerAgentVerifyCommand,
+} from "@/lib/agent-release";
 
 function formatBytes(bytes: number): string {
   if (!Number.isFinite(bytes) || bytes <= 0) return "0 B";
@@ -231,6 +239,109 @@ function LoadingState() {
   );
 }
 
+function AgentCommandBlock({
+  label,
+  command,
+}: {
+  label: string;
+  command: string;
+}) {
+  const [copied, setCopied] = useState(false);
+  const { toast } = useToast();
+
+  const handleCopy = async () => {
+    await navigator.clipboard.writeText(command);
+    setCopied(true);
+    toast({ title: "Copied to clipboard" });
+    window.setTimeout(() => setCopied(false), 1500);
+  };
+
+  return (
+    <div className="space-y-2">
+      <div className="flex items-center justify-between gap-3">
+        <p className="text-xs uppercase tracking-[0.22em] text-muted-foreground">{label}</p>
+        <Button type="button" variant="ghost" size="sm" className="gap-1.5" onClick={handleCopy}>
+          <Copy className="h-3.5 w-3.5" />
+          {copied ? "Copied" : "Copy"}
+        </Button>
+      </div>
+      <div className="rounded-2xl border border-white/10 bg-background/60 p-4">
+        <pre className="overflow-x-auto whitespace-pre-wrap break-all font-mono text-sm text-foreground/90">{command}</pre>
+      </div>
+    </div>
+  );
+}
+
+function AgentUpdateDialog({
+  host,
+  trigger,
+}: {
+  host: DockerHost;
+  trigger: React.ReactNode;
+}) {
+  const installCommand = buildWatchtowerAgentInstallCommand(CURRENT_WATCHTOWER_AGENT_RELEASE);
+  const verifyCommand = buildWatchtowerAgentVerifyCommand();
+  const installedVersion = host.agent_version || "Pending";
+  const latestVersion = CURRENT_WATCHTOWER_AGENT_RELEASE.version;
+  const updateAvailable = isAgentVersionOutdated(host.agent_version);
+
+  return (
+    <Dialog>
+      <DialogTrigger asChild>{trigger}</DialogTrigger>
+      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>Update Host Agent</DialogTitle>
+          <DialogDescription>
+            Use the pinned release installer for this host. The dashboard does not run privileged commands remotely.
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="space-y-5">
+          <div className="grid gap-4 md:grid-cols-3">
+            <div className="rounded-2xl border border-white/10 bg-background/50 p-4">
+              <p className="text-xs uppercase tracking-[0.22em] text-muted-foreground">Installed version</p>
+              <p className="mt-2 text-2xl font-semibold tracking-tight">{installedVersion}</p>
+            </div>
+            <div className="rounded-2xl border border-white/10 bg-background/50 p-4">
+              <p className="text-xs uppercase tracking-[0.22em] text-muted-foreground">Latest approved</p>
+              <p className="mt-2 text-2xl font-semibold tracking-tight">{latestVersion}</p>
+            </div>
+            <div className="rounded-2xl border border-white/10 bg-background/50 p-4">
+              <p className="text-xs uppercase tracking-[0.22em] text-muted-foreground">Status</p>
+              <p className="mt-2 text-2xl font-semibold tracking-tight">
+                {updateAvailable ? "Update available" : "Current release"}
+              </p>
+            </div>
+          </div>
+
+          <div className="rounded-2xl border border-primary/15 bg-primary/5 p-4 text-sm text-muted-foreground">
+            Download source:{" "}
+            <a
+              href={CURRENT_WATCHTOWER_AGENT_RELEASE.releaseUrl}
+              target="_blank"
+              rel="noreferrer"
+              className="inline-flex items-center gap-1 text-primary hover:underline"
+            >
+              {CURRENT_WATCHTOWER_AGENT_RELEASE.tag}
+              <ExternalLink className="h-3.5 w-3.5" />
+            </a>
+            . Installer checksum: <code className="rounded bg-background px-1.5 py-0.5">{CURRENT_WATCHTOWER_AGENT_RELEASE.installerSha256}</code>
+          </div>
+
+          <AgentCommandBlock label="Pinned upgrade command" command={installCommand} />
+          <AgentCommandBlock label="Post-upgrade verification" command={verifyCommand} />
+
+          <div className="rounded-2xl border border-white/10 bg-background/50 p-4 text-sm text-muted-foreground">
+            Re-running the installer preserves the stored config in <code className="rounded bg-background px-1.5 py-0.5">/etc/watchtower-agent/watchtower-agent.env</code>.
+            If the host still fails after upgrade, run <code className="rounded bg-background px-1.5 py-0.5">sudo journalctl -u watchtower-agent -n 50</code> and test
+            <code className="rounded bg-background px-1.5 py-0.5 ml-1">/agent/version</code> and <code className="rounded bg-background px-1.5 py-0.5">/metrics</code> locally.
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 function formatHostMetricsFailure(
   failure: HostMetricsFailure | null | undefined,
   host: DockerHost | null,
@@ -324,6 +435,7 @@ export function HostWorkspace() {
   const containers = Array.isArray(containersQuery.data) ? containersQuery.data : [];
   const runningCount = containers.filter((container: any) => container.State === "running").length;
   const agentOutdated = selectedHost?.agent_version ? isAgentVersionOutdated(selectedHost.agent_version) : false;
+  const showAgentUpdateCta = !!selectedHost && (!selectedHost.agent_version || agentOutdated);
   const addHostAction = currentOrg ? (
     <AddHostDialog
       orgId={currentOrg.id}
@@ -343,16 +455,17 @@ export function HostWorkspace() {
     setTesting(true);
     try {
       const result = await dockerApi.ping(selectedHost.id);
+      const latestVersion = result.latest_agent_version || CURRENT_WATCHTOWER_AGENT_VERSION;
       toast({
         title: result.ok ? "Connection successful" : "Connection failed",
         description: result.ok
           ? [
               `Docker ${result.docker_version || "detected"}.`,
               result.agent_version
-                ? `Agent ${result.agent_version}${result.agent_update_available ? ` is behind ${CURRENT_WATCHTOWER_AGENT_VERSION}` : ""}.`
+                ? `Agent ${result.agent_version}${result.agent_update_available ? ` is behind ${latestVersion}` : ""}.`
                 : result.agent_version_error
-                  ? `Agent version not reported yet (${result.agent_version_error}). Current release is ${CURRENT_WATCHTOWER_AGENT_VERSION}.`
-                  : `Agent version not reported yet. Current release is ${CURRENT_WATCHTOWER_AGENT_VERSION}.`,
+                  ? `Agent version not reported yet (${result.agent_version_error}). Current release is ${latestVersion}.`
+                  : `Agent version not reported yet. Current release is ${latestVersion}.`,
             ].join(" ")
           : undefined,
       });
@@ -466,6 +579,17 @@ export function HostWorkspace() {
                       {testing ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
                       Test Connection
                     </Button>
+                    {showAgentUpdateCta ? (
+                      <AgentUpdateDialog
+                        host={selectedHost}
+                        trigger={
+                          <Button variant="outline" className="gap-2">
+                            <Terminal className="h-4 w-4" />
+                            Update Agent
+                          </Button>
+                        }
+                      />
+                    ) : null}
                     {currentOrg && selectedHost ? (
                       <AddHostDialog
                         orgId={currentOrg.id}
@@ -508,6 +632,25 @@ export function HostWorkspace() {
               {selectedHost.status === "stale" && (
                 <div className="rounded-xl border border-warning/20 bg-warning/10 px-4 py-3 text-sm text-warning">
                   This host heartbeat is stale. The page will keep trying to read metrics and containers, but the data may be delayed or partially unavailable until the next successful health check.
+                </div>
+              )}
+
+              {showAgentUpdateCta && (
+                <div className="flex flex-col gap-3 rounded-xl border border-primary/20 bg-primary/5 px-4 py-4 text-sm text-muted-foreground md:flex-row md:items-center md:justify-between">
+                  <div>
+                    <p className="font-medium text-foreground">
+                      {selectedHost.agent_version
+                        ? `Agent ${selectedHost.agent_version} is behind ${CURRENT_WATCHTOWER_AGENT_RELEASE.version}.`
+                        : `This host has not reported an installed agent version yet.`}
+                    </p>
+                    <p className="mt-1">
+                      Use the pinned release installer and verification command to upgrade or repair the host agent without changing its saved config.
+                    </p>
+                  </div>
+                  <AgentUpdateDialog
+                    host={selectedHost}
+                    trigger={<Button className="gap-2"><Terminal className="h-4 w-4" />Open Upgrade Steps</Button>}
+                  />
                 </div>
               )}
 
