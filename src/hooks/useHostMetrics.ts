@@ -139,6 +139,7 @@ export function useHostMetrics(hostId?: string | null, options: UseHostMetricsOp
       return normalized;
     },
     enabled: enabled && !!hostId,
+    retry: false,
     refetchInterval: enabled ? refetchInterval : false,
   });
 }

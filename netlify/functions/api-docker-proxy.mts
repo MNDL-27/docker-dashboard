@@ -406,10 +406,19 @@ export default async (req: Request) => {
       const metricsResponse = await dockerFetch(metricsReq.url, metricsReq.method, metricsReq.headers, 5000);
 
       if (!metricsResponse.ok) {
+        const rawDetails = await metricsResponse.text();
+        let parsedDetails: unknown = rawDetails;
+        try {
+          parsedDetails = JSON.parse(rawDetails);
+        } catch {
+          // Keep raw string detail when upstream payload is not JSON.
+        }
+
         return new Response(JSON.stringify({
           error: 'Host metrics unavailable',
-          details: await metricsResponse.text(),
-        }), { status: 502, headers });
+          details: parsedDetails,
+          upstream_status: metricsResponse.status,
+        }), { status: metricsResponse.status || 502, headers });
       }
 
       const metricsData = await metricsResponse.json();
