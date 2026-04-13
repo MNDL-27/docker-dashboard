@@ -33,10 +33,38 @@ describe("normalizeHostMetricsPoint", () => {
     });
   });
 
-  it("rejects unusable zero-capacity payloads", () => {
+  it("accepts empty-workload zero-capacity payloads", () => {
+    const point = normalizeHostMetricsPoint({
+      cpu: 0,
+      memory: 0,
+      usedCores: 0,
+      totalCores: 0,
+      memoryUsed: 0,
+      memoryLimit: 0,
+      network_in_bytes_per_sec: null,
+      network_out_bytes_per_sec: null,
+      disk_read_bytes_per_sec: null,
+      disk_write_bytes_per_sec: null,
+    });
+
+    expect(point).toMatchObject({
+      cpu: 0,
+      memory: 0,
+      usedCores: 0,
+      totalCores: 0,
+      memoryUsed: 0,
+      memoryLimit: 0,
+      networkInBytesPerSec: null,
+      networkOutBytesPerSec: null,
+      diskReadBytesPerSec: null,
+      diskWriteBytesPerSec: null,
+    });
+  });
+
+  it("rejects inconsistent zero-capacity payloads", () => {
     expect(
       normalizeHostMetricsPoint({
-        cpu: 0,
+        cpu: 10,
         memory: 0,
         usedCores: 0,
         totalCores: 0,

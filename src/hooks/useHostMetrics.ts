@@ -103,7 +103,11 @@ export function normalizeHostMetricsPoint(point: HostMetricsApiPoint): HostMetri
     return null;
   }
 
-  if (totalCores === 0 && memoryLimit === 0) return null;
+  if (totalCores === 0 && memoryLimit === 0) {
+    if (cpu !== 0 || memory !== 0 || usedCores !== 0 || memoryUsed !== 0) {
+      return null;
+    }
+  }
   if ((cpu > 0 && totalCores === 0) || (memory > 0 && memoryLimit === 0)) return null;
 
   return {

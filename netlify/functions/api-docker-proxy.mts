@@ -97,6 +97,28 @@ function createHostMetricsPoint(data: any) {
   const totalCores = Math.max(0, toFiniteNumber(data?.online_cpus) ?? 0);
   const memoryUsed = Math.max(0, toFiniteNumber(data?.memory_used) ?? 0);
   const memoryLimit = Math.max(0, toFiniteNumber(data?.memory_limit) ?? 0);
+  const timestamp = Date.now();
+
+  if (totalCores === 0 && memoryLimit === 0 && cpuTimeNs === 0 && systemTimeNs === 0 && memoryUsed === 0) {
+    return {
+      timestamp,
+      time: new Date(timestamp).toLocaleTimeString('en-US', {
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: false,
+      }),
+      cpu: 0,
+      memory: 0,
+      usedCores: 0,
+      totalCores: 0,
+      memoryUsed: 0,
+      memoryLimit: 0,
+      networkInBytesPerSec: normalizeOptionalRate(data?.network_in_bytes_per_sec ?? data?.networkInBytesPerSec),
+      networkOutBytesPerSec: normalizeOptionalRate(data?.network_out_bytes_per_sec ?? data?.networkOutBytesPerSec),
+      diskReadBytesPerSec: normalizeOptionalRate(data?.disk_read_bytes_per_sec ?? data?.diskReadBytesPerSec),
+      diskWriteBytesPerSec: normalizeOptionalRate(data?.disk_write_bytes_per_sec ?? data?.diskWriteBytesPerSec),
+    };
+  }
 
   if (systemTimeNs <= 0 || (totalCores === 0 && memoryLimit === 0)) {
     return null;
@@ -105,7 +127,6 @@ function createHostMetricsPoint(data: any) {
   const usedCores = totalCores > 0 ? (cpuTimeNs / systemTimeNs) * totalCores : 0;
   const cpu = totalCores > 0 ? Math.max(0, Math.min(100, (usedCores / totalCores) * 100)) : 0;
   const memory = memoryLimit > 0 ? Math.max(0, Math.min(100, (memoryUsed / memoryLimit) * 100)) : 0;
-  const timestamp = Date.now();
 
   return {
     timestamp,
