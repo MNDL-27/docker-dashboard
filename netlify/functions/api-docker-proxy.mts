@@ -91,6 +91,50 @@ function normalizeOptionalRate(value: unknown): number | null {
   return numeric;
 }
 
+function parseDiagnosticPayload(rawDetails: string) {
+  try {
+    return JSON.parse(rawDetails);
+  } catch {
+    return rawDetails;
+  }
+}
+
+function classifyHostMetricsFailure(status: number, details: unknown) {
+  if (status === 404 || status === 405) {
+    return {
+      error: 'Host metrics endpoint unsupported',
+      code: 'metrics_endpoint_unsupported',
+      details,
+      upstream_status: status,
+    };
+  }
+
+  if (status === 504) {
+    return {
+      error: 'Host metrics request timed out',
+      code: 'agent_timeout',
+      details,
+      upstream_status: status,
+    };
+  }
+
+  if (status === 502) {
+    return {
+      error: 'Host metrics connection failed',
+      code: 'agent_connection_failed',
+      details,
+      upstream_status: status,
+    };
+  }
+
+  return {
+    error: 'Host metrics unavailable',
+    code: 'host_metrics_unavailable',
+    details,
+    upstream_status: status,
+  };
+}
+
 function createHostMetricsPoint(data: any) {
   const cpuTimeNs = Math.max(0, toFiniteNumber(data?.cpu_time_ns) ?? 0);
   const systemTimeNs = Math.max(0, toFiniteNumber(data?.system_time_ns) ?? 0);
@@ -428,18 +472,10 @@ export default async (req: Request) => {
 
       if (!metricsResponse.ok) {
         const rawDetails = await metricsResponse.text();
-        let parsedDetails: unknown = rawDetails;
-        try {
-          parsedDetails = JSON.parse(rawDetails);
-        } catch {
-          // Keep raw string detail when upstream payload is not JSON.
-        }
+        const parsedDetails = parseDiagnosticPayload(rawDetails);
+        const failure = classifyHostMetricsFailure(metricsResponse.status || 502, parsedDetails);
 
-        return new Response(JSON.stringify({
-          error: 'Host metrics unavailable',
-          details: parsedDetails,
-          upstream_status: metricsResponse.status,
-        }), { status: metricsResponse.status || 502, headers });
+        return new Response(JSON.stringify(failure), { status: metricsResponse.status || 502, headers });
       }
 
       const metricsData = await metricsResponse.json();
@@ -448,7 +484,8 @@ export default async (req: Request) => {
       if (!normalizedMetrics) {
         return new Response(JSON.stringify({
           error: 'Host metrics unavailable',
-          details: 'Agent did not return a usable metrics sample',
+          code: 'malformed_metrics_payload',
+          details: 'Agent returned a success response without a usable metrics sample',
         }), { status: 502, headers });
       }
 

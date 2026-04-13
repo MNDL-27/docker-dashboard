@@ -24,7 +24,7 @@ import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
 import { useDeleteDockerHost, useDockerHosts, useHostContainers } from "@/hooks/useDocker";
-import { HostMetricsPoint, useHostMetrics, useHostMetricsHistory } from "@/hooks/useHostMetrics";
+import { HostMetricsFailure, HostMetricsPoint, useHostMetricsHistory } from "@/hooks/useHostMetrics";
 import { useToast } from "@/hooks/use-toast";
 import { dockerApi } from "@/services/docker-api";
 import type { DockerHost } from "@/types/database";
@@ -90,18 +90,14 @@ function isDisconnectedHostStatus(status: string | null | undefined) {
 function HostCard({
   host,
   selected,
+  previewMetrics,
   onSelect,
 }: {
   host: DockerHost;
   selected: boolean;
+  previewMetrics?: Pick<HostMetricsPoint, "cpu" | "memory"> | null;
   onSelect: () => void;
 }) {
-  const canReadHost = isReadableHostStatus(host.status);
-  const metricsQuery = useHostMetrics(host.id, {
-    enabled: canReadHost,
-    refetchInterval: 20000,
-  });
-
   return (
     <button
       type="button"
@@ -123,8 +119,8 @@ function HostCard({
         <span className={cn("mt-1 h-3 w-3 shrink-0 rounded-full", statusDot(host.status))} />
       </div>
       <div className="mt-4 flex items-center justify-between text-sm text-muted-foreground">
-        <span>CPU: {metricsQuery.data ? `${metricsQuery.data.cpu.toFixed(0)}%` : "--"}</span>
-        <span>RAM: {metricsQuery.data ? `${metricsQuery.data.memory.toFixed(0)}%` : "--"}</span>
+        <span>CPU: {previewMetrics ? `${previewMetrics.cpu.toFixed(0)}%` : "--"}</span>
+        <span>RAM: {previewMetrics ? `${previewMetrics.memory.toFixed(0)}%` : "--"}</span>
       </div>
     </button>
   );
@@ -226,6 +222,57 @@ function EmptyState({ title, description }: { title: string; description: string
   );
 }
 
+function LoadingState() {
+  return (
+    <div className="glass-card min-h-[220px] p-6 flex items-center justify-center">
+      <Loader2 className="h-7 w-7 animate-spin text-muted-foreground" />
+    </div>
+  );
+}
+
+function formatHostMetricsFailure(
+  failure: HostMetricsFailure | null | undefined,
+  host: DockerHost | null,
+) {
+  if (!failure) return null;
+
+  if (failure.unsupportedEndpoint) {
+    const versionCopy = host?.agent_version
+      ? `Installed agent: ${host.agent_version}. Current release: ${CURRENT_WATCHTOWER_AGENT_VERSION}.`
+      : `Current release: ${CURRENT_WATCHTOWER_AGENT_VERSION}.`;
+    return {
+      title: "Metrics endpoint unavailable",
+      description: `This host agent does not expose /metrics yet. Upgrade the agent and test the connection again. ${versionCopy}`,
+    };
+  }
+
+  if (failure.code === "agent_timeout") {
+    return {
+      title: "Metrics request timed out",
+      description: "The dashboard reached the host agent, but /metrics did not respond before the timeout window.",
+    };
+  }
+
+  if (failure.code === "agent_connection_failed") {
+    return {
+      title: "Metrics connection failed",
+      description: "The dashboard could not reach the host agent metrics endpoint. Check the tunnel, host URL, and agent process.",
+    };
+  }
+
+  if (failure.malformedPayload) {
+    return {
+      title: "Malformed metrics payload",
+      description: "The host agent returned a success response, but the metrics payload was incomplete or invalid.",
+    };
+  }
+
+  return {
+    title: "Host metrics unavailable",
+    description: "The host agent did not return a usable metrics sample.",
+  };
+}
+
 export function HostWorkspace() {
   const navigate = useNavigate();
   const { id: routeHostId } = useParams();
@@ -260,6 +307,18 @@ export function HostWorkspace() {
     refetchInterval: 10000,
     maxDataPoints: 24,
   });
+  const metricsFailureDisplay = formatHostMetricsFailure(metricsQuery.failure, selectedHost);
+  const selectedPreviewMetrics = metricsQuery.latestPoint
+    ? { cpu: metricsQuery.latestPoint.cpu, memory: metricsQuery.latestPoint.memory }
+    : null;
+  const metricsErrorMessage = metricsQuery.failure
+    ? [
+        metricsQuery.failure.message,
+        metricsQuery.failure.upstreamStatus ? `Upstream status: ${metricsQuery.failure.upstreamStatus}.` : null,
+      ]
+        .filter(Boolean)
+        .join(" ")
+    : null;
 
   const containers = Array.isArray(containersQuery.data) ? containersQuery.data : [];
   const runningCount = containers.filter((container: any) => container.State === "running").length;
@@ -359,7 +418,13 @@ export function HostWorkspace() {
                   <div className="rounded-2xl border border-dashed border-white/10 p-6 text-center text-sm text-muted-foreground">No hosts match your search.</div>
                 ) : (
                   filteredHosts.map((host) => (
-                    <HostCard key={host.id} host={host} selected={host.id === selectedHost?.id} onSelect={() => handleSelectHost(host.id)} />
+                    <HostCard
+                      key={host.id}
+                      host={host}
+                      selected={host.id === selectedHost?.id}
+                      previewMetrics={host.id === selectedHost?.id ? selectedPreviewMetrics : null}
+                      onSelect={() => handleSelectHost(host.id)}
+                    />
                   ))
                 )}
               </div>
@@ -438,6 +503,11 @@ export function HostWorkspace() {
                   <EmptyState title="Host is disconnected" description="Reconnect the host or run a successful connection test to start collecting host metrics." />
                 ) : metricsQuery.isLoading && metricsQuery.history.length === 0 ? (
                   <div className="glass-card min-h-[320px] flex items-center justify-center"><Loader2 className="h-8 w-8 animate-spin text-muted-foreground" /></div>
+                ) : metricsQuery.failure && !metricsQuery.latestPoint ? (
+                  <EmptyState
+                    title={metricsFailureDisplay?.title || "Host metrics unavailable"}
+                    description={metricsFailureDisplay?.description || "The host metrics probe failed before a usable sample was returned."}
+                  />
                 ) : metricsQuery.latestPoint ? (
                   <RingCard point={metricsQuery.latestPoint} />
                 ) : (
@@ -448,6 +518,13 @@ export function HostWorkspace() {
                   <div className="grid gap-6 lg:grid-cols-2">
                     {selectedHostDisconnected ? (
                       <EmptyState title="Memory metrics unavailable" description="Memory panels appear after a connected host returns a metrics sample." />
+                    ) : metricsQuery.isLoading && !metricsQuery.latestPoint ? (
+                      <LoadingState />
+                    ) : metricsQuery.failure && !metricsQuery.latestPoint ? (
+                      <EmptyState
+                        title={metricsFailureDisplay?.title || "Memory metrics unavailable"}
+                        description={metricsFailureDisplay?.description || "The host metrics probe failed before memory data was returned."}
+                      />
                     ) : metricsQuery.latestPoint ? (
                       <MeterCard
                         title="Memory usage"
@@ -462,6 +539,13 @@ export function HostWorkspace() {
 
                     {selectedHostDisconnected ? (
                       <EmptyState title="Disk throughput unavailable" description="Disk throughput is shown only for connected hosts with live metrics." />
+                    ) : metricsQuery.isLoading && !metricsQuery.latestPoint ? (
+                      <LoadingState />
+                    ) : metricsQuery.failure && !metricsQuery.latestPoint ? (
+                      <EmptyState
+                        title={metricsFailureDisplay?.title || "Disk throughput unavailable"}
+                        description={metricsFailureDisplay?.description || "The host metrics probe failed before disk throughput data was returned."}
+                      />
                     ) : metricsQuery.latestPoint ? (
                       <MeterCard
                         title="Disk throughput"
@@ -489,6 +573,14 @@ export function HostWorkspace() {
                     </div>
                     {selectedHostDisconnected ? (
                       <p className="text-sm text-muted-foreground">Connect this host to start rendering throughput history.</p>
+                    ) : metricsQuery.isLoading && !metricsQuery.latestPoint ? (
+                      <div className="flex h-36 items-center justify-center">
+                        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                      </div>
+                    ) : metricsQuery.failure && !metricsQuery.latestPoint ? (
+                      <p className="text-sm text-muted-foreground">
+                        {metricsFailureDisplay?.description || "The host metrics probe failed before network history could be rendered."}
+                      </p>
                     ) : (
                       <TrendBars history={metricsQuery.history} accessor={(point) => point.networkInBytesPerSec} />
                     )}
@@ -496,9 +588,9 @@ export function HostWorkspace() {
                 </div>
               </div>
 
-              {metricsQuery.error && selectedHostReadable && (
+              {metricsErrorMessage && selectedHostReadable && (
                 <div className="rounded-xl border border-warning/20 bg-warning/10 px-4 py-3 text-sm text-warning">
-                  {metricsQuery.error instanceof Error ? metricsQuery.error.message : "Host metrics are temporarily unavailable."}
+                  {metricsErrorMessage}
                 </div>
               )}
 

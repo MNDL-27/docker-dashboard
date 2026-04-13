@@ -59,6 +59,16 @@ const metricsPoint = {
   diskWriteBytesPerSec: 8192,
 };
 
+const metricsFailure = {
+  message: "Host metrics endpoint unsupported: {\"error\":\"Not found\"}",
+  code: "metrics_endpoint_unsupported",
+  details: { error: "Not found" },
+  status: 404,
+  upstreamStatus: 404,
+  unsupportedEndpoint: true,
+  malformedPayload: false,
+};
+
 const mockUseOrganization = vi.fn();
 const mockUseDockerHosts = vi.fn();
 const mockUseDeleteDockerHost = vi.fn();
@@ -107,6 +117,7 @@ describe("HostWorkspace", () => {
       latestPoint: metricsPoint,
       isLoading: false,
       error: null,
+      failure: null,
       refetch: vi.fn(),
     });
     mockUseToast.mockReturnValue({ toast: vi.fn() });
@@ -159,5 +170,23 @@ describe("HostWorkspace", () => {
     expect(screen.queryByText(/host is disconnected/i)).not.toBeInTheDocument();
     expect(mockUseHostContainers).toHaveBeenCalledWith("host-1");
     expect(mockUseHostMetricsHistory).toHaveBeenCalledWith("host-1", expect.objectContaining({ enabled: true }));
+  });
+
+  it("renders a diagnostics state when host metrics fail before the first sample", () => {
+    mockUseHostMetricsHistory.mockReturnValue({
+      history: [],
+      latestPoint: undefined,
+      isLoading: false,
+      error: new Error(metricsFailure.message),
+      failure: metricsFailure,
+      refetch: vi.fn(),
+    });
+
+    renderWorkspace("/app/hosts");
+
+    expect(screen.getAllByText(/metrics endpoint unavailable/i).length).toBeGreaterThan(0);
+    expect(screen.getByText(/upgrade the agent and test the connection again/i)).toBeInTheDocument();
+    expect(screen.getByText(/upstream status: 404/i)).toBeInTheDocument();
+    expect(screen.queryByText(/no cpu metrics yet/i)).not.toBeInTheDocument();
   });
 });

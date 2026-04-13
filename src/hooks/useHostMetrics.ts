@@ -1,6 +1,7 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { dockerApi } from "@/services/docker-api";
+import { ApiError } from "@/lib/api";
 
 export interface HostMetricsPoint {
   timestamp: number;
@@ -15,6 +16,16 @@ export interface HostMetricsPoint {
   networkOutBytesPerSec: number | null;
   diskReadBytesPerSec: number | null;
   diskWriteBytesPerSec: number | null;
+}
+
+export interface HostMetricsFailure {
+  message: string;
+  code?: string;
+  details?: unknown;
+  status?: number;
+  upstreamStatus?: number;
+  unsupportedEndpoint: boolean;
+  malformedPayload: boolean;
 }
 
 interface HostMetricsApiPoint {
@@ -126,6 +137,57 @@ export function normalizeHostMetricsPoint(point: HostMetricsApiPoint): HostMetri
   };
 }
 
+function formatFailureDetails(details: unknown): string | null {
+  if (details === null || details === undefined) return null;
+  if (typeof details === "string") return details;
+  if (typeof details === "object") {
+    const error = typeof (details as { error?: unknown }).error === "string" ? (details as { error: string }).error : null;
+    if (error) return error;
+    try {
+      return JSON.stringify(details);
+    } catch {
+      return null;
+    }
+  }
+  return String(details);
+}
+
+export function getHostMetricsFailure(error: unknown): HostMetricsFailure | null {
+  if (!error) return null;
+
+  if (error instanceof ApiError) {
+    const details = error.details;
+    const detailText = formatFailureDetails(details);
+    const message = detailText ? `${error.message}: ${detailText}` : error.message;
+    return {
+      message,
+      code: error.code,
+      details,
+      status: error.status,
+      upstreamStatus: error.upstreamStatus,
+      unsupportedEndpoint:
+        error.code === "metrics_endpoint_unsupported" ||
+        error.status === 404 ||
+        error.status === 405,
+      malformedPayload: error.code === "malformed_metrics_payload",
+    };
+  }
+
+  if (error instanceof Error) {
+    return {
+      message: error.message,
+      unsupportedEndpoint: false,
+      malformedPayload: false,
+    };
+  }
+
+  return {
+    message: "Host metrics are temporarily unavailable.",
+    unsupportedEndpoint: false,
+    malformedPayload: false,
+  };
+}
+
 interface UseHostMetricsOptions {
   enabled?: boolean;
   refetchInterval?: number;
@@ -134,18 +196,33 @@ interface UseHostMetricsOptions {
 export function useHostMetrics(hostId?: string | null, options: UseHostMetricsOptions = {}) {
   const { enabled = true, refetchInterval = 10000 } = options;
 
-  return useQuery({
+  const query = useQuery({
     queryKey: ["host-metrics", hostId],
     queryFn: async (): Promise<HostMetricsPoint> => {
       const data = await dockerApi.hostMetrics(hostId!);
       const normalized = normalizeHostMetricsPoint((data ?? {}) as HostMetricsApiPoint);
-      if (!normalized) throw new Error("Host metrics unavailable");
+      if (!normalized) {
+        throw new ApiError(
+          502,
+          {
+            error: "Host metrics unavailable",
+            code: "malformed_metrics_payload",
+            details: "Agent returned a success response without a usable host metrics sample.",
+          },
+          "Host metrics unavailable",
+        );
+      }
       return normalized;
     },
     enabled: enabled && !!hostId,
     retry: false,
     refetchInterval: enabled ? refetchInterval : false,
   });
+
+  return {
+    ...query,
+    failure: getHostMetricsFailure(query.error),
+  };
 }
 
 interface UseHostMetricsHistoryOptions extends UseHostMetricsOptions {
@@ -172,9 +249,13 @@ export function useHostMetricsHistory(hostId?: string | null, options: UseHostMe
     });
   }, [maxDataPoints, query.data]);
 
+  const latestPoint = history[history.length - 1] ?? query.data;
+  const failure = useMemo(() => getHostMetricsFailure(query.error), [query.error]);
+
   return {
     ...query,
     history,
-    latestPoint: history[history.length - 1] ?? query.data,
+    latestPoint,
+    failure,
   };
 }

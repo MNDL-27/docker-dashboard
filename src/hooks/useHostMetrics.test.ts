@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
-import { normalizeHostMetricsPoint } from "@/hooks/useHostMetrics";
+import { ApiError } from "@/lib/api";
+import { getHostMetricsFailure, normalizeHostMetricsPoint } from "@/hooks/useHostMetrics";
 
 describe("normalizeHostMetricsPoint", () => {
   it("normalizes a valid metrics payload", () => {
@@ -72,5 +73,26 @@ describe("normalizeHostMetricsPoint", () => {
         memoryLimit: 0,
       }),
     ).toBeNull();
+  });
+
+  it("maps unsupported endpoint API failures into structured diagnostics", () => {
+    expect(
+      getHostMetricsFailure(
+        new ApiError(
+          404,
+          {
+            error: "Host metrics endpoint unsupported",
+            code: "metrics_endpoint_unsupported",
+            details: { error: "Not found" },
+            upstream_status: 404,
+          },
+          "Host metrics endpoint unsupported",
+        ),
+      ),
+    ).toMatchObject({
+      code: "metrics_endpoint_unsupported",
+      unsupportedEndpoint: true,
+      upstreamStatus: 404,
+    });
   });
 });

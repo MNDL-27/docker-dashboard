@@ -38,6 +38,20 @@ export default async (req: Request) => {
       }), { status: 200, headers });
     }
 
+    if (path === '/metrics' || path.endsWith('/metrics')) {
+      return new Response(JSON.stringify({
+        cpu_time_ns: 1_200_000_000,
+        system_time_ns: 4_800_000_000,
+        online_cpus: 4,
+        memory_used: 2_147_483_648,
+        memory_limit: 8_589_934_592,
+        network_in_bytes_per_sec: 524_288,
+        network_out_bytes_per_sec: 262_144,
+        disk_read_bytes_per_sec: 131_072,
+        disk_write_bytes_per_sec: 65_536,
+      }), { status: 200, headers });
+    }
+
     if (path === '/docker/version' || path.endsWith('/version')) {
       return new Response(JSON.stringify({
         Version: '27.0.3-mock',
