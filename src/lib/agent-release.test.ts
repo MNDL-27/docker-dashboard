@@ -13,6 +13,7 @@ describe("watchtower agent release helpers", () => {
     expect(command).toContain(CURRENT_WATCHTOWER_AGENT_RELEASE.assetBaseUrl);
     expect(command).toContain(CURRENT_WATCHTOWER_AGENT_RELEASE.installerSha256);
     expect(command).toContain(`--expected-version "${CURRENT_WATCHTOWER_AGENT_RELEASE.version}"`);
+    expect(command).toContain("/raw.githubusercontent.com/");
     expect(command).not.toContain("/main/");
   });
 
@@ -25,7 +26,9 @@ describe("watchtower agent release helpers", () => {
       agent_update_available: true,
       release_url: CURRENT_WATCHTOWER_AGENT_RELEASE.releaseUrl,
       checksum: CURRENT_WATCHTOWER_AGENT_RELEASE.installerSha256,
+      source_label: CURRENT_WATCHTOWER_AGENT_RELEASE.sourceLabel,
+      published_release: CURRENT_WATCHTOWER_AGENT_RELEASE.published,
     });
-    expect(response.upgrade_command).toContain(CURRENT_WATCHTOWER_AGENT_RELEASE.tag);
+    expect(response.upgrade_command).toContain(CURRENT_WATCHTOWER_AGENT_RELEASE.installerAssetName);
   });
 });

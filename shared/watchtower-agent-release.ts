@@ -1,6 +1,8 @@
 export interface WatchtowerAgentRelease {
   version: string;
   tag: string;
+  sourceLabel: string;
+  published: boolean;
   releaseUrl: string;
   releaseNotesUrl: string;
   assetBaseUrl: string;
@@ -17,6 +19,8 @@ export interface WatchtowerAgentReleaseResponse {
   agent_update_available: boolean;
   current_agent_version: string;
   upgrade_command: string;
+  source_label: string;
+  published_release: boolean;
   release_url: string;
   release_notes_url: string;
   checksum: string;
@@ -24,13 +28,16 @@ export interface WatchtowerAgentReleaseResponse {
 
 const WATCHTOWER_AGENT_GITHUB_OWNER = "MNDL-27";
 const WATCHTOWER_AGENT_GITHUB_REPO = "docker-watchtower-dash";
+const WATCHTOWER_AGENT_SOURCE_REF = "b6512ebb0078a2d44dffdbef42ac95b40d0d6739";
 
 export const CURRENT_WATCHTOWER_AGENT_RELEASE: WatchtowerAgentRelease = {
   version: "1.0.1",
   tag: "v1.0.1",
-  releaseUrl: `https://github.com/${WATCHTOWER_AGENT_GITHUB_OWNER}/${WATCHTOWER_AGENT_GITHUB_REPO}/releases/tag/v1.0.1`,
-  releaseNotesUrl: `https://github.com/${WATCHTOWER_AGENT_GITHUB_OWNER}/${WATCHTOWER_AGENT_GITHUB_REPO}/releases/tag/v1.0.1`,
-  assetBaseUrl: `https://github.com/${WATCHTOWER_AGENT_GITHUB_OWNER}/${WATCHTOWER_AGENT_GITHUB_REPO}/releases/download/v1.0.1`,
+  sourceLabel: `GitHub commit ${WATCHTOWER_AGENT_SOURCE_REF.slice(0, 7)}`,
+  published: false,
+  releaseUrl: `https://github.com/${WATCHTOWER_AGENT_GITHUB_OWNER}/${WATCHTOWER_AGENT_GITHUB_REPO}/tree/${WATCHTOWER_AGENT_SOURCE_REF}/public`,
+  releaseNotesUrl: `https://github.com/${WATCHTOWER_AGENT_GITHUB_OWNER}/${WATCHTOWER_AGENT_GITHUB_REPO}/commit/${WATCHTOWER_AGENT_SOURCE_REF}`,
+  assetBaseUrl: `https://raw.githubusercontent.com/${WATCHTOWER_AGENT_GITHUB_OWNER}/${WATCHTOWER_AGENT_GITHUB_REPO}/${WATCHTOWER_AGENT_SOURCE_REF}/public`,
   installerAssetName: "watchtower-agent-install.sh",
   runtimeAssetName: "watchtower-agent.sh",
   uninstallAssetName: "watchtower-agent-uninstall.sh",
@@ -82,6 +89,8 @@ export function buildWatchtowerAgentReleaseResponse(
     agent_update_available: isAgentVersionOutdated(installedAgentVersion),
     current_agent_version: CURRENT_WATCHTOWER_AGENT_RELEASE.version,
     upgrade_command: buildWatchtowerAgentInstallCommand(CURRENT_WATCHTOWER_AGENT_RELEASE),
+    source_label: CURRENT_WATCHTOWER_AGENT_RELEASE.sourceLabel,
+    published_release: CURRENT_WATCHTOWER_AGENT_RELEASE.published,
     release_url: CURRENT_WATCHTOWER_AGENT_RELEASE.releaseUrl,
     release_notes_url: CURRENT_WATCHTOWER_AGENT_RELEASE.releaseNotesUrl,
     checksum: CURRENT_WATCHTOWER_AGENT_RELEASE.installerSha256,

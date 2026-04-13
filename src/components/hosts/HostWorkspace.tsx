@@ -315,17 +315,18 @@ function AgentUpdateDialog({
           </div>
 
           <div className="rounded-2xl border border-primary/15 bg-primary/5 p-4 text-sm text-muted-foreground">
-            Download source:{" "}
+            Source:{" "}
             <a
               href={CURRENT_WATCHTOWER_AGENT_RELEASE.releaseUrl}
               target="_blank"
               rel="noreferrer"
               className="inline-flex items-center gap-1 text-primary hover:underline"
             >
-              {CURRENT_WATCHTOWER_AGENT_RELEASE.tag}
+              {CURRENT_WATCHTOWER_AGENT_RELEASE.sourceLabel}
               <ExternalLink className="h-3.5 w-3.5" />
             </a>
             . Installer checksum: <code className="rounded bg-background px-1.5 py-0.5">{CURRENT_WATCHTOWER_AGENT_RELEASE.installerSha256}</code>
+            {!CURRENT_WATCHTOWER_AGENT_RELEASE.published ? " Release assets are not published yet, so this command uses a commit-pinned raw GitHub file." : ""}
           </div>
 
           <AgentCommandBlock label="Pinned upgrade command" command={installCommand} />

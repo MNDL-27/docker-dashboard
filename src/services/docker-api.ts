@@ -10,6 +10,8 @@ export interface DockerHostPingResult {
   current_agent_version: string | null;
   latest_agent_version: string | null;
   upgrade_command: string | null;
+  source_label: string | null;
+  published_release: boolean;
   release_url: string | null;
   release_notes_url: string | null;
   checksum: string | null;
