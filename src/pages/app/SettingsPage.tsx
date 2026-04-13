@@ -1,4 +1,5 @@
 import { PageHeader } from "@/components/shared/PageHeader";
+import { OrganizationMembersWorkspaceContainer } from "@/components/settings/OrganizationMembersWorkspace";
 import { useState } from "react";
 import { DiscordDestinationsPanel } from "@/components/settings/DiscordDestinationsPanel";
 import { ProfileSettings } from "@/components/settings/ProfileSettings";
@@ -13,7 +14,7 @@ import { useCreateWebhookDestination, useTestWebhookDestination, useUpdateWebhoo
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import type { SlackDestinationFormValues, WebhookDestinationFormValues } from "@/types/alerts";
 
-const tabs = ["Profile", "General", "API Keys", "Webhooks", "Notifications", "Audit Logs", "Danger Zone"];
+const tabs = ["Members", "Profile", "General", "API Keys", "Webhooks", "Notifications", "Audit Logs", "Danger Zone"];
 
 export default function SettingsPage() {
   const { organization: currentOrg } = useOrganization();
@@ -153,6 +154,10 @@ export default function SettingsPage() {
           <ProfileSettings />
         </TabsContent>
 
+        <TabsContent value="Members">
+          <OrganizationMembersWorkspaceContainer />
+        </TabsContent>
+
         <TabsContent value="Webhooks">
           <WebhookDestinationsPanel
             destinations={webhookDestinations}
@@ -182,7 +187,7 @@ export default function SettingsPage() {
           </div>
         </TabsContent>
 
-        {tabs.filter((currentTab) => !["Profile", "Webhooks", "Notifications"].includes(currentTab)).map((currentTab) => (
+        {tabs.filter((currentTab) => !["Members", "Profile", "Webhooks", "Notifications"].includes(currentTab)).map((currentTab) => (
           <TabsContent key={currentTab} value={currentTab}>
             <div className="glass-card p-12 text-center">
               <Construction className="h-10 w-10 text-muted-foreground mx-auto mb-3" />

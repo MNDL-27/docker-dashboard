@@ -1,11 +1,5 @@
-import { createClerkClient } from '@clerk/backend';
 import { sql } from './db.mjs';
-
-const clerkClient = createClerkClient({
-  secretKey: process.env.CLERK_SECRET_KEY,
-  publishableKey: process.env.CLERK_PUBLISHABLE_KEY || process.env.VITE_CLERK_PUBLISHABLE_KEY,
-  jwtKey: process.env.CLERK_JWT_KEY,
-});
+import { clerkClient } from './clerk.mjs';
 
 export interface AppAuthContext {
   userId: string; // The internal UUID

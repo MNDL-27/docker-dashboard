@@ -4,7 +4,7 @@ type StatusType = "healthy" | "running" | "success" | "paid" | "resolved" |
   "warning" | "acknowledged" | "paused" |
   "critical" | "unhealthy" | "firing" | "failed" | "investigating" |
   "offline" | "exited" | "restarting" | "identified" |
-  "info" | "owner" | "admin" | "developer" | "viewer" | "billing" |
+  "info" | "owner" | "admin" | "member" | "active" | "invited" | "developer" | "viewer" | "billing" |
   "production" | "staging" | "development";
 
 const statusStyles: Record<string, string> = {
@@ -33,6 +33,9 @@ const statusStyles: Record<string, string> = {
 
   owner: "bg-primary/15 text-primary border-primary/20",
   admin: "bg-warning/15 text-warning border-warning/20",
+  member: "bg-muted text-muted-foreground border-border",
+  active: "bg-success/15 text-success border-success/20",
+  invited: "bg-primary/15 text-primary border-primary/20",
   developer: "bg-success/15 text-success border-success/20",
   viewer: "bg-muted text-muted-foreground border-border",
   billing: "bg-muted text-muted-foreground border-border",
@@ -42,7 +45,7 @@ const statusStyles: Record<string, string> = {
   development: "bg-primary/10 text-primary border-primary/20",
 };
 
-const hasDot = ["healthy", "running", "warning", "critical", "unhealthy", "offline", "firing", "restarting", "exited", "paused"];
+const hasDot = ["healthy", "running", "warning", "critical", "unhealthy", "offline", "firing", "restarting", "exited", "paused", "active", "invited"];
 
 export function StatusBadge({ status, className }: { status: StatusType; className?: string }) {
   return (
@@ -53,11 +56,11 @@ export function StatusBadge({ status, className }: { status: StatusType; classNa
     )}>
       {hasDot.includes(status) && (
         <span className={cn("w-1.5 h-1.5 rounded-full", {
-          "bg-success animate-pulse-dot": ["healthy", "running"].includes(status),
+          "bg-success animate-pulse-dot": ["healthy", "running", "active"].includes(status),
           "bg-warning": status === "warning" || status === "paused",
           "bg-destructive": ["critical", "unhealthy", "firing"].includes(status),
           "bg-muted-foreground": ["offline", "exited"].includes(status),
-          "bg-primary": status === "restarting",
+          "bg-primary": status === "restarting" || status === "invited",
         })} />
       )}
       {status}

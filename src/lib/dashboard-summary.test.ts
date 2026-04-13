@@ -81,14 +81,14 @@ describe("buildDashboardStats", () => {
       type: "container",
       severity: "warning",
       title: "Container Exited",
-      href: "/app/containers/cont-3",
+      href: "/app/containers",
     });
     expect(stats.alerts[2]).toMatchObject({
       id: "cont-cont-2",
       type: "container",
       severity: "warning",
       title: "Container Restart Loop",
-      href: "/app/containers/cont-2",
+      href: "/app/containers",
     });
     expect(stats.containers).toHaveLength(3);
   });
