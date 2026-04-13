@@ -523,11 +523,11 @@ if [ "$PATH_RAW" = "/metrics" ]; then
     STATS_JSON=$(curl --silent --unix-socket "$SOCKET_PATH" "http://localhost/containers/${CONTAINER_ID}/stats?stream=false" 2>/dev/null)
 
     if [ -n "$STATS_JSON" ]; then
-      CPU_USAGE=$(echo "$STATS_JSON" | grep -oE '"cpu_usage":{"total_usage":[0-9]+' | head -1 | sed 's/.*total_usage://' | tr -d '}')
-      PREV_CPU=$(echo "$STATS_JSON" | grep -oE '"precpu_stats":{"cpu_usage":{"total_usage":[0-9]+' | head -1 | sed 's/.*total_usage://' | tr -d '}')
-      SYSTEM_USAGE=$(echo "$STATS_JSON" | grep -oE '"system_cpu_usage":[0-9]+' | head -1 | sed 's/.*://' | tr -d '}')
-      PREV_SYSTEM=$(echo "$STATS_JSON" | grep -oE '"precpu_stats":{"system_cpu_usage":[0-9]+' | head -1 | sed 's/.*system_cpu_usage://' | tr -d '}')
-      ONLINE_CPUS=$(echo "$STATS_JSON" | grep -oE '"online_cpus":[0-9]+' | head -1 | sed 's/.*://' | tr -d '}')
+      CPU_USAGE=$(echo "$STATS_JSON" | grep -oE '"cpu_usage":{"total_usage":[0-9]+' | head -1 | sed 's/.*total_usage://' | tr -d '}' || true)
+      PREV_CPU=$(echo "$STATS_JSON" | grep -oE '"precpu_stats":{"cpu_usage":{"total_usage":[0-9]+' | head -1 | sed 's/.*total_usage://' | tr -d '}' || true)
+      SYSTEM_USAGE=$(echo "$STATS_JSON" | grep -oE '"system_cpu_usage":[0-9]+' | head -1 | sed 's/.*://' | tr -d '}' || true)
+      PREV_SYSTEM=$(echo "$STATS_JSON" | grep -oE '"precpu_stats":{"system_cpu_usage":[0-9]+' | head -1 | sed 's/.*system_cpu_usage://' | tr -d '}' || true)
+      ONLINE_CPUS=$(echo "$STATS_JSON" | grep -oE '"online_cpus":[0-9]+' | head -1 | sed 's/.*://' | tr -d '}' || true)
 
       if [ -n "$ONLINE_CPUS" ] && [ "$HOST_CORES" = "0" ]; then
         HOST_CORES=$ONLINE_CPUS
@@ -544,8 +544,8 @@ if [ "$PATH_RAW" = "/metrics" ]; then
         TOTAL_CPU_TIME_NS=$((TOTAL_CPU_TIME_NS + CPU_DELTA))
       fi
 
-      MEM_USAGE=$(echo "$STATS_JSON" | grep -oE '"usage":[0-9]+' | head -1 | cut -d':' -f2)
-      MEM_LIMIT=$(echo "$STATS_JSON" | grep -oE '"limit":[0-9]+' | head -1 | cut -d':' -f2)
+      MEM_USAGE=$(echo "$STATS_JSON" | grep -oE '"usage":[0-9]+' | head -1 | cut -d':' -f2 || true)
+      MEM_LIMIT=$(echo "$STATS_JSON" | grep -oE '"limit":[0-9]+' | head -1 | cut -d':' -f2 || true)
 
       if [ -n "$MEM_USAGE" ] && [ -n "$MEM_LIMIT" ]; then
         TOTAL_MEM_USED=$((TOTAL_MEM_USED + MEM_USAGE))
