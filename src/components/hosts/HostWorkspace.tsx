@@ -36,6 +36,7 @@ import { CURRENT_WATCHTOWER_AGENT_VERSION, isAgentVersionOutdated } from "@/lib/
 import {
   CURRENT_WATCHTOWER_AGENT_RELEASE,
   buildWatchtowerAgentInstallCommand,
+  buildWatchtowerAgentUpdateCopy,
   buildWatchtowerAgentVerifyCommand,
 } from "@/lib/agent-release";
 
@@ -281,6 +282,7 @@ function AgentUpdateDialog({
 }) {
   const installCommand = buildWatchtowerAgentInstallCommand(CURRENT_WATCHTOWER_AGENT_RELEASE);
   const verifyCommand = buildWatchtowerAgentVerifyCommand();
+  const updateCopy = buildWatchtowerAgentUpdateCopy(CURRENT_WATCHTOWER_AGENT_RELEASE);
   const installedVersion = host.agent_version || "Pending";
   const latestVersion = CURRENT_WATCHTOWER_AGENT_RELEASE.version;
   const updateAvailable = isAgentVersionOutdated(host.agent_version);
@@ -291,9 +293,7 @@ function AgentUpdateDialog({
       <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Update Host Agent</DialogTitle>
-          <DialogDescription>
-            Use the pinned release installer for this host. The dashboard does not run privileged commands remotely.
-          </DialogDescription>
+          <DialogDescription>{updateCopy.dialogDescription}</DialogDescription>
         </DialogHeader>
 
         <div className="space-y-5">
@@ -309,13 +309,13 @@ function AgentUpdateDialog({
             <div className="rounded-2xl border border-white/10 bg-background/50 p-4">
               <p className="text-xs uppercase tracking-[0.22em] text-muted-foreground">Status</p>
               <p className="mt-2 text-2xl font-semibold tracking-tight">
-                {updateAvailable ? "Update available" : "Current release"}
+                {updateAvailable ? updateCopy.statusUpdateAvailable : updateCopy.statusCurrent}
               </p>
             </div>
           </div>
 
           <div className="rounded-2xl border border-primary/15 bg-primary/5 p-4 text-sm text-muted-foreground">
-            Source:{" "}
+            {updateCopy.sourcePrefix}{" "}
             <a
               href={CURRENT_WATCHTOWER_AGENT_RELEASE.releaseUrl}
               target="_blank"
@@ -326,16 +326,14 @@ function AgentUpdateDialog({
               <ExternalLink className="h-3.5 w-3.5" />
             </a>
             . Installer checksum: <code className="rounded bg-background px-1.5 py-0.5">{CURRENT_WATCHTOWER_AGENT_RELEASE.installerSha256}</code>
-            {!CURRENT_WATCHTOWER_AGENT_RELEASE.published ? " Release assets are not published yet, so this command uses the current Dockerdash-hosted installer asset." : ""}
+            {updateCopy.sourceNotice ? ` ${updateCopy.sourceNotice}` : ""}
           </div>
 
-          <AgentCommandBlock label="Pinned upgrade command" command={installCommand} />
-          <AgentCommandBlock label="Post-upgrade verification" command={verifyCommand} />
+          <AgentCommandBlock label={updateCopy.upgradeCommandLabel} command={installCommand} />
+          <AgentCommandBlock label={updateCopy.verifyCommandLabel} command={verifyCommand} />
 
           <div className="rounded-2xl border border-white/10 bg-background/50 p-4 text-sm text-muted-foreground">
-            Re-running the installer preserves the stored config in <code className="rounded bg-background px-1.5 py-0.5">/etc/watchtower-agent/watchtower-agent.env</code>.
-            If the host still fails after upgrade, run <code className="rounded bg-background px-1.5 py-0.5">sudo journalctl -u watchtower-agent -n 50</code> and test
-            <code className="rounded bg-background px-1.5 py-0.5 ml-1">/agent/version</code> and <code className="rounded bg-background px-1.5 py-0.5">/metrics</code> locally.
+            {updateCopy.supportInstructions}
           </div>
         </div>
       </DialogContent>
@@ -436,6 +434,7 @@ export function HostWorkspace() {
   const containers = Array.isArray(containersQuery.data) ? containersQuery.data : [];
   const runningCount = containers.filter((container: any) => container.State === "running").length;
   const agentOutdated = selectedHost?.agent_version ? isAgentVersionOutdated(selectedHost.agent_version) : false;
+  const updateCopy = buildWatchtowerAgentUpdateCopy(CURRENT_WATCHTOWER_AGENT_RELEASE);
   const showAgentUpdateCta = !!selectedHost && (!selectedHost.agent_version || agentOutdated);
   const addHostAction = currentOrg ? (
     <AddHostDialog
@@ -641,11 +640,11 @@ export function HostWorkspace() {
                   <div>
                     <p className="font-medium text-foreground">
                       {selectedHost.agent_version
-                        ? `Agent ${selectedHost.agent_version} is behind ${CURRENT_WATCHTOWER_AGENT_RELEASE.version}.`
-                        : `This host has not reported an installed agent version yet.`}
+                        ? updateCopy.outdatedSummary(selectedHost.agent_version, CURRENT_WATCHTOWER_AGENT_RELEASE.version)
+                        : updateCopy.pendingSummary}
                     </p>
                     <p className="mt-1">
-                      Use the pinned release installer and verification command to upgrade or repair the host agent without changing its saved config.
+                      {updateCopy.repairSummary}
                     </p>
                   </div>
                   <AgentUpdateDialog

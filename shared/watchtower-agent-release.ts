@@ -26,6 +26,20 @@ export interface WatchtowerAgentReleaseResponse {
   checksum: string;
 }
 
+export interface WatchtowerAgentUpdateCopy {
+  dialogDescription: string;
+  statusCurrent: string;
+  statusUpdateAvailable: string;
+  sourcePrefix: string;
+  sourceNotice: string | null;
+  upgradeCommandLabel: string;
+  verifyCommandLabel: string;
+  repairSummary: string;
+  outdatedSummary: (installedVersion: string, latestVersion: string) => string;
+  pendingSummary: string;
+  supportInstructions: string;
+}
+
 const WATCHTOWER_AGENT_GITHUB_OWNER = "MNDL-27";
 const WATCHTOWER_AGENT_GITHUB_REPO = "docker-watchtower-dash";
 const WATCHTOWER_AGENT_SOURCE_REF = "b6512ebb0078a2d44dffdbef42ac95b40d0d6739";
@@ -72,6 +86,28 @@ sudo ./watchtower-agent-install.sh --expected-version "${release.version}"`;
 export function buildWatchtowerAgentVerifyCommand(agentApiKeyPlaceholder = "<agent-api-key>") {
   return `curl -i http://127.0.0.1:9876/agent/version
 curl -i http://127.0.0.1:9876/metrics -H "X-Agent-Key: ${agentApiKeyPlaceholder}"`;
+}
+
+export function buildWatchtowerAgentUpdateCopy(
+  release: WatchtowerAgentRelease = CURRENT_WATCHTOWER_AGENT_RELEASE,
+): WatchtowerAgentUpdateCopy {
+  return {
+    dialogDescription: "Use the hosted installer command for this host. The dashboard does not run privileged commands remotely.",
+    statusCurrent: "Current release",
+    statusUpdateAvailable: "Update available",
+    sourcePrefix: "Source:",
+    sourceNotice: release.published
+      ? null
+      : "This command currently uses the Dockerdash-hosted installer asset instead of a published GitHub release bundle.",
+    upgradeCommandLabel: "Pinned upgrade command",
+    verifyCommandLabel: "Post-upgrade verification",
+    repairSummary: "Use the hosted installer and verification command to upgrade or repair the host agent without changing its saved config.",
+    outdatedSummary: (installedVersion: string, latestVersion: string) =>
+      `Agent ${installedVersion} is behind ${latestVersion}.`,
+    pendingSummary: "This host has not reported an installed agent version yet.",
+    supportInstructions:
+      "Re-running the installer preserves the stored config in /etc/watchtower-agent/watchtower-agent.env. If the host still fails after upgrade, run sudo journalctl -u watchtower-agent -n 50 and test /agent/version and /metrics locally.",
+  };
 }
 
 export function isAgentVersionOutdated(agentVersion: string | null | undefined): boolean {
