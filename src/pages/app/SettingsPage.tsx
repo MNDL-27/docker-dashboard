@@ -1,5 +1,6 @@
 import { PageHeader } from "@/components/shared/PageHeader";
 import { useState } from "react";
+import { DiscordDestinationsPanel } from "@/components/settings/DiscordDestinationsPanel";
 import { ProfileSettings } from "@/components/settings/ProfileSettings";
 import { Construction } from "lucide-react";
 import { useSearchParams } from "react-router-dom";
@@ -167,15 +168,18 @@ export default function SettingsPage() {
         </TabsContent>
 
         <TabsContent value="Notifications">
-          <SlackDestinationsPanel
-            destinations={slackDestinations}
-            canManage={slackCanManage}
-            saving={slackSaving}
-            testingId={testSlackMutation.isPending ? testSlackMutation.variables : null}
-            onCreate={handleCreateSlack}
-            onUpdate={handleUpdateSlack}
-            onTest={handleTestSlack}
-          />
+          <div className="space-y-4">
+            <SlackDestinationsPanel
+              destinations={slackDestinations}
+              canManage={slackCanManage}
+              saving={slackSaving}
+              testingId={testSlackMutation.isPending ? testSlackMutation.variables : null}
+              onCreate={handleCreateSlack}
+              onUpdate={handleUpdateSlack}
+              onTest={handleTestSlack}
+            />
+            <DiscordDestinationsPanel />
+          </div>
         </TabsContent>
 
         {tabs.filter((currentTab) => !["Profile", "Webhooks", "Notifications"].includes(currentTab)).map((currentTab) => (
