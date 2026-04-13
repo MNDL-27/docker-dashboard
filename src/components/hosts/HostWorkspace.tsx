@@ -207,9 +207,19 @@ function MeterCard({
   );
 }
 
-function TrendBars({ history, accessor, maxBars = 24 }: { history: HostMetricsPoint[]; accessor: (point: HostMetricsPoint) => number | null; maxBars?: number }) {
-  const values = history.map(accessor).filter((value): value is number => value !== null && value >= 0);
-  const maxValue = values.length > 0 ? Math.max(...values, 1) : 1;
+function TrendBars({ 
+  history, 
+  accessor, 
+  secondaryAccessor,
+  maxBars = 24 
+}: { 
+  history: HostMetricsPoint[]; 
+  accessor: (point: HostMetricsPoint) => number | null; 
+  secondaryAccessor?: (point: HostMetricsPoint) => number | null;
+  maxBars?: number 
+}) {
+  const totals = history.map(p => (accessor(p) ?? 0) + (secondaryAccessor?.(p) ?? 0));
+  const maxValue = totals.length > 0 ? Math.max(...totals, 1) : 1;
   const hasData = history.length > 0;
 
   if (!hasData) {
@@ -238,15 +248,34 @@ function TrendBars({ history, accessor, maxBars = 24 }: { history: HostMetricsPo
         <div key={`empty-${index}`} className="flex-1 rounded-t-full bg-white/5 transition-all" style={{ height: '4px' }} />
       ))}
       {dataBars.map((point) => {
-        const value = accessor(point) ?? 0;
-        // Minimum 4% height so that 0 values are still slightly visible, but less than 10%
-        const heightPercent = value === 0 ? 2 : Math.max(4, Math.round((value / maxValue) * 100));
+        const valPrimary = accessor(point) ?? 0;
+        const valSecondary = secondaryAccessor?.(point) ?? 0;
+        const total = valPrimary + valSecondary;
+        
+        const primaryHeight = total === 0 ? 2 : Math.max(2, Math.round((valPrimary / maxValue) * 100));
+        const secondaryHeight = total === 0 ? 0 : Math.round((valSecondary / maxValue) * 100);
+        
         return (
           <div 
             key={point.timestamp} 
-            className="flex-1 rounded-t-full bg-primary/60 transition-all duration-500" 
-            style={{ height: `${heightPercent}%` }} 
-          />
+            className="flex-1 flex flex-col justify-end gap-[1px]"
+            style={{ height: `${Math.max(4, primaryHeight + secondaryHeight)}%` }}
+          >
+            {valSecondary > 0 && (
+              <div 
+                className="w-full rounded-t-full bg-muted-foreground/40 transition-all duration-500" 
+                style={{ height: `${(secondaryHeight / (primaryHeight + secondaryHeight)) * 100}%` }} 
+              />
+            )}
+            <div 
+              className={cn(
+                "w-full transition-all duration-500",
+                valSecondary > 0 ? "rounded-b-sm" : "rounded-t-full",
+                "bg-primary/60"
+              )} 
+              style={{ height: `${(primaryHeight / (primaryHeight + secondaryHeight)) * 100}%` }} 
+            />
+          </div>
         );
       })}
     </div>
@@ -748,9 +777,27 @@ export function HostWorkspace() {
                     <div className="flex items-start justify-between gap-4">
                       <div>
                         <p className="text-xs uppercase tracking-[0.22em] text-muted-foreground">Network activity</p>
-                        <p className="mt-3 text-3xl font-semibold tracking-tight">
-                          {metricsQuery.latestPoint ? formatSpeed(metricsQuery.latestPoint.networkInBytesPerSec) : "Unavailable"}
-                        </p>
+                        <div className="mt-3 flex flex-wrap items-center gap-x-6 gap-y-2">
+                          <div>
+                            <p className="text-xs font-medium text-primary uppercase tracking-wider">Inbound</p>
+                            <p className="text-3xl font-semibold tracking-tight">
+                              {metricsQuery.latestPoint ? formatSpeed(metricsQuery.latestPoint.networkInBytesPerSec) : "Unavailable"}
+                            </p>
+                          </div>
+                          <div>
+                            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Outbound</p>
+                            <p className="text-3xl font-semibold tracking-tight">
+                              {metricsQuery.latestPoint ? formatSpeed(metricsQuery.latestPoint.networkOutBytesPerSec) : "Unavailable"}
+                            </p>
+                          </div>
+                          {metricsQuery.latestPoint?.networkMonthlyTotal && (
+                            <div className="self-end pb-1">
+                              <p className="text-xs text-muted-foreground bg-white/5 border border-white/10 rounded-full px-2.5 py-1">
+                                <span className="font-medium text-primary">{formatBytes(metricsQuery.latestPoint.networkMonthlyTotal)}</span> this month
+                              </p>
+                            </div>
+                          )}
+                        </div>
                       </div>
                       <div className="flex flex-col items-end gap-2">
                         <div className="flex items-center gap-4 text-xs text-muted-foreground">
@@ -775,7 +822,11 @@ export function HostWorkspace() {
                         {metricsFailureDisplay?.description || "The host metrics probe failed before network history could be rendered."}
                       </p>
                     ) : (
-                      <TrendBars history={metricsQuery.history} accessor={(point) => point.networkInBytesPerSec} />
+                      <TrendBars 
+                        history={metricsQuery.history} 
+                        accessor={(point) => point.networkInBytesPerSec} 
+                        secondaryAccessor={(point) => point.networkOutBytesPerSec}
+                      />
                     )}
                   </div>
                 </div>

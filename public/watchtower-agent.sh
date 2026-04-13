@@ -344,7 +344,7 @@ EOF
       "$TOTAL_DISK_READ_BYTES" \
       "$TOTAL_DISK_WRITE_BYTES"
 
-    METRICS_JSON="{\"cpu_time_ns\":${DELTA_ACTIVE},\"system_time_ns\":${DELTA_TOTAL},\"online_cpus\":${HOST_CORES},\"memory_used\":${TOTAL_MEM_USED},\"memory_limit\":${TOTAL_MEM_LIMIT},\"network_in_bytes_per_sec\":${NETWORK_IN_RATE},\"network_out_bytes_per_sec\":${NETWORK_OUT_RATE},\"disk_read_bytes_per_sec\":${DISK_READ_RATE},\"disk_write_bytes_per_sec\":${DISK_WRITE_RATE}}"
+    METRICS_JSON="{\"cpu_time_ns\":${DELTA_ACTIVE},\"system_time_ns\":${DELTA_TOTAL},\"online_cpus\":${HOST_CORES},\"memory_used\":${TOTAL_MEM_USED},\"memory_limit\":${TOTAL_MEM_LIMIT},\"network_in_bytes_per_sec\":${NETWORK_IN_RATE},\"network_out_bytes_per_sec\":${NETWORK_OUT_RATE},\"network_rx_total\":${TOTAL_NETWORK_IN_BYTES},\"network_tx_total\":${TOTAL_NETWORK_OUT_BYTES},\"disk_read_bytes_per_sec\":${DISK_READ_RATE},\"disk_write_bytes_per_sec\":${DISK_WRITE_RATE}}"
     respond_json '200 OK' "$METRICS_JSON"
     exit 0
   fi

@@ -14,6 +14,7 @@ export interface HostMetricsPoint {
   memoryLimit: number;
   networkInBytesPerSec: number | null;
   networkOutBytesPerSec: number | null;
+  networkMonthlyTotal: number | null;
   diskReadBytesPerSec: number | null;
   diskWriteBytesPerSec: number | null;
 }
@@ -45,6 +46,8 @@ interface HostMetricsApiPoint {
   network_out_bytes_per_sec?: number;
   disk_read_bytes_per_sec?: number;
   disk_write_bytes_per_sec?: number;
+  networkMonthlyTotal?: number;
+  network_monthly_total?: number;
 }
 
 function toFiniteNumber(value: unknown): number | null {
@@ -87,6 +90,7 @@ export function normalizeHostMetricsPoint(point: HostMetricsApiPoint): HostMetri
   const memoryLimit = toFiniteNumber(point.memoryLimit);
   const networkInBytesPerSec = normalizeOptionalRate(point.networkInBytesPerSec ?? point.network_in_bytes_per_sec);
   const networkOutBytesPerSec = normalizeOptionalRate(point.networkOutBytesPerSec ?? point.network_out_bytes_per_sec);
+  const networkMonthlyTotal = toFiniteNumber(point.networkMonthlyTotal ?? point.network_monthly_total);
   const diskReadBytesPerSec = normalizeOptionalRate(point.diskReadBytesPerSec ?? point.disk_read_bytes_per_sec);
   const diskWriteBytesPerSec = normalizeOptionalRate(point.diskWriteBytesPerSec ?? point.disk_write_bytes_per_sec);
 
@@ -132,6 +136,7 @@ export function normalizeHostMetricsPoint(point: HostMetricsApiPoint): HostMetri
     memoryLimit,
     networkInBytesPerSec,
     networkOutBytesPerSec,
+    networkMonthlyTotal,
     diskReadBytesPerSec,
     diskWriteBytesPerSec,
   };

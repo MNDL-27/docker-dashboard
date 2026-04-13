@@ -162,6 +162,7 @@ function createHostMetricsPoint(data: any) {
       memoryLimit: 0,
       networkInBytesPerSec: normalizeOptionalRate(data?.network_in_bytes_per_sec ?? data?.networkInBytesPerSec),
       networkOutBytesPerSec: normalizeOptionalRate(data?.network_out_bytes_per_sec ?? data?.networkOutBytesPerSec),
+      networkMonthlyTotal: toFiniteNumber(data?.network_monthly_total),
       diskReadBytesPerSec: normalizeOptionalRate(data?.disk_read_bytes_per_sec ?? data?.diskReadBytesPerSec),
       diskWriteBytesPerSec: normalizeOptionalRate(data?.disk_write_bytes_per_sec ?? data?.diskWriteBytesPerSec),
     };
@@ -190,6 +191,7 @@ function createHostMetricsPoint(data: any) {
     memoryLimit,
     networkInBytesPerSec: normalizeOptionalRate(data?.network_in_bytes_per_sec ?? data?.networkInBytesPerSec),
     networkOutBytesPerSec: normalizeOptionalRate(data?.network_out_bytes_per_sec ?? data?.networkOutBytesPerSec),
+    networkMonthlyTotal: toFiniteNumber(data?.network_monthly_total),
     diskReadBytesPerSec: normalizeOptionalRate(data?.disk_read_bytes_per_sec ?? data?.diskReadBytesPerSec),
     diskWriteBytesPerSec: normalizeOptionalRate(data?.disk_write_bytes_per_sec ?? data?.diskWriteBytesPerSec),
   };
@@ -493,7 +495,47 @@ export default async (req: Request) => {
       }
 
       const metricsData = await metricsResponse.json();
-      const normalizedMetrics = createHostMetricsPoint(metricsData);
+      
+      // Monthly network usage accumulation
+      const currentRx = toFiniteNumber(metricsData.network_rx_total);
+      const currentTx = toFiniteNumber(metricsData.network_tx_total);
+      const monthBucket = new Date().toISOString().slice(0, 7); // UTC YYYY-MM
+      
+      let monthlyTotal = 0;
+
+      if (currentRx !== null && currentTx !== null) {
+        try {
+          // Atomic upsert with delta accumulation and reset detection
+          const usageResult = await sql`
+            INSERT INTO host_network_usage (host_id, month_bucket, last_raw_rx, last_raw_tx, accumulated_rx, accumulated_tx)
+            VALUES (${hostId}, ${monthBucket}, ${currentRx}, ${currentTx}, 0, 0)
+            ON CONFLICT (host_id, month_bucket) DO UPDATE SET
+              accumulated_rx = host_network_usage.accumulated_rx + CASE 
+                WHEN ${currentRx} >= host_network_usage.last_raw_rx THEN (${currentRx} - host_network_usage.last_raw_rx)
+                ELSE ${currentRx} -- Reset detection (reboot or topology change)
+              END,
+              accumulated_tx = host_network_usage.accumulated_tx + CASE 
+                WHEN ${currentTx} >= host_network_usage.last_raw_tx THEN (${currentTx} - host_network_usage.last_raw_tx)
+                ELSE ${currentTx} -- Reset detection
+              END,
+              last_raw_rx = ${currentRx},
+              last_raw_tx = ${currentTx},
+              updated_at = now()
+            RETURNING accumulated_rx, accumulated_tx;
+          `;
+          
+          if (usageResult.length > 0) {
+            monthlyTotal = (toFiniteNumber(usageResult[0].accumulated_rx) ?? 0) + (toFiniteNumber(usageResult[0].accumulated_tx) ?? 0);
+          }
+        } catch (e) {
+          console.error('[docker-proxy] network usage upsert failed', e);
+        }
+      }
+
+      const normalizedMetrics = createHostMetricsPoint({
+        ...metricsData,
+        network_monthly_total: monthlyTotal > 0 ? monthlyTotal : null
+      });
 
       if (!normalizedMetrics) {
         return createProblemResponse(502, "Host metrics unavailable", "Agent returned a success response without a usable metrics sample", "malformed_metrics_payload");
