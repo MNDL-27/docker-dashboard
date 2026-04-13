@@ -199,7 +199,10 @@ Docker Engine
 
 - `public/watchtower-agent.sh`: host-local HTTP shim over Docker Unix socket
 - `public/watchtower-agent-install.sh`: supported install/update path and embedded runtime template
-- `shared/agent-version.ts` and `netlify/functions/lib/agent-version.mts`: current agent version reference used by UI and backend
+- `shared/watchtower-agent-release.ts`: canonical source for all release metadata (`CURRENT_WATCHTOWER_AGENT_RELEASE`), install command builders, and `buildWatchtowerAgentUpdateCopy()` for generating all upgrade dialog copy centrally
+- `shared/agent-version.ts`: backward-compat shim that re-exports from `watchtower-agent-release.ts` and also exports `CURRENT_WATCHTOWER_AGENT_VERSION` for older consumers
+- `src/lib/agent-release.ts`: frontend-side barrel re-export from `watchtower-agent-release.ts`
+- `netlify/functions/lib/agent-version.mts`: canonical agent version comparison on the backend
 
 ## Multi-Tenancy and Security Notes
 

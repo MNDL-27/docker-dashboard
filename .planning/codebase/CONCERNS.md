@@ -97,8 +97,9 @@ The highest current risks are watcher-specific:
 
 ### 7. Agent version drift detection is strict string equality only
 - Evidence:
-  - `shared/agent-version.ts`
-- `isAgentVersionOutdated()` returns true for any string not exactly equal to `1.0.0`.
+  - `shared/watchtower-agent-release.ts` (`isAgentVersionOutdated`)
+  - `netlify/functions/lib/agent-version.mts`
+- `isAgentVersionOutdated()` returns true for any string not exactly equal to `CURRENT_WATCHTOWER_AGENT_RELEASE.version`.
 - Result:
   - Valid semver variants such as build metadata, patch suffixes, or forward-compatible versions are treated as outdated.
 - Impact:

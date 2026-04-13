@@ -89,7 +89,8 @@ Key utilities:
 - `hostname.ts`: subdomain detection
 - `host-health-state.ts`: UI state helpers for host freshness/status
 - `onboarding-gate.ts`: onboarding state derivation
-- `agent-version.ts`: current-version comparison logic for UI prompts
+- `agent-release.ts`: frontend barrel re-export from `shared/watchtower-agent-release.ts`
+- `agent-version.ts`: backward-compat re-export shim; also exports `CURRENT_WATCHTOWER_AGENT_VERSION`
 
 ### `src/types/`
 
@@ -149,6 +150,7 @@ Core server-side helpers:
 - `host-health.mjs`
   - stale/unhealthy state transitions
 - `agent-version.mts`
+  - canonical agent version comparison for backend use
   - canonical agent version comparison
 - `ensure-onboarding-schema.mts`
   - compatibility guard for onboarding-related columns/tables
@@ -192,9 +194,14 @@ Legacy shim pointing users toward the supported installer/runtime flow.
 
 ### `shared/`
 
-- `agent-version.ts`
+- `watchtower-agent-release.ts` — primary release module:
+  - `CURRENT_WATCHTOWER_AGENT_RELEASE` with version, tag, published flag, checksums, asset URLs
+  - `buildWatchtowerAgentInstallCommand()`, `buildWatchtowerAgentVerifyCommand()`, `buildWatchtowerAgentAssetUrl()`
+  - `buildWatchtowerAgentUpdateCopy()` — returns a `WatchtowerAgentUpdateCopy` object with all upgrade dialog UI strings, conditioned on `release.published`
+  - `isAgentVersionOutdated()`, `buildWatchtowerAgentReleaseResponse()`
+- `agent-version.ts` — backward-compat shim that re-exports from `watchtower-agent-release.ts`; also exports `CURRENT_WATCHTOWER_AGENT_VERSION`
 
-Shared current-version constant to keep UI and functions aligned on upgrade prompts.
+Shared current-version constant and release metadata to keep UI and functions aligned on upgrade prompts and install commands.
 
 ### `netlify/schema.sql`
 

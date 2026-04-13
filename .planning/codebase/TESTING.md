@@ -8,14 +8,13 @@
 
 ## Actual Coverage State
 
-- `rg` over `src/`, `netlify/`, and `public/` did not find any `*.test.*` or `*.spec.*` files.
-- That means the repo currently has test infrastructure but effectively no committed automated tests.
-- The previous codebase map was stale here: it referenced a placeholder test file that is no longer present.
+- `rg` over `src/`, `netlify/`, and `public/` found one committed test file: `src/hooks/useHostMetrics.test.ts` (added during the host-metrics debug session).
+- Test infrastructure is otherwise sparse; the previous map entry claiming no tests at all is now stale.
 
 ## What Is Testable Today
 
 - Frontend unit and component tests can be added immediately under `src/` with Vitest + Testing Library.
-- Pure shared logic such as [`shared/agent-version.ts`](../../shared/agent-version.ts) also fits the existing Vitest setup.
+- Pure shared logic such as [`shared/watchtower-agent-release.ts`](../../shared/watchtower-agent-release.ts) also fits the existing Vitest setup.
 - Netlify function tests are not covered by the current include glob because those handlers live under `netlify/functions/` and rely on server/runtime concerns not yet modeled in the test setup.
 - Shell scripts in `public/` have no harness at all; there is no `shellcheck`, `shfmt`, `bats`, or equivalent in the repo.
 
@@ -45,7 +44,7 @@
 
 ## Practical Testing Roadmap
 
-1. Add fast unit tests for `shared/agent-version.ts` and the request-builder helpers in `api-docker-proxy.mts`.
+1. Add fast unit tests for `shared/watchtower-agent-release.ts` (version comparison, install command builder, `buildWatchtowerAgentUpdateCopy`) and the request-builder helpers in `api-docker-proxy.mts`.
 2. Expand Vitest coverage to selected server files, or add a parallel server-focused config that can run handler tests under Node.
 3. Introduce shell validation:
    - `shellcheck` in CI for `public/watchtower-agent*.sh`

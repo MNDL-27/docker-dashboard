@@ -4,7 +4,7 @@
 
 - Frontend code is TypeScript-first with React function components, TanStack Query for async state, and `@/` path aliases wired through Vite and Vitest.
 - Netlify functions use ESM `.mts` files with a consistent `export default async (req: Request)` entrypoint and `export const config: Config = { path: ... }`.
-- Shared agent version logic is intentionally centralized in [`shared/agent-version.ts`](../../shared/agent-version.ts), then re-exported into both frontend and Netlify code.
+- Shared agent release logic is centralized in [`shared/watchtower-agent-release.ts`](../../shared/watchtower-agent-release.ts): it holds `CURRENT_WATCHTOWER_AGENT_RELEASE`, install command builders, version comparison, and `buildWatchtowerAgentUpdateCopy()` for generating all upgrade dialog UI copy. [`shared/agent-version.ts`](../../shared/agent-version.ts) is a backward-compat re-export shim that also exports `CURRENT_WATCHTOWER_AGENT_VERSION`. Frontend code imports through [`src/lib/agent-release.ts`](../../src/lib/agent-release.ts).
 - Styling is utility-first Tailwind with shadcn/ui primitives; component variants are typically handled with `class-variance-authority` and `cn()`.
 
 ## TypeScript And React Patterns
