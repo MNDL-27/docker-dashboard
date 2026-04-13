@@ -207,17 +207,47 @@ function MeterCard({
   );
 }
 
-function TrendBars({ history, accessor }: { history: HostMetricsPoint[]; accessor: (point: HostMetricsPoint) => number | null }) {
+function TrendBars({ history, accessor, maxBars = 24 }: { history: HostMetricsPoint[]; accessor: (point: HostMetricsPoint) => number | null; maxBars?: number }) {
   const values = history.map(accessor).filter((value): value is number => value !== null && value >= 0);
   const maxValue = values.length > 0 ? Math.max(...values, 1) : 1;
-  const bars = history.length > 0 ? history : [];
+  const hasData = history.length > 0;
+
+  if (!hasData) {
+    return (
+      <div className="flex h-36 items-end gap-2">
+        {Array.from({ length: maxBars }).map((_, index) => {
+          const height = 18 + (index % 5) * 10;
+          return (
+            <div 
+              key={`placeholder-${index}`} 
+              className="flex-1 rounded-t-full bg-primary/20 transition-all" 
+              style={{ height: `${height}%` }} 
+            />
+          );
+        })}
+      </div>
+    );
+  }
+
+  const emptySlots = Math.max(0, maxBars - history.length);
+  const dataBars = history.slice(-maxBars);
 
   return (
     <div className="flex h-36 items-end gap-2">
-      {(bars.length > 0 ? bars : Array.from({ length: 20 })).map((point, index) => {
-        const value = point && "timestamp" in point ? accessor(point as HostMetricsPoint) ?? 0 : 0;
-        const height = bars.length > 0 ? Math.max(10, Math.round((value / maxValue) * 100)) : 18 + (index % 5) * 10;
-        return <div key={bars.length > 0 ? (point as HostMetricsPoint).timestamp : index} className="flex-1 rounded-t-full bg-primary/60" style={{ height: `${height}%` }} />;
+      {Array.from({ length: emptySlots }).map((_, index) => (
+        <div key={`empty-${index}`} className="flex-1 rounded-t-full bg-white/5 transition-all" style={{ height: '4px' }} />
+      ))}
+      {dataBars.map((point) => {
+        const value = accessor(point) ?? 0;
+        // Minimum 4% height so that 0 values are still slightly visible, but less than 10%
+        const heightPercent = value === 0 ? 2 : Math.max(4, Math.round((value / maxValue) * 100));
+        return (
+          <div 
+            key={point.timestamp} 
+            className="flex-1 rounded-t-full bg-primary/60 transition-all duration-500" 
+            style={{ height: `${heightPercent}%` }} 
+          />
+        );
       })}
     </div>
   );
