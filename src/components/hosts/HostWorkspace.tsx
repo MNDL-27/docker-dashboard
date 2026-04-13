@@ -151,14 +151,16 @@ function SummaryCard({ label, value, helper, icon: Icon }: { label: string; valu
 
 function RingCard({ point }: { point: HostMetricsPoint }) {
   const value = Math.max(0, Math.min(100, point.cpu));
+  const colorVar = value >= 90 ? "var(--destructive)" : value >= 70 ? "var(--warning)" : "var(--primary)";
+  
   return (
     <div className="glass-card min-h-[320px] p-6 flex flex-col items-center justify-center gap-5">
       <div className="text-center">
         <p className="text-xs uppercase tracking-[0.24em] text-muted-foreground">CPU usage</p>
       </div>
       <div
-        className="relative flex h-52 w-52 items-center justify-center rounded-full"
-        style={{ background: `conic-gradient(hsl(var(--primary)) ${value}%, rgba(255,255,255,0.06) ${value}% 100%)` }}
+        className="relative flex h-52 w-52 items-center justify-center rounded-full transition-all duration-500"
+        style={{ background: `conic-gradient(hsl(${colorVar}) ${value}%, rgba(255,255,255,0.06) ${value}% 100%)` }}
       >
         <div className="flex h-40 w-40 flex-col items-center justify-center rounded-full bg-background/95">
           <span className="text-5xl font-semibold tracking-tight">{value.toFixed(0)}%</span>
