@@ -1,0 +1,48 @@
+import { describe, expect, it } from "vitest";
+
+import { normalizeHostMetricsPoint } from "@/hooks/useHostMetrics";
+
+describe("normalizeHostMetricsPoint", () => {
+  it("normalizes a valid metrics payload", () => {
+    const point = normalizeHostMetricsPoint({
+      timestamp: 1710000000000,
+      cpu: 42,
+      memory: 38,
+      usedCores: 3.36,
+      totalCores: 8,
+      memoryUsed: 12_000_000_000,
+      memoryLimit: 32_000_000_000,
+      network_in_bytes_per_sec: 1024,
+      network_out_bytes_per_sec: 2048,
+      disk_read_bytes_per_sec: 4096,
+      disk_write_bytes_per_sec: 8192,
+    });
+
+    expect(point).toMatchObject({
+      timestamp: 1710000000000,
+      cpu: 42,
+      memory: 38,
+      usedCores: 3.36,
+      totalCores: 8,
+      memoryUsed: 12_000_000_000,
+      memoryLimit: 32_000_000_000,
+      networkInBytesPerSec: 1024,
+      networkOutBytesPerSec: 2048,
+      diskReadBytesPerSec: 4096,
+      diskWriteBytesPerSec: 8192,
+    });
+  });
+
+  it("rejects unusable zero-capacity payloads", () => {
+    expect(
+      normalizeHostMetricsPoint({
+        cpu: 0,
+        memory: 0,
+        usedCores: 0,
+        totalCores: 0,
+        memoryUsed: 0,
+        memoryLimit: 0,
+      }),
+    ).toBeNull();
+  });
+});

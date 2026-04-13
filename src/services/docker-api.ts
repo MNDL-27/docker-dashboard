@@ -11,6 +11,7 @@ async function invoke(body: Record<string, unknown>) {
 
 export const dockerApi = {
   ping: (hostId: string) => invoke({ action: 'ping', hostId }),
+  hostMetrics: (hostId: string) => invoke({ action: 'host-metrics', hostId }),
   info: (hostId: string) => invoke({ action: 'info', hostId }),
   version: (hostId: string) => invoke({ action: 'version', hostId }),
   listContainers: (hostId: string) => invoke({ action: 'containers', hostId }),

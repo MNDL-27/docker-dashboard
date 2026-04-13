@@ -77,6 +77,56 @@ function trimDiagnostic(value: string, maxLength = 160) {
   return value.length > maxLength ? `${value.slice(0, maxLength - 3)}...` : value;
 }
 
+function toFiniteNumber(value: unknown): number | null {
+  const numeric = typeof value === 'number' ? value : Number(value);
+  return Number.isFinite(numeric) ? numeric : null;
+}
+
+function normalizeOptionalRate(value: unknown): number | null {
+  const numeric = toFiniteNumber(value);
+  if (numeric === null || numeric < 0) {
+    return null;
+  }
+
+  return numeric;
+}
+
+function createHostMetricsPoint(data: any) {
+  const cpuTimeNs = Math.max(0, toFiniteNumber(data?.cpu_time_ns) ?? 0);
+  const systemTimeNs = Math.max(0, toFiniteNumber(data?.system_time_ns) ?? 0);
+  const totalCores = Math.max(0, toFiniteNumber(data?.online_cpus) ?? 0);
+  const memoryUsed = Math.max(0, toFiniteNumber(data?.memory_used) ?? 0);
+  const memoryLimit = Math.max(0, toFiniteNumber(data?.memory_limit) ?? 0);
+
+  if (systemTimeNs <= 0 || (totalCores === 0 && memoryLimit === 0)) {
+    return null;
+  }
+
+  const usedCores = totalCores > 0 ? (cpuTimeNs / systemTimeNs) * totalCores : 0;
+  const cpu = totalCores > 0 ? Math.max(0, Math.min(100, (usedCores / totalCores) * 100)) : 0;
+  const memory = memoryLimit > 0 ? Math.max(0, Math.min(100, (memoryUsed / memoryLimit) * 100)) : 0;
+  const timestamp = Date.now();
+
+  return {
+    timestamp,
+    time: new Date(timestamp).toLocaleTimeString('en-US', {
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false,
+    }),
+    cpu: Math.round(cpu * 100) / 100,
+    memory: Math.round(memory * 100) / 100,
+    usedCores: Math.round(usedCores * 100) / 100,
+    totalCores: Math.round(totalCores * 100) / 100,
+    memoryUsed,
+    memoryLimit,
+    networkInBytesPerSec: normalizeOptionalRate(data?.network_in_bytes_per_sec ?? data?.networkInBytesPerSec),
+    networkOutBytesPerSec: normalizeOptionalRate(data?.network_out_bytes_per_sec ?? data?.networkOutBytesPerSec),
+    diskReadBytesPerSec: normalizeOptionalRate(data?.disk_read_bytes_per_sec ?? data?.diskReadBytesPerSec),
+    diskWriteBytesPerSec: normalizeOptionalRate(data?.disk_write_bytes_per_sec ?? data?.diskWriteBytesPerSec),
+  };
+}
+
 async function fetchAgentVersionReport(
   host: { id: string; host_url: string; connection_mode: string; docker_socket_path: string },
   secrets: { agent_api_key?: string; cf_service_token_id?: string; cf_service_token_secret?: string } | null,
@@ -350,6 +400,37 @@ export default async (req: Request) => {
       FROM docker_host_secrets WHERE host_id = ${hostId}
     `;
     const secrets = decryptHostSecrets(secretsRecord[0] || null, host.id);
+
+    if (action === 'host-metrics') {
+      const metricsReq = buildAgentRequest(host as any, secrets, '/metrics', 'GET');
+      const metricsResponse = await dockerFetch(metricsReq.url, metricsReq.method, metricsReq.headers, 5000);
+
+      if (!metricsResponse.ok) {
+        return new Response(JSON.stringify({
+          error: 'Host metrics unavailable',
+          details: await metricsResponse.text(),
+        }), { status: 502, headers });
+      }
+
+      const metricsData = await metricsResponse.json();
+      const normalizedMetrics = createHostMetricsPoint(metricsData);
+
+      if (!normalizedMetrics) {
+        return new Response(JSON.stringify({
+          error: 'Host metrics unavailable',
+          details: 'Agent did not return a usable metrics sample',
+        }), { status: 502, headers });
+      }
+
+      await sql`
+        UPDATE docker_hosts
+        SET status = 'connected',
+            last_seen_at = now()
+        WHERE id = ${hostId}
+      `;
+
+      return new Response(JSON.stringify(normalizedMetrics), { headers });
+    }
 
     let dockerPath: string;
     let method = 'GET';
