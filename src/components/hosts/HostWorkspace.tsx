@@ -792,13 +792,6 @@ export function HostWorkspace() {
                               {metricsQuery.latestPoint ? formatSpeed(metricsQuery.latestPoint.networkOutBytesPerSec) : "Unavailable"}
                             </p>
                           </div>
-                          {metricsQuery.latestPoint?.networkMonthlyTotal && (
-                            <div className="self-end pb-1">
-                              <p className="text-xs text-muted-foreground bg-white/5 border border-white/10 rounded-full px-2.5 py-1">
-                                <span className="font-medium text-primary">{formatBytes(metricsQuery.latestPoint.networkMonthlyTotal)}</span> this month
-                              </p>
-                            </div>
-                          )}
                         </div>
                       </div>
                       <div className="flex flex-col items-end gap-2">
@@ -806,11 +799,15 @@ export function HostWorkspace() {
                           <span className="inline-flex items-center gap-2"><span className="h-3 w-3 rounded-full bg-primary" />Inbound</span>
                           <span className="inline-flex items-center gap-2"><span className="h-3 w-3 rounded-full bg-muted-foreground/60" />Outbound</span>
                         </div>
-                        {metricsQuery.latestPoint && (
+                        {metricsQuery.latestPoint?.networkMonthlyTotal !== undefined ? (
+                          <p className="text-sm font-medium text-muted-foreground">
+                            Monthly usage: <span className="text-foreground">{formatBytes(metricsQuery.latestPoint.networkMonthlyTotal)}</span>
+                          </p>
+                        ) : metricsQuery.latestPoint ? (
                           <p className="text-sm font-medium text-muted-foreground">
                             Total: <span className="text-foreground">{formatSpeed((metricsQuery.latestPoint.networkInBytesPerSec || 0) + (metricsQuery.latestPoint.networkOutBytesPerSec || 0))}</span>
                           </p>
-                        )}
+                        ) : null}
                       </div>
                     </div>
                     {selectedHostDisconnected ? (
