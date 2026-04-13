@@ -6,10 +6,12 @@ import { decryptHostSecrets, SecretCryptoError } from './lib/crypto.mjs';
 import { isAgentVersionOutdated } from './lib/agent-version.mts';
 import { buildWatchtowerAgentReleaseResponse } from './lib/agent-release.mts';
 import { ensureDockerHostSchema } from './lib/ensure-docker-host-schema.mjs';
+import { createProblemResponse } from '../../shared/schema/error.ts';
+import { ProxyRequestParamsSchema } from '../../shared/schema/proxy.ts';
 
 const headers = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+  'Access-Control-Allow-Headers': 'Content-Type, Authorization, Idempotency-Key, X-Idempotency-Key',
   'Content-Type': 'application/json'
 };
 
@@ -317,18 +319,29 @@ export default async (req: Request) => {
     await ensureDockerHostSchema();
 
     const auth = await requireAuth(req);
-    const body = await req.json();
-    const { action, hostId, containerId, params } = body;
+    let body;
+    try {
+      body = await req.json();
+    } catch {
+      return createProblemResponse(400, "Invalid JSON payload");
+    }
+
+    const parseResult = ProxyRequestParamsSchema.safeParse(body);
+    if (!parseResult.success) {
+      return createProblemResponse(400, "Validation Error", JSON.stringify(parseResult.error.format()));
+    }
+    const { action, hostId, containerId, params } = parseResult.data;
+
     const orgId = auth.orgId;
 
     // ── Org-wide: fetch containers from all hosts ──
     if (action === 'all-containers') {
-      if (!orgId) return new Response(JSON.stringify({ error: 'orgId required' }), { status: 400, headers });
+      if (!orgId) return createProblemResponse(400, "orgId required");
 
       const memberships = await sql`
         SELECT 1 FROM organization_members WHERE organization_id = ${orgId} AND user_id = ${auth.userId}
       `;
-      if (memberships.length === 0) return new Response(JSON.stringify({ error: 'Access denied' }), { status: 403, headers });
+      if (memberships.length === 0) return createProblemResponse(403, "Access denied");
 
       const hosts = await sql`
         SELECT h.*
@@ -367,12 +380,12 @@ export default async (req: Request) => {
 
     // ── Org-wide: fetch stats for all running containers ──
     if (action === 'all-container-stats') {
-      if (!orgId) return new Response(JSON.stringify({ error: 'orgId required' }), { status: 400, headers });
+      if (!orgId) return createProblemResponse(400, "orgId required");
 
       const memberships = await sql`
         SELECT 1 FROM organization_members WHERE organization_id = ${orgId} AND user_id = ${auth.userId}
       `;
-      if (memberships.length === 0) return new Response(JSON.stringify({ error: 'Access denied' }), { status: 403, headers });
+      if (memberships.length === 0) return createProblemResponse(403, "Access denied");
 
       const hosts = await sql`
         SELECT h.*
@@ -447,7 +460,7 @@ export default async (req: Request) => {
     }
 
     // ── Host-specific actions ──
-    if (!hostId) return new Response(JSON.stringify({ error: 'hostId required' }), { status: 400, headers });
+    if (!hostId) return createProblemResponse(400, "hostId required");
 
     const hostRecords = await sql`
       SELECT h.* FROM docker_hosts h
@@ -456,7 +469,7 @@ export default async (req: Request) => {
     `;
 
     if (hostRecords.length === 0) {
-      return new Response(JSON.stringify({ error: 'Host not found or access denied' }), { status: 404, headers });
+      return createProblemResponse(404, "Host not found or access denied");
     }
     const host = hostRecords[0];
     await assertHostProxyAllowed({ hostId, isPlatformAdmin: auth.isPlatformAdmin });
@@ -483,11 +496,7 @@ export default async (req: Request) => {
       const normalizedMetrics = createHostMetricsPoint(metricsData);
 
       if (!normalizedMetrics) {
-        return new Response(JSON.stringify({
-          error: 'Host metrics unavailable',
-          code: 'malformed_metrics_payload',
-          details: 'Agent returned a success response without a usable metrics sample',
-        }), { status: 502, headers });
+        return createProblemResponse(502, "Host metrics unavailable", "Agent returned a success response without a usable metrics sample", "malformed_metrics_payload");
       }
 
       await sql`
@@ -510,42 +519,46 @@ export default async (req: Request) => {
       case 'version': dockerPath = '/version'; timeoutMs = 3000; break;
       case 'containers': dockerPath = '/containers/json?all=true'; timeoutMs = 5000; break;
       case 'container-inspect': 
-        if (!containerId) return new Response(JSON.stringify({ error: 'containerId required' }), { status: 400, headers });
+        if (!containerId) return createProblemResponse(400, "containerId required");
         dockerPath = `/containers/${sanitizeContainerId(containerId)}/json`; 
         timeoutMs = 5000;
         break;
       case 'container-stats': 
-        if (!containerId) return new Response(JSON.stringify({ error: 'containerId required' }), { status: 400, headers });
+        if (!containerId) return createProblemResponse(400, "containerId required");
         dockerPath = `/containers/${sanitizeContainerId(containerId)}/stats?stream=false`; 
         timeoutMs = 5000;
         break;
       case 'container-logs': 
-        if (!containerId) return new Response(JSON.stringify({ error: 'containerId required' }), { status: 400, headers });
-        dockerPath = `/containers/${sanitizeContainerId(containerId)}/logs?stdout=true&stderr=true&tail=${params?.tail || 100}&timestamps=true`; 
+        if (!containerId) return createProblemResponse(400, "containerId required");
+        dockerPath = `/containers/${sanitizeContainerId(containerId)}/logs?stdout=true&stderr=true&tail=${(params as any)?.tail || 100}&timestamps=true`; 
         timeoutMs = 6000;
         break;
       case 'container-start': 
-        if (!containerId) return new Response(JSON.stringify({ error: 'containerId required' }), { status: 400, headers });
+        if (!containerId) return createProblemResponse(400, "containerId required");
         dockerPath = `/containers/${sanitizeContainerId(containerId)}/start`; method = 'POST'; 
         timeoutMs = 8000;
         break;
       case 'container-stop': 
-        if (!containerId) return new Response(JSON.stringify({ error: 'containerId required' }), { status: 400, headers });
+        if (!containerId) return createProblemResponse(400, "containerId required");
         dockerPath = `/containers/${sanitizeContainerId(containerId)}/stop`; method = 'POST'; 
         timeoutMs = 8000;
         break;
       case 'container-restart': 
-        if (!containerId) return new Response(JSON.stringify({ error: 'containerId required' }), { status: 400, headers });
+        if (!containerId) return createProblemResponse(400, "containerId required");
         dockerPath = `/containers/${sanitizeContainerId(containerId)}/restart`; method = 'POST'; 
         timeoutMs = 8000;
         break;
       default:
-        return new Response(JSON.stringify({ error: `Unknown action: ${action}` }), { status: 400, headers });
+        return createProblemResponse(400, `Unknown action: ${action}`);
     }
 
     const reqData = buildRequest(host as any, secrets, dockerPath, method);
 
     if (['container-start', 'container-stop', 'container-restart'].includes(action)) {
+      const idempotencyKey = req.headers.get('x-idempotency-key') || req.headers.get('idempotency-key');
+      if (!idempotencyKey) {
+        return createProblemResponse(400, "Missing Idempotency Key", "Mutations require an Idempotency-Key header for safety.");
+      }
       await assertOrganizationWriteAllowed({
         organizationId: host.organization_id,
         isPlatformAdmin: auth.isPlatformAdmin,
@@ -611,7 +624,7 @@ export default async (req: Request) => {
 
     if (action === 'container-logs') {
       if (dockerResponse.status === 413) {
-        return new Response(JSON.stringify({ error: 'Logs too large (exceeded 4MB limit)' }), { status: 413, headers });
+        return createProblemResponse(413, "Logs too large", "Exceeded 4MB limit");
       }
       const rawBytes = new Uint8Array(await dockerResponse.arrayBuffer());
       const lines: string[] = [];
@@ -635,20 +648,20 @@ export default async (req: Request) => {
     }
 
     if (!dockerResponse.ok) {
-      return new Response(JSON.stringify({ error: `Docker API error: ${dockerResponse.status}`, details: await dockerResponse.text() }), { status: 502, headers });
+      return createProblemResponse(502, `Docker API error: ${dockerResponse.status}`, await dockerResponse.text());
     }
 
-    return new Response(JSON.stringify(await dockerResponse.json()), { headers });
+    const payload = await dockerResponse.json();
+    if (req.method === 'GET') {
+      headers['Cache-Control'] = 'private, max-age=0, must-revalidate';
+    }
+    return new Response(JSON.stringify(payload), { headers });
 
   } catch (error: any) {
     if (error instanceof SecretCryptoError) {
-      return new Response(JSON.stringify({
-        error: 'Secret storage failed',
-        details: error.message,
-        code: error.code,
-      }), { status: 500, headers });
+      return createProblemResponse(500, 'Secret storage failed', error.message);
     }
-    return new Response(JSON.stringify({ error: 'Docker connection failed', details: error.message }), { status: 502, headers });
+    return createProblemResponse(502, 'Docker connection failed', error.message);
   }
 };
 
