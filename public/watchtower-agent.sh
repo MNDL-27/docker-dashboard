@@ -235,148 +235,119 @@ fi
 # system_time_ns = system CPU time delta (aggregate across cores)
 # Backend computes: cpu % = Σ (cpu_time_ns / system_time_ns * online_cpus) × 100
 # This matches Docker's standard formula: (cpuDelta / systemDelta) * onlineCPUs * 100
-if [ "$PATH_RAW" = "/metrics" ]; then
-  CONTAINERS_JSON=$(curl --silent --unix-socket "$SOCKET_PATH" "http://localhost/containers/json" 2>/dev/null)
+  if [ "$PATH_RAW" = "/metrics" ]; then
+    HOST_CORES=$(nproc 2>/dev/null || echo 1)
 
-  if [ -z "$CONTAINERS_JSON" ] || [ "$CONTAINERS_JSON" = "[]" ]; then
-    write_cached_metrics "$(date +%s%3N)" 0 0 0 0 0 0
-    respond_json '200 OK' '{"cpu_time_ns":0,"system_time_ns":0,"online_cpus":0,"memory_used":0,"memory_limit":0,"network_in_bytes_per_sec":null,"network_out_bytes_per_sec":null,"disk_read_bytes_per_sec":null,"disk_write_bytes_per_sec":null}'
-    exit 0
-  fi
-
-  CONTAINER_IDS=$(echo "$CONTAINERS_JSON" | jq -r '.[0:20] | .[].Id // empty')
-
-  TOTAL_CPU_TIME_NS=0
-  TOTAL_SYSTEM_TIME_NS=0
-  TOTAL_MEM_USED=0
-  TOTAL_MEM_LIMIT=0
-  TOTAL_NETWORK_IN_BYTES=0
-  TOTAL_NETWORK_OUT_BYTES=0
-  TOTAL_DISK_READ_BYTES=0
-  TOTAL_DISK_WRITE_BYTES=0
-  HOST_CORES=0
-  MEASURED_SYSTEM_NS=0
-
-  STATS_TMPDIR="$(mktemp -d "${TMPDIR:-/tmp}/wt-stats.XXXXXX")"
-
-  for CONTAINER_ID in $CONTAINER_IDS; do
-    (
-      curl --silent --max-time 5 --unix-socket "$SOCKET_PATH" \
-        "http://localhost/containers/${CONTAINER_ID}/stats?stream=false" \
-        2>/dev/null > "${STATS_TMPDIR}/${CONTAINER_ID}.json" || true
-    ) &
-  done
-  wait
-
-  for CONTAINER_ID in $CONTAINER_IDS; do
-    STATS_FILE="${STATS_TMPDIR}/${CONTAINER_ID}.json"
-    [ -f "$STATS_FILE" ] && [ -s "$STATS_FILE" ] || continue
-
-    CPU_USAGE=$(jq -r '.cpu_stats.cpu_usage.total_usage // empty' "$STATS_FILE")
-    PREV_CPU=$(jq -r '.precpu_stats.cpu_usage.total_usage // empty' "$STATS_FILE")
-    SYSTEM_USAGE=$(jq -r '.cpu_stats.system_cpu_usage // empty' "$STATS_FILE")
-    PREV_SYSTEM=$(jq -r '.precpu_stats.system_cpu_usage // empty' "$STATS_FILE")
-    ONLINE_CPUS=$(jq -r '.cpu_stats.online_cpus // empty' "$STATS_FILE")
-
-    if [ -n "$ONLINE_CPUS" ] && [ "$HOST_CORES" = "0" ]; then
-      HOST_CORES=$ONLINE_CPUS
+    TOTAL_CPU_TICKS=0
+    ACTIVE_CPU_TICKS=0
+    if [ -f /proc/stat ]; then
+      read -r cpu user nice system idle iowait irq softirq steal _ < /proc/stat
+      user=${user:-0}; nice=${nice:-0}; system=${system:-0}; idle=${idle:-0}; iowait=${iowait:-0}; irq=${irq:-0}; softirq=${softirq:-0}; steal=${steal:-0}
+      TOTAL_CPU_TICKS=$((user + nice + system + idle + iowait + irq + softirq + steal))
+      IDLE_ALL_TICKS=$((idle + iowait))
+      ACTIVE_CPU_TICKS=$((TOTAL_CPU_TICKS - IDLE_ALL_TICKS))
     fi
 
-    if [ -n "$SYSTEM_USAGE" ] && [ -n "$PREV_SYSTEM" ] && [ "$MEASURED_SYSTEM_NS" = "0" ]; then
-      if [ "$SYSTEM_USAGE" -gt "$PREV_SYSTEM" ]; then
-        MEASURED_SYSTEM_NS=$((SYSTEM_USAGE - PREV_SYSTEM))
-      fi
+    MemTotal=0; MemFree=0; Buffers=0; Cached=0; SReclaimable=0; Shmem=0
+    if [ -f /proc/meminfo ]; then
+      meminfo=$(cat /proc/meminfo)
+      get_mem() { echo "$meminfo" | awk -v key="^$1:" '$0 ~ key {print $2; exit}' || echo 0; }
+      MemTotal=$(get_mem MemTotal)
+      MemFree=$(get_mem MemFree)
+      Buffers=$(get_mem Buffers)
+      Cached=$(get_mem Cached)
+      SReclaimable=$(get_mem SReclaimable)
+      Shmem=$(get_mem Shmem)
     fi
 
-    if [ -n "$CPU_USAGE" ] && [ -n "$PREV_CPU" ] && [ "$CPU_USAGE" -gt "$PREV_CPU" ]; then
-      CPU_DELTA=$((CPU_USAGE - PREV_CPU))
-      TOTAL_CPU_TIME_NS=$((TOTAL_CPU_TIME_NS + CPU_DELTA))
+    TOTAL_MEM_LIMIT=$((MemTotal * 1024))
+    USED_KB=$((MemTotal - MemFree - Buffers - (Cached + SReclaimable - Shmem)))
+    if [ "$USED_KB" -lt 0 ]; then USED_KB=0; fi
+    TOTAL_MEM_USED=$((USED_KB * 1024))
+
+    TOTAL_NETWORK_IN_BYTES=0
+    TOTAL_NETWORK_OUT_BYTES=0
+    if [ -f /proc/net/dev ]; then
+      read -r TOTAL_NETWORK_IN_BYTES TOTAL_NETWORK_OUT_BYTES <<< "$(awk '
+        $1 ~ /:/ { 
+          sub(/:/, "", $1); 
+          if ($1 !~ /^(lo|veth|docker|br-)/) { 
+            rx+=$2; tx+=$10 
+          } 
+        } END {print rx+0, tx+0}' /proc/net/dev)"
     fi
 
-    MEM_USAGE=$(jq -r '.memory_stats.usage // empty' "$STATS_FILE")
-    MEM_LIMIT=$(jq -r '.memory_stats.limit // empty' "$STATS_FILE")
-
-    if [ -n "$MEM_USAGE" ] && [ -n "$MEM_LIMIT" ]; then
-      TOTAL_MEM_USED=$((TOTAL_MEM_USED + MEM_USAGE))
-      TOTAL_MEM_LIMIT=$((TOTAL_MEM_LIMIT + MEM_LIMIT))
+    TOTAL_DISK_READ_BYTES=0
+    TOTAL_DISK_WRITE_BYTES=0
+    if [ -f /proc/diskstats ]; then
+      read -r DISK_SECTORS_READ DISK_SECTORS_WRITE <<< "$(awk '
+        $3 ~ /^(sd[a-z]+|vd[a-z]+|xvd[a-z]+|nvme[0-9]+n[0-9]+|mmcblk[0-9]+)$/ { 
+          r+=$6; w+=$10 
+        } END {print r+0, w+0}' /proc/diskstats)"
+      TOTAL_DISK_READ_BYTES=$((DISK_SECTORS_READ * 512))
+      TOTAL_DISK_WRITE_BYTES=$((DISK_SECTORS_WRITE * 512))
     fi
 
-    NETWORK_RX_BYTES=$(jq -r '[.networks[]?.rx_bytes] | add // 0' "$STATS_FILE")
-    NETWORK_TX_BYTES=$(jq -r '[.networks[]?.tx_bytes] | add // 0' "$STATS_FILE")
-    DISK_READ_BYTES=$(jq -r '[.blkio_stats.io_service_bytes_recursive[]? | select(.op == "Read") | .value] | add // 0' "$STATS_FILE")
-    DISK_WRITE_BYTES=$(jq -r '[.blkio_stats.io_service_bytes_recursive[]? | select(.op == "Write") | .value] | add // 0' "$STATS_FILE")
+    CURRENT_TIMESTAMP="$(date +%s%3N)"
+    PREVIOUS_SAMPLE="$(read_cached_metrics || true)"
+    PREVIOUS_TIMESTAMP=""
+    PREVIOUS_ACTIVE=0
+    PREVIOUS_TOTAL=0
+    PREVIOUS_NETWORK_IN_BYTES=0
+    PREVIOUS_NETWORK_OUT_BYTES=0
+    PREVIOUS_DISK_READ_BYTES=0
+    PREVIOUS_DISK_WRITE_BYTES=0
 
-    TOTAL_NETWORK_IN_BYTES=$((TOTAL_NETWORK_IN_BYTES + NETWORK_RX_BYTES))
-    TOTAL_NETWORK_OUT_BYTES=$((TOTAL_NETWORK_OUT_BYTES + NETWORK_TX_BYTES))
-    TOTAL_DISK_READ_BYTES=$((TOTAL_DISK_READ_BYTES + DISK_READ_BYTES))
-    TOTAL_DISK_WRITE_BYTES=$((TOTAL_DISK_WRITE_BYTES + DISK_WRITE_BYTES))
-  done
-
-  rm -rf "$STATS_TMPDIR"
-
-
-
-  if [ "$HOST_CORES" = "0" ]; then
-    HOST_CORES=1
-  fi
-
-  CURRENT_TIMESTAMP="$(date +%s%3N)"
-  PREVIOUS_SAMPLE="$(read_cached_metrics || true)"
-  PREVIOUS_TIMESTAMP=""
-  PREVIOUS_CPU_TIME_NS=0
-  PREVIOUS_SYSTEM_TIME_NS=0
-  PREVIOUS_NETWORK_IN_BYTES=0
-  PREVIOUS_NETWORK_OUT_BYTES=0
-  PREVIOUS_DISK_READ_BYTES=0
-  PREVIOUS_DISK_WRITE_BYTES=0
-
-  if [ -n "$PREVIOUS_SAMPLE" ]; then
-    IFS='|' read -r \
-      PREVIOUS_TIMESTAMP \
-      PREVIOUS_CPU_TIME_NS \
-      PREVIOUS_SYSTEM_TIME_NS \
-      PREVIOUS_NETWORK_IN_BYTES \
-      PREVIOUS_NETWORK_OUT_BYTES \
-      PREVIOUS_DISK_READ_BYTES \
-      PREVIOUS_DISK_WRITE_BYTES <<EOF
+    if [ -n "$PREVIOUS_SAMPLE" ]; then
+      IFS='|' read -r \
+        PREVIOUS_TIMESTAMP \
+        PREVIOUS_ACTIVE \
+        PREVIOUS_TOTAL \
+        PREVIOUS_NETWORK_IN_BYTES \
+        PREVIOUS_NETWORK_OUT_BYTES \
+        PREVIOUS_DISK_READ_BYTES \
+        PREVIOUS_DISK_WRITE_BYTES <<EOF
 $PREVIOUS_SAMPLE
 EOF
+    fi
+
+    ELAPSED_MS=0
+    if [ -n "$PREVIOUS_TIMESTAMP" ] && [ "$CURRENT_TIMESTAMP" -gt "$PREVIOUS_TIMESTAMP" ]; then
+      ELAPSED_MS=$((CURRENT_TIMESTAMP - PREVIOUS_TIMESTAMP))
+    fi
+
+    NETWORK_IN_RATE=null
+    NETWORK_OUT_RATE=null
+    DISK_READ_RATE=null
+    DISK_WRITE_RATE=null
+    DELTA_ACTIVE=0
+    DELTA_TOTAL=0
+
+    if [ -n "$PREVIOUS_TIMESTAMP" ] && [ "$ELAPSED_MS" -gt 0 ]; then
+      NETWORK_IN_RATE="$(calculate_rate "$TOTAL_NETWORK_IN_BYTES" "$PREVIOUS_NETWORK_IN_BYTES" "$ELAPSED_MS")"
+      NETWORK_OUT_RATE="$(calculate_rate "$TOTAL_NETWORK_OUT_BYTES" "$PREVIOUS_NETWORK_OUT_BYTES" "$ELAPSED_MS")"
+      DISK_READ_RATE="$(calculate_rate "$TOTAL_DISK_READ_BYTES" "$PREVIOUS_DISK_READ_BYTES" "$ELAPSED_MS")"
+      DISK_WRITE_RATE="$(calculate_rate "$TOTAL_DISK_WRITE_BYTES" "$PREVIOUS_DISK_WRITE_BYTES" "$ELAPSED_MS")"
+      
+      DELTA_ACTIVE=$((ACTIVE_CPU_TICKS - PREVIOUS_ACTIVE))
+      DELTA_TOTAL=$((TOTAL_CPU_TICKS - PREVIOUS_TOTAL))
+      if [ "$DELTA_ACTIVE" -lt 0 ]; then DELTA_ACTIVE=0; fi
+      if [ "$DELTA_TOTAL" -lt 0 ]; then DELTA_TOTAL=0; fi
+    fi
+
+    write_cached_metrics \
+      "$CURRENT_TIMESTAMP" \
+      "$ACTIVE_CPU_TICKS" \
+      "$TOTAL_CPU_TICKS" \
+      "$TOTAL_NETWORK_IN_BYTES" \
+      "$TOTAL_NETWORK_OUT_BYTES" \
+      "$TOTAL_DISK_READ_BYTES" \
+      "$TOTAL_DISK_WRITE_BYTES"
+
+    METRICS_JSON="{\"cpu_time_ns\":${DELTA_ACTIVE},\"system_time_ns\":${DELTA_TOTAL},\"online_cpus\":${HOST_CORES},\"memory_used\":${TOTAL_MEM_USED},\"memory_limit\":${TOTAL_MEM_LIMIT},\"network_in_bytes_per_sec\":${NETWORK_IN_RATE},\"network_out_bytes_per_sec\":${NETWORK_OUT_RATE},\"disk_read_bytes_per_sec\":${DISK_READ_RATE},\"disk_write_bytes_per_sec\":${DISK_WRITE_RATE}}"
+    respond_json '200 OK' "$METRICS_JSON"
+    exit 0
   fi
-
-  ELAPSED_MS=0
-  if [ -n "$PREVIOUS_TIMESTAMP" ] && [ "$CURRENT_TIMESTAMP" -gt "$PREVIOUS_TIMESTAMP" ]; then
-    ELAPSED_MS=$((CURRENT_TIMESTAMP - PREVIOUS_TIMESTAMP))
-  fi
-
-  NETWORK_IN_RATE=null
-  NETWORK_OUT_RATE=null
-  DISK_READ_RATE=null
-  DISK_WRITE_RATE=null
-
-  if [ -n "$PREVIOUS_TIMESTAMP" ] && [ "$ELAPSED_MS" -gt 0 ]; then
-    NETWORK_IN_RATE="$(calculate_rate "$TOTAL_NETWORK_IN_BYTES" "$PREVIOUS_NETWORK_IN_BYTES" "$ELAPSED_MS")"
-    NETWORK_OUT_RATE="$(calculate_rate "$TOTAL_NETWORK_OUT_BYTES" "$PREVIOUS_NETWORK_OUT_BYTES" "$ELAPSED_MS")"
-    DISK_READ_RATE="$(calculate_rate "$TOTAL_DISK_READ_BYTES" "$PREVIOUS_DISK_READ_BYTES" "$ELAPSED_MS")"
-    DISK_WRITE_RATE="$(calculate_rate "$TOTAL_DISK_WRITE_BYTES" "$PREVIOUS_DISK_WRITE_BYTES" "$ELAPSED_MS")"
-  fi
-
-  if [ "$MEASURED_SYSTEM_NS" = "0" ]; then
-    MEASURED_SYSTEM_NS="$PREVIOUS_SYSTEM_TIME_NS"
-  fi
-
-  write_cached_metrics \
-    "$CURRENT_TIMESTAMP" \
-    "$TOTAL_CPU_TIME_NS" \
-    "$MEASURED_SYSTEM_NS" \
-    "$TOTAL_NETWORK_IN_BYTES" \
-    "$TOTAL_NETWORK_OUT_BYTES" \
-    "$TOTAL_DISK_READ_BYTES" \
-    "$TOTAL_DISK_WRITE_BYTES"
-
-  METRICS_JSON="{\"cpu_time_ns\":${TOTAL_CPU_TIME_NS},\"system_time_ns\":${MEASURED_SYSTEM_NS},\"online_cpus\":${HOST_CORES},\"memory_used\":${TOTAL_MEM_USED},\"memory_limit\":${TOTAL_MEM_LIMIT},\"network_in_bytes_per_sec\":${NETWORK_IN_RATE},\"network_out_bytes_per_sec\":${NETWORK_OUT_RATE},\"disk_read_bytes_per_sec\":${DISK_READ_RATE},\"disk_write_bytes_per_sec\":${DISK_WRITE_RATE}}"
-  respond_json '200 OK' "$METRICS_JSON"
-  exit 0
-fi
 
 DOCKER_PATH="${PATH_RAW#/docker}"
 [ -n "$DOCKER_PATH" ] || DOCKER_PATH="/"

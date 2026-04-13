@@ -530,8 +530,13 @@ export default async (req: Request) => {
         break;
       case 'container-logs': 
         if (!containerId) return createProblemResponse(400, "containerId required");
-        dockerPath = `/containers/${sanitizeContainerId(containerId)}/logs?stdout=true&stderr=true&tail=${(params as any)?.tail || 100}&timestamps=true`; 
-        timeoutMs = 6000;
+        {
+          const tail = (params as any)?.tail || 100;
+          const since = (params as any)?.since ? `&since=${(params as any).since}` : '';
+          const until = (params as any)?.until ? `&until=${(params as any).until}` : '';
+          dockerPath = `/containers/${sanitizeContainerId(containerId)}/logs?stdout=true&stderr=true&tail=${tail}&timestamps=true${since}${until}`; 
+          timeoutMs = 6000;
+        }
         break;
       case 'container-start': 
         if (!containerId) return createProblemResponse(400, "containerId required");
