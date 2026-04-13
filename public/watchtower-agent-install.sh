@@ -165,6 +165,29 @@ for cmd in bash install systemctl getent useradd groupadd stat socat curl sed aw
   require_command "$cmd"
 done
 
+install_jq() {
+  if command -v jq >/dev/null 2>&1; then
+    return 0
+  fi
+  
+  log "jq is required but not found. Attempting to install jq..."
+  if command -v apk >/dev/null 2>&1; then
+    apk add --no-cache jq
+  elif command -v apt-get >/dev/null 2>&1; then
+    apt-get update -o Dir::Cache::pkgcache="" -o Dir::Cache::srcpkgcache="" -qq && apt-get install -y --no-install-recommends jq
+  elif command -v yum >/dev/null 2>&1; then
+    yum install -y epel-release || true
+    yum install -y jq
+  elif command -v dnf >/dev/null 2>&1; then
+    dnf install -y jq
+  else
+    fail "Could not find a supported package manager (apk, apt-get, yum, dnf) to install jq. Please install jq manually and rerun the installer."
+  fi
+}
+
+install_jq
+require_command jq
+
 [ -d /run/systemd/system ] || fail "systemd is required on this host. For non-systemd environments, run watchtower-agent.sh under another supervisor or containerize it with restart=unless-stopped."
 
 if [ -f "$ENV_FILE" ]; then
@@ -267,10 +290,8 @@ check_config() {
   [ -n "$AGENT_BIND_ADDRESS" ] || fail "AGENT_BIND_ADDRESS must not be empty"
   require_command socat
   require_command curl
-  require_command awk
+  require_command jq
   require_command mkdir
-  require_command tr
-  require_command sed
   [ -S "$DOCKER_SOCKET" ] || fail "Docker socket not found at $DOCKER_SOCKET. Ensure Docker is running or update DOCKER_SOCKET."
 }
 
@@ -392,34 +413,6 @@ write_cached_metrics() {
   mv "$tmp_file" "$cache_file"
 }
 
-sum_json_field_values() {
-  local json="$1"
-  local field="$2"
-  local matches
-
-  matches="$(printf '%s' "$json" | grep -oE "\"${field}\":[0-9]+" || true)"
-  if [ -z "$matches" ]; then
-    printf '0'
-    return 0
-  fi
-
-  printf '%s\n' "$matches" | cut -d':' -f2 | awk '{sum += $1} END {printf "%.0f", sum + 0}'
-}
-
-sum_blkio_op_values() {
-  local json="$1"
-  local op="$2"
-  local matches
-
-  matches="$(printf '%s' "$json" | grep -oE "\"op\":\"${op}\"[^}]*\"value\":[0-9]+" || true)"
-  if [ -z "$matches" ]; then
-    printf '0'
-    return 0
-  fi
-
-  printf '%s\n' "$matches" | grep -oE '"value":[0-9]+' | cut -d':' -f2 | awk '{sum += $1} END {printf "%.0f", sum + 0}'
-}
-
 calculate_rate() {
   local current="$1"
   local previous="$2"
@@ -516,7 +509,7 @@ fi
 # Returns: { cpu_time_ns: <ns>, system_time_ns: <ns>, online_cpus: <num>, memory_used: <bytes>, memory_limit: <bytes>, network_in_bytes_per_sec: <rate>, network_out_bytes_per_sec: <rate>, disk_read_bytes_per_sec: <rate>, disk_write_bytes_per_sec: <rate> }
 # Backend computes: cpu % = Σ (cpu_time_ns / system_time_ns * online_cpus) × 100
 # This matches Docker's standard formula: (cpuDelta / systemDelta) * onlineCPUs * 100
-if [ "$PATH_RAW" = "/metrics" ]; then
+  if [ "$PATH_RAW" = "/metrics" ]; then
   CONTAINERS_JSON=$(curl --silent --unix-socket "$SOCKET_PATH" "http://localhost/containers/json" 2>/dev/null)
 
   if [ -z "$CONTAINERS_JSON" ] || [ "$CONTAINERS_JSON" = "[]" ]; then
@@ -525,7 +518,7 @@ if [ "$PATH_RAW" = "/metrics" ]; then
     exit 0
   fi
 
-  CONTAINER_IDS=$(echo "$CONTAINERS_JSON" | grep -oE '"Id":"[a-f0-9]+"' | head -20 | cut -d'"' -f4)
+  CONTAINER_IDS=$(echo "$CONTAINERS_JSON" | jq -r '.[0:20] | .[].Id // empty')
 
   TOTAL_CPU_TIME_NS=0
   TOTAL_SYSTEM_TIME_NS=0
@@ -552,51 +545,45 @@ if [ "$PATH_RAW" = "/metrics" ]; then
   for CONTAINER_ID in $CONTAINER_IDS; do
     STATS_FILE="${STATS_TMPDIR}/${CONTAINER_ID}.json"
     [ -f "$STATS_FILE" ] && [ -s "$STATS_FILE" ] || continue
-    STATS_JSON="$(cat "$STATS_FILE")"
 
-    if [ -n "$STATS_JSON" ]; then
-      # Docker stats JSON has two occurrences of each field:
-      #   1st = cpu_stats (current), 2nd = precpu_stats (previous)
-      # Use head -1 / tail -1 for positional extraction
-      CPU_USAGE=$(echo "$STATS_JSON" | grep -oE '"total_usage":[0-9]+' | head -1 | grep -oE '[0-9]+$' || true)
-      PREV_CPU=$(echo "$STATS_JSON" | grep -oE '"total_usage":[0-9]+' | tail -1 | grep -oE '[0-9]+$' || true)
-      SYSTEM_USAGE=$(echo "$STATS_JSON" | grep -oE '"system_cpu_usage":[0-9]+' | head -1 | grep -oE '[0-9]+$' || true)
-      PREV_SYSTEM=$(echo "$STATS_JSON" | grep -oE '"system_cpu_usage":[0-9]+' | tail -1 | grep -oE '[0-9]+$' || true)
-      ONLINE_CPUS=$(echo "$STATS_JSON" | grep -oE '"online_cpus":[0-9]+' | head -1 | grep -oE '[0-9]+$' || true)
+    CPU_USAGE=$(jq -r '.cpu_stats.cpu_usage.total_usage // empty' "$STATS_FILE")
+    PREV_CPU=$(jq -r '.precpu_stats.cpu_usage.total_usage // empty' "$STATS_FILE")
+    SYSTEM_USAGE=$(jq -r '.cpu_stats.system_cpu_usage // empty' "$STATS_FILE")
+    PREV_SYSTEM=$(jq -r '.precpu_stats.system_cpu_usage // empty' "$STATS_FILE")
+    ONLINE_CPUS=$(jq -r '.cpu_stats.online_cpus // empty' "$STATS_FILE")
 
-      if [ -n "$ONLINE_CPUS" ] && [ "$HOST_CORES" = "0" ]; then
-        HOST_CORES=$ONLINE_CPUS
-      fi
-
-      if [ -n "$SYSTEM_USAGE" ] && [ -n "$PREV_SYSTEM" ] && [ "$MEASURED_SYSTEM_NS" = "0" ]; then
-        if [ "$SYSTEM_USAGE" -gt "$PREV_SYSTEM" ]; then
-          MEASURED_SYSTEM_NS=$((SYSTEM_USAGE - PREV_SYSTEM))
-        fi
-      fi
-
-      if [ -n "$CPU_USAGE" ] && [ -n "$PREV_CPU" ] && [ "$CPU_USAGE" -gt "$PREV_CPU" ]; then
-        CPU_DELTA=$((CPU_USAGE - PREV_CPU))
-        TOTAL_CPU_TIME_NS=$((TOTAL_CPU_TIME_NS + CPU_DELTA))
-      fi
-
-      MEM_USAGE=$(echo "$STATS_JSON" | grep -oE '"usage":[0-9]+' | head -1 | grep -oE '[0-9]+$' || true)
-      MEM_LIMIT=$(echo "$STATS_JSON" | grep -oE '"limit":[0-9]+' | head -1 | grep -oE '[0-9]+$' || true)
-
-      if [ -n "$MEM_USAGE" ] && [ -n "$MEM_LIMIT" ]; then
-        TOTAL_MEM_USED=$((TOTAL_MEM_USED + MEM_USAGE))
-        TOTAL_MEM_LIMIT=$((TOTAL_MEM_LIMIT + MEM_LIMIT))
-      fi
-
-      NETWORK_RX_BYTES=$(sum_json_field_values "$STATS_JSON" "rx_bytes")
-      NETWORK_TX_BYTES=$(sum_json_field_values "$STATS_JSON" "tx_bytes")
-      DISK_READ_BYTES=$(sum_blkio_op_values "$STATS_JSON" "Read")
-      DISK_WRITE_BYTES=$(sum_blkio_op_values "$STATS_JSON" "Write")
-
-      TOTAL_NETWORK_IN_BYTES=$((TOTAL_NETWORK_IN_BYTES + NETWORK_RX_BYTES))
-      TOTAL_NETWORK_OUT_BYTES=$((TOTAL_NETWORK_OUT_BYTES + NETWORK_TX_BYTES))
-      TOTAL_DISK_READ_BYTES=$((TOTAL_DISK_READ_BYTES + DISK_READ_BYTES))
-      TOTAL_DISK_WRITE_BYTES=$((TOTAL_DISK_WRITE_BYTES + DISK_WRITE_BYTES))
+    if [ -n "$ONLINE_CPUS" ] && [ "$HOST_CORES" = "0" ]; then
+      HOST_CORES=$ONLINE_CPUS
     fi
+
+    if [ -n "$SYSTEM_USAGE" ] && [ -n "$PREV_SYSTEM" ] && [ "$MEASURED_SYSTEM_NS" = "0" ]; then
+      if [ "$SYSTEM_USAGE" -gt "$PREV_SYSTEM" ]; then
+        MEASURED_SYSTEM_NS=$((SYSTEM_USAGE - PREV_SYSTEM))
+      fi
+    fi
+
+    if [ -n "$CPU_USAGE" ] && [ -n "$PREV_CPU" ] && [ "$CPU_USAGE" -gt "$PREV_CPU" ]; then
+      CPU_DELTA=$((CPU_USAGE - PREV_CPU))
+      TOTAL_CPU_TIME_NS=$((TOTAL_CPU_TIME_NS + CPU_DELTA))
+    fi
+
+    MEM_USAGE=$(jq -r '.memory_stats.usage // empty' "$STATS_FILE")
+    MEM_LIMIT=$(jq -r '.memory_stats.limit // empty' "$STATS_FILE")
+
+    if [ -n "$MEM_USAGE" ] && [ -n "$MEM_LIMIT" ]; then
+      TOTAL_MEM_USED=$((TOTAL_MEM_USED + MEM_USAGE))
+      TOTAL_MEM_LIMIT=$((TOTAL_MEM_LIMIT + MEM_LIMIT))
+    fi
+
+    NETWORK_RX_BYTES=$(jq -r '[.networks[]?.rx_bytes] | add // 0' "$STATS_FILE")
+    NETWORK_TX_BYTES=$(jq -r '[.networks[]?.tx_bytes] | add // 0' "$STATS_FILE")
+    DISK_READ_BYTES=$(jq -r '[.blkio_stats.io_service_bytes_recursive[]? | select(.op == "Read") | .value] | add // 0' "$STATS_FILE")
+    DISK_WRITE_BYTES=$(jq -r '[.blkio_stats.io_service_bytes_recursive[]? | select(.op == "Write") | .value] | add // 0' "$STATS_FILE")
+
+    TOTAL_NETWORK_IN_BYTES=$((TOTAL_NETWORK_IN_BYTES + NETWORK_RX_BYTES))
+    TOTAL_NETWORK_OUT_BYTES=$((TOTAL_NETWORK_OUT_BYTES + NETWORK_TX_BYTES))
+    TOTAL_DISK_READ_BYTES=$((TOTAL_DISK_READ_BYTES + DISK_READ_BYTES))
+    TOTAL_DISK_WRITE_BYTES=$((TOTAL_DISK_WRITE_BYTES + DISK_WRITE_BYTES))
   done
 
   rm -rf "$STATS_TMPDIR"
