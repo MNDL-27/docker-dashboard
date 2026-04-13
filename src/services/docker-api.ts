@@ -19,14 +19,21 @@ export interface DockerHostPingResult {
   connection_mode: string;
 }
 
-async function invoke(body: Record<string, unknown>) {
+async function invoke(body: Record<string, unknown>, idempotencyKey?: string) {
+  const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+  if (idempotencyKey) {
+    headers['Idempotency-Key'] = idempotencyKey;
+  }
   const data = await apiFetch('/docker-proxy', {
     method: 'POST',
+    headers,
     body: JSON.stringify(body),
   });
   if (data?.error) throw new Error(data.error + (data.details ? `: ${data.details}` : ''));
   return data;
 }
+
+const genKey = () => crypto.randomUUID();
 
 export const dockerApi = {
   ping: (hostId: string) => invoke({ action: 'ping', hostId }) as Promise<DockerHostPingResult>,
@@ -38,14 +45,14 @@ export const dockerApi = {
     invoke({ action: 'container-inspect', hostId, containerId }),
   containerStats: (hostId: string, containerId: string) =>
     invoke({ action: 'container-stats', hostId, containerId }),
-  containerLogs: (hostId: string, containerId: string, tail = 100) =>
-    invoke({ action: 'container-logs', hostId, containerId, params: { tail } }),
+  containerLogs: (hostId: string, containerId: string, tail: string | number = 100, since?: number, until?: number) =>
+    invoke({ action: 'container-logs', hostId, containerId, params: { tail, since, until } }),
   startContainer: (hostId: string, containerId: string) =>
-    invoke({ action: 'container-start', hostId, containerId }),
+    invoke({ action: 'container-start', hostId, containerId }, genKey()),
   stopContainer: (hostId: string, containerId: string) =>
-    invoke({ action: 'container-stop', hostId, containerId }),
+    invoke({ action: 'container-stop', hostId, containerId }, genKey()),
   restartContainer: (hostId: string, containerId: string) =>
-    invoke({ action: 'container-restart', hostId, containerId }),
+    invoke({ action: 'container-restart', hostId, containerId }, genKey()),
   allContainers: (orgId: string) => invoke({ action: 'all-containers', orgId }),
   allContainerStats: (orgId: string) => invoke({ action: 'all-container-stats', orgId }),
 };

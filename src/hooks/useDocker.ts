@@ -139,10 +139,10 @@ export function useContainerStats(hostId?: string | null, containerId?: string |
   });
 }
 
-export function useContainerLogs(hostId?: string | null, containerId?: string | null, tail = 200) {
+export function useContainerLogs(hostId?: string | null, containerId?: string | null, tail: number | string = 200, since?: number, until?: number) {
   return useQuery({
-    queryKey: ['container-logs', hostId, containerId, tail],
-    queryFn: () => dockerApi.containerLogs(hostId!, containerId!, tail),
+    queryKey: ['container-logs', hostId, containerId, tail, since, until],
+    queryFn: () => dockerApi.containerLogs(hostId!, containerId!, tail, since, until),
     enabled: !!hostId && !!containerId,
   });
 }

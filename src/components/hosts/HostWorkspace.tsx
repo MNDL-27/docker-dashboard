@@ -752,9 +752,16 @@ export function HostWorkspace() {
                           {metricsQuery.latestPoint ? formatSpeed(metricsQuery.latestPoint.networkInBytesPerSec) : "Unavailable"}
                         </p>
                       </div>
-                      <div className="flex items-center gap-4 text-xs text-muted-foreground">
-                        <span className="inline-flex items-center gap-2"><span className="h-3 w-3 rounded-full bg-primary" />Inbound</span>
-                        <span className="inline-flex items-center gap-2"><span className="h-3 w-3 rounded-full bg-muted-foreground/60" />Outbound</span>
+                      <div className="flex flex-col items-end gap-2">
+                        <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                          <span className="inline-flex items-center gap-2"><span className="h-3 w-3 rounded-full bg-primary" />Inbound</span>
+                          <span className="inline-flex items-center gap-2"><span className="h-3 w-3 rounded-full bg-muted-foreground/60" />Outbound</span>
+                        </div>
+                        {metricsQuery.latestPoint && (
+                          <p className="text-sm font-medium text-muted-foreground">
+                            Total: <span className="text-foreground">{formatSpeed((metricsQuery.latestPoint.networkInBytesPerSec || 0) + (metricsQuery.latestPoint.networkOutBytesPerSec || 0))}</span>
+                          </p>
+                        )}
                       </div>
                     </div>
                     {selectedHostDisconnected ? (
@@ -798,25 +805,15 @@ export function HostWorkspace() {
                 ) : containers.length === 0 ? (
                   <div className="p-8 text-center text-sm text-muted-foreground">No containers found on this host.</div>
                 ) : (
-                  <div className="divide-y divide-white/5">
-                    {containers.slice(0, 8).map((container: any) => (
-                      <Link key={container.Id} to={`/app/containers/${container.Id?.substring(0, 12)}?host=${selectedHost.id}`} className="flex items-center justify-between gap-4 px-5 py-4 hover:bg-white/5 transition-colors">
-                        <div className="min-w-0">
-                          <p className="truncate font-medium">{(container.Names?.[0] || container.Id?.substring(0, 12)).replace(/^\//, "")}</p>
-                          <p className="mt-1 truncate text-xs text-muted-foreground">{container.Image}</p>
-                        </div>
-                        <span className={cn(
-                          "inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium",
-                          container.State === "running"
-                            ? "bg-success/15 text-success"
-                            : container.State === "exited"
-                              ? "bg-muted text-muted-foreground"
-                              : "bg-warning/15 text-warning",
-                        )}>
-                          {container.State}
-                        </span>
-                      </Link>
-                    ))}
+                  <div className="p-12 text-center">
+                    <Box className="mx-auto h-12 w-12 text-muted-foreground/50 mb-4" />
+                    <p className="text-4xl font-semibold tracking-tight">{containers.length}</p>
+                    <p className="mt-2 text-sm text-muted-foreground">Total containers detected</p>
+                    <div className="mt-6 flex justify-center">
+                      <Button variant="outline" asChild>
+                        <Link to={`/app/containers?host=${selectedHost.id}`}>View all containers</Link>
+                      </Button>
+                    </div>
                   </div>
                 )}
               </div>
