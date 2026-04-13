@@ -135,25 +135,10 @@ The highest current risks are watcher-specific:
 - Impact:
   - Operationally safe, but brittle without key rotation runbooks and alarms.
 
-## Testing and Verification Gaps
-
-### 11. Watcher-critical paths are effectively untested in-repo
-- Evidence:
-  - `src/test/setup.ts`
-  - no watcher-specific tests under `src/` or `netlify/functions/`
-- Missing automated coverage for:
-  - agent `/metrics` behavior
-  - Docker log frame parsing
-  - Cloudflare Tunnel metrics path
-  - stale/error/unhealthy state transitions
-  - encryption key rotation and decrypt fallback
-- Impact:
-  - Regressions in the watcher path are likely to be discovered in production.
-
 ## Suggested Next Focus
 
-1. Fix `api-fleet-metrics.mts` to send CF Access headers and `X-Docker-Socket`, then add coverage for tunnel and custom-socket hosts.
-2. Remove synthetic chart seeding from `FleetResourceChart.tsx` and replace it with an explicit “no live metrics” state.
+1. Fix `api-fleet-metrics.mts` to send CF Access headers and `X-Docker-Socket`.
+2. Remove synthetic chart seeding from `FleetResourceChart.tsx` and replace it with an explicit "no live metrics" state.
 3. Separate health polling state from ad hoc UI probes so `last_seen_at` only means successful scheduled health.
 4. Tighten the agent trust boundary:
    - disable arbitrary socket overrides by default
