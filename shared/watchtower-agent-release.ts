@@ -46,18 +46,18 @@ const WATCHTOWER_AGENT_SOURCE_REF = "b6512ebb0078a2d44dffdbef42ac95b40d0d6739";
 const WATCHTOWER_AGENT_APP_BASE_URL = "https://app.dockerdash.app";
 
 export const CURRENT_WATCHTOWER_AGENT_RELEASE: WatchtowerAgentRelease = {
-  version: "1.0.1",
-  tag: "v1.0.1",
+  version: "1.0.2",
+  tag: "v1.0.2",
   sourceLabel: "Dockerdash hosted installer",
   published: false,
-  releaseUrl: `${WATCHTOWER_AGENT_APP_BASE_URL}/watchtower-agent-install.sh?v=1.0.1`,
+  releaseUrl: `${WATCHTOWER_AGENT_APP_BASE_URL}/watchtower-agent-install.sh?v=1.0.2`,
   releaseNotesUrl: `https://github.com/${WATCHTOWER_AGENT_GITHUB_OWNER}/${WATCHTOWER_AGENT_GITHUB_REPO}/commit/${WATCHTOWER_AGENT_SOURCE_REF}`,
   assetBaseUrl: WATCHTOWER_AGENT_APP_BASE_URL,
   installerAssetName: "watchtower-agent-install.sh",
   runtimeAssetName: "watchtower-agent.sh",
   uninstallAssetName: "watchtower-agent-uninstall.sh",
-  installerSha256: "31E75B953E258CF90F5DE12BBAC6F4B80C268CB05A9E09EE657CA887C2B6FC43",
-  runtimeSha256: "F2F7B4F37E61E79EDD98BF1F9F5C540D0A252536049D830158356E7E19DAEB33",
+  installerSha256: "9BD527926F4B35BA38BBC514CF7C8C26A8E128810ACB2CB407C69F9B2B4D8513",
+  runtimeSha256: "0D76F3BD73DF0FB4126D802C509E4D8CF5A6CF92E40479C8D267D3C58D778EB3",
   uninstallSha256: "449AFC5FF62742AF0FF15254827E82F120BDD17694C43500C08FAF9926D0985C",
 };
 

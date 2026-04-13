@@ -299,7 +299,7 @@ AGENT_PORT="${AGENT_PORT:-9876}"
 AGENT_BIND_ADDRESS="${AGENT_BIND_ADDRESS:-${AGENT_BIND:-0.0.0.0}}"
 DOCKER_SOCKET="${DOCKER_SOCKET:-/var/run/docker.sock}"
 WATCHTOWER_AGENT_STATE_DIR="${WATCHTOWER_AGENT_STATE_DIR:-/var/lib/watchtower-agent}"
-WATCHTOWER_AGENT_VERSION="${WATCHTOWER_AGENT_VERSION:-1.0.1}"
+WATCHTOWER_AGENT_VERSION="${WATCHTOWER_AGENT_VERSION:-1.0.2}"
 
 if [ "${1:-}" = "--check" ]; then
   check_config
@@ -539,14 +539,14 @@ if [ "$PATH_RAW" = "/metrics" ]; then
   MEASURED_SYSTEM_NS=0
 
   for CONTAINER_ID in $CONTAINER_IDS; do
-    STATS_JSON=$(curl --silent --unix-socket "$SOCKET_PATH" "http://localhost/containers/${CONTAINER_ID}/stats?stream=false" 2>/dev/null)
+    STATS_JSON=$(curl --silent --max-time 3 --unix-socket "$SOCKET_PATH" "http://localhost/containers/${CONTAINER_ID}/stats?stream=false&one-shot=true" 2>/dev/null)
 
     if [ -n "$STATS_JSON" ]; then
-      CPU_USAGE=$(echo "$STATS_JSON" | grep -oE '"cpu_usage":{"total_usage":[0-9]+' | head -1 | sed 's/.*total_usage://' | tr -d '}' || true)
-      PREV_CPU=$(echo "$STATS_JSON" | grep -oE '"precpu_stats":{"cpu_usage":{"total_usage":[0-9]+' | head -1 | sed 's/.*total_usage://' | tr -d '}' || true)
-      SYSTEM_USAGE=$(echo "$STATS_JSON" | grep -oE '"system_cpu_usage":[0-9]+' | head -1 | sed 's/.*://' | tr -d '}' || true)
-      PREV_SYSTEM=$(echo "$STATS_JSON" | grep -oE '"precpu_stats":{"system_cpu_usage":[0-9]+' | head -1 | sed 's/.*system_cpu_usage://' | tr -d '}' || true)
-      ONLINE_CPUS=$(echo "$STATS_JSON" | grep -oE '"online_cpus":[0-9]+' | head -1 | sed 's/.*://' | tr -d '}' || true)
+      CPU_USAGE=$(echo "$STATS_JSON" | grep -oE '"cpu_usage":{"total_usage":[0-9]+' | head -1 | grep -oE '[0-9]+$' || true)
+      PREV_CPU=$(echo "$STATS_JSON" | grep -oE '"precpu_stats":{"cpu_usage":{"total_usage":[0-9]+' | head -1 | grep -oE '[0-9]+$' || true)
+      SYSTEM_USAGE=$(echo "$STATS_JSON" | grep -oE '"system_cpu_usage":[0-9]+' | head -1 | grep -oE '[0-9]+$' || true)
+      PREV_SYSTEM=$(echo "$STATS_JSON" | grep -oE '"precpu_stats":{"system_cpu_usage":[0-9]+' | head -1 | grep -oE '[0-9]+$' || true)
+      ONLINE_CPUS=$(echo "$STATS_JSON" | grep -oE '"online_cpus":[0-9]+' | head -1 | grep -oE '[0-9]+$' || true)
 
       if [ -n "$ONLINE_CPUS" ] && [ "$HOST_CORES" = "0" ]; then
         HOST_CORES=$ONLINE_CPUS
