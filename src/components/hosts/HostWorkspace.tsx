@@ -79,6 +79,14 @@ function statusDot(status: string) {
   }
 }
 
+function isReadableHostStatus(status: string | null | undefined) {
+  return status === "connected" || status === "stale";
+}
+
+function isDisconnectedHostStatus(status: string | null | undefined) {
+  return !isReadableHostStatus(status);
+}
+
 function HostCard({
   host,
   selected,
@@ -88,8 +96,9 @@ function HostCard({
   selected: boolean;
   onSelect: () => void;
 }) {
+  const canReadHost = isReadableHostStatus(host.status);
   const metricsQuery = useHostMetrics(host.id, {
-    enabled: host.status === "connected",
+    enabled: canReadHost,
     refetchInterval: 20000,
   });
 
@@ -242,9 +251,12 @@ export function HostWorkspace() {
     return filteredHosts[0] ?? hosts[0] ?? null;
   }, [filteredHosts, hosts, routeHostId]);
 
-  const containersQuery = useHostContainers(selectedHost?.status === "connected" ? selectedHost.id : null);
-  const metricsQuery = useHostMetricsHistory(selectedHost?.status === "connected" ? selectedHost.id : null, {
-    enabled: selectedHost?.status === "connected",
+  const selectedHostReadable = isReadableHostStatus(selectedHost?.status);
+  const selectedHostDisconnected = isDisconnectedHostStatus(selectedHost?.status);
+
+  const containersQuery = useHostContainers(selectedHostReadable ? selectedHost?.id : null);
+  const metricsQuery = useHostMetricsHistory(selectedHostReadable ? selectedHost?.id : null, {
+    enabled: selectedHostReadable,
     refetchInterval: 10000,
     maxDataPoints: 24,
   });
@@ -398,14 +410,31 @@ export function HostWorkspace() {
 
                 <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
                   <SummaryCard label="Running containers" value={`${runningCount}`} helper={`${containers.length} total`} icon={Box} />
-                  <SummaryCard label="Last seen" value={selectedHost.last_seen_at ? new Date(selectedHost.last_seen_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : "Never"} helper={selectedHost.status === "connected" ? "Heartbeat healthy" : "Waiting for a successful probe"} icon={Activity} />
+                  <SummaryCard
+                    label="Last seen"
+                    value={selectedHost.last_seen_at ? new Date(selectedHost.last_seen_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : "Never"}
+                    helper={
+                      selectedHost.status === "connected"
+                        ? "Heartbeat healthy"
+                        : selectedHost.status === "stale"
+                          ? "Heartbeat is stale"
+                          : "Waiting for a successful probe"
+                    }
+                    icon={Activity}
+                  />
                   <SummaryCard label="Operating system" value={selectedHost.os_info || "Unknown"} helper={`Docker ${selectedHost.docker_version || "pending"}`} icon={Server} />
                   <SummaryCard label="Agent version" value={selectedHost.agent_version || "Pending"} helper={agentOutdated ? `Update available: ${CURRENT_WATCHTOWER_AGENT_VERSION}` : `Current release: ${CURRENT_WATCHTOWER_AGENT_VERSION}`} icon={Terminal} />
                 </div>
               </div>
 
+              {selectedHost.status === "stale" && (
+                <div className="rounded-xl border border-warning/20 bg-warning/10 px-4 py-3 text-sm text-warning">
+                  This host heartbeat is stale. The page will keep trying to read metrics and containers, but the data may be delayed or partially unavailable until the next successful health check.
+                </div>
+              )}
+
               <div className="grid gap-6 xl:grid-cols-[minmax(280px,360px),1fr]">
-                {selectedHost.status !== "connected" ? (
+                {selectedHostDisconnected ? (
                   <EmptyState title="Host is disconnected" description="Reconnect the host or run a successful connection test to start collecting host metrics." />
                 ) : metricsQuery.isLoading && metricsQuery.history.length === 0 ? (
                   <div className="glass-card min-h-[320px] flex items-center justify-center"><Loader2 className="h-8 w-8 animate-spin text-muted-foreground" /></div>
@@ -417,7 +446,7 @@ export function HostWorkspace() {
 
                 <div className="grid gap-6">
                   <div className="grid gap-6 lg:grid-cols-2">
-                    {selectedHost.status !== "connected" ? (
+                    {selectedHostDisconnected ? (
                       <EmptyState title="Memory metrics unavailable" description="Memory panels appear after a connected host returns a metrics sample." />
                     ) : metricsQuery.latestPoint ? (
                       <MeterCard
@@ -428,10 +457,10 @@ export function HostWorkspace() {
                         footer={`${metricsQuery.latestPoint.memory.toFixed(0)}% utilized`}
                       />
                     ) : (
-                      <EmptyState title="Memory metrics unavailable" description="Waiting for a usable metrics sample from the agent." />
+                      <EmptyState title="Memory metrics unavailable" description="Waiting for a usable metrics sample from the host agent." />
                     )}
 
-                    {selectedHost.status !== "connected" ? (
+                    {selectedHostDisconnected ? (
                       <EmptyState title="Disk throughput unavailable" description="Disk throughput is shown only for connected hosts with live metrics." />
                     ) : metricsQuery.latestPoint ? (
                       <MeterCard
@@ -441,7 +470,7 @@ export function HostWorkspace() {
                         footer="Read / write throughput"
                       />
                     ) : (
-                      <EmptyState title="Disk throughput unavailable" description="Waiting for a usable metrics sample from the agent." />
+                      <EmptyState title="Disk throughput unavailable" description="Waiting for a usable metrics sample from the host agent." />
                     )}
                   </div>
 
@@ -458,7 +487,7 @@ export function HostWorkspace() {
                         <span className="inline-flex items-center gap-2"><span className="h-3 w-3 rounded-full bg-muted-foreground/60" />Outbound</span>
                       </div>
                     </div>
-                    {selectedHost.status !== "connected" ? (
+                    {selectedHostDisconnected ? (
                       <p className="text-sm text-muted-foreground">Connect this host to start rendering throughput history.</p>
                     ) : (
                       <TrendBars history={metricsQuery.history} accessor={(point) => point.networkInBytesPerSec} />
@@ -467,7 +496,7 @@ export function HostWorkspace() {
                 </div>
               </div>
 
-              {metricsQuery.error && selectedHost.status === "connected" && (
+              {metricsQuery.error && selectedHostReadable && (
                 <div className="rounded-xl border border-warning/20 bg-warning/10 px-4 py-3 text-sm text-warning">
                   {metricsQuery.error instanceof Error ? metricsQuery.error.message : "Host metrics are temporarily unavailable."}
                 </div>
@@ -484,7 +513,7 @@ export function HostWorkspace() {
                     {runningCount} running / {containers.length} total
                   </span>
                 </div>
-                {selectedHost.status !== "connected" ? (
+                {selectedHostDisconnected ? (
                   <div className="p-8 text-center text-sm text-muted-foreground">Host is not connected. Test the connection to fetch container data.</div>
                 ) : containersQuery.isLoading ? (
                   <div className="flex items-center justify-center h-24"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>

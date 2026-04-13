@@ -145,4 +145,19 @@ describe("HostWorkspace", () => {
     expect(screen.getByRole("heading", { name: "beta-host" })).toBeInTheDocument();
     expect(screen.getByText("Endpoint: https://beta.example.com")).toBeInTheDocument();
   });
+
+  it("treats stale hosts as readable instead of disconnected", () => {
+    mockUseDockerHosts.mockReturnValue({
+      data: [{ ...hosts[0], status: "stale" }],
+      isLoading: false,
+      refetch: vi.fn(),
+    });
+
+    renderWorkspace("/app/hosts");
+
+    expect(screen.getByText(/heartbeat is stale/i)).toBeInTheDocument();
+    expect(screen.queryByText(/host is disconnected/i)).not.toBeInTheDocument();
+    expect(mockUseHostContainers).toHaveBeenCalledWith("host-1");
+    expect(mockUseHostMetricsHistory).toHaveBeenCalledWith("host-1", expect.objectContaining({ enabled: true }));
+  });
 });
