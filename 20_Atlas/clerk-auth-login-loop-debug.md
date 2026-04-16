@@ -31,6 +31,19 @@ Suggested env var:
 
 - `CLERK_AUTHORIZED_PARTIES="https://app.dockerdash.app,https://dockerdash.app,https://www.dockerdash.app,http://localhost:5173,http://localhost:8888"`
 
+### Follow-up Production Finding
+
+- After the redirect loop was removed, `/api/auth/me` could still fail for signed-in users because access control still enforced manual approval for every non-admin user.
+- `netlify/functions/lib/access-controls.mts` blocked users with `Your account is awaiting platform approval.` unless they were explicitly approved.
+- That behavior conflicts with the current public-facing signup flow (`LandingPage` says `Now in Public Beta` and `SignupPage` drives straight into app onboarding).
+- `netlify/functions/auth-me.mts` also flattened that access-control failure into a generic `401`, which made the browser console look like token/auth breakage even when the real issue was approval policy.
+
+### Follow-up Fix
+
+- Make platform approval opt-in via `REQUIRE_PLATFORM_APPROVALS` instead of always-on.
+- Keep admin suspension/disable and org-ban checks intact.
+- Map `auth-me` failures to more specific HTTP statuses so approval and org-selection issues do not all appear as generic unauthorized responses.
+
 ### Files
 
 - `netlify/functions/lib/auth.mts`
@@ -38,3 +51,4 @@ Suggested env var:
 - `src/components/ProtectedRoute.tsx`
 - `src/components/AppRootRedirect.tsx`
 - `src/pages/LoginPage.tsx`
+- `netlify/functions/lib/access-controls.mts`

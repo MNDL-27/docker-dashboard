@@ -1,6 +1,11 @@
 import { sql } from "./db.mjs";
 import { ensureAdminSchema } from "./ensure-admin-schema.mjs";
 
+function requiresPlatformApproval() {
+  const value = (process.env.REQUIRE_PLATFORM_APPROVALS || "").trim().toLowerCase();
+  return value === "1" || value === "true" || value === "yes";
+}
+
 export interface UserAccessControl {
   is_suspended: boolean;
   is_hard_disabled: boolean;
@@ -110,7 +115,7 @@ export async function assertTenantAccessAllowed({
 }) {
   await ensureAdminSchema();
 
-  if (!isPlatformAdmin && !isApproved) {
+  if (!isPlatformAdmin && requiresPlatformApproval() && !isApproved) {
     throw new Error("Your account is awaiting platform approval.");
   }
 

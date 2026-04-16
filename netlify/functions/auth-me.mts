@@ -93,10 +93,22 @@ export default async (req: Request) => {
     console.error('[auth-me] caught error:', err?.message);
 
     if (err?.code === 'SYNC_PENDING') {
-      return new Response(JSON.stringify({ error: err.message, retry: true }), { status: 202, headers });
+      return new Response(JSON.stringify({ error: err.message, code: err.code, retry: true }), { status: 202, headers });
     }
 
-    return new Response(JSON.stringify({ error: err.message || 'Unauthorized' }), { status: 401, headers });
+    const message = err?.message || 'Unauthorized';
+    const lowerMessage = String(message).toLowerCase();
+    const status =
+      lowerMessage.includes('awaiting platform approval') ||
+      lowerMessage.includes('disabled by a platform administrator') ||
+      lowerMessage.includes('account is suspended') ||
+      lowerMessage.includes('no longer have access to the selected organization')
+        ? 403
+        : lowerMessage.includes('no active organization selected')
+          ? 409
+          : 401;
+
+    return new Response(JSON.stringify({ error: message }), { status, headers });
   }
 };
 
