@@ -240,13 +240,13 @@ function RingCard({ point }: { point: HostMetricsPoint }) {
         className="relative flex h-44 w-44 items-center justify-center rounded-full transition-all duration-500"
         style={{ background: `conic-gradient(hsl(${colorVar}) ${value}%, rgba(255,255,255,0.06) ${value}% 100%)` }}
       >
-        <div className="flex h-32 w-32 flex-col items-center justify-center rounded-full bg-background/95">
+        <div className="flex h-32 w-32 items-center justify-center rounded-full bg-background/95">
           <span className="text-4xl font-semibold tracking-tight">{value.toFixed(0)}%</span>
-          <span className="mt-2 text-xs uppercase tracking-[0.2em] text-muted-foreground">
-            {point.usedCores.toFixed(2)} / {point.totalCores.toFixed(2)} cores
-          </span>
         </div>
       </div>
+      <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
+        {point.usedCores.toFixed(2)} / {point.totalCores.toFixed(2)} cores
+      </p>
     </div>
   );
 }
