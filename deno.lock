@@ -11,6 +11,7 @@
   "workspace": {
     "packageJson": {
       "dependencies": [
+        "npm:@asteasolutions/zod-to-openapi@^7.3.4",
         "npm:@clerk/backend@^3.2.0",
         "npm:@clerk/clerk-react@^5.61.3",
         "npm:@eslint/js@^9.32.0",
@@ -45,8 +46,6 @@
         "npm:@radix-ui/react-tooltip@^1.2.7",
         "npm:@tailwindcss/typography@~0.5.16",
         "npm:@tanstack/react-query@^5.83.0",
-        "npm:@testing-library/jest-dom@^6.6.0",
-        "npm:@testing-library/react@16",
         "npm:@types/node@^22.16.5",
         "npm:@types/react-dom@^18.3.7",
         "npm:@types/react@^18.3.23",
@@ -67,7 +66,6 @@
         "npm:framer-motion@^12.35.0",
         "npm:globals@^15.15.0",
         "npm:input-otp@^1.4.2",
-        "npm:jsdom@^20.0.3",
         "npm:lovable-tagger@^1.1.13",
         "npm:lucide-react@0.462",
         "npm:netlify-cli@^24.2.0",
@@ -91,7 +89,6 @@
         "npm:typescript@^5.8.3",
         "npm:vaul@~0.9.9",
         "npm:vite@^5.4.19",
-        "npm:vitest@^3.2.4",
         "npm:zod@^3.25.76"
       ]
     }

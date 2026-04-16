@@ -16,12 +16,15 @@ Usage: watchtower-agent-install.sh [options]
 
 Options:
   --api-key VALUE         Set AGENT_API_KEY non-interactively
+  --enrollment-token VAL  Exchange a one-time enrollment token for the real AGENT_API_KEY
+  --enroll-url URL        Enrollment exchange endpoint
   --check                 Validate the current or provided configuration without installing
   --expected-version VAL  Fail if the installed runtime version does not match this value
   --port VALUE            Set AGENT_PORT (default: 9876)
-  --bind-address VALUE    Set AGENT_BIND_ADDRESS (default: 0.0.0.0)
+  --bind-address VALUE    Set AGENT_BIND_ADDRESS (default: 127.0.0.1)
   --bind VALUE            Alias for --bind-address
   --docker-socket PATH    Set DOCKER_SOCKET (default: /var/run/docker.sock)
+  --connection-mode MODE  Set connection mode for user-facing output (agent or cloudflare_tunnel)
   --yes                   Accept defaults without prompting
   --help                  Show this help text
 EOF
@@ -176,22 +179,57 @@ prompt_hidden() {
   printf '%s' "$value"
 }
 
+exchange_enrollment_token() {
+  [ -n "$ENROLLMENT_TOKEN_VALUE" ] || fail "--enrollment-token requires a value"
+  [ -n "$ENROLL_URL_VALUE" ] || fail "--enroll-url is required when using --enrollment-token"
+  require_jq
+
+  local response
+  response="$(curl -fsSL -X POST "$ENROLL_URL_VALUE" \
+    -H 'Content-Type: application/json' \
+    -d "{\"enrollment_token\":\"$ENROLLMENT_TOKEN_VALUE\"}")" || fail "Enrollment token exchange failed. Re-generate the install command in Dockerdash and try again."
+
+  AGENT_API_KEY_VALUE="$(printf '%s' "$response" | jq -r '.agent_api_key // empty')"
+  AGENT_PORT_VALUE="$(printf '%s' "$response" | jq -r '.port // empty')"
+  AGENT_BIND_ADDRESS_VALUE="$(printf '%s' "$response" | jq -r '.bind_address // empty')"
+  DOCKER_SOCKET_VALUE="$(printf '%s' "$response" | jq -r '.docker_socket_path // empty')"
+  CONNECTION_MODE_VALUE="$(printf '%s' "$response" | jq -r '.connection_mode // empty')"
+
+  [ -n "$AGENT_API_KEY_VALUE" ] || fail "Enrollment exchange succeeded, but no AGENT_API_KEY was returned."
+  [ -n "$AGENT_PORT_VALUE" ] || AGENT_PORT_VALUE="$DEFAULT_PORT"
+  [ -n "$AGENT_BIND_ADDRESS_VALUE" ] || AGENT_BIND_ADDRESS_VALUE="$DEFAULT_BIND_ADDRESS"
+  [ -n "$DOCKER_SOCKET_VALUE" ] || DOCKER_SOCKET_VALUE="$DEFAULT_DOCKER_SOCKET"
+}
+
 DEFAULT_PORT="9876"
 DEFAULT_BIND_ADDRESS="127.0.0.1"
 DEFAULT_DOCKER_SOCKET="/var/run/docker.sock"
 FLAG_YES="false"
 FLAG_CHECK="false"
 CLI_API_KEY=""
+CLI_ENROLLMENT_TOKEN=""
+CLI_ENROLL_URL=""
 CLI_EXPECTED_VERSION=""
 CLI_PORT=""
 CLI_BIND_ADDRESS=""
 CLI_DOCKER_SOCKET=""
+CLI_CONNECTION_MODE=""
 
 while [ $# -gt 0 ]; do
   case "$1" in
     --api-key)
       [ $# -ge 2 ] || fail "--api-key requires a value"
       CLI_API_KEY="$2"
+      shift 2
+      ;;
+    --enrollment-token)
+      [ $# -ge 2 ] || fail "--enrollment-token requires a value"
+      CLI_ENROLLMENT_TOKEN="$2"
+      shift 2
+      ;;
+    --enroll-url)
+      [ $# -ge 2 ] || fail "--enroll-url requires a value"
+      CLI_ENROLL_URL="$2"
       shift 2
       ;;
     --check)
@@ -216,6 +254,11 @@ while [ $# -gt 0 ]; do
     --docker-socket)
       [ $# -ge 2 ] || fail "--docker-socket requires a value"
       CLI_DOCKER_SOCKET="$2"
+      shift 2
+      ;;
+    --connection-mode)
+      [ $# -ge 2 ] || fail "--connection-mode requires a value"
+      CLI_CONNECTION_MODE="$2"
       shift 2
       ;;
     --yes)
@@ -249,10 +292,20 @@ AGENT_BIND_ADDRESS_VALUE="${CLI_BIND_ADDRESS:-${AGENT_BIND_ADDRESS:-${AGENT_BIND
 DOCKER_SOCKET_VALUE="${CLI_DOCKER_SOCKET:-${DOCKER_SOCKET:-$DEFAULT_DOCKER_SOCKET}}"
 STATE_DIR_VALUE="${WATCHTOWER_AGENT_STATE_DIR:-/var/lib/watchtower-agent}"
 EXPECTED_VERSION_VALUE="${CLI_EXPECTED_VERSION:-${WATCHTOWER_AGENT_EXPECTED_VERSION:-}}"
+ENROLLMENT_TOKEN_VALUE="${CLI_ENROLLMENT_TOKEN:-}"
+ENROLL_URL_VALUE="${CLI_ENROLL_URL:-}"
+CONNECTION_MODE_VALUE="${CLI_CONNECTION_MODE:-agent}"
+
+if [ -n "$ENROLLMENT_TOKEN_VALUE" ]; then
+  log "Checking enrollment token"
+  exchange_enrollment_token
+fi
 
 validate_port "$AGENT_PORT_VALUE"
 validate_bind_address "$AGENT_BIND_ADDRESS_VALUE"
 [ -S "$DOCKER_SOCKET_VALUE" ] || fail "Docker socket not found at $DOCKER_SOCKET_VALUE. Ensure Docker is running or rerun with --docker-socket PATH."
+SOCKET_GROUP="$(stat -c '%G' "$DOCKER_SOCKET_VALUE")"
+[ "$SOCKET_GROUP" != "UNKNOWN" ] && [ -n "$SOCKET_GROUP" ] && [ "$SOCKET_GROUP" != "root" ] || fail "The Docker socket group for $DOCKER_SOCKET_VALUE must be a non-root group such as docker."
 
 if [ -z "$AGENT_API_KEY_VALUE" ]; then
   if [ -t 0 ]; then
@@ -271,6 +324,7 @@ if [ "$FLAG_CHECK" = "true" ]; then
   exit 0
 fi
 
+log "Checking host"
 check_config
 
 if [ -f "$SERVICE_FILE" ] || [ -f "$ENV_FILE" ] || [ -f "${INSTALL_DIR}/watchtower-agent.sh" ]; then
@@ -308,7 +362,7 @@ install -d -m 0750 "$CONFIG_DIR"
 chown root:root "$INSTALL_DIR" "$CONFIG_DIR"
 install -d -m 0750 -o "$SERVICE_USER" -g "$SERVICE_USER" "$STATE_DIR_VALUE"
 
-log "Installing runtime"
+log "Installing agent runtime"
 install -m 0755 /dev/stdin "${INSTALL_DIR}/watchtower-agent.sh" <<'RUNTIME_EOF'
 #!/usr/bin/env bash
 
@@ -357,7 +411,7 @@ trap cleanup EXIT INT TERM
 
 AGENT_API_KEY="${AGENT_API_KEY:-}"
 AGENT_PORT="${AGENT_PORT:-9876}"
-AGENT_BIND_ADDRESS="${AGENT_BIND_ADDRESS:-${AGENT_BIND:-0.0.0.0}}"
+AGENT_BIND_ADDRESS="${AGENT_BIND_ADDRESS:-${AGENT_BIND:-127.0.0.1}}"
 DOCKER_SOCKET="${DOCKER_SOCKET:-/var/run/docker.sock}"
 WATCHTOWER_AGENT_STATE_DIR="${WATCHTOWER_AGENT_STATE_DIR:-/var/lib/watchtower-agent}"
 WATCHTOWER_AGENT_VERSION="${WATCHTOWER_AGENT_VERSION:-1.0.5}"
@@ -1033,9 +1087,15 @@ chmod 0644 "$SERVICE_FILE"
 log "Reloading systemd"
 systemctl daemon-reload
 systemctl enable "${SERVICE_NAME}.service" >/dev/null
+log "Starting service"
 systemctl restart "${SERVICE_NAME}.service" 2>/dev/null || systemctl start "${SERVICE_NAME}.service"
 if ! systemctl --quiet is-active "${SERVICE_NAME}.service"; then
   fail "watchtower-agent.service did not start cleanly. Inspect: sudo systemctl status ${SERVICE_NAME} && sudo journalctl -u ${SERVICE_NAME} -n 50"
+fi
+
+log "Verifying local health"
+if ! "${INSTALL_DIR}/watchtower-agent.sh" --check >/dev/null 2>&1; then
+  fail "Local agent verification failed after install. Inspect: sudo journalctl -u ${SERVICE_NAME} -n 50"
 fi
 
 INSTALLED_RUNTIME_VERSION="$(extract_runtime_version "${INSTALL_DIR}/watchtower-agent.sh" || true)"
@@ -1066,4 +1126,9 @@ Notes:
   - The agent listens on ${AGENT_BIND_ADDRESS_VALUE}:${AGENT_PORT_VALUE}.
   - Direct mode should stay behind HTTPS via a reverse proxy.
   - Cloudflare Tunnel mode should target http://${AGENT_BIND_ADDRESS_VALUE}:${AGENT_PORT_VALUE}.
+  - Connection mode for this install: ${CONNECTION_MODE_VALUE}
+
+Next in Dockerdash:
+  - Run the local verify command shown in the setup flow.
+  - Return to Dockerdash and click Finish setup.
 EOF

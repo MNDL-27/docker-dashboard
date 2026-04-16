@@ -16,9 +16,9 @@ import {
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import {
+  buildWatchtowerAgentAdvancedInstallCommand,
+  buildWatchtowerAgentLocalVerifyCommand,
   buildWatchtowerAgentPreflightCommand,
-  buildWatchtowerAgentUpgradeCommand,
-  buildWatchtowerAgentVerifyCommand,
   buildWatchtowerAgentRepairCommand,
   CURRENT_WATCHTOWER_AGENT_RELEASE,
 } from "@/lib/agent-release";
@@ -90,10 +90,16 @@ function InfoBox({ variant = "info", children }: { variant?: "info" | "warning" 
 
 export default function SetupGuidePage() {
   const preflightCommand = buildWatchtowerAgentPreflightCommand();
-  const updateCommand = buildWatchtowerAgentUpgradeCommand();
-  const verifyCommand = buildWatchtowerAgentVerifyCommand();
+  const updateCommand = buildWatchtowerAgentAdvancedInstallCommand({
+    agentApiKey: "<agent-api-key>",
+    connectionMode: "agent",
+  });
+  const verifyCommand = buildWatchtowerAgentLocalVerifyCommand();
   const repairCommand = buildWatchtowerAgentRepairCommand();
-  const tunnelInstallCommand = updateCommand;
+  const tunnelInstallCommand = buildWatchtowerAgentAdvancedInstallCommand({
+    agentApiKey: "<agent-api-key>",
+    connectionMode: "cloudflare_tunnel",
+  });
   const serviceCommands = `sudo systemctl status watchtower-agent
 sudo journalctl -u watchtower-agent -f
 sudo systemctl restart watchtower-agent
@@ -133,6 +139,10 @@ sudo watchtower-agent-uninstall`;
           forwards them to Docker over the local Unix socket, and stays under your control.
           <strong> Your Docker socket is never exposed directly to the internet.</strong>
         </p>
+        <InfoBox variant="success">
+          Preferred setup path: start from <strong>Connect Host</strong> or onboarding to get a one-time guided install command.
+          This page is the manual reference flow and advanced fallback.
+        </InfoBox>
       </div>
 
       <Tabs defaultValue="agent" className="space-y-4">
@@ -159,7 +169,7 @@ sudo watchtower-agent-uninstall`;
             </p>
             <CopyBlock code="openssl rand -hex 32" label="Generate API key" />
             <p className="text-sm text-muted-foreground">
-              Save this key. You will use it during preflight, update, and host connection.
+              Save this key only if you are following the manual fallback path. The guided Dockerdash flow can generate a one-time install command for you instead.
             </p>
           </StepCard>
 
@@ -175,9 +185,9 @@ sudo watchtower-agent-uninstall`;
 
           <StepCard step={3} title="Update">
             <p className="text-sm text-muted-foreground">
-              Run the in-place update on the host. It downloads the current installer, verifies its checksum, and preserves the stored config in <code className="bg-muted px-1 rounded">/etc/watchtower-agent/watchtower-agent.env</code>.
+              Run the manual install or in-place update on the host. It downloads the current installer, verifies its checksum, and preserves the stored config in <code className="bg-muted px-1 rounded">/etc/watchtower-agent/watchtower-agent.env</code>.
             </p>
-            <CopyBlock label={`Update (${CURRENT_WATCHTOWER_AGENT_RELEASE.tag})`} code={updateCommand} />
+            <CopyBlock label={`Manual Install / Update (${CURRENT_WATCHTOWER_AGENT_RELEASE.tag})`} code={updateCommand} />
             <InfoBox>
               The update is atomic: the installer is only executed after the checksum matches. If the host already has the agent, rerunning this command replaces the runtime in place.
             </InfoBox>
@@ -185,7 +195,7 @@ sudo watchtower-agent-uninstall`;
 
           <StepCard step={4} title="Verify">
             <p className="text-sm text-muted-foreground">
-              Confirm the local runtime is healthy after the update. Verify checks both <code className="bg-muted px-1 rounded">/agent/version</code> and <code className="bg-muted px-1 rounded">/metrics</code>.
+              Confirm the local runtime is healthy after the update. This verify command reads the local env file and checks both <code className="bg-muted px-1 rounded">/agent/version</code> and <code className="bg-muted px-1 rounded">/metrics</code>.
             </p>
             <CopyBlock label="Verify agent endpoints" code={verifyCommand} />
           </StepCard>
@@ -219,7 +229,7 @@ sudo watchtower-agent-uninstall`;
 
           <StepCard step={2} title="Install the Agent on Your Host">
             <p className="text-sm text-muted-foreground">
-              Use the same installer. It already binds to localhost by default, which is what Cloudflare Tunnel needs.
+              Use the same manual installer fallback. It binds to localhost by default, which is what Cloudflare Tunnel needs.
             </p>
             <CopyBlock label="Install for tunnel-only access" code={tunnelInstallCommand} />
             <InfoBox>

@@ -6,21 +6,16 @@ import { StepTestFailed } from "./onboarding/StepTestFailed";
 import { StepComplete } from "./onboarding/StepComplete";
 import { LoadingCard } from "./onboarding/LoadingCard";
 
-/* ══════════════════════════════════════════════════════════════════════
-    OnboardingPage — Thin orchestrator that delegates to step components
-   ══════════════════════════════════════════════════════════════════════ */
 export default function OnboardingPage() {
   const ob = useOnboardingState();
   const { state } = ob;
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
-      {/* ── Top Header Bar ── */}
       <OnboardingHeader stepIndex={state.step} progressWidth={getProgressWidth(state)} />
 
-      {/* ── Main Content ── */}
       <main className="flex-1 flex items-center justify-center px-4 py-12">
-        <div className={`w-full ${state.step === 1 ? "max-w-lg" : "max-w-md"}`}>
+        <div className={`w-full ${state.step === 1 ? "max-w-2xl" : "max-w-md"}`}>
           <OnboardingStepRouter ob={ob} />
         </div>
       </main>
@@ -28,36 +23,25 @@ export default function OnboardingPage() {
   );
 }
 
-/* ── Header with progress bar ── */
 function OnboardingHeader({ stepIndex, progressWidth }: { stepIndex: number; progressWidth: string }) {
   return (
     <header className="border-b border-border bg-background">
       <div className="w-full flex items-center justify-between px-6 py-4">
-        <div className="flex items-center gap-2">
-          <span className="text-sm font-medium text-muted-foreground">Onboarding</span>
-        </div>
-        <div className="flex items-center gap-1.5">
-          <span className="text-sm font-medium text-foreground">
-            Step {stepIndex + 1} of {STEPS.length} — {STEPS[stepIndex]}
-          </span>
-        </div>
+        <span className="text-sm font-medium text-muted-foreground">Onboarding</span>
+        <span className="text-sm font-medium text-foreground">
+          Step {stepIndex + 1} of {STEPS.length} - {STEPS[stepIndex]}
+        </span>
       </div>
-      {/* Progress Bar */}
       <div className="w-full h-1 bg-border">
-        <div
-          className="h-full bg-primary transition-all duration-500 ease-in-out"
-          style={{ width: progressWidth }}
-        />
+        <div className="h-full bg-primary transition-all duration-500 ease-in-out" style={{ width: progressWidth }} />
       </div>
     </header>
   );
 }
 
-/* ── Step Router — maps state to the correct sub-component ── */
 function OnboardingStepRouter({ ob }: { ob: ReturnType<typeof useOnboardingState> }) {
   const { state } = ob;
 
-  // Step 0: Org form
   if (state.step === 0 && state.phase === "form") {
     return (
       <StepCreateOrg
@@ -69,16 +53,14 @@ function OnboardingStepRouter({ ob }: { ob: ReturnType<typeof useOnboardingState
     );
   }
 
-  // Step 0: Creating / Syncing
   if (isStep0Submitting(state)) {
-    const title = state.phase === "creating" ? "Creating organization…" : "Syncing your workspace…";
+    const title = state.phase === "creating" ? "Creating organization..." : "Syncing your workspace...";
     const desc = state.phase === "creating"
-      ? `Setting up "${ob.orgName.trim()}"…`
+      ? `Setting up "${ob.orgName.trim()}"...`
       : "Finishing setup. This usually takes a few seconds.";
     return <LoadingCard title={title} description={desc} />;
   }
 
-  // Step 1, Screen A: Host basics
   if (state.step === 1 && state.phase === "basics") {
     return (
       <StepHostBasics
@@ -96,48 +78,46 @@ function OnboardingStepRouter({ ob }: { ob: ReturnType<typeof useOnboardingState
     );
   }
 
-  // Step 1, Screen B: Credentials
-  if (state.step === 1 && state.phase === "credentials") {
+  if (state.step === 1 && state.phase === "install") {
     return (
       <StepHostCredentials
         connectionMode={ob.connectionMode}
-        agentApiKey={ob.agentApiKey}
-        onAgentApiKeyChange={ob.setAgentApiKey}
-        socketPath={ob.socketPath}
-        onSocketPathChange={ob.setSocketPath}
-        cfServiceTokenId={ob.cfServiceTokenId}
-        onCfServiceTokenIdChange={ob.setCfServiceTokenId}
-        cfServiceTokenSecret={ob.cfServiceTokenSecret}
-        onCfServiceTokenSecretChange={ob.setCfServiceTokenSecret}
+        modeLabel={ob.enrollment?.mode_label || ""}
+        installCommand={ob.enrollment?.install_command || ""}
+        verifyCommand={ob.enrollment?.verify_command || ""}
+        setupSummary={ob.enrollment?.setup_summary || ""}
+        verifySummary={ob.enrollment?.verify_summary || ""}
+        nextStepSummary={ob.enrollment?.next_step_summary || ""}
+        advancedManualCommand={ob.enrollment?.advanced_manual_command || ""}
+        expiresAt={ob.enrollment?.expires_at || null}
         error={ob.error}
         onBack={ob.handleBackToBasics}
-        onSubmit={ob.handleSaveAndTest}
+        onFinalize={ob.handleFinalizeEnrollment}
+        onRegenerate={ob.handleRegenerateEnrollment}
       />
     );
   }
 
-  // Step 1: Saving / Testing
   if (isStep1Loading(state)) {
-    const title = state.phase === "saving" ? "Adding host…" : "Testing connection…";
-    const desc = state.phase === "saving"
-      ? `Saving "${ob.hostName}" to your workspace…`
-      : "Verifying Docker API connectivity. This may take a moment.";
+    const title = state.phase === "preparing" ? "Preparing setup command..." : "Finishing setup...";
+    const desc = state.phase === "preparing"
+      ? `Creating a guided install command for "${ob.hostName}"...`
+      : "Testing the saved host through the Dockerdash proxy path. This may take a moment.";
     return <LoadingCard title={title} description={desc} />;
   }
 
-  // Step 1: Test failed
   if (state.step === 1 && state.phase === "test-failed") {
     return (
       <StepTestFailed
         hostName={ob.hostName}
         testError={ob.testError}
+        remediationCommand={ob.remediationCommand}
         onRetry={ob.handleRetryTest}
         onFinishLater={ob.completeOnboardingAndNavigate}
       />
     );
   }
 
-  // Step 2: Success
   if (state.step === 2) {
     return <StepComplete onContinue={ob.completeOnboardingAndNavigate} />;
   }

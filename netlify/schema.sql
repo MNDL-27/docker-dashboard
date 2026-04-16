@@ -143,6 +143,36 @@ CREATE TRIGGER update_docker_hosts_updated_at BEFORE UPDATE ON public.docker_hos
 DROP TRIGGER IF EXISTS update_docker_host_secrets_updated_at ON public.docker_host_secrets;
 CREATE TRIGGER update_docker_host_secrets_updated_at BEFORE UPDATE ON public.docker_host_secrets FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
+CREATE TABLE IF NOT EXISTS public.agent_enrollment_sessions (
+  id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
+  organization_id uuid NOT NULL REFERENCES public.organizations(id) ON DELETE CASCADE,
+  created_by_user_id uuid NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
+  docker_host_id uuid REFERENCES public.docker_hosts(id) ON DELETE SET NULL,
+  host_name text NOT NULL,
+  host_url text NOT NULL,
+  connection_mode text NOT NULL DEFAULT 'agent',
+  docker_socket_path text NOT NULL DEFAULT '/var/run/docker.sock',
+  encrypted_agent_api_key text NOT NULL,
+  encrypted_cf_service_token_id text,
+  encrypted_cf_service_token_secret text,
+  enrollment_token_hash text NOT NULL,
+  status text NOT NULL DEFAULT 'created',
+  expires_at timestamptz NOT NULL,
+  claimed_at timestamptz,
+  installed_at timestamptz,
+  cancelled_at timestamptz,
+  created_at timestamptz NOT NULL DEFAULT now(),
+  updated_at timestamptz NOT NULL DEFAULT now(),
+  CONSTRAINT agent_enrollment_sessions_status_check
+    CHECK (status IN ('created', 'claimed', 'installed', 'expired', 'cancelled'))
+);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_agent_enrollment_token_hash ON public.agent_enrollment_sessions (enrollment_token_hash);
+CREATE INDEX IF NOT EXISTS idx_agent_enrollment_org_status ON public.agent_enrollment_sessions (organization_id, status, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_agent_enrollment_host ON public.agent_enrollment_sessions (docker_host_id);
+
+DROP TRIGGER IF EXISTS update_agent_enrollment_sessions_updated_at ON public.agent_enrollment_sessions;
+CREATE TRIGGER update_agent_enrollment_sessions_updated_at BEFORE UPDATE ON public.agent_enrollment_sessions FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
 -- Step 9: Alerts workspace
 CREATE TABLE IF NOT EXISTS public.alert_rules (
   id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),

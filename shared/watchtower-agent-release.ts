@@ -28,6 +28,31 @@ export interface WatchtowerAgentReleaseResponse {
   release_url: string;
   release_notes_url: string;
   checksum: string;
+  install_command: string;
+  advanced_manual_command: string;
+  setup_summary: string;
+  verify_summary: string;
+  next_step_summary: string;
+  mode_label: string;
+}
+
+export type WatchtowerAgentConnectionMode = "agent" | "cloudflare_tunnel";
+
+export interface WatchtowerAgentEnrollmentCommandOptions {
+  enrollmentToken: string;
+  enrollUrl: string;
+  connectionMode: WatchtowerAgentConnectionMode;
+  bindAddress?: string;
+  dockerSocketPath?: string;
+  release?: WatchtowerAgentRelease;
+}
+
+export interface WatchtowerAgentInstallCommandOptions {
+  agentApiKey: string;
+  connectionMode: WatchtowerAgentConnectionMode;
+  bindAddress?: string;
+  dockerSocketPath?: string;
+  release?: WatchtowerAgentRelease;
 }
 
 export type WatchtowerAgentUpdateStatus =
@@ -78,12 +103,15 @@ export const CURRENT_WATCHTOWER_AGENT_RELEASE: WatchtowerAgentRelease = {
 function buildAtomicInstallerCommand({
   release,
   action,
+  extraArgs = "",
 }: {
   release: WatchtowerAgentRelease;
   action: "check" | "install";
+  extraArgs?: string;
 }) {
   const installerUrl = buildWatchtowerAgentAssetUrl(release.installerAssetName, release);
-  const actionArgs = action === "check" ? `--check --expected-version "${release.version}"` : `--expected-version "${release.version}"`;
+  const baseArgs = action === "check" ? `--check --expected-version "${release.version}"` : `--expected-version "${release.version}"`;
+  const actionArgs = `${baseArgs}${extraArgs ? ` ${extraArgs.trim()}` : ""}`;
 
   return `set -euo pipefail
 INSTALLER_URL="${installerUrl}"
@@ -122,9 +150,108 @@ export function buildWatchtowerAgentInstallCommand(
   return buildWatchtowerAgentUpgradeCommand(release);
 }
 
+export function getWatchtowerAgentRecommendedBindAddress(
+  connectionMode: WatchtowerAgentConnectionMode,
+) {
+  return connectionMode === "cloudflare_tunnel" ? "127.0.0.1" : "127.0.0.1";
+}
+
+export function getWatchtowerAgentModeLabel(
+  connectionMode: WatchtowerAgentConnectionMode,
+) {
+  return connectionMode === "cloudflare_tunnel" ? "Agent via Cloudflare Tunnel" : "Agent (Direct)";
+}
+
+function buildInstallerExtraArgs({
+  connectionMode,
+  bindAddress,
+  dockerSocketPath,
+}: {
+  connectionMode: WatchtowerAgentConnectionMode;
+  bindAddress?: string;
+  dockerSocketPath?: string;
+}) {
+  const args: string[] = [`--connection-mode "${connectionMode}"`];
+
+  if (bindAddress) {
+    args.push(`--bind-address "${bindAddress}"`);
+  }
+
+  if (dockerSocketPath && dockerSocketPath !== "/var/run/docker.sock") {
+    args.push(`--docker-socket "${dockerSocketPath}"`);
+  }
+
+  return args.join(" ");
+}
+
+export function buildWatchtowerAgentEnrollmentInstallCommand({
+  enrollmentToken,
+  enrollUrl,
+  connectionMode,
+  bindAddress = getWatchtowerAgentRecommendedBindAddress(connectionMode),
+  dockerSocketPath = "/var/run/docker.sock",
+  release = CURRENT_WATCHTOWER_AGENT_RELEASE,
+}: WatchtowerAgentEnrollmentCommandOptions) {
+  const extraArgs = [
+    `--enrollment-token "${enrollmentToken}"`,
+    `--enroll-url "${enrollUrl}"`,
+    buildInstallerExtraArgs({ connectionMode, bindAddress, dockerSocketPath }),
+  ].join(" ");
+
+  return buildAtomicInstallerCommand({
+    release,
+    action: "install",
+    extraArgs,
+  });
+}
+
+export function buildWatchtowerAgentAdvancedInstallCommand({
+  agentApiKey,
+  connectionMode,
+  bindAddress = getWatchtowerAgentRecommendedBindAddress(connectionMode),
+  dockerSocketPath = "/var/run/docker.sock",
+  release = CURRENT_WATCHTOWER_AGENT_RELEASE,
+}: WatchtowerAgentInstallCommandOptions) {
+  const extraArgs = [
+    `--api-key "${agentApiKey}"`,
+    buildInstallerExtraArgs({ connectionMode, bindAddress, dockerSocketPath }),
+  ].join(" ");
+
+  return buildAtomicInstallerCommand({
+    release,
+    action: "install",
+    extraArgs,
+  });
+}
+
 export function buildWatchtowerAgentVerifyCommand(agentApiKeyPlaceholder = "<agent-api-key>") {
   return `curl -i http://127.0.0.1:9876/agent/version
 curl -i http://127.0.0.1:9876/metrics -H "X-Agent-Key: ${agentApiKeyPlaceholder}"`;
+}
+
+export function buildWatchtowerAgentLocalVerifyCommand() {
+  return `sudo bash -lc 'set -euo pipefail
+source /etc/watchtower-agent/watchtower-agent.env
+curl -i "http://\${AGENT_BIND_ADDRESS}:\${AGENT_PORT}/agent/version"
+curl -i "http://\${AGENT_BIND_ADDRESS}:\${AGENT_PORT}/metrics" -H "X-Agent-Key: \${AGENT_API_KEY}"'`;
+}
+
+export function buildWatchtowerAgentSetupSummary(connectionMode: WatchtowerAgentConnectionMode) {
+  return connectionMode === "cloudflare_tunnel"
+    ? "Install the agent locally, keep it on localhost, then route traffic through your Cloudflare Tunnel."
+    : "Install the agent on the host, expose it behind HTTPS, then finish the connection test in Dockerdash.";
+}
+
+export function buildWatchtowerAgentVerifySummary(connectionMode: WatchtowerAgentConnectionMode) {
+  return connectionMode === "cloudflare_tunnel"
+    ? "Verify the local agent first, then confirm your tunnel hostname forwards to the same local service."
+    : "Verify the local agent first, then confirm your public HTTPS endpoint reaches the same local service.";
+}
+
+export function buildWatchtowerAgentNextStepSummary(connectionMode: WatchtowerAgentConnectionMode) {
+  return connectionMode === "cloudflare_tunnel"
+    ? "After the local verify passes, return to Dockerdash and click Finish setup to test the tunnel URL."
+    : "After the local verify passes, return to Dockerdash and click Finish setup to test the HTTPS agent URL.";
 }
 
 export function buildWatchtowerAgentRepairCommand(
@@ -238,5 +365,15 @@ export function buildWatchtowerAgentReleaseResponse(
     release_url: CURRENT_WATCHTOWER_AGENT_RELEASE.releaseUrl,
     release_notes_url: CURRENT_WATCHTOWER_AGENT_RELEASE.releaseNotesUrl,
     checksum: CURRENT_WATCHTOWER_AGENT_RELEASE.installerSha256,
+    install_command: buildWatchtowerAgentInstallCommand(CURRENT_WATCHTOWER_AGENT_RELEASE),
+    advanced_manual_command: buildWatchtowerAgentAdvancedInstallCommand({
+      agentApiKey: "<agent-api-key>",
+      connectionMode: "agent",
+      release: CURRENT_WATCHTOWER_AGENT_RELEASE,
+    }),
+    setup_summary: buildWatchtowerAgentSetupSummary("agent"),
+    verify_summary: buildWatchtowerAgentVerifySummary("agent"),
+    next_step_summary: buildWatchtowerAgentNextStepSummary("agent"),
+    mode_label: getWatchtowerAgentModeLabel("agent"),
   };
 }

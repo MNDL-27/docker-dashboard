@@ -78,6 +78,31 @@ export interface AlertRule {
   updated_at: string;
 }
 
+export type AgentEnrollmentSessionStatus =
+  | 'created'
+  | 'claimed'
+  | 'installed'
+  | 'expired'
+  | 'cancelled';
+
+export interface AgentEnrollmentSession {
+  id: string;
+  organization_id: string;
+  created_by_user_id: string;
+  docker_host_id: string | null;
+  host_name: string;
+  host_url: string;
+  connection_mode: ConnectionMode;
+  docker_socket_path: string;
+  status: AgentEnrollmentSessionStatus;
+  expires_at: string;
+  claimed_at: string | null;
+  installed_at: string | null;
+  cancelled_at: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
 export interface AlertEvent {
   id: string;
   organization_id: string;

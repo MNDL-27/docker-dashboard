@@ -4,12 +4,18 @@ import { Button } from "@/components/ui/button";
 interface Props {
   hostName: string;
   testError: string;
+  remediationCommand?: string | null;
   onRetry: () => void;
   onFinishLater: () => void;
 }
 
-/** Step 1 — host saved but connection test failed. */
-export function StepTestFailed({ hostName, testError, onRetry, onFinishLater }: Props) {
+export function StepTestFailed({
+  hostName,
+  testError,
+  remediationCommand,
+  onRetry,
+  onFinishLater,
+}: Props) {
   return (
     <div className="animate-fade-in w-full">
       <div className="text-center mb-10">
@@ -20,18 +26,31 @@ export function StepTestFailed({ hostName, testError, onRetry, onFinishLater }: 
           Host saved, connection not verified
         </h1>
         <p className="text-muted-foreground text-sm leading-relaxed max-w-sm mx-auto">
-          <strong>"{hostName}"</strong> was saved to your workspace, but the connection test didn't pass.
+          <strong>"{hostName}"</strong> was saved to your workspace, but the connection test did not pass.
         </p>
       </div>
 
       <div className="bg-card border border-border rounded-xl shadow-lg p-8 space-y-6">
-        {/* Error detail */}
         <div className="flex items-start gap-2.5 p-3.5 rounded-lg border border-warning/20 bg-warning/5">
           <XCircle className="h-4 w-4 text-warning shrink-0 mt-0.5" />
           <div className="text-sm text-warning leading-relaxed">{testError || "Connection test failed."}</div>
         </div>
 
-        <TroubleshootingHints />
+        <div className="text-xs text-muted-foreground leading-relaxed space-y-1.5">
+          <p>Common causes:</p>
+          <ul className="list-disc pl-4 space-y-1">
+            <li>Agent is not running on the host</li>
+            <li>Firewall or tunnel rules are blocking the agent endpoint</li>
+            <li>API key mismatch between Dockerdash and the agent</li>
+            <li>URL, port, or Cloudflare Access configuration is incorrect</li>
+          </ul>
+          {remediationCommand ? (
+            <div className="rounded-lg border border-border bg-muted/30 p-3">
+              <p className="mb-2 font-medium text-foreground">Suggested remediation command</p>
+              <pre className="whitespace-pre-wrap break-all font-mono text-[11px] text-foreground/90">{remediationCommand}</pre>
+            </div>
+          ) : null}
+        </div>
 
         <div className="border-t border-border" />
 
@@ -39,11 +58,7 @@ export function StepTestFailed({ hostName, testError, onRetry, onFinishLater }: 
           <Button variant="outline" className="h-11" onClick={onRetry}>
             Retry Connection
           </Button>
-          <Button
-            className="flex-1 h-11 text-base"
-            variant="secondary"
-            onClick={onFinishLater}
-          >
+          <Button className="flex-1 h-11 text-base" variant="secondary" onClick={onFinishLater}>
             Finish Later
             <ArrowRight className="h-4 w-4 ml-1" />
           </Button>
@@ -53,21 +68,6 @@ export function StepTestFailed({ hostName, testError, onRetry, onFinishLater }: 
           You can retry or edit this host anytime from <strong>Hosts</strong> in the dashboard.
         </p>
       </div>
-    </div>
-  );
-}
-
-/* ── Troubleshooting checklist ── */
-function TroubleshootingHints() {
-  return (
-    <div className="text-xs text-muted-foreground leading-relaxed space-y-1.5">
-      <p>Common causes:</p>
-      <ul className="list-disc pl-4 space-y-1">
-        <li>Agent is not running on the host</li>
-        <li>Firewall blocking HTTPS traffic to the agent port</li>
-        <li>API key mismatch between dashboard and agent</li>
-        <li>URL or port is incorrect</li>
-      </ul>
     </div>
   );
 }
