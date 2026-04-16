@@ -256,16 +256,18 @@ function ContainerSummaryCard({
   running,
   loading,
   disconnected,
+  compact = false,
 }: {
   total: number;
   running: number;
   loading: boolean;
   disconnected: boolean;
+  compact?: boolean;
 }) {
   const stopped = Math.max(0, total - running);
 
   return (
-    <div className="glass-card min-h-[220px] p-5 flex flex-col justify-between">
+    <div className={cn("glass-card p-5 flex flex-col justify-between", compact ? "min-h-[260px]" : "min-h-[220px]")}>
       <div className="flex items-center justify-between gap-3">
         <div>
           <p className="text-xs uppercase tracking-[0.22em] text-muted-foreground">Containers</p>
@@ -281,7 +283,7 @@ function ContainerSummaryCard({
           <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
         </div>
       ) : (
-        <div className="grid gap-3 sm:grid-cols-2">
+        <div className={cn("grid gap-3", compact ? "grid-cols-1" : "sm:grid-cols-2")}>
           <div className="rounded-2xl border border-white/10 bg-background/40 p-4">
             <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">Total</p>
             <p className="mt-2 text-3xl font-semibold tracking-tight">{total}</p>
@@ -984,7 +986,7 @@ export function HostWorkspace() {
               )}
 
               <div className="grid gap-6 xl:grid-cols-[minmax(280px,340px),1fr]">
-                <div className="grid gap-6">
+                <div className={cn("grid gap-6", !isInfrastructureVisible && "md:grid-cols-2 xl:grid-cols-2")}>
                   {selectedHostDisconnected ? (
                     <EmptyState title="Host is disconnected" description="Reconnect the host or run a successful connection test to start collecting host metrics." />
                   ) : metricsQuery.isLoading && metricsQuery.history.length === 0 ? (
@@ -1005,6 +1007,7 @@ export function HostWorkspace() {
                     running={runningCount}
                     loading={containersQuery.isLoading}
                     disconnected={selectedHostDisconnected}
+                    compact={!isInfrastructureVisible}
                   />
                 </div>
 
