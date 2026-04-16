@@ -8,40 +8,42 @@ import { ProtectedRoute } from "@/components/ProtectedRoute";
 import AppRootRedirect from "@/components/AppRootRedirect";
 import { isAppSubdomain, isDocsSubdomain } from "@/lib/hostname";
 import { RequireAppSubdomain } from "@/components/RequireAppSubdomain";
-import LandingPage from "./pages/LandingPage";
-import FeaturesPage from "./pages/FeaturesPage";
-import PricingPage from "./pages/PricingPage";
-import SecurityPage from "./pages/SecurityPage";
-import DocsPage from "./pages/DocsPage";
-import LoginPage from "./pages/LoginPage";
-import SignupPage from "./pages/SignupPage";
-import CreateOrgPage from "./pages/CreateOrgPage";
-import TermsPage from "./pages/TermsPage";
-import PrivacyPage from "./pages/PrivacyPage";
-import RefundsPage from "./pages/RefundsPage";
-import ContactPage from "./pages/ContactPage";
 import { ClerkProvider } from "@clerk/clerk-react";
-import OnboardingPage from "./pages/OnboardingPage";
 import { RequirePlatformAdmin } from "@/components/RequirePlatformAdmin";
-import DashboardPage from "./pages/app/DashboardPage";
-import HostsPage from "./pages/app/HostsPage";
-import HostDetailPage from "./pages/app/HostDetailPage";
-import ContainersPage from "./pages/app/ContainersPage";
-import ContainerDetailPage from "./pages/app/ContainerDetailPage";
-import MonitoringPage from "./pages/app/MonitoringPage";
-import LogsPage from "./pages/app/LogsPage";
-import AlertsPage from "./pages/app/AlertsPage";
-import IncidentsPage from "./pages/app/IncidentsPage";
-import DeploymentsPage from "./pages/app/DeploymentsPage";
-import MembersPage from "./pages/app/MembersPage";
-import BillingPage from "./pages/app/BillingPage";
-import SettingsPage from "./pages/app/SettingsPage";
-import OrganizationsPage from "./pages/app/OrganizationsPage";
-import AdminPage from "./pages/app/AdminPage";
-import HelpPage from "./pages/app/HelpPage";
-import SetupGuidePage from "./pages/app/SetupGuidePage";
-import NotFound from "./pages/NotFound";
-import { useEffect } from "react";
+import { Loader2 } from "lucide-react";
+import { lazy, Suspense, useEffect } from "react";
+
+const LandingPage = lazy(() => import("./pages/LandingPage"));
+const FeaturesPage = lazy(() => import("./pages/FeaturesPage"));
+const PricingPage = lazy(() => import("./pages/PricingPage"));
+const SecurityPage = lazy(() => import("./pages/SecurityPage"));
+const DocsPage = lazy(() => import("./pages/DocsPage"));
+const LoginPage = lazy(() => import("./pages/LoginPage"));
+const SignupPage = lazy(() => import("./pages/SignupPage"));
+const CreateOrgPage = lazy(() => import("./pages/CreateOrgPage"));
+const TermsPage = lazy(() => import("./pages/TermsPage"));
+const PrivacyPage = lazy(() => import("./pages/PrivacyPage"));
+const RefundsPage = lazy(() => import("./pages/RefundsPage"));
+const ContactPage = lazy(() => import("./pages/ContactPage"));
+const OnboardingPage = lazy(() => import("./pages/OnboardingPage"));
+const DashboardPage = lazy(() => import("./pages/app/DashboardPage"));
+const HostsPage = lazy(() => import("./pages/app/HostsPage"));
+const HostDetailPage = lazy(() => import("./pages/app/HostDetailPage"));
+const ContainersPage = lazy(() => import("./pages/app/ContainersPage"));
+const ContainerDetailPage = lazy(() => import("./pages/app/ContainerDetailPage"));
+const MonitoringPage = lazy(() => import("./pages/app/MonitoringPage"));
+const LogsPage = lazy(() => import("./pages/app/LogsPage"));
+const AlertsPage = lazy(() => import("./pages/app/AlertsPage"));
+const IncidentsPage = lazy(() => import("./pages/app/IncidentsPage"));
+const DeploymentsPage = lazy(() => import("./pages/app/DeploymentsPage"));
+const MembersPage = lazy(() => import("./pages/app/MembersPage"));
+const BillingPage = lazy(() => import("./pages/app/BillingPage"));
+const SettingsPage = lazy(() => import("./pages/app/SettingsPage"));
+const OrganizationsPage = lazy(() => import("./pages/app/OrganizationsPage"));
+const AdminPage = lazy(() => import("./pages/app/AdminPage"));
+const HelpPage = lazy(() => import("./pages/app/HelpPage"));
+const SetupGuidePage = lazy(() => import("./pages/app/SetupGuidePage"));
+const NotFound = lazy(() => import("./pages/NotFound"));
 
 const queryClient = new QueryClient();
 
@@ -84,6 +86,12 @@ const PaddleInitializer = ({ children }: { children: React.ReactNode }) => {
   return <>{children}</>;
 };
 
+const RouteFallback = () => (
+  <div className="flex min-h-[40vh] items-center justify-center">
+    <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+  </div>
+);
+
 const App = () => (
   <ClerkProvider
     publishableKey={import.meta.env.VITE_CLERK_PUBLISHABLE_KEY}
@@ -100,46 +108,48 @@ const App = () => (
             <Toaster />
             <Sonner />
             <BrowserRouter>
-              <Routes>
-                {/* Marketing */}
-                <Route path="/" element={isDocsSubdomain() ? <DocsPage /> : isAppSubdomain() ? <AppRootRedirect /> : <LandingPage />} />
-                <Route path="/features" element={<FeaturesPage />} />
-                <Route path="/pricing" element={<PricingPage />} />
-                <Route path="/security" element={<SecurityPage />} />
-                <Route path="/docs" element={<DocsPage />} />
-                <Route path="/contact" element={<ContactPage />} />
-                <Route path="/tos" element={<TermsPage />} />
-                <Route path="/privacy" element={<PrivacyPage />} />
-                <Route path="/refunds" element={<RefundsPage />} />
-                {/* Auth */}
-                <Route path="/login/*" element={<RequireAppSubdomain><LoginPage /></RequireAppSubdomain>} />
-                <Route path="/sign-up/*" element={<RequireAppSubdomain><SignupPage /></RequireAppSubdomain>} />
-                <Route path="/signup" element={<RequireAppSubdomain><Navigate to="/sign-up" replace /></RequireAppSubdomain>} />
-                <Route path="/create-org" element={<RequireAppSubdomain><CreateOrgPage /></RequireAppSubdomain>} />
-                <Route path="/onboarding" element={<RequireAppSubdomain key="onboarding"><ProtectedRoute requireOnboarded={false}><OnboardingPage /></ProtectedRoute></RequireAppSubdomain>} />
-                {/* App Shell - Protected */}
-                <Route path="/app" element={<RequireAppSubdomain key="app"><ProtectedRoute><AppShell /></ProtectedRoute></RequireAppSubdomain>}>
-                  <Route index element={<DashboardPage />} />
-                  <Route path="organizations" element={<OrganizationsPage />} />
-                  <Route path="hosts" element={<HostsPage />} />
-                  <Route path="hosts/:id" element={<HostDetailPage />} />
-                  <Route path="containers" element={<ContainersPage />} />
-                  <Route path="containers/:id" element={<ContainerDetailPage />} />
-                  <Route path="monitoring" element={<MonitoringPage />} />
-                  <Route path="logs" element={<LogsPage />} />
-                  <Route path="alerts" element={<AlertsPage />} />
-                  <Route path="incidents" element={<IncidentsPage />} />
-                  <Route path="incidents/:id" element={<IncidentsPage />} />
-                  <Route path="deployments" element={<DeploymentsPage />} />
-                  <Route path="members" element={<MembersPage />} />
-                  <Route path="billing" element={<BillingPage />} />
-                  <Route path="settings" element={<SettingsPage />} />
-                  <Route path="admin" element={<RequirePlatformAdmin><AdminPage /></RequirePlatformAdmin>} />
-                  <Route path="help" element={<HelpPage />} />
-                  <Route path="setup-guide" element={<SetupGuidePage />} />
-                </Route>
-                <Route path="*" element={<NotFound />} />
-              </Routes>
+              <Suspense fallback={<RouteFallback />}>
+                <Routes>
+                  {/* Marketing */}
+                  <Route path="/" element={isDocsSubdomain() ? <DocsPage /> : isAppSubdomain() ? <AppRootRedirect /> : <LandingPage />} />
+                  <Route path="/features" element={<FeaturesPage />} />
+                  <Route path="/pricing" element={<PricingPage />} />
+                  <Route path="/security" element={<SecurityPage />} />
+                  <Route path="/docs" element={<DocsPage />} />
+                  <Route path="/contact" element={<ContactPage />} />
+                  <Route path="/tos" element={<TermsPage />} />
+                  <Route path="/privacy" element={<PrivacyPage />} />
+                  <Route path="/refunds" element={<RefundsPage />} />
+                  {/* Auth */}
+                  <Route path="/login/*" element={<RequireAppSubdomain><LoginPage /></RequireAppSubdomain>} />
+                  <Route path="/sign-up/*" element={<RequireAppSubdomain><SignupPage /></RequireAppSubdomain>} />
+                  <Route path="/signup" element={<RequireAppSubdomain><Navigate to="/sign-up" replace /></RequireAppSubdomain>} />
+                  <Route path="/create-org" element={<RequireAppSubdomain><CreateOrgPage /></RequireAppSubdomain>} />
+                  <Route path="/onboarding" element={<RequireAppSubdomain key="onboarding"><ProtectedRoute requireOnboarded={false}><OnboardingPage /></ProtectedRoute></RequireAppSubdomain>} />
+                  {/* App Shell - Protected */}
+                  <Route path="/app" element={<RequireAppSubdomain key="app"><ProtectedRoute><AppShell /></ProtectedRoute></RequireAppSubdomain>}>
+                    <Route index element={<DashboardPage />} />
+                    <Route path="organizations" element={<OrganizationsPage />} />
+                    <Route path="hosts" element={<HostsPage />} />
+                    <Route path="hosts/:id" element={<HostDetailPage />} />
+                    <Route path="containers" element={<ContainersPage />} />
+                    <Route path="containers/:id" element={<ContainerDetailPage />} />
+                    <Route path="monitoring" element={<MonitoringPage />} />
+                    <Route path="logs" element={<LogsPage />} />
+                    <Route path="alerts" element={<AlertsPage />} />
+                    <Route path="incidents" element={<IncidentsPage />} />
+                    <Route path="incidents/:id" element={<IncidentsPage />} />
+                    <Route path="deployments" element={<DeploymentsPage />} />
+                    <Route path="members" element={<MembersPage />} />
+                    <Route path="billing" element={<BillingPage />} />
+                    <Route path="settings" element={<SettingsPage />} />
+                    <Route path="admin" element={<RequirePlatformAdmin><AdminPage /></RequirePlatformAdmin>} />
+                    <Route path="help" element={<HelpPage />} />
+                    <Route path="setup-guide" element={<SetupGuidePage />} />
+                  </Route>
+                  <Route path="*" element={<NotFound />} />
+                </Routes>
+              </Suspense>
             </BrowserRouter>
           </PaddleInitializer>
         </DarkModeInit>
