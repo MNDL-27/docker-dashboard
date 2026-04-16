@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ShieldCheck, ArrowRight, ArrowLeft, Terminal, Copy, Eye, EyeOff, RefreshCw, Wrench } from "lucide-react";
+import { ShieldCheck, ArrowRight, ArrowLeft, Terminal, Copy, Eye, EyeOff, RefreshCw, Wrench, CloudCog } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ErrorBanner } from "./ErrorBanner";
 import type { ConnectionMode } from "@/types/database";
@@ -99,6 +99,25 @@ export function StepHostCredentials({
         <div className="rounded-xl border border-primary/20 bg-primary/5 p-4 text-sm text-primary">
           {setupSummary}
         </div>
+
+        {connectionMode === "cloudflare_tunnel" ? (
+          <div className="flex items-start gap-3 rounded-xl border border-amber-500/20 bg-amber-500/5 p-4">
+            <CloudCog className="h-5 w-5 text-amber-500 shrink-0 mt-0.5" />
+            <div className="space-y-1.5">
+              <p className="text-sm font-medium text-amber-600 dark:text-amber-400">
+                Configure your Cloudflare Tunnel
+              </p>
+              <p className="text-xs text-muted-foreground leading-relaxed">
+                Point your tunnel's public hostname to{" "}
+                <code className="bg-muted px-1.5 py-0.5 rounded font-mono text-foreground">http://127.0.0.1:9876</code>{" "}
+                on the host. The agent binds to localhost on port 9876 by default.
+              </p>
+              <p className="text-[11px] text-muted-foreground/70">
+                Example: <code className="bg-muted px-1 py-0.5 rounded font-mono">cloudflared tunnel run --url http://127.0.0.1:9876 your-tunnel-name</code>
+              </p>
+            </div>
+          </div>
+        ) : null}
 
         <CopyCommand label="Primary install command" command={installCommand} />
 

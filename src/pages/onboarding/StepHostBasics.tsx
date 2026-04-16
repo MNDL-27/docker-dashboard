@@ -82,7 +82,7 @@ export function StepHostBasics({
           <p className="text-xs text-muted-foreground mt-1.5">
             {connectionMode === "agent"
               ? "The HTTPS URL where the Watchtower Agent is running."
-              : "The Cloudflare Tunnel public hostname."}
+              : "The Cloudflare Tunnel public hostname. Your tunnel must route traffic to the agent on port 9876."}
           </p>
         </div>
 
@@ -108,7 +108,9 @@ export function StepHostBasics({
       <div className="mt-4 flex items-start gap-2.5 rounded-lg border border-border bg-muted/40 px-4 py-3">
         <Info className="h-4 w-4 text-muted-foreground shrink-0 mt-0.5" />
         <p className="text-xs text-muted-foreground leading-relaxed">
-          The Watchtower Agent runs alongside Docker on your host. Keep it on localhost and expose it through HTTPS or Cloudflare Tunnel.
+          {connectionMode === "cloudflare_tunnel"
+            ? "The Watchtower Agent listens on port 9876. Configure your Cloudflare Tunnel to forward traffic to http://127.0.0.1:9876 on the host."
+            : "The Watchtower Agent runs alongside Docker on your host. Keep it on localhost and expose it through HTTPS or Cloudflare Tunnel."}
         </p>
       </div>
     </div>
