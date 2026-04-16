@@ -17,6 +17,17 @@ export interface HostMetricsPoint {
   networkMonthlyTotal: number | null;
   diskReadBytesPerSec: number | null;
   diskWriteBytesPerSec: number | null;
+  uptimeSeconds: number | null;
+  disks: HostMetricsDisk[];
+}
+
+export interface HostMetricsDisk {
+  device: string;
+  mount: string;
+  usedBytes: number;
+  totalBytes: number;
+  readBytesPerSec: number | null;
+  writeBytesPerSec: number | null;
 }
 
 export interface HostMetricsFailure {
@@ -48,6 +59,22 @@ interface HostMetricsApiPoint {
   disk_write_bytes_per_sec?: number;
   networkMonthlyTotal?: number;
   network_monthly_total?: number;
+  uptimeSeconds?: number;
+  uptime_seconds?: number;
+  disks?: unknown;
+}
+
+interface HostMetricsApiDisk {
+  device?: string;
+  mount?: string;
+  usedBytes?: number;
+  totalBytes?: number;
+  readBytesPerSec?: number;
+  writeBytesPerSec?: number;
+  used_bytes?: number;
+  total_bytes?: number;
+  read_bytes_per_sec?: number;
+  write_bytes_per_sec?: number;
 }
 
 function toFiniteNumber(value: unknown): number | null {
@@ -80,6 +107,31 @@ function normalizeOptionalRate(value: unknown): number | null {
   return numeric;
 }
 
+function normalizeHostMetricsDisk(value: unknown): HostMetricsDisk | null {
+  if (!value || typeof value !== "object") return null;
+
+  const disk = value as HostMetricsApiDisk;
+  const device = typeof disk.device === "string" ? disk.device.trim() : "";
+  const mount = typeof disk.mount === "string" ? disk.mount.trim() : "";
+  const usedBytes = toFiniteNumber(disk.usedBytes ?? disk.used_bytes);
+  const totalBytes = toFiniteNumber(disk.totalBytes ?? disk.total_bytes);
+  const readBytesPerSec = normalizeOptionalRate(disk.readBytesPerSec ?? disk.read_bytes_per_sec);
+  const writeBytesPerSec = normalizeOptionalRate(disk.writeBytesPerSec ?? disk.write_bytes_per_sec);
+
+  if (!device || !mount || usedBytes === null || totalBytes === null || usedBytes < 0 || totalBytes <= 0 || usedBytes > totalBytes) {
+    return null;
+  }
+
+  return {
+    device,
+    mount,
+    usedBytes,
+    totalBytes,
+    readBytesPerSec,
+    writeBytesPerSec,
+  };
+}
+
 export function normalizeHostMetricsPoint(point: HostMetricsApiPoint): HostMetricsPoint | null {
   const timestamp = toTimestamp(point.timestamp) ?? Date.now();
   const cpu = toFiniteNumber(point.cpu);
@@ -93,6 +145,9 @@ export function normalizeHostMetricsPoint(point: HostMetricsApiPoint): HostMetri
   const networkMonthlyTotal = toFiniteNumber(point.networkMonthlyTotal ?? point.network_monthly_total);
   const diskReadBytesPerSec = normalizeOptionalRate(point.diskReadBytesPerSec ?? point.disk_read_bytes_per_sec);
   const diskWriteBytesPerSec = normalizeOptionalRate(point.diskWriteBytesPerSec ?? point.disk_write_bytes_per_sec);
+  const uptimeSecondsRaw = toFiniteNumber(point.uptimeSeconds ?? point.uptime_seconds);
+  const uptimeSeconds = uptimeSecondsRaw !== null && uptimeSecondsRaw >= 0 ? uptimeSecondsRaw : null;
+  const disks = Array.isArray(point.disks) ? point.disks.map(normalizeHostMetricsDisk).filter((disk): disk is HostMetricsDisk => disk !== null) : [];
 
   if (
     cpu === null ||
@@ -139,6 +194,8 @@ export function normalizeHostMetricsPoint(point: HostMetricsApiPoint): HostMetri
     networkMonthlyTotal,
     diskReadBytesPerSec,
     diskWriteBytesPerSec,
+    uptimeSeconds,
+    disks,
   };
 }
 

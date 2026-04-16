@@ -94,6 +94,32 @@ function normalizeOptionalRate(value: unknown): number | null {
   return numeric;
 }
 
+function normalizeDiskMetric(value: any) {
+  if (!value || typeof value !== 'object') {
+    return null;
+  }
+
+  const device = typeof value.device === 'string' ? value.device.trim() : '';
+  const mount = typeof value.mount === 'string' ? value.mount.trim() : '';
+  const usedBytes = toFiniteNumber(value.used_bytes ?? value.usedBytes);
+  const totalBytes = toFiniteNumber(value.total_bytes ?? value.totalBytes);
+  const readBytesPerSec = normalizeOptionalRate(value.read_bytes_per_sec ?? value.readBytesPerSec);
+  const writeBytesPerSec = normalizeOptionalRate(value.write_bytes_per_sec ?? value.writeBytesPerSec);
+
+  if (!device || !mount || usedBytes === null || totalBytes === null || usedBytes < 0 || totalBytes <= 0 || usedBytes > totalBytes) {
+    return null;
+  }
+
+  return {
+    device,
+    mount,
+    usedBytes,
+    totalBytes,
+    readBytesPerSec,
+    writeBytesPerSec,
+  };
+}
+
 function parseDiagnosticPayload(rawDetails: string) {
   try {
     return JSON.parse(rawDetails);
@@ -144,6 +170,11 @@ function createHostMetricsPoint(data: any) {
   const totalCores = Math.max(0, toFiniteNumber(data?.online_cpus) ?? 0);
   const memoryUsed = Math.max(0, toFiniteNumber(data?.memory_used) ?? 0);
   const memoryLimit = Math.max(0, toFiniteNumber(data?.memory_limit) ?? 0);
+  const uptimeSecondsRaw = toFiniteNumber(data?.uptime_seconds ?? data?.uptimeSeconds);
+  const uptimeSeconds = uptimeSecondsRaw !== null && uptimeSecondsRaw >= 0 ? uptimeSecondsRaw : null;
+  const disks = Array.isArray(data?.disks)
+    ? data.disks.map((disk: any) => normalizeDiskMetric(disk)).filter(Boolean)
+    : [];
   const timestamp = Date.now();
 
   if (totalCores === 0 && memoryLimit === 0 && cpuTimeNs === 0 && systemTimeNs === 0 && memoryUsed === 0) {
@@ -165,6 +196,8 @@ function createHostMetricsPoint(data: any) {
       networkMonthlyTotal: toFiniteNumber(data?.network_monthly_total),
       diskReadBytesPerSec: normalizeOptionalRate(data?.disk_read_bytes_per_sec ?? data?.diskReadBytesPerSec),
       diskWriteBytesPerSec: normalizeOptionalRate(data?.disk_write_bytes_per_sec ?? data?.diskWriteBytesPerSec),
+      uptimeSeconds,
+      disks,
     };
   }
 
@@ -194,6 +227,8 @@ function createHostMetricsPoint(data: any) {
     networkMonthlyTotal: toFiniteNumber(data?.network_monthly_total),
     diskReadBytesPerSec: normalizeOptionalRate(data?.disk_read_bytes_per_sec ?? data?.diskReadBytesPerSec),
     diskWriteBytesPerSec: normalizeOptionalRate(data?.disk_write_bytes_per_sec ?? data?.diskWriteBytesPerSec),
+    uptimeSeconds,
+    disks,
   };
 }
 

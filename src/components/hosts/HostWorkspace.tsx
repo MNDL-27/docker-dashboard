@@ -5,9 +5,11 @@ import { useNavigate, useParams, Link } from "react-router-dom";
 import {
   Activity,
   Box,
+  Clock3,
   CloudCog,
   Copy,
   ExternalLink,
+  HardDrive,
   Loader2,
   Pencil,
   Plus,
@@ -28,7 +30,7 @@ import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
 import { useDeleteDockerHost, useDockerHosts, useHostContainers } from "@/hooks/useDocker";
-import { HostMetricsFailure, HostMetricsPoint, useHostMetricsHistory } from "@/hooks/useHostMetrics";
+import { HostMetricsDisk, HostMetricsFailure, HostMetricsPoint, useHostMetricsHistory } from "@/hooks/useHostMetrics";
 import { useToast } from "@/hooks/use-toast";
 import { dockerApi } from "@/services/docker-api";
 import type { DockerHost } from "@/types/database";
@@ -59,6 +61,22 @@ function formatSpeed(bytesPerSecond: number | null | undefined): string {
 function formatLastSeen(lastSeenAt: string | null): string {
   if (!lastSeenAt) return "Never";
   return formatDistanceToNowStrict(new Date(lastSeenAt), { addSuffix: true });
+}
+
+function formatUptime(seconds: number | null | undefined): string {
+  if (!Number.isFinite(seconds) || seconds === null || seconds === undefined || seconds < 0) {
+    return "Unavailable";
+  }
+
+  const totalSeconds = Math.floor(seconds);
+  const days = Math.floor(totalSeconds / 86400);
+  const hours = Math.floor((totalSeconds % 86400) / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+
+  if (days > 0) return `${days}d ${hours}h ${minutes}m`;
+  if (hours > 0) return `${hours}h ${minutes}m`;
+  if (minutes > 0) return `${minutes}m`;
+  return `${totalSeconds}s`;
 }
 
 function statusPill(status: string) {
@@ -205,6 +223,34 @@ function MeterCard({
         </div>
       )}
       {!width && footer && <p className="text-xs text-muted-foreground">{footer}</p>}
+    </div>
+  );
+}
+
+function DiskUsageCard({ disk }: { disk: HostMetricsDisk }) {
+  const progress = disk.totalBytes > 0 ? Math.max(0, Math.min(100, (disk.usedBytes / disk.totalBytes) * 100)) : 0;
+
+  return (
+    <div className="glass-card p-5 space-y-4">
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <p className="text-xs uppercase tracking-[0.22em] text-muted-foreground">Disk usage ({disk.device})</p>
+          <p className="mt-3 text-3xl font-semibold tracking-tight">
+            {formatBytes(disk.usedBytes)} <span className="text-muted-foreground">/ {formatBytes(disk.totalBytes)}</span>
+          </p>
+        </div>
+        <p className="text-right text-xs text-muted-foreground">{disk.mount}</p>
+      </div>
+      <div className="space-y-2">
+        <div className="h-3 overflow-hidden rounded-full bg-white/5">
+          <div className="h-full rounded-full bg-primary" style={{ width: `${progress}%` }} />
+        </div>
+        <p className="text-xs text-muted-foreground">{progress.toFixed(0)}% utilized</p>
+      </div>
+      <div className="flex items-center justify-between gap-4 text-xs uppercase tracking-[0.18em] text-muted-foreground">
+        <span>Read: <span className="text-foreground">{formatSpeed(disk.readBytesPerSec)}</span></span>
+        <span>Write: <span className="text-foreground">{formatSpeed(disk.writeBytesPerSec)}</span></span>
+      </div>
     </div>
   );
 }
@@ -494,6 +540,8 @@ export function HostWorkspace() {
 
   const containers = Array.isArray(containersQuery.data) ? containersQuery.data : [];
   const runningCount = containers.filter((container: any) => container.State === "running").length;
+  const stoppedCount = Math.max(0, containers.length - runningCount);
+  const previewContainers = containers.slice(0, 3);
   const agentOutdated = selectedHost?.agent_version ? isAgentVersionOutdated(selectedHost.agent_version) : false;
   const updateCopy = buildWatchtowerAgentUpdateCopy(CURRENT_WATCHTOWER_AGENT_RELEASE);
   const showAgentUpdateCta = !!selectedHost && (!selectedHost.agent_version || agentOutdated);
@@ -674,16 +722,18 @@ export function HostWorkspace() {
                 <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
                   <SummaryCard label="Running containers" value={`${runningCount}`} helper={`${containers.length} total`} icon={Box} />
                   <SummaryCard
-                    label="Last seen"
-                    value={selectedHost.last_seen_at ? new Date(selectedHost.last_seen_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : "Never"}
+                    label="Uptime"
+                    value={formatUptime(metricsQuery.latestPoint?.uptimeSeconds)}
                     helper={
-                      selectedHost.status === "connected"
-                        ? "Heartbeat healthy"
+                      metricsQuery.latestPoint?.uptimeSeconds !== null && metricsQuery.latestPoint?.uptimeSeconds !== undefined
+                        ? "From current host metrics sample"
+                        : selectedHost.status === "connected"
+                          ? "Waiting for uptime sample"
                         : selectedHost.status === "stale"
                           ? "Heartbeat is stale"
                           : "Waiting for a successful probe"
                     }
-                    icon={Activity}
+                    icon={Clock3}
                   />
                   <SummaryCard label="Operating system" value={selectedHost.os_info || "Unknown"} helper={`Docker ${selectedHost.docker_version || "pending"}`} icon={Server} />
                   <SummaryCard label="Agent version" value={selectedHost.agent_version || "Pending"} helper={agentOutdated ? `Update available: ${CURRENT_WATCHTOWER_AGENT_VERSION}` : `Current release: ${CURRENT_WATCHTOWER_AGENT_VERSION}`} icon={Terminal} />
@@ -755,23 +805,20 @@ export function HostWorkspace() {
                     )}
 
                     {selectedHostDisconnected ? (
-                      <EmptyState title="Disk throughput unavailable" description="Disk throughput is shown only for connected hosts with live metrics." />
+                      <EmptyState title="Disk usage unavailable" description="Disk usage is shown only for connected hosts with live metrics." />
                     ) : metricsQuery.isLoading && !metricsQuery.latestPoint ? (
                       <LoadingState />
                     ) : metricsQuery.failure && !metricsQuery.latestPoint ? (
                       <EmptyState
-                        title={metricsFailureDisplay?.title || "Disk throughput unavailable"}
-                        description={metricsFailureDisplay?.description || "The host metrics probe failed before disk throughput data was returned."}
+                        title={metricsFailureDisplay?.title || "Disk usage unavailable"}
+                        description={metricsFailureDisplay?.description || "The host metrics probe failed before disk usage data was returned."}
                       />
-                    ) : metricsQuery.latestPoint ? (
-                      <MeterCard
-                        title="Disk throughput"
-                        value={formatSpeed(metricsQuery.latestPoint.diskReadBytesPerSec)}
-                        helper={formatSpeed(metricsQuery.latestPoint.diskWriteBytesPerSec)}
-                        footer="Read / write throughput"
-                      />
+                    ) : metricsQuery.latestPoint?.disks.length ? (
+                      metricsQuery.latestPoint.disks.map((disk) => (
+                        <DiskUsageCard key={`${disk.device}-${disk.mount}`} disk={disk} />
+                      ))
                     ) : (
-                      <EmptyState title="Disk throughput unavailable" description="Waiting for a usable metrics sample from the host agent." />
+                      <EmptyState title="Disk usage unavailable" description="Waiting for a usable per-disk metrics sample from the host agent." />
                     )}
                   </div>
 
@@ -855,11 +902,51 @@ export function HostWorkspace() {
                 ) : containers.length === 0 ? (
                   <div className="p-8 text-center text-sm text-muted-foreground">No containers found on this host.</div>
                 ) : (
-                  <div className="p-12 text-center">
-                    <Box className="mx-auto h-12 w-12 text-muted-foreground/50 mb-4" />
-                    <p className="text-4xl font-semibold tracking-tight">{containers.length}</p>
-                    <p className="mt-2 text-sm text-muted-foreground">Total containers detected</p>
-                    <div className="mt-6 flex justify-center">
+                  <div className="p-5 space-y-5">
+                    <div className="grid gap-3 sm:grid-cols-3">
+                      <div className="rounded-2xl border border-white/10 bg-background/40 p-4">
+                        <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">Running</p>
+                        <p className="mt-2 text-2xl font-semibold tracking-tight">{runningCount}</p>
+                      </div>
+                      <div className="rounded-2xl border border-white/10 bg-background/40 p-4">
+                        <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">Stopped</p>
+                        <p className="mt-2 text-2xl font-semibold tracking-tight">{stoppedCount}</p>
+                      </div>
+                      <div className="rounded-2xl border border-white/10 bg-background/40 p-4">
+                        <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">Total</p>
+                        <p className="mt-2 text-2xl font-semibold tracking-tight">{containers.length}</p>
+                      </div>
+                    </div>
+                    <div className="space-y-3">
+                      <div className="flex items-center gap-2 text-xs uppercase tracking-[0.18em] text-muted-foreground">
+                        <HardDrive className="h-3.5 w-3.5" />
+                        Recent containers
+                      </div>
+                      <div className="space-y-2">
+                        {previewContainers.map((container: any) => {
+                          const name = (container.Names?.[0] || container.Id?.substring(0, 12) || "unknown").replace(/^\//, "");
+                          const isRunning = container.State === "running";
+                          return (
+                            <div key={container.Id || name} className="flex items-center justify-between gap-3 rounded-2xl border border-white/10 bg-background/30 px-4 py-3">
+                              <div className="min-w-0">
+                                <p className="truncate text-sm font-medium">{name}</p>
+                                <p className="truncate text-xs text-muted-foreground">{container.Image || "Image unavailable"}</p>
+                              </div>
+                              <span
+                                className={cn(
+                                  "inline-flex items-center rounded-full border px-2.5 py-1 text-[11px] font-medium uppercase tracking-[0.16em]",
+                                  isRunning ? "border-success/25 bg-success/10 text-success" : "border-white/10 bg-background/60 text-muted-foreground",
+                                )}
+                              >
+                                {container.State || "unknown"}
+                              </span>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                    <div className="flex items-center justify-between gap-4">
+                      <p className="text-sm text-muted-foreground">Compact workload summary for this host. Open the containers page for full details and actions.</p>
                       <Button variant="outline" asChild>
                         <Link to={`/app/containers?host=${selectedHost.id}`}>View all containers</Link>
                       </Button>

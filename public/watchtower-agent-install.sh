@@ -51,6 +51,7 @@ check_config() {
   require_command socat
   require_command curl
   require_command awk
+  require_command df
   require_command mkdir
   require_command tr
   require_command sed
@@ -291,6 +292,7 @@ check_config() {
   require_command socat
   require_command curl
   require_command jq
+  require_command df
   require_command mkdir
   [ -S "$DOCKER_SOCKET" ] || fail "Docker socket not found at $DOCKER_SOCKET. Ensure Docker is running or update DOCKER_SOCKET."
 }
@@ -375,7 +377,8 @@ read_cached_metrics() {
     cached_network_in_bytes \
     cached_network_out_bytes \
     cached_disk_read_bytes \
-    cached_disk_write_bytes <"$cache_file" || return 1
+    cached_disk_write_bytes \
+    cached_disk_snapshots <"$cache_file" || return 1
 
   case "$cached_timestamp" in ''|*[!0-9]*) return 1 ;; esac
   case "$cached_cpu_time_ns" in ''|*[!0-9]*) return 1 ;; esac
@@ -385,14 +388,15 @@ read_cached_metrics() {
   case "$cached_disk_read_bytes" in ''|*[!0-9]*) return 1 ;; esac
   case "$cached_disk_write_bytes" in ''|*[!0-9]*) return 1 ;; esac
 
-  printf '%s|%s|%s|%s|%s|%s|%s' \
+  printf '%s|%s|%s|%s|%s|%s|%s|%s' \
     "$cached_timestamp" \
     "$cached_cpu_time_ns" \
     "$cached_system_time_ns" \
     "$cached_network_in_bytes" \
     "$cached_network_out_bytes" \
     "$cached_disk_read_bytes" \
-    "$cached_disk_write_bytes"
+    "$cached_disk_write_bytes" \
+    "${cached_disk_snapshots:-}"
 }
 
 write_cached_metrics() {
@@ -401,14 +405,15 @@ write_cached_metrics() {
   ensure_state_dir
   tmp_file="$(mktemp "${TMPDIR:-/tmp}/watchtower-agent-metrics-cache.XXXXXX")"
 
-  printf '%s|%s|%s|%s|%s|%s|%s\n' \
+  printf '%s|%s|%s|%s|%s|%s|%s|%s\n' \
     "$1" \
     "$2" \
     "$3" \
     "$4" \
     "$5" \
     "$6" \
-    "$7" >"$tmp_file"
+    "$7" \
+    "${8:-}" >"$tmp_file"
 
   mv "$tmp_file" "$cache_file"
 }
@@ -431,6 +436,40 @@ calculate_rate() {
 
     printf "%.2f", delta / (elapsed_ms / 1000.0)
   }'
+}
+
+lookup_cached_disk_totals() {
+  local snapshot="$1"
+  local device="$2"
+
+  [ -n "$snapshot" ] || return 1
+  [ -n "$device" ] || return 1
+
+  printf '%s' "$snapshot" | awk -F';' -v device="$device" '{
+    for (i = 1; i <= NF; i++) {
+      split($i, parts, ":")
+      if (parts[1] == device) {
+        printf "%s|%s", parts[2], parts[3]
+        exit
+      }
+    }
+  }'
+}
+
+derive_parent_disk_device() {
+  local device="$1"
+
+  if [[ "$device" =~ ^((sd|vd|xvd)[a-z]+)[0-9]+$ ]]; then
+    printf '%s' "${BASH_REMATCH[1]}"
+    return 0
+  fi
+
+  if [[ "$device" =~ ^(nvme[0-9]+n[0-9]+|mmcblk[0-9]+)p[0-9]+$ ]]; then
+    printf '%s' "${BASH_REMATCH[1]}"
+    return 0
+  fi
+
+  return 1
 }
 
 IFS= read -r REQUEST_LINE || exit 0
@@ -511,6 +550,13 @@ fi
 # This matches Docker's standard formula: (cpuDelta / systemDelta) * onlineCPUs * 100
   if [ "$PATH_RAW" = "/metrics" ]; then
     HOST_CORES=$(nproc 2>/dev/null || echo 1)
+    UPTIME_SECONDS=null
+    if [ -f /proc/uptime ]; then
+      UPTIME_SECONDS="$(awk '{printf "%d", $1}' /proc/uptime 2>/dev/null || true)"
+      if [ -z "$UPTIME_SECONDS" ]; then
+        UPTIME_SECONDS=null
+      fi
+    fi
 
     TOTAL_CPU_TICKS=0
     ACTIVE_CPU_TICKS=0
@@ -543,21 +589,27 @@ fi
     TOTAL_NETWORK_OUT_BYTES=0
     if [ -f /proc/net/dev ]; then
       read -r TOTAL_NETWORK_IN_BYTES TOTAL_NETWORK_OUT_BYTES <<< "$(awk '
-        $1 ~ /:/ { 
-          sub(/:/, "", $1); 
-          if ($1 !~ /^(lo|veth|docker|br-)/) { 
-            rx+=$2; tx+=$10 
-          } 
+        $1 ~ /:/ {
+          sub(/:/, "", $1);
+          if ($1 !~ /^(lo|veth|docker|br-)/) {
+            rx+=$2; tx+=$10
+          }
         } END {print rx+0, tx+0}' /proc/net/dev)"
     fi
 
     TOTAL_DISK_READ_BYTES=0
     TOTAL_DISK_WRITE_BYTES=0
+    CURRENT_DISK_SNAPSHOT=""
     if [ -f /proc/diskstats ]; then
       read -r DISK_SECTORS_READ DISK_SECTORS_WRITE <<< "$(awk '
-        $3 ~ /^(sd[a-z]+|vd[a-z]+|xvd[a-z]+|nvme[0-9]+n[0-9]+|mmcblk[0-9]+)$/ { 
-          r+=$6; w+=$10 
+        $3 ~ /^(sd[a-z]+|vd[a-z]+|xvd[a-z]+|nvme[0-9]+n[0-9]+|mmcblk[0-9]+)$/ {
+          r+=$6; w+=$10
         } END {print r+0, w+0}' /proc/diskstats)"
+      CURRENT_DISK_SNAPSHOT="$(awk '
+        $3 ~ /^(sd[a-z]+([0-9]+)?|vd[a-z]+([0-9]+)?|xvd[a-z]+([0-9]+)?|nvme[0-9]+n[0-9]+(p[0-9]+)?|mmcblk[0-9]+(p[0-9]+)?)$/ {
+          printf "%s%s:%d:%d", sep, $3, $6 * 512, $10 * 512
+          sep=";"
+        }' /proc/diskstats)"
       TOTAL_DISK_READ_BYTES=$((DISK_SECTORS_READ * 512))
       TOTAL_DISK_WRITE_BYTES=$((DISK_SECTORS_WRITE * 512))
     fi
@@ -571,6 +623,7 @@ fi
     PREVIOUS_NETWORK_OUT_BYTES=0
     PREVIOUS_DISK_READ_BYTES=0
     PREVIOUS_DISK_WRITE_BYTES=0
+    PREVIOUS_DISK_SNAPSHOT=""
 
     if [ -n "$PREVIOUS_SAMPLE" ]; then
       IFS='|' read -r \
@@ -580,7 +633,8 @@ fi
         PREVIOUS_NETWORK_IN_BYTES \
         PREVIOUS_NETWORK_OUT_BYTES \
         PREVIOUS_DISK_READ_BYTES \
-        PREVIOUS_DISK_WRITE_BYTES <<EOF
+        PREVIOUS_DISK_WRITE_BYTES \
+        PREVIOUS_DISK_SNAPSHOT <<EOF
 $PREVIOUS_SAMPLE
 EOF
     fi
@@ -596,17 +650,71 @@ EOF
     DISK_WRITE_RATE=null
     DELTA_ACTIVE=0
     DELTA_TOTAL=0
+    DISK_ROWS=""
 
     if [ -n "$PREVIOUS_TIMESTAMP" ] && [ "$ELAPSED_MS" -gt 0 ]; then
       NETWORK_IN_RATE="$(calculate_rate "$TOTAL_NETWORK_IN_BYTES" "$PREVIOUS_NETWORK_IN_BYTES" "$ELAPSED_MS")"
       NETWORK_OUT_RATE="$(calculate_rate "$TOTAL_NETWORK_OUT_BYTES" "$PREVIOUS_NETWORK_OUT_BYTES" "$ELAPSED_MS")"
       DISK_READ_RATE="$(calculate_rate "$TOTAL_DISK_READ_BYTES" "$PREVIOUS_DISK_READ_BYTES" "$ELAPSED_MS")"
       DISK_WRITE_RATE="$(calculate_rate "$TOTAL_DISK_WRITE_BYTES" "$PREVIOUS_DISK_WRITE_BYTES" "$ELAPSED_MS")"
-      
+
       DELTA_ACTIVE=$((ACTIVE_CPU_TICKS - PREVIOUS_ACTIVE))
       DELTA_TOTAL=$((TOTAL_CPU_TICKS - PREVIOUS_TOTAL))
       if [ "$DELTA_ACTIVE" -lt 0 ]; then DELTA_ACTIVE=0; fi
       if [ "$DELTA_TOTAL" -lt 0 ]; then DELTA_TOTAL=0; fi
+    fi
+
+    while IFS=$'\t' read -r DISK_SOURCE DISK_USED_BYTES DISK_TOTAL_BYTES DISK_MOUNT; do
+      [ -n "$DISK_SOURCE" ] || continue
+
+      DISK_DEVICE_NAME="${DISK_SOURCE#/dev/}"
+      RATE_DEVICE="$DISK_DEVICE_NAME"
+      DISK_READ_DEVICE_RATE=null
+      DISK_WRITE_DEVICE_RATE=null
+
+      if ! lookup_cached_disk_totals "$CURRENT_DISK_SNAPSHOT" "$RATE_DEVICE" >/dev/null 2>&1; then
+        PARENT_DEVICE="$(derive_parent_disk_device "$DISK_DEVICE_NAME" || true)"
+        if [ -n "$PARENT_DEVICE" ] && lookup_cached_disk_totals "$CURRENT_DISK_SNAPSHOT" "$PARENT_DEVICE" >/dev/null 2>&1; then
+          RATE_DEVICE="$PARENT_DEVICE"
+        else
+          RATE_DEVICE=""
+        fi
+      fi
+
+      if [ -n "$RATE_DEVICE" ] && [ "$ELAPSED_MS" -gt 0 ]; then
+        CURRENT_DEVICE_TOTALS="$(lookup_cached_disk_totals "$CURRENT_DISK_SNAPSHOT" "$RATE_DEVICE" || true)"
+        PREVIOUS_DEVICE_TOTALS="$(lookup_cached_disk_totals "$PREVIOUS_DISK_SNAPSHOT" "$RATE_DEVICE" || true)"
+
+        if [ -n "$CURRENT_DEVICE_TOTALS" ] && [ -n "$PREVIOUS_DEVICE_TOTALS" ]; then
+          IFS='|' read -r CURRENT_DEVICE_READ_BYTES CURRENT_DEVICE_WRITE_BYTES <<EOF
+$CURRENT_DEVICE_TOTALS
+EOF
+          IFS='|' read -r PREVIOUS_DEVICE_READ_BYTES PREVIOUS_DEVICE_WRITE_BYTES <<EOF
+$PREVIOUS_DEVICE_TOTALS
+EOF
+          DISK_READ_DEVICE_RATE="$(calculate_rate "$CURRENT_DEVICE_READ_BYTES" "$PREVIOUS_DEVICE_READ_BYTES" "$ELAPSED_MS")"
+          DISK_WRITE_DEVICE_RATE="$(calculate_rate "$CURRENT_DEVICE_WRITE_BYTES" "$PREVIOUS_DEVICE_WRITE_BYTES" "$ELAPSED_MS")"
+        fi
+      fi
+
+      DISK_ROWS+="${DISK_SOURCE}"$'\t'"${DISK_MOUNT}"$'\t'"${DISK_USED_BYTES}"$'\t'"${DISK_TOTAL_BYTES}"$'\t'"${DISK_READ_DEVICE_RATE}"$'\t'"${DISK_WRITE_DEVICE_RATE}"$'\n'
+    done < <(df -P -B1 2>/dev/null | awk 'NR > 1 && $1 ~ "^/dev/" && $2 ~ /^[0-9]+$/ && $3 ~ /^[0-9]+$/ {print $1 "\t" $3 "\t" $2 "\t" $6}')
+
+    if [ -n "$DISK_ROWS" ]; then
+      DISKS_JSON="$(printf '%s' "$DISK_ROWS" | jq -Rsc '
+        split("\n")
+        | map(select(length > 0) | split("\t"))
+        | map({
+            device: .[0],
+            mount: .[1],
+            used_bytes: (.[2] | tonumber),
+            total_bytes: (.[3] | tonumber),
+            read_bytes_per_sec: (if .[4] == "null" or .[4] == "" then null else (.[4] | tonumber) end),
+            write_bytes_per_sec: (if .[5] == "null" or .[5] == "" then null else (.[5] | tonumber) end)
+          })
+      ')"
+    else
+      DISKS_JSON='[]'
     fi
 
     write_cached_metrics \
@@ -616,9 +724,38 @@ EOF
       "$TOTAL_NETWORK_IN_BYTES" \
       "$TOTAL_NETWORK_OUT_BYTES" \
       "$TOTAL_DISK_READ_BYTES" \
-      "$TOTAL_DISK_WRITE_BYTES"
+      "$TOTAL_DISK_WRITE_BYTES" \
+      "$CURRENT_DISK_SNAPSHOT"
 
-    METRICS_JSON="{\"cpu_time_ns\":${DELTA_ACTIVE},\"system_time_ns\":${DELTA_TOTAL},\"online_cpus\":${HOST_CORES},\"memory_used\":${TOTAL_MEM_USED},\"memory_limit\":${TOTAL_MEM_LIMIT},\"network_in_bytes_per_sec\":${NETWORK_IN_RATE},\"network_out_bytes_per_sec\":${NETWORK_OUT_RATE},\"network_rx_total\":${TOTAL_NETWORK_IN_BYTES},\"network_tx_total\":${TOTAL_NETWORK_OUT_BYTES},\"disk_read_bytes_per_sec\":${DISK_READ_RATE},\"disk_write_bytes_per_sec\":${DISK_WRITE_RATE}}"
+    METRICS_JSON="$(jq -n \
+      --argjson cpu_time_ns "$DELTA_ACTIVE" \
+      --argjson system_time_ns "$DELTA_TOTAL" \
+      --argjson online_cpus "$HOST_CORES" \
+      --argjson memory_used "$TOTAL_MEM_USED" \
+      --argjson memory_limit "$TOTAL_MEM_LIMIT" \
+      --argjson network_in_bytes_per_sec "$NETWORK_IN_RATE" \
+      --argjson network_out_bytes_per_sec "$NETWORK_OUT_RATE" \
+      --argjson network_rx_total "$TOTAL_NETWORK_IN_BYTES" \
+      --argjson network_tx_total "$TOTAL_NETWORK_OUT_BYTES" \
+      --argjson disk_read_bytes_per_sec "$DISK_READ_RATE" \
+      --argjson disk_write_bytes_per_sec "$DISK_WRITE_RATE" \
+      --argjson uptime_seconds "$UPTIME_SECONDS" \
+      --argjson disks "$DISKS_JSON" \
+      '{
+        cpu_time_ns: $cpu_time_ns,
+        system_time_ns: $system_time_ns,
+        online_cpus: $online_cpus,
+        memory_used: $memory_used,
+        memory_limit: $memory_limit,
+        network_in_bytes_per_sec: $network_in_bytes_per_sec,
+        network_out_bytes_per_sec: $network_out_bytes_per_sec,
+        network_rx_total: $network_rx_total,
+        network_tx_total: $network_tx_total,
+        disk_read_bytes_per_sec: $disk_read_bytes_per_sec,
+        disk_write_bytes_per_sec: $disk_write_bytes_per_sec,
+        uptime_seconds: $uptime_seconds,
+        disks: $disks
+      }')"
     respond_json '200 OK' "$METRICS_JSON"
     exit 0
   fi
