@@ -129,7 +129,7 @@ function DetailStatCard({
   const width = progress !== null && progress !== undefined ? `${Math.max(0, Math.min(100, progress))}%` : null;
 
   return (
-    <div className="rounded-[28px] border border-emerald-500/15 bg-emerald-950/30 p-6 shadow-[0_0_0_1px_rgba(16,185,129,0.04)]">
+    <div className="glass-card rounded-[28px] p-6">
       <div className="flex items-center justify-between gap-4">
         <p className="text-sm font-medium uppercase tracking-[0.18em] text-muted-foreground">{title}</p>
         <span className={cn("text-4xl font-semibold tracking-tight", valueTone)}>{value}</span>
@@ -141,7 +141,7 @@ function DetailStatCard({
               <div
                 key={index}
                 className={cn(
-                  "flex-1 rounded-t-md bg-emerald-600/25",
+                  "flex-1 rounded-t-md bg-primary/15",
                   index === 6 && "bg-primary",
                 )}
                 style={{ height: `${Math.max(30, Math.min(100, progress ?? 0) * (0.45 + index * 0.08))}%` }}
@@ -152,7 +152,7 @@ function DetailStatCard({
         </div>
       ) : helper ? (
         <div className="mt-8">
-          <div className="h-4 rounded-full bg-emerald-950/60">
+          <div className="h-4 rounded-full bg-white/5">
             <div className="h-full w-0 rounded-full bg-primary" />
           </div>
           <p className="mt-3 text-sm text-muted-foreground">{helper}</p>
@@ -170,8 +170,8 @@ function MiniSummaryCard({
   value: string;
 }) {
   return (
-    <div className="rounded-[28px] border border-emerald-500/15 bg-emerald-950/30 p-6">
-      <p className="text-sm font-medium uppercase tracking-[0.2em] text-emerald-400/80">{label}</p>
+    <div className="glass-card rounded-[28px] p-6">
+      <p className="text-sm font-medium uppercase tracking-[0.2em] text-muted-foreground">{label}</p>
       <p className="mt-4 text-5xl font-semibold tracking-tight text-foreground">{value}</p>
     </div>
   );
@@ -281,12 +281,12 @@ export default function ContainerDetailPage() {
         breadcrumbs={[{ label: "Containers", href: "/app/containers" }, { label: name || containerId || "" }]}
       />
 
-      <div className="space-y-6 rounded-[32px] border border-emerald-500/15 bg-[radial-gradient(circle_at_top_left,rgba(16,185,129,0.10),rgba(6,18,15,0.92)_55%)] p-6 shadow-[0_0_0_1px_rgba(16,185,129,0.04)]">
+      <div className="space-y-6">
         <div className="grid gap-6 xl:grid-cols-[minmax(0,1.9fr),220px,220px]">
-          <div className="rounded-[28px] border border-emerald-500/15 bg-emerald-950/30 p-7">
+          <div className="glass-card rounded-[28px] p-7">
             <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
               <div className="flex items-start gap-5">
-                <div className="flex h-24 w-24 shrink-0 items-center justify-center rounded-[28px] border border-emerald-500/20 bg-emerald-500/10">
+                <div className="flex h-24 w-24 shrink-0 items-center justify-center rounded-[28px] border border-primary/20 bg-primary/10">
                   <Box className="h-11 w-11 text-primary" />
                 </div>
                 <div className="space-y-3">
@@ -320,7 +320,7 @@ export default function ContainerDetailPage() {
           <MiniSummaryCard label="Restarts" value={formatCount(restartCount)} />
         </div>
 
-        <div className="rounded-[28px] border border-emerald-500/15 bg-emerald-950/25 px-6 py-5">
+        <div className="glass-card rounded-[28px] px-6 py-5">
           <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
             <div className="flex flex-wrap items-center gap-3">
               <Button
