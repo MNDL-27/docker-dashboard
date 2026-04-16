@@ -1,5 +1,6 @@
 import { sql } from './db.mjs';
 import { decryptHostSecrets } from './crypto.mjs';
+import { buildValidatedAgentUrl } from './host-url.mjs';
 import type { AppAuthContext } from './auth.mjs';
 import { deliverSlackAlerts } from './slack-delivery.mjs';
 import { deliverAlertWebhooks } from './webhook-destinations.mjs';
@@ -143,7 +144,7 @@ function buildDockerRequest(
     if (secrets?.cf_service_token_secret) headers['CF-Access-Client-Secret'] = secrets.cf_service_token_secret;
   }
 
-  return { url: `${base}/docker${dockerPath}`, headers };
+  return { url: buildValidatedAgentUrl(base, `/docker${dockerPath}`), headers };
 }
 
 async function dockerFetchJson<T>(

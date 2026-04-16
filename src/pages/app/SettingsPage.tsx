@@ -1,9 +1,7 @@
 import { PageHeader } from "@/components/shared/PageHeader";
 import { OrganizationMembersWorkspaceContainer } from "@/components/settings/OrganizationMembersWorkspace";
 import { useState } from "react";
-import { DiscordDestinationsPanel } from "@/components/settings/DiscordDestinationsPanel";
 import { ProfileSettings } from "@/components/settings/ProfileSettings";
-import { Construction } from "lucide-react";
 import { useSearchParams } from "react-router-dom";
 import { SlackDestinationsPanel } from "@/components/settings/SlackDestinationsPanel";
 import { WebhookDestinationsPanel } from "@/components/settings/WebhookDestinationsPanel";
@@ -14,7 +12,7 @@ import { useCreateWebhookDestination, useTestWebhookDestination, useUpdateWebhoo
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import type { SlackDestinationFormValues, WebhookDestinationFormValues } from "@/types/alerts";
 
-const tabs = ["Members", "Profile", "General", "API Keys", "Webhooks", "Notifications", "Audit Logs", "Danger Zone"];
+const tabs = ["Members", "Profile", "Webhooks", "Notifications"];
 
 export default function SettingsPage() {
   const { organization: currentOrg } = useOrganization();
@@ -173,31 +171,16 @@ export default function SettingsPage() {
         </TabsContent>
 
         <TabsContent value="Notifications">
-          <div className="space-y-4">
-            <SlackDestinationsPanel
-              destinations={slackDestinations}
-              canManage={slackCanManage}
-              saving={slackSaving}
-              testingId={testSlackMutation.isPending ? testSlackMutation.variables : null}
-              onCreate={handleCreateSlack}
-              onUpdate={handleUpdateSlack}
-              onTest={handleTestSlack}
-            />
-            <DiscordDestinationsPanel />
-          </div>
+          <SlackDestinationsPanel
+            destinations={slackDestinations}
+            canManage={slackCanManage}
+            saving={slackSaving}
+            testingId={testSlackMutation.isPending ? testSlackMutation.variables : null}
+            onCreate={handleCreateSlack}
+            onUpdate={handleUpdateSlack}
+            onTest={handleTestSlack}
+          />
         </TabsContent>
-
-        {tabs.filter((currentTab) => !["Members", "Profile", "Webhooks", "Notifications"].includes(currentTab)).map((currentTab) => (
-          <TabsContent key={currentTab} value={currentTab}>
-            <div className="glass-card p-12 text-center">
-              <Construction className="h-10 w-10 text-muted-foreground mx-auto mb-3" />
-              <h3 className="font-medium mb-1">Coming Soon</h3>
-              <p className="text-sm text-muted-foreground max-w-md mx-auto">
-                {currentTab} settings are under development.
-              </p>
-            </div>
-          </TabsContent>
-        ))}
       </Tabs>
     </div>
   );

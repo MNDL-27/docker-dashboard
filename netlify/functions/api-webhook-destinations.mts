@@ -75,7 +75,11 @@ export default async (req: Request) => {
 
     return new Response(JSON.stringify({ error: 'Method not allowed' }), { status: 405, headers });
   } catch (error: any) {
-    const status = /Admin access required|Access denied/.test(error?.message || '') ? 403 : 500;
+    const status = /Admin access required|Access denied/.test(error?.message || '')
+      ? 403
+      : /URL must|URL cannot/.test(error?.message || '')
+        ? 400
+        : 500;
     return new Response(JSON.stringify({ error: error?.message || 'Failed to process webhook destinations' }), { status, headers });
   }
 };

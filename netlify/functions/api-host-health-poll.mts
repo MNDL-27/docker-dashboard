@@ -9,6 +9,7 @@ import {
 } from './lib/host-health.mjs';
 import { buildWatchtowerAgentReleaseResponse } from './lib/agent-release.mts';
 import { ensureDockerHostSchema } from './lib/ensure-docker-host-schema.mjs';
+import { buildValidatedAgentUrl } from './lib/host-url.mjs';
 
 const headers = {
   'Access-Control-Allow-Origin': '*',
@@ -39,9 +40,9 @@ function buildPingRequest(
   }
 
   return {
-    pingUrl: `${base}/docker/_ping`,
-    dockerVersionUrl: `${base}/docker/version`,
-    agentVersionUrl: `${base}/agent/version`,
+    pingUrl: buildValidatedAgentUrl(base, '/docker/_ping'),
+    dockerVersionUrl: buildValidatedAgentUrl(base, '/docker/version'),
+    agentVersionUrl: buildValidatedAgentUrl(base, '/agent/version'),
     headers: reqHeaders
   }
 }

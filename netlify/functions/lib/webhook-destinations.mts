@@ -2,6 +2,7 @@ import crypto from 'crypto';
 
 import { sql } from './db.mjs';
 import type { AppAuthContext } from './auth.mjs';
+import { normalizeAndValidateWebhookUrl } from './host-url.mjs';
 
 type DeliveryEventType = 'alert.opened' | 'alert.acknowledged' | 'alert.resolved' | 'alert.test';
 
@@ -252,13 +253,14 @@ export async function createWebhookDestination(
   auth: AppAuthContext,
   values: { name: string; url: string; enabled?: boolean },
 ) {
+  const destinationUrl = normalizeAndValidateWebhookUrl(values.url);
   const { secret, preview } = buildSecret();
   const [row] = await sql`
     INSERT INTO webhook_destinations (
       organization_id, name, url, signing_secret, signing_secret_preview, enabled, created_by
     )
     VALUES (
-      ${auth.orgId}, ${values.name}, ${values.url}, ${secret}, ${preview}, ${values.enabled ?? true}, ${auth.userId}
+      ${auth.orgId}, ${values.name}, ${destinationUrl}, ${secret}, ${preview}, ${values.enabled ?? true}, ${auth.userId}
     )
     RETURNING *
   `;
@@ -280,12 +282,13 @@ export async function updateWebhookDestination(
     secret: existing.signing_secret,
     preview: existing.signing_secret_preview,
   };
+  const nextUrl = values.url ? normalizeAndValidateWebhookUrl(values.url) : existing.url;
 
   const [row] = await sql`
     UPDATE webhook_destinations
     SET
       name = ${values.name ?? existing.name},
-      url = ${values.url ?? existing.url},
+      url = ${nextUrl},
       enabled = ${Object.prototype.hasOwnProperty.call(values, 'enabled') ? values.enabled : existing.enabled},
       signing_secret = ${secretState.secret},
       signing_secret_preview = ${secretState.preview}

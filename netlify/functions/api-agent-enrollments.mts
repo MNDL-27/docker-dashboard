@@ -5,6 +5,7 @@ import { requireAuth } from "./lib/auth.mjs";
 import { assertOrganizationWriteAllowed } from "./lib/access-controls.mjs";
 import { decryptSecret, encryptSecret } from "./lib/crypto.mjs";
 import { ensureAgentEnrollmentSchema } from "./lib/ensure-agent-enrollment-schema.mjs";
+import { buildValidatedAgentUrl, normalizeAndValidateHostUrl } from "./lib/host-url.mjs";
 import {
   buildWatchtowerAgentAdvancedInstallCommand,
   buildWatchtowerAgentEnrollmentInstallCommand,
@@ -85,7 +86,6 @@ function buildAgentHeaders(options: {
   cfServiceTokenSecret: string | null;
   path: string;
 }) {
-  const base = options.hostUrl.replace(/\/$/, "");
   const reqHeaders: Record<string, string> = {};
 
   if (options.agentApiKey) {
@@ -105,7 +105,7 @@ function buildAgentHeaders(options: {
     }
   }
 
-  return { url: `${base}${options.path}`, headers: reqHeaders };
+  return { url: buildValidatedAgentUrl(options.hostUrl, options.path), headers: reqHeaders };
 }
 
 async function fetchWithTimeout(url: string, init: RequestInit, timeoutMs = 5000) {
@@ -506,10 +506,11 @@ export default async (req: Request) => {
         return badRequest("host_url is required");
       }
 
+      let normalizedHostUrl: string;
       try {
-        new URL(hostUrl);
-      } catch {
-        return badRequest("host_url must be a valid URL");
+        normalizedHostUrl = normalizeAndValidateHostUrl(hostUrl);
+      } catch (error: any) {
+        return badRequest(error?.message || "host_url is invalid");
       }
 
       const token = createEnrollmentToken();
@@ -535,7 +536,7 @@ export default async (req: Request) => {
           ${auth.orgId},
           ${auth.userId},
           ${hostName},
-          ${hostUrl},
+          ${normalizedHostUrl},
           ${connectionMode},
           ${dockerSocketPath},
           ${encryptSecret(sessionApiKey, "pending", "agent_api_key")},

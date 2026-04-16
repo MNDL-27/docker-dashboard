@@ -1,16 +1,16 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Box, Server, Bell, FileText, Activity, Shield, Check, ArrowRight } from "lucide-react";
+import { Box, Server, Bell, FileText, Shield, Check, ArrowRight, Boxes, Users } from "lucide-react";
 import { PublicNavbar } from "@/components/layout/PublicNavbar";
 import { PublicFooter } from "@/components/layout/PublicFooter";
 
 const features = [
-  { icon: Server, title: "Multi-Host Fleet Management", desc: "Connect unlimited Docker hosts across regions, cloud providers, and on-premise infrastructure. See every host and container in one unified view.", details: ["Auto-discovery of containers", "Region and tag grouping", "Host health monitoring", "Agent auto-updates"] },
-  { icon: Activity, title: "Real-Time Metrics", desc: "Track CPU, memory, network, and disk metrics per host and per container with 1-second granularity.", details: ["Time-series charts", "Custom dashboards", "Historical comparisons", "Export to Prometheus/Grafana"] },
-  { icon: FileText, title: "Centralized Log Explorer", desc: "Search, filter, and tail logs from every container. Full-text search with severity, host, and time filters.", details: ["Live tail streaming", "Structured log parsing", "Log-to-incident linking", "Configurable retention"] },
-  { icon: Bell, title: "Smart Alerting", desc: "Create alert rules for common failure modes. Route to Slack, email, PagerDuty, or webhooks.", details: ["Container exit alerts", "CPU/memory thresholds", "Restart loop detection", "Host offline detection"] },
-  { icon: Shield, title: "Incident Management", desc: "Track incidents from detection to resolution. Full timeline, impacted services, and team collaboration.", details: ["Auto-create from alerts", "Severity classification", "Assign and escalate", "Post-mortem templates"] },
-  { icon: Box, title: "Container Lifecycle", desc: "View container state, restart history, configuration, networking, volumes, and health checks.", details: ["One-click restart/stop", "Environment inspection", "Resource limits view", "Health check history"] },
+  { icon: Server, title: "Host Inventory", desc: "Register Docker hosts through the guided setup flow and keep connectivity status visible in one workspace.", details: ["Agent connectivity checks", "Host health status", "Stored agent version", "Cloudflare Tunnel support"] },
+  { icon: Boxes, title: "Container Visibility", desc: "Browse containers across connected hosts and inspect runtime details without logging into each machine.", details: ["Cross-host container list", "Inspect metadata", "Restart, stop, and start actions", "Environment and networking views"] },
+  { icon: FileText, title: "On-Demand Logs", desc: "Fetch recent container logs for debugging and filter them in the UI when you need to investigate quickly.", details: ["Per-container log fetch", "Timestamped output", "Client-side filtering", "Recent host-aware troubleshooting"] },
+  { icon: Bell, title: "Alert Rules", desc: "Define practical alert rules for host and container issues, then route them to Slack or signed webhooks.", details: ["Host offline alerts", "Container exited alerts", "CPU and memory thresholds", "Slack and webhook delivery"] },
+  { icon: Users, title: "Organization Workspaces", desc: "Keep each team in a separate organization with role-based access to hosts, settings, and alerts.", details: ["Owner, admin, and member roles", "Clerk-backed organization access", "Organization-scoped data", "Member management workspace"] },
+  { icon: Shield, title: "Secure Agent Model", desc: "The control plane talks to a lightweight agent instead of exposing the Docker socket directly to the public internet.", details: ["Encrypted stored secrets", "Per-host agent API keys", "Optional tunnel credentials", "Backend-enforced organization access"] },
 ];
 
 export default function FeaturesPage() {
@@ -21,8 +21,8 @@ export default function FeaturesPage() {
       <main className="flex-1">
         <section className="py-20">
           <div className="max-w-5xl mx-auto px-4 text-center mb-16">
-            <h1 className="text-4xl md:text-5xl font-bold tracking-tight mb-4">Everything you need to monitor Docker</h1>
-            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">From individual containers to large-scale fleets, Docker Dashboard gives your team full visibility and control.</p>
+            <h1 className="text-4xl md:text-5xl font-bold tracking-tight mb-4">The working Docker operations core</h1>
+            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">Docker Dashboard focuses on the features that are already implemented well: host connectivity, container visibility, logs, and practical alerts.</p>
           </div>
           <div className="max-w-5xl mx-auto px-4 space-y-12">
             {features.map((f, i) => (

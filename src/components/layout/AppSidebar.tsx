@@ -3,8 +3,8 @@ import { Link, useLocation } from "react-router-dom";
 import { LogoLink } from "@/components/shared/LogoLink";
 import { cn } from "@/lib/utils";
 import {
-  LayoutDashboard, Server, Box, Activity, FileText, Bell, AlertTriangle,
-  Rocket, CreditCard, Settings, HelpCircle, ChevronLeft, ChevronRight,
+  LayoutDashboard, Server, Box, FileText, Bell, CreditCard, Settings,
+  HelpCircle, ChevronLeft, ChevronRight,
   Building2, Users, Shield, BookOpen
 } from "lucide-react";
 import { useViewerState } from "@/hooks/useViewerState";
@@ -27,16 +27,13 @@ const navGroups = [
   {
     label: "Observability",
     items: [
-      { label: "Monitoring", icon: Activity, href: "/app/monitoring" },
       { label: "Logs", icon: FileText, href: "/app/logs" },
       { label: "Alerts", icon: Bell, href: "/app/alerts" },
-      { label: "Incidents", icon: AlertTriangle, href: "/app/incidents" },
     ],
   },
   {
     label: "Operations",
     items: [
-      { label: "Deployments", icon: Rocket, href: "/app/deployments" },
       { label: "Members", icon: Users, href: "/app/members" },
     ],
   },

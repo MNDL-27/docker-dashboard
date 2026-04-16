@@ -1,9 +1,9 @@
-const ADMIN_EMAILS = [
-  'protikmndl27@gmail.com',
-  'protikmondal27@gmail.com',
-];
-
 export function isPlatformAdminEmail(email: string | null | undefined): boolean {
   if (!email) return false;
-  return ADMIN_EMAILS.includes(email.toLowerCase());
+  const configuredEmails = (process.env.PLATFORM_ADMIN_EMAILS || "")
+    .split(",")
+    .map((value) => value.trim().toLowerCase())
+    .filter(Boolean);
+
+  return configuredEmails.includes(email.toLowerCase());
 }

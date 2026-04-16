@@ -5,6 +5,7 @@ import { assertHostProxyAllowed, assertOrganizationWriteAllowed } from './lib/ac
 import { decryptHostSecrets, SecretCryptoError } from './lib/crypto.mjs';
 import { buildWatchtowerAgentReleaseResponse } from './lib/agent-release.mts';
 import { ensureDockerHostSchema } from './lib/ensure-docker-host-schema.mjs';
+import { buildValidatedAgentUrl } from './lib/host-url.mjs';
 import { createProblemResponse } from '../../shared/schema/error.ts';
 import { ProxyRequestParamsSchema } from '../../shared/schema/proxy.ts';
 
@@ -30,7 +31,7 @@ function buildRequest(
   const base = host.host_url.replace(/\/$/, '');
   const reqHeaders: Record<string, string> = {};
 
-  const url = `${base}/docker${dockerPath}`;
+  const url = buildValidatedAgentUrl(base, `/docker${dockerPath}`);
 
   if (secrets?.agent_api_key) {
     reqHeaders['X-Agent-Key'] = secrets.agent_api_key;
@@ -57,7 +58,7 @@ function buildAgentRequest(
   const base = host.host_url.replace(/\/$/, '');
   const reqHeaders: Record<string, string> = {};
 
-  const url = `${base}${agentPath}`;
+  const url = buildValidatedAgentUrl(base, agentPath);
 
   if (secrets?.agent_api_key) {
     reqHeaders['X-Agent-Key'] = secrets.agent_api_key;

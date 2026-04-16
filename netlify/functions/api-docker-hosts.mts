@@ -5,6 +5,7 @@ import { assertHostProxyAllowed, assertOrganizationWriteAllowed } from './lib/ac
 import { decryptHostSecrets, encryptSecret } from './lib/crypto.mjs';
 import { ensureOnboardingSchema } from './lib/ensure-onboarding-schema.mjs';
 import { parseStaleThresholdMinutes, staleCutoffDate } from './lib/host-health.mjs';
+import { normalizeAndValidateHostUrl } from './lib/host-url.mjs';
 
 const headers = {
   'Access-Control-Allow-Origin': '*',
@@ -119,10 +120,16 @@ export default async (req: Request) => {
       if (!isAdmin) {
         return new Response(JSON.stringify({ error: 'Admin access required for active org' }), { status: 403, headers });
       }
+      let hostUrl: string;
+      try {
+        hostUrl = normalizeAndValidateHostUrl(String(body.host_url ?? ""));
+      } catch (error: any) {
+        return new Response(JSON.stringify({ error: error?.message || 'Invalid host_url' }), { status: 400, headers });
+      }
 
       const [host] = await sql`
         INSERT INTO docker_hosts (organization_id, name, host_url, connection_mode, docker_socket_path, created_by, status)
-        VALUES (${orgId}, ${body.name}, ${body.host_url}, ${body.connection_mode}, ${body.docker_socket_path || '/var/run/docker.sock'}, ${auth.userId}, 'unknown')
+        VALUES (${orgId}, ${body.name}, ${hostUrl}, ${body.connection_mode}, ${body.docker_socket_path || '/var/run/docker.sock'}, ${auth.userId}, 'unknown')
         RETURNING *
       `;
 
@@ -170,12 +177,18 @@ export default async (req: Request) => {
       }
 
       const body = await req.json();
+      let hostUrl: string;
+      try {
+        hostUrl = normalizeAndValidateHostUrl(String(body.host_url ?? ""));
+      } catch (error: any) {
+        return new Response(JSON.stringify({ error: error?.message || 'Invalid host_url' }), { status: 400, headers });
+      }
 
       const [updatedHost] = await sql`
         UPDATE docker_hosts
         SET
           name = ${body.name},
-          host_url = ${body.host_url},
+          host_url = ${hostUrl},
           connection_mode = ${body.connection_mode},
           docker_socket_path = ${body.docker_socket_path || '/var/run/docker.sock'},
           updated_at = now()

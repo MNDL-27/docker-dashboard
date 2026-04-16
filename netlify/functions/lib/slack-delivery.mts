@@ -3,6 +3,7 @@ import crypto from 'crypto';
 import { decryptSecret, encryptSecret } from './crypto.mjs';
 import { sql } from './db.mjs';
 import type { AppAuthContext } from './auth.mjs';
+import { normalizeAndValidateSlackWebhookUrl } from './host-url.mjs';
 
 type SlackDeliveryEventType = 'alert.opened' | 'alert.acknowledged' | 'alert.resolved' | 'alert.test';
 
@@ -293,14 +294,15 @@ export async function createSlackDestination(
   auth: AppAuthContext,
   values: { name: string; webhook_url: string; enabled?: boolean },
 ) {
+  const webhookUrl = normalizeAndValidateSlackWebhookUrl(values.webhook_url);
   const destinationId = crypto.randomUUID();
-  const encryptedWebhookUrl = encryptSecret(values.webhook_url, destinationId, 'webhook_url');
+  const encryptedWebhookUrl = encryptSecret(webhookUrl, destinationId, 'webhook_url');
   const [row] = await sql`
     INSERT INTO slack_destinations (
       id, organization_id, name, webhook_url, webhook_url_preview, enabled, created_by
     )
     VALUES (
-      ${destinationId}, ${auth.orgId}, ${values.name}, ${encryptedWebhookUrl}, ${maskSlackWebhookUrl(values.webhook_url)}, ${values.enabled ?? true}, ${auth.userId}
+      ${destinationId}, ${auth.orgId}, ${values.name}, ${encryptedWebhookUrl}, ${maskSlackWebhookUrl(webhookUrl)}, ${values.enabled ?? true}, ${auth.userId}
     )
     RETURNING *
   `;
@@ -315,8 +317,9 @@ export async function updateSlackDestination(
   const existing = await getDestinationForOrg(auth, values.id);
   if (!existing) throw new Error('Slack destination not found');
 
-  const nextWebhookUrl = values.webhook_url ? encryptSecret(values.webhook_url, existing.id, 'webhook_url') : existing.webhook_url;
-  const nextPreview = values.webhook_url ? maskSlackWebhookUrl(values.webhook_url) : existing.webhook_url_preview;
+  const validatedWebhookUrl = values.webhook_url ? normalizeAndValidateSlackWebhookUrl(values.webhook_url) : null;
+  const nextWebhookUrl = validatedWebhookUrl ? encryptSecret(validatedWebhookUrl, existing.id, 'webhook_url') : existing.webhook_url;
+  const nextPreview = validatedWebhookUrl ? maskSlackWebhookUrl(validatedWebhookUrl) : existing.webhook_url_preview;
 
   const [row] = await sql`
     UPDATE slack_destinations

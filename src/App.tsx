@@ -31,11 +31,8 @@ const HostsPage = lazy(() => import("./pages/app/HostsPage"));
 const HostDetailPage = lazy(() => import("./pages/app/HostDetailPage"));
 const ContainersPage = lazy(() => import("./pages/app/ContainersPage"));
 const ContainerDetailPage = lazy(() => import("./pages/app/ContainerDetailPage"));
-const MonitoringPage = lazy(() => import("./pages/app/MonitoringPage"));
 const LogsPage = lazy(() => import("./pages/app/LogsPage"));
 const AlertsPage = lazy(() => import("./pages/app/AlertsPage"));
-const IncidentsPage = lazy(() => import("./pages/app/IncidentsPage"));
-const DeploymentsPage = lazy(() => import("./pages/app/DeploymentsPage"));
 const MembersPage = lazy(() => import("./pages/app/MembersPage"));
 const BillingPage = lazy(() => import("./pages/app/BillingPage"));
 const SettingsPage = lazy(() => import("./pages/app/SettingsPage"));
@@ -134,12 +131,12 @@ const App = () => (
                     <Route path="hosts/:id" element={<HostDetailPage />} />
                     <Route path="containers" element={<ContainersPage />} />
                     <Route path="containers/:id" element={<ContainerDetailPage />} />
-                    <Route path="monitoring" element={<MonitoringPage />} />
+                    <Route path="monitoring" element={<Navigate to="/app/alerts" replace />} />
                     <Route path="logs" element={<LogsPage />} />
                     <Route path="alerts" element={<AlertsPage />} />
-                    <Route path="incidents" element={<IncidentsPage />} />
-                    <Route path="incidents/:id" element={<IncidentsPage />} />
-                    <Route path="deployments" element={<DeploymentsPage />} />
+                    <Route path="incidents" element={<Navigate to="/app/alerts" replace />} />
+                    <Route path="incidents/:id" element={<Navigate to="/app/alerts" replace />} />
+                    <Route path="deployments" element={<Navigate to="/app/hosts" replace />} />
                     <Route path="members" element={<MembersPage />} />
                     <Route path="billing" element={<BillingPage />} />
                     <Route path="settings" element={<SettingsPage />} />

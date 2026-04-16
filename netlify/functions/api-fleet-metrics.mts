@@ -2,6 +2,7 @@ import type { Config } from '@netlify/functions';
 import { sql } from './lib/db.mjs';
 import { requireAuth } from './lib/auth.mjs';
 import { decryptHostSecrets } from './lib/crypto.mjs';
+import { buildValidatedAgentUrl } from './lib/host-url.mjs';
 
 const headers = {
   'Access-Control-Allow-Origin': '*',
@@ -52,7 +53,7 @@ function normalizeOptionalRate(value: unknown): number | null {
 
 async function fetchHostMetrics(hostUrl: string, apiKey: string, timeoutMs = 5000): Promise<HostMetricsResponse | null> {
   try {
-    const response = await fetch(`${hostUrl.replace(/\/$/, '')}/metrics`, {
+    const response = await fetch(buildValidatedAgentUrl(hostUrl, '/metrics'), {
       headers: {
         'X-Agent-Key': apiKey,
       },
