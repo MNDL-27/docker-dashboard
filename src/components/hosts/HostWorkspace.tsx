@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { formatDistanceToNowStrict } from "date-fns";
 import { useOrganization } from "@clerk/clerk-react";
 import { useNavigate, useParams } from "react-router-dom";
@@ -522,6 +522,11 @@ function AgentUpdateDialog({
   statusCopy: { title: string; description: string };
   verificationReason: string | null;
 }) {
+  const normalizedStatus =
+    status === "current" || status === "update_required" || status === "verification_required"
+      ? status
+      : "pending";
+  const resolvedStatusCopy = statusCopy ?? getWatchtowerAgentUpdateStatusCopy(normalizedStatus, CURRENT_WATCHTOWER_AGENT_RELEASE);
   const updateCopy = buildWatchtowerAgentUpdateCopy(CURRENT_WATCHTOWER_AGENT_RELEASE);
   const installedVersion = host.agent_version || "Pending";
   const latestVersion = CURRENT_WATCHTOWER_AGENT_RELEASE.version;
@@ -551,20 +556,20 @@ function AgentUpdateDialog({
             </div>
             <div className="rounded-2xl border border-white/10 bg-background/50 p-4">
               <p className="text-xs uppercase tracking-[0.22em] text-muted-foreground">Status</p>
-              <p className={cn("mt-2 text-2xl font-semibold tracking-tight", statusSummaryTone(status))}>{statusCopy.title}</p>
-              <p className="mt-1 text-xs text-muted-foreground">{statusCopy.description}</p>
+              <p className={cn("mt-2 text-2xl font-semibold tracking-tight", statusSummaryTone(normalizedStatus))}>{resolvedStatusCopy.title}</p>
+              <p className="mt-1 text-xs text-muted-foreground">{resolvedStatusCopy.description}</p>
             </div>
           </div>
 
-          <div className={cn("rounded-2xl border p-4 text-sm", statusTone(status))}>
+          <div className={cn("rounded-2xl border p-4 text-sm", statusTone(normalizedStatus))}>
             <div className="flex items-start justify-between gap-4">
               <div>
                 <p className="text-xs uppercase tracking-[0.22em] opacity-80">Current state</p>
-                <p className="mt-2 text-base font-medium">{statusCopy.title}</p>
-                <p className="mt-1 text-sm opacity-90">{statusCopy.description}</p>
+                <p className="mt-2 text-base font-medium">{resolvedStatusCopy.title}</p>
+                <p className="mt-1 text-sm opacity-90">{resolvedStatusCopy.description}</p>
               </div>
               <span className="rounded-full border border-current/20 px-3 py-1 text-xs font-medium uppercase tracking-[0.18em]">
-                {status}
+                {normalizedStatus}
               </span>
             </div>
             {verificationReason ? (
@@ -690,6 +695,19 @@ export function HostWorkspace() {
     return filteredHosts[0] ?? hosts[0] ?? null;
   }, [filteredHosts, hosts, routeHostId]);
 
+  useEffect(() => {
+    if (isLoading || !routeHostId) return;
+
+    if (selectedHost) return;
+
+    if (hosts.length === 0) {
+      navigate("/app/hosts", { replace: true });
+      return;
+    }
+
+    navigate(`/app/hosts/${filteredHosts[0]?.id ?? hosts[0].id}`, { replace: true });
+  }, [filteredHosts, hosts, isLoading, navigate, routeHostId, selectedHost]);
+
   const selectedHostReadable = isReadableHostStatus(selectedHost?.status);
   const selectedHostDisconnected = isDisconnectedHostStatus(selectedHost?.status);
 
@@ -721,7 +739,9 @@ export function HostWorkspace() {
     installedVersion: selectedHost?.agent_version ?? null,
     capabilityGap: selectedHostReadable ? missingExtendedMetrics || !!metricsQuery.failure : false,
   });
-  const agentUpdateStatusCopy = getWatchtowerAgentUpdateStatusCopy(agentUpdateStatus, CURRENT_WATCHTOWER_AGENT_RELEASE);
+  const agentUpdateStatusCopy =
+    getWatchtowerAgentUpdateStatusCopy(agentUpdateStatus, CURRENT_WATCHTOWER_AGENT_RELEASE)
+    ?? getWatchtowerAgentUpdateStatusCopy("pending", CURRENT_WATCHTOWER_AGENT_RELEASE);
   const verificationReason = agentVerificationReason(metricsQuery.failure, missingExtendedMetrics);
   const showAgentUpdateCta = !!selectedHost && agentUpdateStatus !== "current";
   const addHostAction = currentOrg ? (
@@ -776,8 +796,10 @@ export function HostWorkspace() {
     try {
       await deleteHost.mutateAsync(selectedHost.id);
       toast({ title: "Host removed" });
-      await refetch();
-      navigate("/app/hosts");
+      const refreshed = await refetch();
+      const remainingHosts = Array.isArray(refreshed.data) ? refreshed.data : [];
+      const fallbackHost = remainingHosts.find((host) => host.id !== selectedHost.id) ?? remainingHosts[0] ?? null;
+      navigate(fallbackHost ? `/app/hosts/${fallbackHost.id}` : "/app/hosts", { replace: true });
     } catch (error: any) {
       toast({ title: "Failed", description: error.message, variant: "destructive" });
     }
@@ -901,6 +923,9 @@ export function HostWorkspace() {
                     {showAgentUpdateCta ? (
                       <AgentUpdateDialog
                         host={selectedHost}
+                        status={agentUpdateStatus}
+                        statusCopy={agentUpdateStatusCopy}
+                        verificationReason={verificationReason}
                         trigger={
                           <Button variant="outline" className="gap-2">
                             <Terminal className="h-4 w-4" />
