@@ -34,12 +34,16 @@ import { HostMetricsDisk, HostMetricsFailure, HostMetricsPoint, useHostMetricsHi
 import { useToast } from "@/hooks/use-toast";
 import { dockerApi } from "@/services/docker-api";
 import type { DockerHost } from "@/types/database";
-import { CURRENT_WATCHTOWER_AGENT_VERSION, isAgentVersionOutdated } from "@/lib/agent-version";
+import { CURRENT_WATCHTOWER_AGENT_VERSION } from "@/lib/agent-version";
 import {
   CURRENT_WATCHTOWER_AGENT_RELEASE,
-  buildWatchtowerAgentInstallCommand,
+  buildWatchtowerAgentPreflightCommand,
   buildWatchtowerAgentUpdateCopy,
+  buildWatchtowerAgentUpgradeCommand,
+  buildWatchtowerAgentRepairCommand,
   buildWatchtowerAgentVerifyCommand,
+  getWatchtowerAgentUpdateStatus,
+  getWatchtowerAgentUpdateStatusCopy,
 } from "@/lib/agent-release";
 
 function formatBytes(bytes: number): string {
@@ -77,6 +81,61 @@ function formatUptime(seconds: number | null | undefined): string {
   if (hours > 0) return `${hours}h ${minutes}m`;
   if (minutes > 0) return `${minutes}m`;
   return `${totalSeconds}s`;
+}
+
+function statusTone(status: string) {
+  switch (status) {
+    case "current":
+      return "border-success/20 bg-success/10 text-success";
+    case "update_required":
+      return "border-warning/20 bg-warning/10 text-warning";
+    case "verification_required":
+      return "border-primary/20 bg-primary/10 text-primary";
+    case "pending":
+    default:
+      return "border-white/10 bg-background/60 text-muted-foreground";
+  }
+}
+
+function statusSummaryTone(status: string) {
+  switch (status) {
+    case "current":
+      return "text-success";
+    case "update_required":
+      return "text-warning";
+    case "verification_required":
+      return "text-primary";
+    case "pending":
+    default:
+      return "text-muted-foreground";
+  }
+}
+
+function agentVerificationReason(
+  failure: HostMetricsFailure | null | undefined,
+  missingExtendedMetrics: boolean,
+): string | null {
+  if (failure?.unsupportedEndpoint) {
+    return "This host agent does not expose /metrics yet. Run Preflight, Update, then Verify.";
+  }
+
+  if (failure?.code === "agent_timeout") {
+    return "The agent responded too slowly. Check the local service, then use Troubleshoot / Repair.";
+  }
+
+  if (failure?.code === "agent_connection_failed") {
+    return "The dashboard could not reach the host agent. Confirm the host URL, tunnel, and local service.";
+  }
+
+  if (failure?.malformedPayload) {
+    return "The host returned a malformed metrics sample. Update the agent, then Verify the local service.";
+  }
+
+  if (missingExtendedMetrics) {
+    return "The current agent version is installed, but uptime and per-disk fields are still missing. Run Verify or Troubleshoot / Repair.";
+  }
+
+  return null;
 }
 
 function statusPill(status: string) {
@@ -380,24 +439,51 @@ function AgentCommandBlock({
   );
 }
 
+function UpdateCommandSection({
+  title,
+  description,
+  command,
+}: {
+  title: string;
+  description: string;
+  command: string;
+}) {
+  return (
+    <div className="rounded-2xl border border-white/10 bg-background/40 p-4 space-y-3">
+      <div>
+        <p className="text-xs uppercase tracking-[0.22em] text-muted-foreground">{title}</p>
+        <p className="mt-2 text-sm text-muted-foreground">{description}</p>
+      </div>
+      <AgentCommandBlock label={title} command={command} />
+    </div>
+  );
+}
+
 function AgentUpdateDialog({
   host,
   trigger,
+  status,
+  statusCopy,
+  verificationReason,
 }: {
   host: DockerHost;
   trigger: React.ReactNode;
+  status: string;
+  statusCopy: { title: string; description: string };
+  verificationReason: string | null;
 }) {
-  const installCommand = buildWatchtowerAgentInstallCommand(CURRENT_WATCHTOWER_AGENT_RELEASE);
-  const verifyCommand = buildWatchtowerAgentVerifyCommand();
   const updateCopy = buildWatchtowerAgentUpdateCopy(CURRENT_WATCHTOWER_AGENT_RELEASE);
   const installedVersion = host.agent_version || "Pending";
   const latestVersion = CURRENT_WATCHTOWER_AGENT_RELEASE.version;
-  const updateAvailable = isAgentVersionOutdated(host.agent_version);
+  const preflightCommand = buildWatchtowerAgentPreflightCommand(CURRENT_WATCHTOWER_AGENT_RELEASE);
+  const upgradeCommand = buildWatchtowerAgentUpgradeCommand(CURRENT_WATCHTOWER_AGENT_RELEASE);
+  const verifyCommand = buildWatchtowerAgentVerifyCommand();
+  const repairCommand = buildWatchtowerAgentRepairCommand();
 
   return (
     <Dialog>
       <DialogTrigger asChild>{trigger}</DialogTrigger>
-      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Update Host Agent</DialogTitle>
           <DialogDescription>{updateCopy.dialogDescription}</DialogDescription>
@@ -415,10 +501,27 @@ function AgentUpdateDialog({
             </div>
             <div className="rounded-2xl border border-white/10 bg-background/50 p-4">
               <p className="text-xs uppercase tracking-[0.22em] text-muted-foreground">Status</p>
-              <p className="mt-2 text-2xl font-semibold tracking-tight">
-                {updateAvailable ? updateCopy.statusUpdateAvailable : updateCopy.statusCurrent}
-              </p>
+              <p className={cn("mt-2 text-2xl font-semibold tracking-tight", statusSummaryTone(status))}>{statusCopy.title}</p>
+              <p className="mt-1 text-xs text-muted-foreground">{statusCopy.description}</p>
             </div>
+          </div>
+
+          <div className={cn("rounded-2xl border p-4 text-sm", statusTone(status))}>
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <p className="text-xs uppercase tracking-[0.22em] opacity-80">Current state</p>
+                <p className="mt-2 text-base font-medium">{statusCopy.title}</p>
+                <p className="mt-1 text-sm opacity-90">{statusCopy.description}</p>
+              </div>
+              <span className="rounded-full border border-current/20 px-3 py-1 text-xs font-medium uppercase tracking-[0.18em]">
+                {status}
+              </span>
+            </div>
+            {verificationReason ? (
+              <p className="mt-4 rounded-xl border border-white/10 bg-background/40 px-3 py-2 text-sm text-muted-foreground">
+                {verificationReason}
+              </p>
+            ) : null}
           </div>
 
           <div className="rounded-2xl border border-primary/15 bg-primary/5 p-4 text-sm text-muted-foreground">
@@ -436,8 +539,28 @@ function AgentUpdateDialog({
             {updateCopy.sourceNotice ? ` ${updateCopy.sourceNotice}` : ""}
           </div>
 
-          <AgentCommandBlock label={updateCopy.upgradeCommandLabel} command={installCommand} />
-          <AgentCommandBlock label={updateCopy.verifyCommandLabel} command={verifyCommand} />
+          <div className="grid gap-4">
+            <UpdateCommandSection
+              title={updateCopy.preflightCommandLabel}
+              description="Checks prerequisites and verifies the installer before making any changes."
+              command={preflightCommand}
+            />
+            <UpdateCommandSection
+              title={updateCopy.upgradeCommandLabel}
+              description="Downloads the current installer, verifies its checksum, and runs the in-place update."
+              command={upgradeCommand}
+            />
+            <UpdateCommandSection
+              title={updateCopy.verifyCommandLabel}
+              description="Confirms the local agent version and metrics endpoints after the update."
+              command={verifyCommand}
+            />
+            <UpdateCommandSection
+              title={updateCopy.repairCommandLabel}
+              description="Use this when the host needs repair guidance after a failed or partial update."
+              command={repairCommand}
+            />
+          </div>
 
           <div className="rounded-2xl border border-white/10 bg-background/50 p-4 text-sm text-muted-foreground">
             {updateCopy.supportInstructions}
@@ -545,9 +668,13 @@ export function HostWorkspace() {
   const runningCount = containers.filter((container: any) => container.State === "running").length;
   const stoppedCount = Math.max(0, containers.length - runningCount);
   const previewContainers = containers.slice(0, 3);
-  const agentOutdated = selectedHost?.agent_version ? isAgentVersionOutdated(selectedHost.agent_version) : false;
-  const updateCopy = buildWatchtowerAgentUpdateCopy(CURRENT_WATCHTOWER_AGENT_RELEASE);
-  const showAgentUpdateCta = !!selectedHost && (!selectedHost.agent_version || agentOutdated);
+  const agentUpdateStatus = getWatchtowerAgentUpdateStatus({
+    installedVersion: selectedHost?.agent_version ?? null,
+    capabilityGap: selectedHostReadable ? missingExtendedMetrics || !!metricsQuery.failure : false,
+  });
+  const agentUpdateStatusCopy = getWatchtowerAgentUpdateStatusCopy(agentUpdateStatus, CURRENT_WATCHTOWER_AGENT_RELEASE);
+  const verificationReason = agentVerificationReason(metricsQuery.failure, missingExtendedMetrics);
+  const showAgentUpdateCta = !!selectedHost && agentUpdateStatus !== "current";
   const addHostAction = currentOrg ? (
     <AddHostDialog
       orgId={currentOrg.id}
@@ -568,16 +695,20 @@ export function HostWorkspace() {
     try {
       const result = await dockerApi.ping(selectedHost.id);
       const latestVersion = result.latest_agent_version || CURRENT_WATCHTOWER_AGENT_VERSION;
+      const resultStatusCopy =
+        result.agent_update_status
+          ? getWatchtowerAgentUpdateStatusCopy(result.agent_update_status, CURRENT_WATCHTOWER_AGENT_RELEASE)
+          : null;
       toast({
         title: result.ok ? "Connection successful" : "Connection failed",
         description: result.ok
           ? [
               `Docker ${result.docker_version || "detected"}.`,
               result.agent_version
-                ? `Agent ${result.agent_version}${result.agent_update_available ? ` is behind ${latestVersion}` : ""}.`
+                ? `Agent ${result.agent_version}. ${resultStatusCopy?.description || (result.agent_update_available ? `Update available: ${latestVersion}.` : `Current release is ${latestVersion}.`)}`
                 : result.agent_version_error
-                  ? `Agent version not reported yet (${result.agent_version_error}). Current release is ${latestVersion}.`
-                  : `Agent version not reported yet. Current release is ${latestVersion}.`,
+                  ? `Agent version not reported yet (${result.agent_version_error}). ${resultStatusCopy?.description || `Current release is ${latestVersion}.`}`
+                  : `Agent version not reported yet. ${resultStatusCopy?.description || `Current release is ${latestVersion}.`}`,
             ].join(" ")
           : undefined,
       });
@@ -723,7 +854,7 @@ export function HostWorkspace() {
                 </div>
 
                 <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-                  <SummaryCard label="Running containers" value={`${runningCount}`} helper={`${containers.length} total`} icon={Box} />
+                    <SummaryCard label="Running containers" value={`${runningCount}`} helper={`${containers.length} total`} icon={Box} />
                   <SummaryCard
                     label="Uptime"
                     value={formatUptime(metricsQuery.latestPoint?.uptimeSeconds)}
@@ -734,14 +865,19 @@ export function HostWorkspace() {
                           ? `Update or reinstall the host agent to ${CURRENT_WATCHTOWER_AGENT_VERSION}`
                         : selectedHost.status === "connected"
                           ? "Waiting for uptime sample"
-                        : selectedHost.status === "stale"
+                          : selectedHost.status === "stale"
                           ? "Heartbeat is stale"
                           : "Waiting for a successful probe"
                     }
                     icon={Clock3}
                   />
                   <SummaryCard label="Operating system" value={selectedHost.os_info || "Unknown"} helper={`Docker ${selectedHost.docker_version || "pending"}`} icon={Server} />
-                  <SummaryCard label="Agent version" value={selectedHost.agent_version || "Pending"} helper={agentOutdated ? `Update available: ${CURRENT_WATCHTOWER_AGENT_VERSION}` : `Current release: ${CURRENT_WATCHTOWER_AGENT_VERSION}`} icon={Terminal} />
+                  <SummaryCard
+                    label="Agent version"
+                    value={selectedHost.agent_version || "Pending"}
+                    helper={agentUpdateStatusCopy.description}
+                    icon={Terminal}
+                  />
                 </div>
               </div>
 
@@ -755,17 +891,18 @@ export function HostWorkspace() {
                 <div className="flex flex-col gap-3 rounded-xl border border-primary/20 bg-primary/5 px-4 py-4 text-sm text-muted-foreground md:flex-row md:items-center md:justify-between">
                   <div>
                     <p className="font-medium text-foreground">
-                      {selectedHost.agent_version
-                        ? updateCopy.outdatedSummary(selectedHost.agent_version, CURRENT_WATCHTOWER_AGENT_RELEASE.version)
-                        : updateCopy.pendingSummary}
+                      {agentUpdateStatusCopy.title}
                     </p>
                     <p className="mt-1">
-                      {updateCopy.repairSummary}
+                      {agentUpdateStatusCopy.description}
                     </p>
                   </div>
                   <AgentUpdateDialog
                     host={selectedHost}
-                    trigger={<Button className="gap-2"><Terminal className="h-4 w-4" />Open Upgrade Steps</Button>}
+                    status={agentUpdateStatus}
+                    statusCopy={agentUpdateStatusCopy}
+                    verificationReason={verificationReason}
+                    trigger={<Button className="gap-2"><Terminal className="h-4 w-4" />Open Update Steps</Button>}
                   />
                 </div>
               )}
@@ -806,7 +943,14 @@ export function HostWorkspace() {
                         footer={`${metricsQuery.latestPoint.memory.toFixed(0)}% utilized`}
                       />
                     ) : (
-                      <EmptyState title="Memory metrics unavailable" description="Waiting for a usable metrics sample from the host agent." />
+                      <EmptyState
+                        title="Memory metrics unavailable"
+                        description={
+                          missingExtendedMetrics
+                            ? `Update or repair the host agent to restore the full metrics sample.`
+                            : "Waiting for a usable metrics sample from the host agent."
+                        }
+                      />
                     )}
 
                     {selectedHostDisconnected ? (
@@ -827,7 +971,7 @@ export function HostWorkspace() {
                         title="Disk usage unavailable"
                         description={
                           missingExtendedMetrics
-                            ? `This host agent is not reporting per-disk usage yet. Update or reinstall the agent to ${CURRENT_WATCHTOWER_AGENT_VERSION}, then test the connection again.`
+                            ? `This host agent is not reporting per-disk usage yet. Update or repair the agent to ${CURRENT_WATCHTOWER_AGENT_VERSION}, then Verify.`
                             : "Waiting for a usable per-disk metrics sample from the host agent."
                         }
                       />

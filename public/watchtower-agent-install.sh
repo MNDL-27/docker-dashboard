@@ -44,6 +44,14 @@ require_command() {
   command -v "$1" >/dev/null 2>&1 || fail "$1 is required but not installed"
 }
 
+require_jq() {
+  command -v jq >/dev/null 2>&1 || fail "jq is required but not installed. Install jq with your distro package manager, then rerun the installer."
+}
+
+print_preflight_ok() {
+  echo "OK: $1"
+}
+
 check_config() {
   [ -n "$AGENT_API_KEY" ] || fail "AGENT_API_KEY is required. Set it in /etc/watchtower-agent/watchtower-agent.env or export it before starting."
   validate_port "$AGENT_PORT"
@@ -51,11 +59,75 @@ check_config() {
   require_command socat
   require_command curl
   require_command awk
+  require_jq
   require_command df
   require_command mkdir
   require_command tr
   require_command sed
   [ -S "$DOCKER_SOCKET" ] || fail "Docker socket not found at $DOCKER_SOCKET. Confirm Docker is running or update DOCKER_SOCKET in /etc/watchtower-agent/watchtower-agent.env."
+}
+
+run_preflight_checks() {
+  echo "watchtower-agent preflight"
+  [ "$(id -u)" -eq 0 ] || fail "Run this installer with sudo or as root"
+  print_preflight_ok "running as root"
+
+  validate_port "$AGENT_PORT"
+  print_preflight_ok "port ${AGENT_PORT} is valid"
+
+  [ -n "$AGENT_BIND_ADDRESS" ] || fail "AGENT_BIND_ADDRESS must not be empty."
+  print_preflight_ok "bind address ${AGENT_BIND_ADDRESS} is set"
+
+  [ -n "$AGENT_API_KEY" ] || fail "AGENT_API_KEY is required. Set it in /etc/watchtower-agent/watchtower-agent.env or export it before starting."
+  print_preflight_ok "agent API key is present"
+
+  require_command socat
+  print_preflight_ok "socat found"
+
+  require_command curl
+  print_preflight_ok "curl found"
+
+  require_command awk
+  print_preflight_ok "awk found"
+
+  require_jq
+  print_preflight_ok "jq found"
+
+  require_command df
+  print_preflight_ok "df found"
+
+  require_command mkdir
+  print_preflight_ok "mkdir found"
+
+  require_command tr
+  print_preflight_ok "tr found"
+
+  require_command sed
+  print_preflight_ok "sed found"
+
+  [ -d /run/systemd/system ] || fail "systemd is required on this host. For non-systemd environments, run watchtower-agent.sh under another supervisor or containerize it with restart=unless-stopped."
+  print_preflight_ok "systemd detected"
+
+  [ -S "$DOCKER_SOCKET" ] || fail "Docker socket not found at $DOCKER_SOCKET. Confirm Docker is running or update DOCKER_SOCKET in /etc/watchtower-agent/watchtower-agent.env."
+  print_preflight_ok "Docker socket found at $DOCKER_SOCKET"
+
+  local_socket_group="$(stat -c '%G' "$DOCKER_SOCKET")"
+  if [ "$local_socket_group" = "UNKNOWN" ] || [ -z "$local_socket_group" ] || [ "$local_socket_group" = "root" ]; then
+    fail "The Docker socket group for $DOCKER_SOCKET must be a non-root group before installing the agent. Grant the socket to a group such as docker, or rerun with --docker-socket PATH."
+  fi
+  print_preflight_ok "Docker socket group ${local_socket_group} is usable"
+
+  if [ -n "$EXPECTED_VERSION_VALUE" ]; then
+    if [ "$WATCHTOWER_AGENT_VERSION" = "$EXPECTED_VERSION_VALUE" ]; then
+      print_preflight_ok "installer version ${WATCHTOWER_AGENT_VERSION} matches expected ${EXPECTED_VERSION_VALUE}"
+    else
+      fail "Expected installer version ${EXPECTED_VERSION_VALUE}, but this script reports ${WATCHTOWER_AGENT_VERSION}"
+    fi
+  else
+    print_preflight_ok "installer version ${WATCHTOWER_AGENT_VERSION}"
+  fi
+
+  print_preflight_ok "all checks passed"
 }
 
 validate_port() {
@@ -166,31 +238,6 @@ for cmd in bash install systemctl getent useradd groupadd stat socat curl sed aw
   require_command "$cmd"
 done
 
-install_jq() {
-  if command -v jq >/dev/null 2>&1; then
-    return 0
-  fi
-  
-  log "jq is required but not found. Attempting to install jq..."
-  if command -v apk >/dev/null 2>&1; then
-    apk add --no-cache jq
-  elif command -v apt-get >/dev/null 2>&1; then
-    apt-get update -o Dir::Cache::pkgcache="" -o Dir::Cache::srcpkgcache="" -qq && apt-get install -y --no-install-recommends jq
-  elif command -v yum >/dev/null 2>&1; then
-    yum install -y epel-release || true
-    yum install -y jq
-  elif command -v dnf >/dev/null 2>&1; then
-    dnf install -y jq
-  else
-    fail "Could not find a supported package manager (apk, apt-get, yum, dnf) to install jq. Please install jq manually and rerun the installer."
-  fi
-}
-
-install_jq
-require_command jq
-
-[ -d /run/systemd/system ] || fail "systemd is required on this host. For non-systemd environments, run watchtower-agent.sh under another supervisor or containerize it with restart=unless-stopped."
-
 if [ -f "$ENV_FILE" ]; then
   # shellcheck disable=SC1090
   . "$ENV_FILE"
@@ -219,21 +266,12 @@ fi
 
 validate_api_key "$AGENT_API_KEY_VALUE"
 
-SOCKET_GROUP="$(stat -c '%G' "$DOCKER_SOCKET_VALUE")"
-if [ "$SOCKET_GROUP" = "UNKNOWN" ] || [ -z "$SOCKET_GROUP" ] || [ "$SOCKET_GROUP" = "root" ]; then
-  fail "The Docker socket group for $DOCKER_SOCKET_VALUE must be a non-root group before installing the agent. Grant the socket to a group such as docker, or rerun with --docker-socket PATH."
-fi
-
 if [ "$FLAG_CHECK" = "true" ]; then
-  cat <<EOF
-watchtower-agent install preflight OK
-  AGENT_PORT=${AGENT_PORT_VALUE}
-  AGENT_BIND_ADDRESS=${AGENT_BIND_ADDRESS_VALUE}
-  DOCKER_SOCKET=${DOCKER_SOCKET_VALUE}
-  SOCKET_GROUP=${SOCKET_GROUP}
-EOF
+  run_preflight_checks
   exit 0
 fi
+
+check_config
 
 if [ -f "$SERVICE_FILE" ] || [ -f "$ENV_FILE" ] || [ -f "${INSTALL_DIR}/watchtower-agent.sh" ]; then
   log "Existing watchtower-agent install detected; updating files and restarting the service"

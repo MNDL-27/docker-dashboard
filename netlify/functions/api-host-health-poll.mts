@@ -7,7 +7,6 @@ import {
   staleCutoffDate,
   failureStatusForCount,
 } from './lib/host-health.mjs';
-import { isAgentVersionOutdated } from './lib/agent-version.mts';
 import { buildWatchtowerAgentReleaseResponse } from './lib/agent-release.mts';
 import { ensureDockerHostSchema } from './lib/ensure-docker-host-schema.mjs';
 
@@ -170,7 +169,7 @@ export default async (req: Request) => {
         }
 
         const releaseResponse = buildWatchtowerAgentReleaseResponse(agentVersion)
-        const agentNeedsUpdate = !!agentVersion && isAgentVersionOutdated(agentVersion)
+        const agentNeedsUpdate = releaseResponse.agent_update_status === 'update_required'
 
         await sql`
           UPDATE docker_hosts 

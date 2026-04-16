@@ -3,7 +3,6 @@ import { sql } from './lib/db.mjs';
 import { requireAuth } from './lib/auth.mjs';
 import { assertHostProxyAllowed, assertOrganizationWriteAllowed } from './lib/access-controls.mjs';
 import { decryptHostSecrets, SecretCryptoError } from './lib/crypto.mjs';
-import { isAgentVersionOutdated } from './lib/agent-version.mts';
 import { buildWatchtowerAgentReleaseResponse } from './lib/agent-release.mts';
 import { ensureDockerHostSchema } from './lib/ensure-docker-host-schema.mjs';
 import { createProblemResponse } from '../../shared/schema/error.ts';
@@ -679,7 +678,7 @@ export default async (req: Request) => {
       }
 
       const releaseResponse = buildWatchtowerAgentReleaseResponse(agentVersion);
-      const agentNeedsUpdate = !!agentVersion && isAgentVersionOutdated(agentVersion);
+      const agentNeedsUpdate = releaseResponse.agent_update_status === 'update_required';
 
       await sql`
         UPDATE docker_hosts 
