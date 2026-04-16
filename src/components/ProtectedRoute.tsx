@@ -55,8 +55,16 @@ export function ProtectedRoute({
           }
 
           if (res.status === 401) {
+            if (attempt < maxAttempts) {
+              await new Promise((resolve) => setTimeout(resolve, 300 * attempt));
+              continue;
+            }
+
             if (!cancelled) {
-              setAuthState({ status: "unauthenticated", hasOrgs: false, onboardingStatus: null, needsOnboarding: true });
+              setAuthState((prev) => ({
+                ...prev,
+                status: "error",
+              }));
             }
             return;
           }
