@@ -529,6 +529,9 @@ export function HostWorkspace() {
   const selectedPreviewMetrics = metricsQuery.latestPoint
     ? { cpu: metricsQuery.latestPoint.cpu, memory: metricsQuery.latestPoint.memory }
     : null;
+  const missingUptimeMetric = !!metricsQuery.latestPoint && metricsQuery.latestPoint.uptimeSeconds === null;
+  const missingDiskMetrics = !!metricsQuery.latestPoint && metricsQuery.latestPoint.disks.length === 0;
+  const missingExtendedMetrics = missingUptimeMetric || missingDiskMetrics;
   const metricsErrorMessage = metricsQuery.failure
     ? [
         metricsQuery.failure.message,
@@ -727,6 +730,8 @@ export function HostWorkspace() {
                     helper={
                       metricsQuery.latestPoint?.uptimeSeconds !== null && metricsQuery.latestPoint?.uptimeSeconds !== undefined
                         ? "From current host metrics sample"
+                        : missingExtendedMetrics
+                          ? `Update or reinstall the host agent to ${CURRENT_WATCHTOWER_AGENT_VERSION}`
                         : selectedHost.status === "connected"
                           ? "Waiting for uptime sample"
                         : selectedHost.status === "stale"
@@ -818,7 +823,14 @@ export function HostWorkspace() {
                         <DiskUsageCard key={`${disk.device}-${disk.mount}`} disk={disk} />
                       ))
                     ) : (
-                      <EmptyState title="Disk usage unavailable" description="Waiting for a usable per-disk metrics sample from the host agent." />
+                      <EmptyState
+                        title="Disk usage unavailable"
+                        description={
+                          missingExtendedMetrics
+                            ? `This host agent is not reporting per-disk usage yet. Update or reinstall the agent to ${CURRENT_WATCHTOWER_AGENT_VERSION}, then test the connection again.`
+                            : "Waiting for a usable per-disk metrics sample from the host agent."
+                        }
+                      />
                     )}
                   </div>
 
