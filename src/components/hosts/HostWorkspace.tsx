@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { formatDistanceToNowStrict } from "date-fns";
 import { useOrganization } from "@clerk/clerk-react";
-import { useNavigate, useParams, Link } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import {
   Activity,
   Box,
@@ -9,7 +9,6 @@ import {
   CloudCog,
   Copy,
   ExternalLink,
-  HardDrive,
   Loader2,
   Pencil,
   PanelLeftClose,
@@ -233,21 +232,70 @@ function RingCard({ point }: { point: HostMetricsPoint }) {
   const colorVar = value >= 90 ? "var(--destructive)" : value >= 70 ? "var(--warning)" : "var(--primary)";
   
   return (
-    <div className="glass-card min-h-[320px] p-6 flex flex-col items-center justify-center gap-5">
+    <div className="glass-card min-h-[260px] p-5 flex flex-col items-center justify-center gap-4">
       <div className="text-center">
         <p className="text-xs uppercase tracking-[0.24em] text-muted-foreground">CPU usage</p>
       </div>
       <div
-        className="relative flex h-52 w-52 items-center justify-center rounded-full transition-all duration-500"
+        className="relative flex h-44 w-44 items-center justify-center rounded-full transition-all duration-500"
         style={{ background: `conic-gradient(hsl(${colorVar}) ${value}%, rgba(255,255,255,0.06) ${value}% 100%)` }}
       >
-        <div className="flex h-40 w-40 flex-col items-center justify-center rounded-full bg-background/95">
-          <span className="text-5xl font-semibold tracking-tight">{value.toFixed(0)}%</span>
+        <div className="flex h-32 w-32 flex-col items-center justify-center rounded-full bg-background/95">
+          <span className="text-4xl font-semibold tracking-tight">{value.toFixed(0)}%</span>
           <span className="mt-2 text-xs uppercase tracking-[0.2em] text-muted-foreground">
             {point.usedCores.toFixed(2)} / {point.totalCores.toFixed(2)} cores
           </span>
         </div>
       </div>
+    </div>
+  );
+}
+
+function ContainerSummaryCard({
+  total,
+  running,
+  loading,
+  disconnected,
+}: {
+  total: number;
+  running: number;
+  loading: boolean;
+  disconnected: boolean;
+}) {
+  const stopped = Math.max(0, total - running);
+
+  return (
+    <div className="glass-card min-h-[220px] p-5 flex flex-col justify-between">
+      <div className="flex items-center justify-between gap-3">
+        <div>
+          <p className="text-xs uppercase tracking-[0.22em] text-muted-foreground">Containers</p>
+          <h3 className="mt-1 text-lg font-semibold tracking-tight">Host workload</h3>
+        </div>
+        <Box className="h-5 w-5 text-muted-foreground" />
+      </div>
+
+      {disconnected ? (
+        <p className="text-sm text-muted-foreground">Reconnect the host to load container counts.</p>
+      ) : loading ? (
+        <div className="flex flex-1 items-center justify-center">
+          <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+        </div>
+      ) : (
+        <div className="grid gap-3 sm:grid-cols-2">
+          <div className="rounded-2xl border border-white/10 bg-background/40 p-4">
+            <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">Total</p>
+            <p className="mt-2 text-3xl font-semibold tracking-tight">{total}</p>
+          </div>
+          <div className="rounded-2xl border border-white/10 bg-background/40 p-4">
+            <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">Running</p>
+            <p className="mt-2 text-3xl font-semibold tracking-tight">{running}</p>
+          </div>
+        </div>
+      )}
+
+      {!disconnected && !loading ? (
+        <p className="text-sm text-muted-foreground">{stopped} stopped containers on this host.</p>
+      ) : null}
     </div>
   );
 }
@@ -669,8 +717,6 @@ export function HostWorkspace() {
 
   const containers = Array.isArray(containersQuery.data) ? containersQuery.data : [];
   const runningCount = containers.filter((container: any) => container.State === "running").length;
-  const stoppedCount = Math.max(0, containers.length - runningCount);
-  const previewContainers = containers.slice(0, 3);
   const agentUpdateStatus = getWatchtowerAgentUpdateStatus({
     installedVersion: selectedHost?.agent_version ?? null,
     capabilityGap: selectedHostReadable ? missingExtendedMetrics || !!metricsQuery.failure : false,
@@ -937,21 +983,30 @@ export function HostWorkspace() {
                 </div>
               )}
 
-              <div className="grid gap-6 xl:grid-cols-[minmax(280px,360px),1fr]">
-                {selectedHostDisconnected ? (
-                  <EmptyState title="Host is disconnected" description="Reconnect the host or run a successful connection test to start collecting host metrics." />
-                ) : metricsQuery.isLoading && metricsQuery.history.length === 0 ? (
-                  <div className="glass-card min-h-[320px] flex items-center justify-center"><Loader2 className="h-8 w-8 animate-spin text-muted-foreground" /></div>
-                ) : metricsQuery.failure && !metricsQuery.latestPoint ? (
-                  <EmptyState
-                    title={metricsFailureDisplay?.title || "Host metrics unavailable"}
-                    description={metricsFailureDisplay?.description || "The host metrics probe failed before a usable sample was returned."}
+              <div className="grid gap-6 xl:grid-cols-[minmax(280px,340px),1fr]">
+                <div className="grid gap-6">
+                  {selectedHostDisconnected ? (
+                    <EmptyState title="Host is disconnected" description="Reconnect the host or run a successful connection test to start collecting host metrics." />
+                  ) : metricsQuery.isLoading && metricsQuery.history.length === 0 ? (
+                    <div className="glass-card min-h-[260px] flex items-center justify-center"><Loader2 className="h-8 w-8 animate-spin text-muted-foreground" /></div>
+                  ) : metricsQuery.failure && !metricsQuery.latestPoint ? (
+                    <EmptyState
+                      title={metricsFailureDisplay?.title || "Host metrics unavailable"}
+                      description={metricsFailureDisplay?.description || "The host metrics probe failed before a usable sample was returned."}
+                    />
+                  ) : metricsQuery.latestPoint ? (
+                    <RingCard point={metricsQuery.latestPoint} />
+                  ) : (
+                    <EmptyState title="No CPU metrics yet" description="The host is connected, but the agent has not returned a usable metrics sample yet." />
+                  )}
+
+                  <ContainerSummaryCard
+                    total={containers.length}
+                    running={runningCount}
+                    loading={containersQuery.isLoading}
+                    disconnected={selectedHostDisconnected}
                   />
-                ) : metricsQuery.latestPoint ? (
-                  <RingCard point={metricsQuery.latestPoint} />
-                ) : (
-                  <EmptyState title="No CPU metrics yet" description="The host is connected, but the agent has not returned a usable metrics sample yet." />
-                )}
+                </div>
 
                 <div className="grid gap-6">
                   <div className="grid gap-6 lg:grid-cols-2">
@@ -1069,77 +1124,6 @@ export function HostWorkspace() {
                   {metricsErrorMessage}
                 </div>
               )}
-
-              <div className="glass-card overflow-hidden">
-                <div className="border-b border-white/5 px-5 py-4 flex items-center justify-between gap-4">
-                  <div>
-                    <p className="text-xs uppercase tracking-[0.22em] text-muted-foreground">Containers</p>
-                    <h3 className="mt-1 text-lg font-semibold">Host workload</h3>
-                  </div>
-                  <span className="inline-flex items-center gap-2 text-sm text-muted-foreground">
-                    <Box className="h-4 w-4" />
-                    {runningCount} running / {containers.length} total
-                  </span>
-                </div>
-                {selectedHostDisconnected ? (
-                  <div className="p-8 text-center text-sm text-muted-foreground">Host is not connected. Test the connection to fetch container data.</div>
-                ) : containersQuery.isLoading ? (
-                  <div className="flex items-center justify-center h-24"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>
-                ) : containers.length === 0 ? (
-                  <div className="p-8 text-center text-sm text-muted-foreground">No containers found on this host.</div>
-                ) : (
-                  <div className="p-5 space-y-5">
-                    <div className="grid gap-3 sm:grid-cols-3">
-                      <div className="rounded-2xl border border-white/10 bg-background/40 p-4">
-                        <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">Running</p>
-                        <p className="mt-2 text-2xl font-semibold tracking-tight">{runningCount}</p>
-                      </div>
-                      <div className="rounded-2xl border border-white/10 bg-background/40 p-4">
-                        <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">Stopped</p>
-                        <p className="mt-2 text-2xl font-semibold tracking-tight">{stoppedCount}</p>
-                      </div>
-                      <div className="rounded-2xl border border-white/10 bg-background/40 p-4">
-                        <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">Total</p>
-                        <p className="mt-2 text-2xl font-semibold tracking-tight">{containers.length}</p>
-                      </div>
-                    </div>
-                    <div className="space-y-3">
-                      <div className="flex items-center gap-2 text-xs uppercase tracking-[0.18em] text-muted-foreground">
-                        <HardDrive className="h-3.5 w-3.5" />
-                        Recent containers
-                      </div>
-                      <div className="space-y-2">
-                        {previewContainers.map((container: any) => {
-                          const name = (container.Names?.[0] || container.Id?.substring(0, 12) || "unknown").replace(/^\//, "");
-                          const isRunning = container.State === "running";
-                          return (
-                            <div key={container.Id || name} className="flex items-center justify-between gap-3 rounded-2xl border border-white/10 bg-background/30 px-4 py-3">
-                              <div className="min-w-0">
-                                <p className="truncate text-sm font-medium">{name}</p>
-                                <p className="truncate text-xs text-muted-foreground">{container.Image || "Image unavailable"}</p>
-                              </div>
-                              <span
-                                className={cn(
-                                  "inline-flex items-center rounded-full border px-2.5 py-1 text-[11px] font-medium uppercase tracking-[0.16em]",
-                                  isRunning ? "border-success/25 bg-success/10 text-success" : "border-white/10 bg-background/60 text-muted-foreground",
-                                )}
-                              >
-                                {container.State || "unknown"}
-                              </span>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    </div>
-                    <div className="flex items-center justify-between gap-4">
-                      <p className="text-sm text-muted-foreground">Compact workload summary for this host. Open the containers page for full details and actions.</p>
-                      <Button variant="outline" asChild>
-                        <Link to={`/app/containers?host=${selectedHost.id}`}>View all containers</Link>
-                      </Button>
-                    </div>
-                  </div>
-                )}
-              </div>
             </div>
           ) : (
             <div className="glass-card p-10 text-center text-muted-foreground">Select a host to view its details.</div>
