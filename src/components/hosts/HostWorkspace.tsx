@@ -12,6 +12,8 @@ import {
   HardDrive,
   Loader2,
   Pencil,
+  PanelLeftClose,
+  PanelLeftOpen,
   Plus,
   RefreshCw,
   Search,
@@ -623,6 +625,7 @@ export function HostWorkspace() {
   const { data: hosts = [], isLoading, refetch } = useDockerHosts(currentOrg?.id);
   const [search, setSearch] = useState("");
   const [testing, setTesting] = useState(false);
+  const [isInfrastructureVisible, setIsInfrastructureVisible] = useState(true);
 
   const filteredHosts = useMemo(() => {
     const query = search.trim().toLowerCase();
@@ -757,39 +760,66 @@ export function HostWorkspace() {
           {currentOrg && <AddHostDialog orgId={currentOrg.id} trigger={<Button>Connect Your First Host</Button>} />}
         </div>
       ) : (
-        <div className="grid gap-6 xl:grid-cols-[320px,minmax(0,1fr)]">
-          <div className="glass-card overflow-hidden">
-            <div className="border-b border-white/5 px-5 py-4 space-y-4">
-              <div>
-                <p className="text-xs uppercase tracking-[0.22em] text-muted-foreground">Host infrastructure</p>
-                <h2 className="mt-1 text-lg font-semibold tracking-tight">Browse hosts</h2>
+        <div className={cn("grid gap-6", isInfrastructureVisible ? "xl:grid-cols-[320px,minmax(0,1fr)]" : "xl:grid-cols-[minmax(0,1fr)]")}>
+          {isInfrastructureVisible ? (
+            <div className="glass-card overflow-hidden">
+              <div className="border-b border-white/5 px-5 py-4 space-y-4">
+                <div className="flex items-start justify-between gap-4">
+                  <div>
+                    <p className="text-xs uppercase tracking-[0.22em] text-muted-foreground">Host infrastructure</p>
+                    <h2 className="mt-1 text-lg font-semibold tracking-tight">Browse hosts</h2>
+                  </div>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="shrink-0"
+                    onClick={() => setIsInfrastructureVisible(false)}
+                    aria-label="Hide host infrastructure panel"
+                  >
+                    <PanelLeftClose className="h-4 w-4" />
+                  </Button>
+                </div>
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground pointer-events-none" />
+                  <Input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search hosts..." className="pl-9" />
+                </div>
               </div>
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground pointer-events-none" />
-                <Input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search hosts..." className="pl-9" />
-              </div>
+              <ScrollArea className="h-[calc(100vh-18rem)]">
+                <div className="space-y-3 p-4">
+                  {filteredHosts.length === 0 ? (
+                    <div className="rounded-2xl border border-dashed border-white/10 p-6 text-center text-sm text-muted-foreground">No hosts match your search.</div>
+                  ) : (
+                    filteredHosts.map((host) => (
+                      <HostCard
+                        key={host.id}
+                        host={host}
+                        selected={host.id === selectedHost?.id}
+                        previewMetrics={host.id === selectedHost?.id ? selectedPreviewMetrics : null}
+                        onSelect={() => handleSelectHost(host.id)}
+                      />
+                    ))
+                  )}
+                </div>
+              </ScrollArea>
             </div>
-            <ScrollArea className="h-[calc(100vh-18rem)]">
-              <div className="space-y-3 p-4">
-                {filteredHosts.length === 0 ? (
-                  <div className="rounded-2xl border border-dashed border-white/10 p-6 text-center text-sm text-muted-foreground">No hosts match your search.</div>
-                ) : (
-                  filteredHosts.map((host) => (
-                    <HostCard
-                      key={host.id}
-                      host={host}
-                      selected={host.id === selectedHost?.id}
-                      previewMetrics={host.id === selectedHost?.id ? selectedPreviewMetrics : null}
-                      onSelect={() => handleSelectHost(host.id)}
-                    />
-                  ))
-                )}
-              </div>
-            </ScrollArea>
-          </div>
+          ) : null}
 
           {selectedHost ? (
             <div className="space-y-6">
+              {!isInfrastructureVisible ? (
+                <div className="flex justify-start">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    className="gap-2"
+                    onClick={() => setIsInfrastructureVisible(true)}
+                  >
+                    <PanelLeftOpen className="h-4 w-4" />
+                    Show Host Infrastructure
+                  </Button>
+                </div>
+              ) : null}
               <div className="glass-card p-6 space-y-5">
                 <div className="flex flex-col gap-5 xl:flex-row xl:items-start xl:justify-between">
                   <div className="flex items-start gap-4">
