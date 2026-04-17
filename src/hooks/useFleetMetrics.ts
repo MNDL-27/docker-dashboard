@@ -14,6 +14,9 @@ export interface FleetMetrics {
   networkOutBytesPerSec: number | null;
   diskReadBytesPerSec: number | null;
   diskWriteBytesPerSec: number | null;
+  reportingHosts: number;
+  totalHosts: number;
+  isPartial: boolean;
 }
 
 interface FleetMetricsApiPoint {
@@ -29,6 +32,9 @@ interface FleetMetricsApiPoint {
   networkOutBytesPerSec?: number;
   diskReadBytesPerSec?: number;
   diskWriteBytesPerSec?: number;
+  reportingHosts?: number;
+  totalHosts?: number;
+  isPartial?: boolean;
   network_in_bytes_per_sec?: number;
   network_out_bytes_per_sec?: number;
   disk_read_bytes_per_sec?: number;
@@ -90,6 +96,9 @@ function normalizeFleetMetricPoint(point: FleetMetricsApiPoint): FleetMetrics | 
   const networkOutBytesPerSec = normalizeOptionalRate(point.networkOutBytesPerSec ?? point.network_out_bytes_per_sec);
   const diskReadBytesPerSec = normalizeOptionalRate(point.diskReadBytesPerSec ?? point.disk_read_bytes_per_sec);
   const diskWriteBytesPerSec = normalizeOptionalRate(point.diskWriteBytesPerSec ?? point.disk_write_bytes_per_sec);
+  const reportingHosts = Math.max(0, toFiniteNumber(point.reportingHosts) ?? 0);
+  const totalHosts = Math.max(0, toFiniteNumber(point.totalHosts) ?? 0);
+  const isPartial = point.isPartial === true;
 
   if (
     cpu === null ||
@@ -140,6 +149,9 @@ function normalizeFleetMetricPoint(point: FleetMetricsApiPoint): FleetMetrics | 
     networkOutBytesPerSec,
     diskReadBytesPerSec,
     diskWriteBytesPerSec,
+    reportingHosts,
+    totalHosts,
+    isPartial,
   };
 }
 

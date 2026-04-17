@@ -23,6 +23,9 @@ interface FleetMetricsPoint {
   networkOutBytesPerSec: number | null;
   diskReadBytesPerSec: number | null;
   diskWriteBytesPerSec: number | null;
+  reportingHosts: number;
+  totalHosts: number;
+  isPartial: boolean;
 }
 
 interface HostMetricsResponse {
@@ -227,6 +230,9 @@ export default async (req: Request) => {
         networkOutBytesPerSec: networkOutCount > 0 ? networkOutSum : null,
         diskReadBytesPerSec: diskReadCount > 0 ? diskReadSum : null,
         diskWriteBytesPerSec: diskWriteCount > 0 ? diskWriteSum : null,
+        reportingHosts: hostCount,
+        totalHosts: hosts.length,
+        isPartial: hostCount > 0 && hostCount < hosts.length,
       }];
 
     return new Response(JSON.stringify(fleetMetrics), { headers });
