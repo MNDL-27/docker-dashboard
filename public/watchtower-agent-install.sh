@@ -47,8 +47,51 @@ require_command() {
   command -v "$1" >/dev/null 2>&1 || fail "$1 is required but not installed"
 }
 
+install_package() {
+  local package_name="$1"
+
+  if command -v apt-get >/dev/null 2>&1; then
+    export DEBIAN_FRONTEND=noninteractive
+    apt-get update >/dev/null 2>&1 || fail "Failed to update apt package metadata while installing ${package_name}"
+    apt-get install -y "$package_name" >/dev/null 2>&1 || fail "Failed to install ${package_name} with apt-get"
+    return 0
+  fi
+
+  if command -v dnf >/dev/null 2>&1; then
+    dnf install -y "$package_name" >/dev/null 2>&1 || fail "Failed to install ${package_name} with dnf"
+    return 0
+  fi
+
+  if command -v yum >/dev/null 2>&1; then
+    yum install -y "$package_name" >/dev/null 2>&1 || fail "Failed to install ${package_name} with yum"
+    return 0
+  fi
+
+  if command -v apk >/dev/null 2>&1; then
+    apk add --no-cache "$package_name" >/dev/null 2>&1 || fail "Failed to install ${package_name} with apk"
+    return 0
+  fi
+
+  if command -v zypper >/dev/null 2>&1; then
+    zypper --non-interactive install "$package_name" >/dev/null 2>&1 || fail "Failed to install ${package_name} with zypper"
+    return 0
+  fi
+
+  fail "${package_name} is required but no supported package manager was found. Install ${package_name} manually and rerun the installer."
+}
+
 require_jq() {
   command -v jq >/dev/null 2>&1 || fail "jq is required but not installed. Install jq with your distro package manager, then rerun the installer."
+}
+
+ensure_jq() {
+  if command -v jq >/dev/null 2>&1; then
+    return 0
+  fi
+
+  log "Installing jq automatically"
+  install_package jq
+  require_jq
 }
 
 print_preflight_ok() {
@@ -295,6 +338,10 @@ EXPECTED_VERSION_VALUE="${CLI_EXPECTED_VERSION:-${WATCHTOWER_AGENT_EXPECTED_VERS
 ENROLLMENT_TOKEN_VALUE="${CLI_ENROLLMENT_TOKEN:-}"
 ENROLL_URL_VALUE="${CLI_ENROLL_URL:-}"
 CONNECTION_MODE_VALUE="${CLI_CONNECTION_MODE:-agent}"
+
+if [ "$FLAG_CHECK" != "true" ]; then
+  ensure_jq
+fi
 
 if [ -n "$ENROLLMENT_TOKEN_VALUE" ]; then
   log "Checking enrollment token"
