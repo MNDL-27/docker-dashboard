@@ -590,19 +590,18 @@ function AgentUpdateDialog({
               {CURRENT_WATCHTOWER_AGENT_RELEASE.sourceLabel}
               <ExternalLink className="h-3.5 w-3.5" />
             </a>
-            . Installer checksum: <code className="rounded bg-background px-1.5 py-0.5">{CURRENT_WATCHTOWER_AGENT_RELEASE.installerSha256}</code>
             {updateCopy.sourceNotice ? ` ${updateCopy.sourceNotice}` : ""}
           </div>
 
           <div className="grid gap-4">
             <UpdateCommandSection
               title={updateCopy.preflightCommandLabel}
-              description="Checks prerequisites and verifies the installer before making any changes."
+              description="Checks prerequisites and verifies the installer automatically before making any changes."
               command={preflightCommand}
             />
             <UpdateCommandSection
               title={updateCopy.upgradeCommandLabel}
-              description="Downloads the current installer, verifies its checksum, and runs the in-place update."
+              description="Downloads the current installer, verifies it automatically, and runs the in-place update."
               command={upgradeCommand}
             />
             <UpdateCommandSection

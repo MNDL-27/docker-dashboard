@@ -185,11 +185,11 @@ sudo watchtower-agent-uninstall`;
 
           <StepCard step={3} title="Update">
             <p className="text-sm text-muted-foreground">
-              Run the manual install or in-place update on the host. It downloads the current installer, verifies its checksum, and preserves the stored config in <code className="bg-muted px-1 rounded">/etc/watchtower-agent/watchtower-agent.env</code>.
+              Run the manual install or in-place update on the host. It downloads the current installer, verifies it automatically, and preserves the stored config in <code className="bg-muted px-1 rounded">/etc/watchtower-agent/watchtower-agent.env</code>.
             </p>
             <CopyBlock label={`Manual Install / Update (${CURRENT_WATCHTOWER_AGENT_RELEASE.tag})`} code={updateCommand} />
             <InfoBox>
-              The update is atomic: the installer is only executed after the checksum matches. If the host already has the agent, rerunning this command replaces the runtime in place.
+              The update is atomic: the installer only runs after the automatic integrity check passes. If the host already has the agent, rerunning this command replaces the runtime in place.
             </InfoBox>
           </StepCard>
 

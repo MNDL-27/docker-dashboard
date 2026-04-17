@@ -115,14 +115,29 @@ function buildAtomicInstallerCommand({
 
   return `( set -euo pipefail
 INSTALLER_URL="${installerUrl}"
-INSTALLER_SHA256="${release.installerSha256}"
+EXPECTED_INSTALLER_SHA256="${release.installerSha256}"
 TMP_FILE="$(mktemp)"
 trap 'rm -f "$TMP_FILE"' EXIT
 
+echo "Downloading Dockerdash installer..."
 curl -fsSL "$INSTALLER_URL" -o "$TMP_FILE"
-echo "$INSTALLER_SHA256  $TMP_FILE" | sha256sum -c -
+
+echo "Verifying installer..."
+ACTUAL_INSTALLER_SHA256="$(sha256sum "$TMP_FILE" | awk '{print toupper($1)}')"
+if [ "$ACTUAL_INSTALLER_SHA256" != "$EXPECTED_INSTALLER_SHA256" ]; then
+  echo "ERROR: Installer verification failed." >&2
+  echo "Expected SHA256: $EXPECTED_INSTALLER_SHA256" >&2
+  echo "Actual SHA256:   $ACTUAL_INSTALLER_SHA256" >&2
+  echo "Refresh Dockerdash, copy a fresh command, and try again." >&2
+  exit 1
+fi
+
 chmod +x "$TMP_FILE"
-sudo "$TMP_FILE" ${actionArgs} )`;
+if [ "$(id -u)" -eq 0 ]; then
+  "$TMP_FILE" ${actionArgs}
+else
+  sudo "$TMP_FILE" ${actionArgs}
+fi )`;
 }
 
 export function buildWatchtowerAgentPreflightCommand(
