@@ -4,9 +4,10 @@ import { requirePlatformAdmin } from "./admin-auth.mjs";
 import { assertAdminReason, normalizeAdminReason, recordAdminAudit } from "./admin-audit.mjs";
 import { ensureAdminSchema } from "./ensure-admin-schema.mjs";
 import { runSecretMigration } from "./secret-migration.mjs";
+import { buildCorsHeaders } from "./security.mjs";
 
 const headers = {
-  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Origin": "*",  // Will be overridden by buildCorsHeaders in responses
   "Access-Control-Allow-Headers": "Content-Type, Authorization",
   "Access-Control-Allow-Methods": "GET, POST, PATCH, DELETE, OPTIONS",
   "Content-Type": "application/json",
@@ -830,8 +831,16 @@ async function runAdminSecretMigration(req: Request) {
 }
 
 export async function handleAdminRequest(req: Request) {
+  // Build secure CORS headers based on request origin
+  const corsHeaders = buildCorsHeaders(req);
+  
+  // Override the json helper to use CORS headers
+  function json(data: unknown, status = 200) {
+    return new Response(JSON.stringify(data), { status, headers: corsHeaders });
+  }
+
   if (req.method === "OPTIONS") {
-    return new Response(null, { headers });
+    return new Response(null, { headers: corsHeaders });
   }
 
   try {
