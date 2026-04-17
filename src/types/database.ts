@@ -17,7 +17,27 @@ export interface Organization {
   paddle_price_id?: string | null;
   current_period_ends_at?: string | null;
   cancel_at_period_end: boolean;
+  donor_premium_expires_at?: string | null;
+  payment_provider?: string | null;
   billing_updated_at: string;
+}
+
+export interface BillingEvent {
+  id: string;
+  provider: string;
+  provider_event_id: string | null;
+  amount: number | null;
+  currency: string | null;
+  metadata: Record<string, unknown>;
+  raw_payload: Record<string, unknown>;
+  verified: boolean;
+  verification_error: string | null;
+  matched: boolean;
+  matched_organization_id: string | null;
+  matched_by: string | null;
+  matched_at: string | null;
+  received_at: string;
+  created_at: string;
 }
 
 export interface OrganizationMember {

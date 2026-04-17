@@ -56,6 +56,9 @@ function useAdminMutation<TVariables>(mutationFn: (variables: TVariables) => Pro
       queryClient.invalidateQueries({ queryKey: ["admin-hosts"] });
       queryClient.invalidateQueries({ queryKey: ["admin-audit-log"] });
       queryClient.invalidateQueries({ queryKey: ["admin-operations"] });
+      queryClient.invalidateQueries({ queryKey: ["admin-billing-unmatched"] });
+      queryClient.invalidateQueries({ queryKey: ["admin-donor-email-deliveries"] });
+      queryClient.invalidateQueries({ queryKey: ["admin-donor-email-delivery"] });
       queryClient.invalidateQueries({ queryKey: ["auth-me"] });
     },
   });
@@ -123,4 +126,36 @@ export function useMarkAdminHostNeedsReconnect() {
 
 export function useRunAdminSecretMigration() {
   return useAdminMutation((values: { reason: string; organization_id?: string; host_id?: string; dry_run?: boolean }) => adminApi.migrateSecrets(values));
+}
+
+export function useAdminUnmatchedBillingEvents(limit = 50) {
+  return useQuery({
+    queryKey: ["admin-billing-unmatched", limit],
+    queryFn: () => adminApi.getUnmatchedBillingEvents(limit),
+  });
+}
+
+export function useAdminMatchBillingEvent() {
+  return useAdminMutation((values: { billing_event_id: string; organization_id: string; reason: string; grant_days?: number }) =>
+    adminApi.matchBillingEvent(values));
+}
+
+export function useAdminDonorEmailDeliveries(limit = 100) {
+  return useQuery({
+    queryKey: ["admin-donor-email-deliveries", limit],
+    queryFn: () => adminApi.getDonorEmailDeliveries(limit),
+  });
+}
+
+export function useAdminDonorEmailDelivery(deliveryId: string | null) {
+  return useQuery({
+    queryKey: ["admin-donor-email-delivery", deliveryId],
+    queryFn: () => adminApi.getDonorEmailDelivery(deliveryId!),
+    enabled: Boolean(deliveryId),
+  });
+}
+
+export function useAdminResendDonorEmailDelivery() {
+  return useAdminMutation(({ deliveryId, reason }: { deliveryId: string; reason: string }) =>
+    adminApi.resendDonorEmailDelivery(deliveryId, reason));
 }

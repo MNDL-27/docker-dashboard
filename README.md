@@ -282,6 +282,31 @@ If a host fails, `consecutive_failures` increments. After **3 consecutive failur
 
 ---
 
+## Donor Premium (Manual + Webhook-Assisted)
+
+If your region cannot use the primary checkout flow yet, you can run a donor-gated premium pilot:
+
+1. Open **Billing** and generate a donor token (`DNR-XXXXXXXX`).
+2. Ask the donor to include that token in the Liberapay or PayPal note.
+3. Configure webhook secrets for semiautomatic matching:
+   - `LIBERAPAY_WEBHOOK_SECRET`
+   - `PAYPAL_WEBHOOK_SECRET`
+4. Configure donor email delivery with Resend:
+   - `EMAIL_PROVIDER=resend`
+   - `EMAIL_FROM`
+   - `EMAIL_REPLY_TO`
+   - `RESEND_API_KEY`
+   - optional reminder gate: `DONOR_REMINDER_CRON_SECRET`
+   - donor emails now include HTML + text versions for better deliverability and readability
+5. Send webhook POSTs to:
+   - `POST /api/billing/webhook/liberapay`
+   - `POST /api/billing/webhook/paypal`
+6. Use the scheduled donor reminder function (`POST /api/donor-reminders`) or Netlify schedule to send 7/3/1 day expiry reminders.
+7. In **Admin → Billing**, review donor email delivery history, inspect provider errors/message IDs, and retry failed sends with a logged reason.
+8. For unmatched events, use **Admin → Billing** manual reconciliation and grant donor premium days.
+
+The donor flow grants **30 days** of premium per matched donation by default.
+
 ## Common Setup Mistakes
 
 | Symptom | Cause | Fix |

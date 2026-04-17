@@ -50,6 +50,8 @@ export interface AdminOrganizationRow {
   paddle_subscription_id: string | null;
   paddle_customer_id: string | null;
   paddle_price_id: string | null;
+  donor_premium_expires_at: string | null;
+  payment_provider: string | null;
   onboarding_status: string;
   is_locked: boolean;
   lock_reason: string | null;
@@ -134,4 +136,37 @@ export interface AdminBillingUpdate {
   subscription_status?: string;
   current_period_ends_at?: string | null;
   cancel_at_period_end?: boolean;
+}
+
+export interface AdminBillingEvent {
+  id: string;
+  provider: string;
+  provider_event_id: string | null;
+  amount: number | null;
+  currency: string | null;
+  metadata: Record<string, unknown>;
+  raw_payload: Record<string, unknown>;
+  verified: boolean;
+  verification_error: string | null;
+  matched: boolean;
+  matched_organization_id: string | null;
+  matched_by: string | null;
+  matched_at: string | null;
+  received_at: string;
+  created_at: string;
+}
+
+export interface AdminDonorEmailDelivery {
+  id: string;
+  organization_id: string;
+  organization_name: string;
+  recipient_email: string;
+  template: string;
+  provider: string;
+  provider_message_id: string | null;
+  status: string;
+  error: string | null;
+  metadata: Record<string, unknown>;
+  sent_at: string;
+  sent_on: string;
 }

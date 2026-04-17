@@ -3,6 +3,7 @@ import { requireAuth } from './lib/auth.mjs';
 import { sql } from './lib/db.mjs';
 import { ensureAlertsSchema } from './lib/ensure-alerts-schema.mjs';
 import { ensureDefaultAlertRules, listAlertRules, requireOrganizationAdmin, syncAlertEvents } from './lib/alerts.mjs';
+import { assertAdvancedAlertsAccessAllowed } from './lib/access-controls.mjs';
 
 const headers = {
   'Access-Control-Allow-Origin': '*',
@@ -26,6 +27,7 @@ export default async (req: Request) => {
 
     if (req.method === 'POST') {
       await requireOrganizationAdmin(auth);
+      await assertAdvancedAlertsAccessAllowed({ organizationId: auth.orgId, isPlatformAdmin: auth.isPlatformAdmin });
       const body = await req.json();
 
       const [rule] = await sql`
@@ -52,6 +54,7 @@ export default async (req: Request) => {
 
     if (req.method === 'PATCH') {
       await requireOrganizationAdmin(auth);
+      await assertAdvancedAlertsAccessAllowed({ organizationId: auth.orgId, isPlatformAdmin: auth.isPlatformAdmin });
       const body = await req.json();
       if (!body?.id) {
         return new Response(JSON.stringify({ error: 'Rule id required' }), { status: 400, headers });

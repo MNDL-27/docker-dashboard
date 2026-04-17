@@ -2,7 +2,7 @@ import { PageHeader } from "@/components/shared/PageHeader";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { AlertTriangle, Construction, Check, ArrowRight, X, Loader2, Zap, Box } from "lucide-react";
+import { AlertTriangle, Construction, Check, ArrowRight, X, Loader2, Zap, Box, HeartHandshake } from "lucide-react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { useOrganization, useUser } from "@clerk/clerk-react";
@@ -31,15 +31,30 @@ export default function BillingPage() {
   const { user } = useUser();
   const { toast } = useToast();
   const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
+  const [donorIntentLoading, setDonorIntentLoading] = useState(false);
+  const [donorIntent, setDonorIntent] = useState<null | {
+    reference_token: string;
+    instructions: string[];
+    grant_days: number;
+  }>(null);
+  const [donorTransactionId, setDonorTransactionId] = useState("");
   const [paddleStatus, setPaddleStatus] = useState<"checking" | "ready" | "unavailable">(() =>
     typeof window !== "undefined" && window.Paddle ? "ready" : "checking",
   );
 
   // Fetch real organization details including billing state
-  const { data: orgDetails, isLoading, refetch } = useQuery({
+  const { data: orgDetails, isLoading } = useQuery({
     queryKey: ['billing-org-details', organization?.id],
     queryFn: async () => {
-      const orgs = await apiFetch('/organizations') as Array<{ id: string; plan: string; subscription_status?: string; current_period_ends_at?: string; cancel_at_period_end?: boolean }>;
+      const orgs = await apiFetch('/organizations') as Array<{
+        id: string;
+        plan: string;
+        subscription_status?: string;
+        current_period_ends_at?: string;
+        cancel_at_period_end?: boolean;
+        donor_premium_expires_at?: string | null;
+        payment_provider?: string | null;
+      }>;
       return orgs.find(o => o.id === organization?.id);
     },
     enabled: !!organization?.id,
@@ -134,6 +149,52 @@ export default function BillingPage() {
     sessionStorage.removeItem("dockerdash_pending_plan");
   };
 
+  const donationUrl = import.meta.env.VITE_DONATION_URL || "https://liberapay.com";
+  const paypalDonationUrl = import.meta.env.VITE_PAYPAL_DONATION_URL || "https://paypal.me";
+
+  const handleCreateDonorIntent = async () => {
+    if (!organization?.id) return;
+
+    setDonorIntentLoading(true);
+    try {
+      const response = await apiFetch('/donor-intent', {
+        method: 'POST',
+        body: {
+          organization_id: organization.id,
+          intended_plan: selectedPlan || 'pro',
+          payer_email: user?.primaryEmailAddress?.emailAddress || undefined,
+        },
+      }) as { reference_token: string; instructions: string[]; grant_days: number };
+
+      setDonorIntent(response);
+      toast({
+        title: 'Donor token created',
+        description: `Reference ${response.reference_token} ready. Include it in your payment note.`,
+      });
+    } catch (error) {
+      toast({
+        title: 'Could not create donor token',
+        description: error instanceof Error ? error.message : 'Please retry in a few moments.',
+        variant: 'destructive',
+      });
+    } finally {
+      setDonorIntentLoading(false);
+    }
+  };
+
+  const handleSubmitTransactionHint = () => {
+    if (!donorTransactionId.trim()) {
+      toast({ title: 'Transaction ID required', description: 'Paste your PayPal transaction ID first.', variant: 'destructive' });
+      return;
+    }
+
+    toast({
+      title: 'Payment note recorded',
+      description: 'Share this transaction ID with support/admin for faster donor premium activation.',
+    });
+    setDonorTransactionId('');
+  };
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -182,8 +243,14 @@ export default function BillingPage() {
               )}
               <div className="flex justify-between text-sm">
                 <span className="text-muted-foreground">Payment Method</span>
-                <span>Paddle managed</span>
+                <span>{orgDetails.payment_provider ? `${orgDetails.payment_provider} managed` : 'Paddle managed'}</span>
               </div>
+              {orgDetails.donor_premium_expires_at && (
+                <div className="flex justify-between text-sm">
+                  <span className="text-muted-foreground">Donor premium access</span>
+                  <span>Active until {new Date(orgDetails.donor_premium_expires_at).toLocaleDateString()}</span>
+                </div>
+              )}
             </div>
 
             <div className="mt-8 flex gap-3">
@@ -227,7 +294,7 @@ export default function BillingPage() {
           breadcrumbs={[{ label: "Management" }, { label: "Billing" }, { label: "Checkout" }]}
         />
         
-        <div className="max-w-md mx-auto">
+        <div className="max-w-md mx-auto space-y-4">
           <div className="glass-card overflow-hidden ring-2 ring-primary">
             <div className="p-6 border-b border-border bg-primary/5 flex justify-between items-center">
               <div>
@@ -271,6 +338,56 @@ export default function BillingPage() {
               </button>
             </div>
           </div>
+
+          <div className="glass-card p-5 border-dashed">
+            <div className="flex items-start gap-3">
+              <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
+                <HeartHandshake className="h-5 w-5 text-primary" />
+              </div>
+              <div>
+                <h4 className="font-semibold">Donor access fallback</h4>
+                <p className="text-xs text-muted-foreground">
+                  If checkout is blocked in your country, donate manually and include the reference token in your payment note.
+                </p>
+              </div>
+            </div>
+
+            <div className="mt-4 space-y-3">
+              <Button variant="outline" className="w-full" onClick={handleCreateDonorIntent} disabled={donorIntentLoading}>
+                {donorIntentLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                Generate donor token (DNR-8)
+              </Button>
+
+              {donorIntent ? (
+                <div className="rounded-lg border border-border p-3 space-y-2">
+                  <p className="text-xs uppercase tracking-wide text-muted-foreground">Reference token</p>
+                  <p className="font-mono text-sm">{donorIntent.reference_token}</p>
+                  <ul className="space-y-1 text-xs text-muted-foreground">
+                    {donorIntent.instructions.map((instruction) => (
+                      <li key={instruction}>• {instruction}</li>
+                    ))}
+                  </ul>
+                  <div className="flex gap-2">
+                    <Button size="sm" variant="outline" onClick={() => window.open(donationUrl, '_blank')}>Open Liberapay</Button>
+                    <Button size="sm" variant="outline" onClick={() => window.open(paypalDonationUrl, '_blank')}>Open PayPal</Button>
+                  </div>
+                  <p className="text-[11px] text-muted-foreground">
+                    Manual verification target: within 24 hours. Access is granted for {donorIntent.grant_days} days per matched donation.
+                  </p>
+                </div>
+              ) : null}
+
+              <div className="flex gap-2">
+                <input
+                  value={donorTransactionId}
+                  onChange={(event) => setDonorTransactionId(event.target.value)}
+                  placeholder="Paste PayPal transaction ID"
+                  className="h-9 flex-1 rounded-md border border-input bg-background px-3 text-sm"
+                />
+                <Button size="sm" onClick={handleSubmitTransactionHint}>I have paid</Button>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     );
@@ -312,6 +429,56 @@ export default function BillingPage() {
           <p className="text-sm text-muted-foreground max-w-xs mx-auto">
             Invoice history and self-serve plan switching are under development.
           </p>
+        </div>
+
+        <div className="glass-card p-8 md:col-span-2">
+          <div className="flex items-start gap-3">
+            <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center">
+              <HeartHandshake className="h-6 w-6 text-primary" />
+            </div>
+            <div>
+              <h3 className="text-xl font-bold">Donor premium (manual verification)</h3>
+              <p className="text-sm text-muted-foreground">
+                You can unlock premium via Liberapay or PayPal donations while checkout integrations are limited in your region.
+              </p>
+            </div>
+          </div>
+
+          <div className="mt-6 grid gap-4 md:grid-cols-2">
+            <Button variant="outline" onClick={handleCreateDonorIntent} disabled={donorIntentLoading}>
+              {donorIntentLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+              Generate donor token (DNR-8)
+            </Button>
+            <div className="flex gap-2">
+              <Button variant="outline" className="flex-1" onClick={() => window.open(donationUrl, '_blank')}>Open Liberapay</Button>
+              <Button variant="outline" className="flex-1" onClick={() => window.open(paypalDonationUrl, '_blank')}>Open PayPal</Button>
+            </div>
+          </div>
+
+          {donorIntent ? (
+            <div className="mt-4 rounded-lg border border-border p-4 space-y-2">
+              <div className="text-xs uppercase tracking-wide text-muted-foreground">Reference token</div>
+              <div className="font-mono text-sm">{donorIntent.reference_token}</div>
+              <ul className="space-y-1 text-xs text-muted-foreground">
+                {donorIntent.instructions.map((instruction) => (
+                  <li key={instruction}>• {instruction}</li>
+                ))}
+              </ul>
+              <p className="text-[11px] text-muted-foreground">
+                Manual verification target: within 24 hours. Access is granted for {donorIntent.grant_days} days per matched donation.
+              </p>
+            </div>
+          ) : null}
+
+          <div className="mt-4 flex gap-2">
+            <input
+              value={donorTransactionId}
+              onChange={(event) => setDonorTransactionId(event.target.value)}
+              placeholder="Paste PayPal transaction ID"
+              className="h-9 flex-1 rounded-md border border-input bg-background px-3 text-sm"
+            />
+            <Button size="sm" onClick={handleSubmitTransactionHint}>I have paid</Button>
+          </div>
         </div>
       </div>
     </div>

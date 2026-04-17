@@ -1,7 +1,9 @@
 import { apiFetch } from "@/lib/api";
 import type {
   AdminAuditEntry,
+  AdminBillingEvent,
   AdminBillingUpdate,
+  AdminDonorEmailDelivery,
   AdminHostRow,
   AdminOperationRun,
   AdminOrganizationDetail,
@@ -57,4 +59,20 @@ export const adminApi = {
     return response.operations;
   },
   migrateSecrets: async (values: { reason: string; organization_id?: string; host_id?: string; dry_run?: boolean }) => apiFetch("/admin/migrate-secrets", { method: "POST", body: values }),
+  getUnmatchedBillingEvents: async (limit = 50) => {
+    const response = await apiFetch(`/admin/billing/unmatched?limit=${limit}`) as { events: AdminBillingEvent[] };
+    return response.events;
+  },
+  matchBillingEvent: async (values: { billing_event_id: string; organization_id: string; reason: string; grant_days?: number }) =>
+    apiFetch("/admin/billing/match", { method: "POST", body: values }),
+  getDonorEmailDeliveries: async (limit = 100) => {
+    const response = await apiFetch(`/admin/billing/email-deliveries?limit=${limit}`) as { deliveries: AdminDonorEmailDelivery[] };
+    return response.deliveries;
+  },
+  getDonorEmailDelivery: async (deliveryId: string) => {
+    const response = await apiFetch(`/admin/billing/email-deliveries/${deliveryId}`) as { delivery: AdminDonorEmailDelivery };
+    return response.delivery;
+  },
+  resendDonorEmailDelivery: async (deliveryId: string, reason: string) =>
+    apiFetch(`/admin/billing/email-deliveries/${deliveryId}/resend`, { method: "POST", body: { reason } }),
 };

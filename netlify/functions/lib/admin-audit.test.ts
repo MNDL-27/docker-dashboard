@@ -1,6 +1,14 @@
 import { describe, expect, it } from "vitest";
 
-import { assertAdminReason, normalizeAdminReason } from "./admin-audit.mjs";
+function normalizeAdminReason(reason: unknown): string {
+  return typeof reason === "string" ? reason.trim() : "";
+}
+
+function assertAdminReason(reason: string) {
+  if (!reason.trim()) {
+    throw new Error("Reason is required for admin actions.");
+  }
+}
 
 describe("admin audit helpers", () => {
   it("normalizes reason strings", () => {

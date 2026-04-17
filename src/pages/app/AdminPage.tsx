@@ -43,6 +43,11 @@ import {
   useAdminOrganization,
   useAdminOrganizations,
   useAdminOverview,
+  useAdminUnmatchedBillingEvents,
+  useAdminMatchBillingEvent,
+  useAdminDonorEmailDeliveries,
+  useAdminDonorEmailDelivery,
+  useAdminResendDonorEmailDelivery,
   useAdminUser,
   useAdminUsers,
   useApproveAdminUser,
@@ -60,7 +65,7 @@ import {
   useUnsuspendAdminUser,
   useUpdateAdminBilling,
 } from "@/hooks/useAdmin";
-import type { AdminBillingUpdate, AdminHostRow, AdminOrganizationRow, AdminUserRow } from "@/types/admin";
+import type { AdminBillingEvent, AdminBillingUpdate, AdminDonorEmailDelivery, AdminHostRow, AdminOrganizationRow, AdminUserRow } from "@/types/admin";
 
 const tabs = ["Overview", "Users", "Organizations", "Hosts", "Billing", "Operations", "Audit Log"] as const;
 type AdminTab = (typeof tabs)[number];
@@ -178,6 +183,13 @@ export default function AdminPage() {
   const [pendingAction, setPendingAction] = useState<null | { kind: string; targetId: string; title: string; description: string; confirmLabel: string; confirmValue?: string }>(null);
   const [banOrganizationId, setBanOrganizationId] = useState("");
   const [migrationScope, setMigrationScope] = useState<{ organization_id?: string; host_id?: string; dry_run?: boolean }>({});
+  const [billingMatchForm, setBillingMatchForm] = useState<{ billing_event_id: string; grant_days: number; reason: string }>({
+    billing_event_id: "",
+    grant_days: 30,
+    reason: "",
+  });
+  const [selectedDeliveryId, setSelectedDeliveryId] = useState<string | null>(null);
+  const [resendReason, setResendReason] = useState("");
 
   const overviewQuery = useAdminOverview();
   const usersQuery = useAdminUsers();
@@ -185,6 +197,9 @@ export default function AdminPage() {
   const hostsQuery = useAdminHosts();
   const auditLogQuery = useAdminAuditLog();
   const operationsQuery = useAdminOperations();
+  const unmatchedBillingQuery = useAdminUnmatchedBillingEvents(100);
+  const donorEmailDeliveriesQuery = useAdminDonorEmailDeliveries(100);
+  const donorEmailDeliveryDetailQuery = useAdminDonorEmailDelivery(selectedDeliveryId);
   const userDetailQuery = useAdminUser(selectedUserId);
   const organizationDetailQuery = useAdminOrganization(selectedOrganizationId);
 
@@ -203,6 +218,8 @@ export default function AdminPage() {
   const unquarantineMutation = useUnquarantineAdminHost();
   const reconnectMutation = useMarkAdminHostNeedsReconnect();
   const migrateSecretsMutation = useRunAdminSecretMigration();
+  const matchBillingMutation = useAdminMatchBillingEvent();
+  const resendDonorEmailMutation = useAdminResendDonorEmailDelivery();
 
   const users = filterByQuery(usersQuery.data ?? [], userQuery, ["email", "full_name"]) as AdminUserRow[];
   const organizations = filterByQuery(organizationsQuery.data ?? [], organizationQuery, ["name", "slug", "plan", "subscription_status"]) as AdminOrganizationRow[];
@@ -558,6 +575,8 @@ export default function AdminPage() {
                     <DetailField label="Paddle Subscription" value={selectedBillingOrganization.paddle_subscription_id} />
                     <DetailField label="Paddle Customer" value={selectedBillingOrganization.paddle_customer_id} />
                     <DetailField label="Current Period End" value={formatDate(selectedBillingOrganization.current_period_ends_at)} />
+                    <DetailField label="Donor Premium Expires" value={formatDate(selectedBillingOrganization.donor_premium_expires_at)} />
+                    <DetailField label="Payment Provider" value={selectedBillingOrganization.payment_provider ?? "—"} />
                     <DetailField label="Cancel At Period End" value={selectedBillingOrganization.cancel_at_period_end ? "Yes" : "No"} />
                   </div>
                 </div>
@@ -624,6 +643,164 @@ export default function AdminPage() {
               {billingMutation.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <CheckCircle2 className="mr-2 h-4 w-4" />}
               Save billing override
             </Button>
+
+            <div className="pt-4 border-t border-border space-y-3">
+              <h4 className="font-medium">Manual donor reconciliation (DNR-8)</h4>
+              <div className="grid gap-3 sm:grid-cols-2">
+                <div className="space-y-2">
+                  <Label>Unmatched event</Label>
+                  <Select value={billingMatchForm.billing_event_id || "none"} onValueChange={(value) => setBillingMatchForm((current) => ({ ...current, billing_event_id: value === "none" ? "" : value }))}>
+                    <SelectTrigger><SelectValue placeholder="Select unmatched event" /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">Select unmatched event</SelectItem>
+                      {(unmatchedBillingQuery.data ?? []).map((event: AdminBillingEvent) => (
+                        <SelectItem key={event.id} value={event.id}>
+                          {event.provider} · {event.provider_event_id ?? event.id.slice(0, 8)}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <div className="max-h-32 overflow-auto rounded-md border border-border p-2 text-xs text-muted-foreground space-y-1">
+                    {(unmatchedBillingQuery.data ?? []).slice(0, 6).map((event: AdminBillingEvent) => (
+                      <div key={`preview-${event.id}`} className="flex justify-between gap-2">
+                        <span className="truncate">{event.provider_event_id ?? event.id.slice(0, 8)}</span>
+                        <span>{event.amount ?? "—"} {event.currency ?? ""}</span>
+                      </div>
+                    ))}
+                    {(unmatchedBillingQuery.data ?? []).length === 0 ? <div>No unmatched events</div> : null}
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label>Grant days</Label>
+                  <Input
+                    type="number"
+                    min={1}
+                    max={365}
+                    value={billingMatchForm.grant_days}
+                    onChange={(event) => setBillingMatchForm((current) => ({ ...current, grant_days: Number(event.target.value || 30) }))}
+                  />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label>Reason</Label>
+                <Textarea
+                  value={billingMatchForm.reason}
+                  onChange={(event) => setBillingMatchForm((current) => ({ ...current, reason: event.target.value }))}
+                  placeholder="Verified on PayPal/Liberapay dashboard"
+                />
+              </div>
+              <Button
+                variant="outline"
+                disabled={matchBillingMutation.isPending || !billingMatchForm.billing_event_id || !selectedBillingOrganizationId || !billingMatchForm.reason.trim()}
+                onClick={async () => {
+                  try {
+                    await matchBillingMutation.mutateAsync({
+                      billing_event_id: billingMatchForm.billing_event_id,
+                      organization_id: selectedBillingOrganizationId!,
+                      reason: billingMatchForm.reason,
+                      grant_days: billingMatchForm.grant_days,
+                    });
+                    toast({ title: "Donor premium granted" });
+                    setBillingMatchForm({ billing_event_id: "", grant_days: 30, reason: "" });
+                  } catch (error) {
+                    toast({ title: "Donor match failed", description: error instanceof Error ? error.message : "Unknown error", variant: "destructive" });
+                  }
+                }}
+              >
+                {matchBillingMutation.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <CheckCircle2 className="mr-2 h-4 w-4" />}
+                Match event & grant premium
+              </Button>
+
+              <div className="pt-4 border-t border-border space-y-3">
+                <h4 className="font-medium">Donor email delivery history</h4>
+                <div className="max-h-64 overflow-auto rounded-md border border-border">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Sent</TableHead>
+                        <TableHead>Template</TableHead>
+                        <TableHead>Organization</TableHead>
+                        <TableHead>Recipient</TableHead>
+                        <TableHead>Status</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {(donorEmailDeliveriesQuery.data ?? []).slice(0, 12).map((delivery: AdminDonorEmailDelivery) => (
+                        <TableRow key={delivery.id} className={selectedDeliveryId === delivery.id ? "bg-muted/40" : ""} onClick={() => setSelectedDeliveryId(delivery.id)}>
+                          <TableCell>{formatDate(delivery.sent_at)}</TableCell>
+                          <TableCell>{delivery.template}</TableCell>
+                          <TableCell className="max-w-[180px] truncate">{delivery.organization_name}</TableCell>
+                          <TableCell className="max-w-[220px] truncate">{delivery.recipient_email}</TableCell>
+                          <TableCell>
+                            <StatusPill active={delivery.status === "sent" || delivery.status === "resent"} label={delivery.status} />
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                      {(donorEmailDeliveriesQuery.data ?? []).length === 0 ? (
+                        <TableRow>
+                          <TableCell colSpan={5} className="text-center text-sm text-muted-foreground">No donor emails sent yet</TableCell>
+                        </TableRow>
+                      ) : null}
+                    </TableBody>
+                  </Table>
+                </div>
+
+                {selectedDeliveryId && donorEmailDeliveryDetailQuery.data ? (
+                  <div className="rounded-lg border border-border p-4 space-y-3">
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <h5 className="font-medium">Delivery details</h5>
+                        <p className="text-xs text-muted-foreground">Inspect provider message ID, errors, and metadata before retrying.</p>
+                      </div>
+                      <StatusPill active={donorEmailDeliveryDetailQuery.data.status === "sent" || donorEmailDeliveryDetailQuery.data.status === "resent"} label={donorEmailDeliveryDetailQuery.data.status} />
+                    </div>
+
+                    <div className="grid gap-3 sm:grid-cols-2">
+                      <DetailField label="Organization" value={donorEmailDeliveryDetailQuery.data.organization_name} />
+                      <DetailField label="Recipient" value={donorEmailDeliveryDetailQuery.data.recipient_email} />
+                      <DetailField label="Template" value={donorEmailDeliveryDetailQuery.data.template} />
+                      <DetailField label="Provider" value={donorEmailDeliveryDetailQuery.data.provider} />
+                      <DetailField label="Provider Message ID" value={donorEmailDeliveryDetailQuery.data.provider_message_id} />
+                      <DetailField label="Sent" value={formatDate(donorEmailDeliveryDetailQuery.data.sent_at)} />
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label>Error</Label>
+                      <div className="rounded-md border border-border bg-muted/30 p-3 text-sm text-muted-foreground">
+                        {donorEmailDeliveryDetailQuery.data.error || "No provider error recorded"}
+                      </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label>Metadata</Label>
+                      <pre className="max-h-56 overflow-auto rounded-md border border-border bg-muted/30 p-3 text-xs">{JSON.stringify(donorEmailDeliveryDetailQuery.data.metadata, null, 2)}</pre>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label>Retry reason</Label>
+                      <Textarea value={resendReason} onChange={(event) => setResendReason(event.target.value)} placeholder="Why are you retrying this email?" />
+                    </div>
+
+                    <Button
+                      variant="outline"
+                      disabled={resendDonorEmailMutation.isPending || !resendReason.trim()}
+                      onClick={async () => {
+                        try {
+                          await resendDonorEmailMutation.mutateAsync({ deliveryId: selectedDeliveryId, reason: resendReason.trim() });
+                          toast({ title: "Donor email retried" });
+                          setResendReason("");
+                        } catch (error) {
+                          toast({ title: "Retry failed", description: error instanceof Error ? error.message : "Unknown error", variant: "destructive" });
+                        }
+                      }}
+                    >
+                      {resendDonorEmailMutation.isPending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <RefreshCcw className="mr-2 h-4 w-4" />}
+                      Retry send with Resend
+                    </Button>
+                  </div>
+                ) : null}
+              </div>
+            </div>
           </div>
         </TabsContent>
 

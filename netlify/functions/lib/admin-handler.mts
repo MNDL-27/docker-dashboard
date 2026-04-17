@@ -5,6 +5,7 @@ import { assertAdminReason, normalizeAdminReason, recordAdminAudit } from "./adm
 import { ensureAdminSchema } from "./ensure-admin-schema.mjs";
 import { runSecretMigration } from "./secret-migration.mjs";
 import { buildCorsHeaders } from "./security.mjs";
+import { adminMatchBillingEvent, listUnmatchedBillingEvents, resendDonorEmailDelivery } from "./donor-billing.mjs";
 
 const headers = {
   "Access-Control-Allow-Origin": "*",  // Will be overridden by buildCorsHeaders in responses
@@ -176,6 +177,8 @@ async function listOrganizations() {
       o.paddle_subscription_id,
       o.paddle_customer_id,
       o.paddle_price_id,
+      o.donor_premium_expires_at,
+      o.payment_provider,
       o.onboarding_status,
       COALESCE(oac.is_locked, false) AS is_locked,
       oac.lock_reason,
@@ -196,6 +199,7 @@ async function listOrganizations() {
   return rows.map((row) => ({
     ...row,
     current_period_ends_at: row.current_period_ends_at ? new Date(String(row.current_period_ends_at)).toISOString() : null,
+    donor_premium_expires_at: row.donor_premium_expires_at ? new Date(String(row.donor_premium_expires_at)).toISOString() : null,
     current_period_ends_at_override: row.current_period_ends_at_override ? new Date(String(row.current_period_ends_at_override)).toISOString() : null,
   }));
 }
@@ -213,6 +217,8 @@ async function getOrganizationDetail(organizationId: string) {
       o.paddle_subscription_id,
       o.paddle_customer_id,
       o.paddle_price_id,
+      o.donor_premium_expires_at,
+      o.payment_provider,
       o.billing_updated_at,
       o.onboarding_status,
       o.onboarding_skipped_at,
@@ -276,6 +282,7 @@ async function getOrganizationDetail(organizationId: string) {
     ...row,
     current_period_ends_at: row.current_period_ends_at ? new Date(String(row.current_period_ends_at)).toISOString() : null,
     billing_updated_at: row.billing_updated_at ? new Date(String(row.billing_updated_at)).toISOString() : null,
+    donor_premium_expires_at: row.donor_premium_expires_at ? new Date(String(row.donor_premium_expires_at)).toISOString() : null,
     onboarding_skipped_at: row.onboarding_skipped_at ? new Date(String(row.onboarding_skipped_at)).toISOString() : null,
     onboarding_completed_at: row.onboarding_completed_at ? new Date(String(row.onboarding_completed_at)).toISOString() : null,
     current_period_ends_at_override: row.current_period_ends_at_override ? new Date(String(row.current_period_ends_at_override)).toISOString() : null,
@@ -361,6 +368,61 @@ async function listOperationRuns() {
     ...row,
     created_at: new Date(String(row.created_at)).toISOString(),
   }));
+}
+
+async function listDonorEmailDeliveries(limit = 100) {
+  const rows = await sql`
+    SELECT
+      d.id,
+      d.organization_id,
+      o.name AS organization_name,
+      d.recipient_email,
+      d.template,
+      d.provider,
+      d.provider_message_id,
+      d.status,
+      d.error,
+      d.metadata,
+      d.sent_at,
+      d.sent_on::text AS sent_on
+    FROM public.donor_email_deliveries d
+    JOIN public.organizations o ON o.id = d.organization_id
+    ORDER BY d.sent_at DESC
+    LIMIT ${limit}
+  `;
+
+  return rows.map((row) => ({
+    ...row,
+    sent_at: new Date(String(row.sent_at)).toISOString(),
+  }));
+}
+
+async function getDonorEmailDelivery(deliveryId: string) {
+  const rows = await sql`
+    SELECT
+      d.id,
+      d.organization_id,
+      o.name AS organization_name,
+      d.recipient_email,
+      d.template,
+      d.provider,
+      d.provider_message_id,
+      d.status,
+      d.error,
+      d.metadata,
+      d.sent_at,
+      d.sent_on::text AS sent_on
+    FROM public.donor_email_deliveries d
+    JOIN public.organizations o ON o.id = d.organization_id
+    WHERE d.id = ${deliveryId}
+    LIMIT 1
+  `;
+
+  if (rows.length === 0) return null;
+  return {
+    ...rows[0],
+    sent_at: new Date(String(rows[0].sent_at)).toISOString(),
+  };
 }
 
 async function mutateUserApproval(userId: string, approved: boolean, req: Request) {
@@ -911,6 +973,41 @@ export async function handleAdminRequest(req: Request) {
     }
 
     if (req.method === "POST" && parts.length === 1 && parts[0] === "migrate-secrets") return await runAdminSecretMigration(req);
+
+    if (req.method === "GET" && parts.length === 2 && parts[0] === "billing" && parts[1] === "unmatched") {
+      return await listUnmatchedBillingEvents(req);
+    }
+
+    if (req.method === "POST" && parts.length === 2 && parts[0] === "billing" && parts[1] === "match") {
+      return await adminMatchBillingEvent(req);
+    }
+
+    if (req.method === "GET" && parts.length === 2 && parts[0] === "billing" && parts[1] === "email-deliveries") {
+      await requirePlatformAdmin(req);
+      const url = new URL(req.url);
+      const limitParam = Number(url.searchParams.get("limit") || 100);
+      const limit = Number.isFinite(limitParam) ? Math.max(1, Math.min(300, Math.floor(limitParam))) : 100;
+      return json({ deliveries: await listDonorEmailDeliveries(limit) });
+    }
+
+    if (req.method === "GET" && parts.length === 3 && parts[0] === "billing" && parts[1] === "email-deliveries") {
+      await requirePlatformAdmin(req);
+      const delivery = await getDonorEmailDelivery(parts[2]);
+      return delivery ? json({ delivery }) : json({ error: "Delivery not found" }, 404);
+    }
+
+    if (req.method === "POST" && parts.length === 4 && parts[0] === "billing" && parts[1] === "email-deliveries" && parts[3] === "resend") {
+      const admin = await requirePlatformAdmin(req);
+      const body = await readBody(req);
+      const reason = normalizeAdminReason(body.reason);
+      assertAdminReason(reason);
+      return json(await resendDonorEmailDelivery({
+        deliveryId: parts[2],
+        actorUserId: admin.auth.userId,
+        actorEmail: admin.actorEmail,
+        reason,
+      }));
+    }
 
     return json({ error: "Method not allowed" }, 405);
   } catch (error) {
