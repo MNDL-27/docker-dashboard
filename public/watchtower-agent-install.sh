@@ -348,6 +348,11 @@ if [ -n "$ENROLLMENT_TOKEN_VALUE" ]; then
   exchange_enrollment_token
 fi
 
+AGENT_API_KEY="${AGENT_API_KEY_VALUE:-}"
+AGENT_PORT="${AGENT_PORT_VALUE:-$DEFAULT_PORT}"
+AGENT_BIND_ADDRESS="${AGENT_BIND_ADDRESS_VALUE:-$DEFAULT_BIND_ADDRESS}"
+DOCKER_SOCKET="${DOCKER_SOCKET_VALUE:-$DEFAULT_DOCKER_SOCKET}"
+
 validate_port "$AGENT_PORT_VALUE"
 validate_bind_address "$AGENT_BIND_ADDRESS_VALUE"
 [ -S "$DOCKER_SOCKET_VALUE" ] || fail "Docker socket not found at $DOCKER_SOCKET_VALUE. Ensure Docker is running or rerun with --docker-socket PATH."
