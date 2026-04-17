@@ -113,7 +113,7 @@ function buildAtomicInstallerCommand({
   const baseArgs = action === "check" ? `--check --expected-version "${release.version}"` : `--expected-version "${release.version}"`;
   const actionArgs = `${baseArgs}${extraArgs ? ` ${extraArgs.trim()}` : ""}`;
 
-  return `set -euo pipefail
+  return `( set -euo pipefail
 INSTALLER_URL="${installerUrl}"
 INSTALLER_SHA256="${release.installerSha256}"
 TMP_FILE="$(mktemp)"
@@ -122,7 +122,7 @@ trap 'rm -f "$TMP_FILE"' EXIT
 curl -fsSL "$INSTALLER_URL" -o "$TMP_FILE"
 echo "$INSTALLER_SHA256  $TMP_FILE" | sha256sum -c -
 chmod +x "$TMP_FILE"
-sudo "$TMP_FILE" ${actionArgs}`;
+sudo "$TMP_FILE" ${actionArgs} )`;
 }
 
 export function buildWatchtowerAgentPreflightCommand(
@@ -153,7 +153,7 @@ export function buildWatchtowerAgentInstallCommand(
 export function getWatchtowerAgentRecommendedBindAddress(
   connectionMode: WatchtowerAgentConnectionMode,
 ) {
-  return connectionMode === "cloudflare_tunnel" ? "127.0.0.1" : "127.0.0.1";
+  return connectionMode === "cloudflare_tunnel" ? "0.0.0.0" : "0.0.0.0";
 }
 
 export function getWatchtowerAgentModeLabel(

@@ -170,7 +170,7 @@ export function StepHostCredentials({
             The guided flow keeps the long-lived API key out of the default copied command.
           </p>
           <p>
-            Recommended bind for {connectionMode === "cloudflare_tunnel" ? "Cloudflare Tunnel" : "direct agent"} mode is applied automatically in the generated installer command.
+            The generated installer command sets <code className="bg-muted px-1.5 py-0.5 rounded font-mono text-foreground">AGENT_BIND_ADDRESS=0.0.0.0</code> by default.
           </p>
         </div>
       </div>

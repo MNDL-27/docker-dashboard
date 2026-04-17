@@ -21,7 +21,7 @@ Options:
   --check                 Validate the current or provided configuration without installing
   --expected-version VAL  Fail if the installed runtime version does not match this value
   --port VALUE            Set AGENT_PORT (default: 9876)
-  --bind-address VALUE    Set AGENT_BIND_ADDRESS (default: 127.0.0.1)
+  --bind-address VALUE    Set AGENT_BIND_ADDRESS (default: 0.0.0.0)
   --bind VALUE            Alias for --bind-address
   --docker-socket PATH    Set DOCKER_SOCKET (default: /var/run/docker.sock)
   --connection-mode MODE  Set connection mode for user-facing output (agent or cloudflare_tunnel)
@@ -202,7 +202,7 @@ exchange_enrollment_token() {
 }
 
 DEFAULT_PORT="9876"
-DEFAULT_BIND_ADDRESS="127.0.0.1"
+DEFAULT_BIND_ADDRESS="0.0.0.0"
 DEFAULT_DOCKER_SOCKET="/var/run/docker.sock"
 FLAG_YES="false"
 FLAG_CHECK="false"
@@ -411,7 +411,7 @@ trap cleanup EXIT INT TERM
 
 AGENT_API_KEY="${AGENT_API_KEY:-}"
 AGENT_PORT="${AGENT_PORT:-9876}"
-AGENT_BIND_ADDRESS="${AGENT_BIND_ADDRESS:-${AGENT_BIND:-127.0.0.1}}"
+AGENT_BIND_ADDRESS="${AGENT_BIND_ADDRESS:-${AGENT_BIND:-0.0.0.0}}"
 DOCKER_SOCKET="${DOCKER_SOCKET:-/var/run/docker.sock}"
 WATCHTOWER_AGENT_STATE_DIR="${WATCHTOWER_AGENT_STATE_DIR:-/var/lib/watchtower-agent}"
 WATCHTOWER_AGENT_VERSION="${WATCHTOWER_AGENT_VERSION:-1.0.5}"

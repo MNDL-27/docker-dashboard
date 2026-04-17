@@ -155,7 +155,7 @@ What the installer does:
 
 Default config written by the installer:
 
-- `AGENT_BIND_ADDRESS=127.0.0.1`
+- `AGENT_BIND_ADDRESS=0.0.0.0`
 - `AGENT_PORT=9876`
 - `DOCKER_SOCKET=/var/run/docker.sock`
 

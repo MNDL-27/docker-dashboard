@@ -229,7 +229,7 @@ sudo watchtower-agent-uninstall`;
 
           <StepCard step={2} title="Install the Agent on Your Host">
             <p className="text-sm text-muted-foreground">
-              Use the same manual installer fallback. It binds to localhost by default, which is what Cloudflare Tunnel needs.
+              Use the same manual installer fallback. It binds to <code className="bg-muted px-1 rounded">0.0.0.0</code> by default, and Cloudflare Tunnel can still forward to the local agent port on the host.
             </p>
             <CopyBlock label="Install for tunnel-only access" code={tunnelInstallCommand} />
             <InfoBox>
