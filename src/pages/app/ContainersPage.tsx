@@ -328,11 +328,7 @@ export default function ContainersPage() {
               <span className="inline-flex rounded-full border border-primary/20 bg-primary/10 px-3 py-1 text-xs font-medium uppercase tracking-[0.18em] text-primary">Fleet workload view</span>
               <span className="text-xs uppercase tracking-[0.18em] text-muted-foreground">{kpi.total} containers · {kpi.running} running · {uniqueHosts.length} hosts</span>
             </div>
-            <div className="mt-6 max-w-2xl space-y-4">
-              <h2 className="text-3xl font-semibold tracking-tight text-foreground md:text-4xl">See fleet pressure first, then move straight into the containers that need attention.</h2>
-              <p className="text-base leading-7 text-muted-foreground">This page stays table-first for operators, but the layout now leads with fleet capacity, health signals, and a dedicated control rail before you drop into row-level actions.</p>
-            </div>
-            <div className="mt-7 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+            <div className="mt-6 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
               <SummaryChip label="Reporting hosts" value={hostCoverage} />
               <SummaryChip label="Live stats" value={`${statsMap.size}`} />
               <SummaryChip label="Filtered set" value={`${filtered.length}`} />
