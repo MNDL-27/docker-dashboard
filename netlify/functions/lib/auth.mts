@@ -94,16 +94,9 @@ export async function requireAuth(
 ): Promise<AppAuthContext> {
   const requireOrg = options.requireOrg ?? true;
 
-  if (process.env.NODE_ENV === 'test' && req.headers.get('x-test-bypass')) {
-    return {
-      userId: req.headers.get('x-test-user-id') || '00000000-0000-0000-0000-000000000000',
-      orgId: req.headers.get('x-test-org-id') || '00000000-0000-0000-0000-000000000000',
-      clerkUserId: 'clerk_test_user',
-      clerkOrgId: 'clerk_test_org',
-      isPlatformAdmin: req.headers.get('x-test-platform-admin') === 'true',
-      email: req.headers.get('x-test-email') || 'test@example.com',
-    };
-  }
+  // Test bypass has been removed from production code.
+  // For testing, use mock implementations in test files only.
+  // See: /workspace/netlify/functions/lib/auth.test.mts for test mocks
 
   const requestState = await clerkClient.authenticateRequest(req, {
     secretKey: process.env.CLERK_SECRET_KEY,

@@ -8,12 +8,7 @@ import { ensureDockerHostSchema } from './lib/ensure-docker-host-schema.mjs';
 import { buildValidatedAgentUrl } from './lib/host-url.mjs';
 import { createProblemResponse } from '../../shared/schema/error.ts';
 import { ProxyRequestParamsSchema } from '../../shared/schema/proxy.ts';
-
-const headers = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'Content-Type, Authorization, Idempotency-Key, X-Idempotency-Key',
-  'Content-Type': 'application/json'
-};
+import { buildCorsHeaders, applyRateLimit, RATE_LIMITS, logSecurityEvent, getClientIp } from './lib/security.mjs';
 
 function sanitizeContainerId(id: string): string {
   if (!/^[a-zA-Z0-9][a-zA-Z0-9_.\-]{0,127}$/.test(id)) {
@@ -348,8 +343,17 @@ async function dockerFetch(url: string, method: string, reqHeaders: Record<strin
 }
 
 export default async (req: Request) => {
+  // Apply rate limiting for proxy endpoint
+  const rateLimitResponse = applyRateLimit(req, 'proxy', RATE_LIMITS.PROXY);
+  if (rateLimitResponse) {
+    return rateLimitResponse;
+  }
+
+  // Build CORS headers with trusted origins only
+  const corsHeaders = buildCorsHeaders(req);
+
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers });
+    return new Response(null, { headers: corsHeaders });
   }
 
   try {
@@ -412,7 +416,7 @@ export default async (req: Request) => {
         }
       });
 
-      return new Response(JSON.stringify(allContainers), { headers });
+      return new Response(JSON.stringify(allContainers), { headers: corsHeaders });
     }
 
     // ── Org-wide: fetch stats for all running containers ──
@@ -493,7 +497,7 @@ export default async (req: Request) => {
         } catch (_) { /* skip host on error */ }
       });
 
-      return new Response(JSON.stringify(allStats), { headers });
+      return new Response(JSON.stringify(allStats), { headers: corsHeaders });
     }
 
     // ── Host-specific actions ──
@@ -526,7 +530,7 @@ export default async (req: Request) => {
         const parsedDetails = parseDiagnosticPayload(rawDetails);
         const failure = classifyHostMetricsFailure(metricsResponse.status || 502, parsedDetails);
 
-        return new Response(JSON.stringify(failure), { status: metricsResponse.status || 502, headers });
+        return new Response(JSON.stringify(failure), { status: metricsResponse.status || 502, headers: corsHeaders });
       }
 
       const metricsData = await metricsResponse.json();
@@ -583,7 +587,7 @@ export default async (req: Request) => {
         WHERE id = ${hostId}
       `;
 
-      return new Response(JSON.stringify(normalizedMetrics), { headers });
+      return new Response(JSON.stringify(normalizedMetrics), { headers: corsHeaders });
     }
 
     let dockerPath: string;
@@ -701,7 +705,7 @@ export default async (req: Request) => {
         agent_version_error: agentVersionError,
         ...releaseResponse,
         agent_update_available: agentNeedsUpdate,
-      }), { headers });
+      }), { headers: corsHeaders });
     }
 
     if (action === 'container-logs') {
@@ -720,13 +724,13 @@ export default async (req: Request) => {
         offset += size;
       }
       if (lines.length === 0) lines.push(...(new TextDecoder().decode(rawBytes)).split('\n').filter(Boolean));
-      return new Response(JSON.stringify({ logs: lines }), { headers });
+      return new Response(JSON.stringify({ logs: lines }), { headers: corsHeaders });
     }
 
     if (['container-start', 'container-stop', 'container-restart'].includes(action)) {
       const text = await dockerResponse.text();
       const ok = dockerResponse.status === 204 || dockerResponse.status === 304 || dockerResponse.ok;
-      return new Response(JSON.stringify({ ok, status: dockerResponse.status, message: text }), { headers });
+      return new Response(JSON.stringify({ ok, status: dockerResponse.status, message: text }), { headers: corsHeaders });
     }
 
     if (!dockerResponse.ok) {
@@ -737,7 +741,7 @@ export default async (req: Request) => {
     if (req.method === 'GET') {
       headers['Cache-Control'] = 'private, max-age=0, must-revalidate';
     }
-    return new Response(JSON.stringify(payload), { headers });
+    return new Response(JSON.stringify(payload), { headers: corsHeaders });
 
   } catch (error: any) {
     if (error instanceof SecretCryptoError) {

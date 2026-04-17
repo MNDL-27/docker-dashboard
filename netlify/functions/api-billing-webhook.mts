@@ -1,6 +1,7 @@
 import type { Config } from '@netlify/functions';
 import { sql } from './lib/db.mjs';
 import crypto from 'crypto';
+import { applyRateLimit, RATE_LIMITS, verifyWebhookTimestamp, logSecurityEvent, getClientIp } from './lib/security.mjs';
 
 const PADDLE_WEBHOOK_SECRET = process.env.PADDLE_WEBHOOK_SECRET;
 
@@ -31,10 +32,43 @@ export default async (req: Request) => {
     return new Response('Method Not Allowed', { status: 405 });
   }
 
+  // Apply rate limiting for webhook endpoint
+  const rateLimitResponse = applyRateLimit(req, 'webhook:paddle', RATE_LIMITS.WEBHOOK);
+  if (rateLimitResponse) {
+    return rateLimitResponse;
+  }
+
   const signature = req.headers.get('paddle-signature') || '';
   const rawBody = await req.text();
+  const clientIp = getClientIp(req);
+
+  // Verify timestamp to prevent replay attacks
+  const tsMatch = signature.match(/ts=(\d+)/);
+  const timestampHeader = tsMatch ? tsMatch[1] : null;
+  const nonceMatch = signature.match(/h1=([a-f0-9]+)/);
+  const nonceHeader = nonceMatch ? nonceMatch[1] : null;
+  
+  const timestampResult = verifyWebhookTimestamp(timestampHeader, nonceHeader);
+  if (!timestampResult.valid) {
+    logSecurityEvent({
+      type: 'replay_attack',
+      endpoint: '/api/billing/webhook',
+      ip: clientIp,
+      reason: `Timestamp verification failed: ${timestampResult.error}`,
+      metadata: { provider: 'paddle' },
+    });
+    console.error('Invalid Paddle timestamp/nonce:', timestampResult.error);
+    return new Response('Invalid Timestamp', { status: 401 });
+  }
 
   if (!verifySignature(rawBody, signature)) {
+    logSecurityEvent({
+      type: 'webhook_signature_failure',
+      endpoint: '/api/billing/webhook',
+      ip: clientIp,
+      reason: 'Invalid Paddle signature',
+      metadata: { provider: 'paddle' },
+    });
     console.error('Invalid Paddle signature');
     return new Response('Invalid Signature', { status: 401 });
   }

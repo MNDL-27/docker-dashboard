@@ -1,11 +1,18 @@
 import { Webhook } from 'svix';
 import { sql } from './lib/db.mjs';
+import { applyRateLimit, RATE_LIMITS, verifyWebhookTimestamp, logSecurityEvent, getClientIp } from './lib/security.mjs';
 
 const webhookSecret = process.env.CLERK_WEBHOOK_SIGNING_SECRET;
 
 export default async (req: Request) => {
   if (req.method !== 'POST') {
     return new Response('Method Not Allowed', { status: 405 });
+  }
+
+  // Apply rate limiting for webhook endpoint
+  const rateLimitResponse = applyRateLimit(req, 'webhook:clerk', RATE_LIMITS.WEBHOOK);
+  if (rateLimitResponse) {
+    return rateLimitResponse;
   }
 
   if (!webhookSecret) {
@@ -17,9 +24,31 @@ export default async (req: Request) => {
   const svix_id = req.headers.get("svix-id");
   const svix_timestamp = req.headers.get("svix-timestamp");
   const svix_signature = req.headers.get("svix-signature");
+  const clientIp = getClientIp(req);
 
   if (!svix_id || !svix_timestamp || !svix_signature) {
+    logSecurityEvent({
+      type: 'webhook_signature_failure',
+      endpoint: '/api/clerk/webhook',
+      ip: clientIp,
+      reason: 'Missing Svix headers',
+      metadata: { provider: 'clerk' },
+    });
     return new Response('Missing svix headers', { status: 400 });
+  }
+
+  // Verify timestamp to prevent replay attacks
+  const timestampResult = verifyWebhookTimestamp(svix_timestamp, svix_id);
+  if (!timestampResult.valid) {
+    logSecurityEvent({
+      type: 'replay_attack',
+      endpoint: '/api/clerk/webhook',
+      ip: clientIp,
+      reason: `Timestamp verification failed: ${timestampResult.error}`,
+      metadata: { provider: 'clerk' },
+    });
+    console.error('Invalid Clerk timestamp/nonce:', timestampResult.error);
+    return new Response('Invalid Timestamp', { status: 400 });
   }
 
   // Get body
@@ -35,6 +64,13 @@ export default async (req: Request) => {
       "svix-signature": svix_signature,
     });
   } catch (err: any) {
+    logSecurityEvent({
+      type: 'webhook_signature_failure',
+      endpoint: '/api/clerk/webhook',
+      ip: clientIp,
+      reason: `Signature verification failed: ${err.message}`,
+      metadata: { provider: 'clerk' },
+    });
     console.error('Webhook signature verification failed:', err.message);
     return new Response('Invalid signature', { status: 400 });
   }
