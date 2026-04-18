@@ -1,5 +1,6 @@
 import type { DockerHost } from "@/types/database";
 import type { AlertItem, DashboardContainerSummary } from "@/components/dashboard/dashboard-types";
+import { getHostAlertCopy, isUnhealthyHostStatus } from "@/lib/host-health-state";
 
 export interface DashboardStats {
   hostsCount: number;
@@ -58,21 +59,25 @@ export function normalizeDashboardContainers(containers: unknown): DashboardCont
 export function buildDashboardStats(hosts: DockerHost[], containers: unknown): DashboardStats {
   const normalizedContainers = normalizeDashboardContainers(containers);
   const connectedHosts = hosts.filter((host) => host.status === "connected");
-  const unhealthyHosts = hosts.filter((host) => host.status === "error" || host.status === "disconnected");
+  const unhealthyHosts = hosts.filter((host) => isUnhealthyHostStatus(host.status));
   const runningContainers = normalizedContainers.filter((container) => container.State === "running");
   const stoppedContainers = normalizedContainers.filter((container) => container.State !== "running");
   const exitedContainers = normalizedContainers.filter((container) => container.State === "exited");
 
   const alerts: AlertItem[] = [
-    ...unhealthyHosts.map((host) => ({
-      id: `host-${host.id}`,
-      type: "host" as const,
-      severity: "error" as const,
-      title: "Host Disconnected",
-      description: `Host "${host.name}" is unresponsive. Check agent connectivity.`,
-      timestamp: host.last_seen_at ? "Seen recently" : "Never seen",
-      href: `/app/hosts/${host.id}`,
-    })),
+    ...unhealthyHosts.map((host) => {
+      const copy = getHostAlertCopy(host.status, host.name);
+
+      return {
+        id: `host-${host.id}`,
+        type: "host" as const,
+        severity: "error" as const,
+        title: copy.title,
+        description: copy.description,
+        timestamp: host.last_seen_at ? "Seen recently" : "Never seen",
+        href: `/app/hosts/${host.id}`,
+      };
+    }),
     ...exitedContainers.map((container) => ({
       id: `cont-exited-${container.Id}`,
       type: "container" as const,

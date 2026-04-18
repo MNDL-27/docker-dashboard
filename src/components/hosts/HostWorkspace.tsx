@@ -30,6 +30,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
+import { getHostStatusAppearance, isReadableHostStatus, normalizeHostStatus } from "@/lib/host-health-state";
 import { useDeleteDockerHost, useDockerHosts, useHostContainers } from "@/hooks/useDocker";
 import { HostMetricsDisk, HostMetricsFailure, HostMetricsPoint, useHostMetricsHistory } from "@/hooks/useHostMetrics";
 import { useToast } from "@/hooks/use-toast";
@@ -139,38 +140,6 @@ function agentVerificationReason(
   return null;
 }
 
-function statusPill(status: string) {
-  switch (status) {
-    case "connected":
-      return "bg-success/15 text-success border-success/20";
-    case "unhealthy":
-      return "bg-destructive/15 text-destructive border-destructive/20";
-    case "stale":
-    case "error":
-      return "bg-warning/15 text-warning border-warning/20";
-    default:
-      return "bg-muted text-muted-foreground border-border";
-  }
-}
-
-function statusDot(status: string) {
-  switch (status) {
-    case "connected":
-      return "bg-success shadow-[0_0_16px_rgba(34,197,94,0.6)]";
-    case "unhealthy":
-      return "bg-destructive shadow-[0_0_16px_rgba(239,68,68,0.45)]";
-    case "stale":
-    case "error":
-      return "bg-warning shadow-[0_0_16px_rgba(245,158,11,0.45)]";
-    default:
-      return "bg-muted-foreground/40";
-  }
-}
-
-function isReadableHostStatus(status: string | null | undefined) {
-  return status === "connected" || status === "stale";
-}
-
 function isDisconnectedHostStatus(status: string | null | undefined) {
   return !isReadableHostStatus(status);
 }
@@ -186,6 +155,8 @@ function HostCard({
   previewMetrics?: Pick<HostMetricsPoint, "cpu" | "memory"> | null;
   onSelect: () => void;
 }) {
+  const statusAppearance = getHostStatusAppearance(host.status);
+
   return (
     <button
       type="button"
@@ -204,7 +175,7 @@ function HostCard({
             {host.connection_mode === "cloudflare_tunnel" ? "Cloudflare tunnel" : "Agent"}
           </p>
         </div>
-        <span className={cn("mt-1 h-3 w-3 shrink-0 rounded-full", statusDot(host.status))} />
+        <span className={cn("mt-1 h-3 w-3 shrink-0 rounded-full", statusAppearance.dotClassName)} />
       </div>
       <div className="mt-4 flex items-center justify-between text-sm text-muted-foreground">
         <span>CPU: {previewMetrics ? `${previewMetrics.cpu.toFixed(0)}%` : "--"}</span>
@@ -888,6 +859,11 @@ export function HostWorkspace() {
                 </div>
               ) : null}
               <div className="glass-card p-6 space-y-5">
+                {(() => {
+                  const selectedHostAppearance = getHostStatusAppearance(selectedHost.status);
+
+                  return (
+                <>
                 <div className="flex flex-col gap-5 xl:flex-row xl:items-start xl:justify-between">
                   <div className="flex items-start gap-4">
                     <div className="rounded-2xl bg-primary/10 p-4">
@@ -896,8 +872,8 @@ export function HostWorkspace() {
                     <div>
                       <div className="flex flex-wrap items-center gap-3">
                         <h2 className="text-4xl font-semibold tracking-tight">{selectedHost.name}</h2>
-                        <span className={cn("inline-flex items-center gap-1 rounded-full border px-3 py-1 text-xs font-medium uppercase tracking-[0.18em]", statusPill(selectedHost.status))}>
-                          {selectedHost.status === "connected" ? <Wifi className="h-3.5 w-3.5" /> : <WifiOff className="h-3.5 w-3.5" />}
+                        <span className={cn("inline-flex items-center gap-1 rounded-full border px-3 py-1 text-xs font-medium uppercase tracking-[0.18em]", selectedHostAppearance.pillClassName)}>
+                          {selectedHostAppearance.isOnlineIcon ? <Wifi className="h-3.5 w-3.5" /> : <WifiOff className="h-3.5 w-3.5" />}
                           {selectedHost.status}
                         </span>
                       </div>
@@ -963,9 +939,9 @@ export function HostWorkspace() {
                         ? "From current host metrics sample"
                         : missingExtendedMetrics
                           ? `Update or reinstall the host agent to ${CURRENT_WATCHTOWER_AGENT_VERSION}`
-                        : selectedHost.status === "connected"
+                        : normalizeHostStatus(selectedHost.status) === "connected"
                           ? "Waiting for uptime sample"
-                          : selectedHost.status === "stale"
+                          : normalizeHostStatus(selectedHost.status) === "stale"
                           ? "Heartbeat is stale"
                           : "Waiting for a successful probe"
                     }
@@ -979,9 +955,12 @@ export function HostWorkspace() {
                     icon={Terminal}
                   />
                 </div>
+                </>
+                  );
+                })()}
               </div>
 
-              {selectedHost.status === "stale" && (
+              {normalizeHostStatus(selectedHost.status) === "stale" && (
                 <div className="rounded-xl border border-warning/20 bg-warning/10 px-4 py-3 text-sm text-warning">
                   This host heartbeat is stale. The page will keep trying to read metrics and containers, but the data may be delayed or partially unavailable until the next successful health check.
                 </div>
