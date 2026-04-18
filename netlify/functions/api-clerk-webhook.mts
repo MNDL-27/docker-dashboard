@@ -10,7 +10,7 @@ export default async (req: Request) => {
   }
 
   // Apply rate limiting for webhook endpoint
-  const rateLimitResponse = applyRateLimit(req, 'webhook:clerk', RATE_LIMITS.WEBHOOK);
+  const rateLimitResponse = await applyRateLimit(req, 'webhook:clerk', RATE_LIMITS.WEBHOOK);
   if (rateLimitResponse) {
     return rateLimitResponse;
   }
@@ -38,7 +38,7 @@ export default async (req: Request) => {
   }
 
   // Verify timestamp to prevent replay attacks
-  const timestampResult = verifyWebhookTimestamp(svix_timestamp, svix_id);
+  const timestampResult = await verifyWebhookTimestamp(svix_timestamp, svix_id);
   if (!timestampResult.valid) {
     logSecurityEvent({
       type: 'replay_attack',

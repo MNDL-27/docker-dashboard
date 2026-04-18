@@ -1,6 +1,7 @@
 import type { Config } from "@netlify/functions";
 
 import { donorJsonHeaders, ingestDonorEvent, parseDonorWebhookEvent } from "./lib/donor-billing.mjs";
+import { applyRateLimit, RATE_LIMITS } from "./lib/security.mjs";
 
 const headers = donorJsonHeaders();
 
@@ -14,6 +15,11 @@ export default async (req: Request) => {
   }
 
   try {
+    const rateLimitResponse = await applyRateLimit(req, "webhook:paypal-donor", RATE_LIMITS.WEBHOOK);
+    if (rateLimitResponse) {
+      return rateLimitResponse;
+    }
+
     const rawBody = await req.text();
     const event = await parseDonorWebhookEvent("paypal", req, rawBody);
     const result = await ingestDonorEvent(event);

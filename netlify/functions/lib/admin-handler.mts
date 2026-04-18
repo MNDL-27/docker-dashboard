@@ -4,7 +4,7 @@ import { requirePlatformAdmin } from "./admin-auth.mjs";
 import { assertAdminReason, normalizeAdminReason, recordAdminAudit } from "./admin-audit.mjs";
 import { ensureAdminSchema } from "./ensure-admin-schema.mjs";
 import { runSecretMigration } from "./secret-migration.mjs";
-import { buildCorsHeaders } from "./security.mjs";
+import { applyRateLimit, buildCorsHeaders, RATE_LIMITS } from "./security.mjs";
 import { adminMatchBillingEvent, listUnmatchedBillingEvents, resendDonorEmailDelivery } from "./donor-billing.mjs";
 
 const headers = {
@@ -903,6 +903,11 @@ export async function handleAdminRequest(req: Request) {
 
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
+  }
+
+  const rateLimitResponse = await applyRateLimit(req, "admin", RATE_LIMITS.AUTH);
+  if (rateLimitResponse) {
+    return rateLimitResponse;
   }
 
   try {

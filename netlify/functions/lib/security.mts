@@ -1,3 +1,5 @@
+import { sql } from './db.mjs';
+
 /**
  * Security utilities for CORS, rate limiting, and request logging
  */
@@ -93,25 +95,53 @@ export const RATE_LIMITS = {
 };
 
 /**
- * In-memory rate limit store (for single-instance deployments)
- * For production with multiple instances, use Redis or similar
+ * Shared, database-backed rate limiting avoids per-instance bypasses in serverless.
  */
-const rateLimitStore = new Map<string, { count: number; resetAt: number }>();
-
-/**
- * Clean up expired entries from rate limit store
- */
-function cleanupRateLimitStore() {
-  const now = Date.now();
-  for (const [key, value] of rateLimitStore.entries()) {
-    if (value.resetAt < now) {
-      rateLimitStore.delete(key);
-    }
-  }
+interface PersistedRateLimitState {
+  count: number;
+  resetAt: number;
 }
 
-// Run cleanup every minute
-setInterval(cleanupRateLimitStore, 60 * 1000);
+function normalizeRateLimitWindowStart(now: number, windowMs: number) {
+  return Math.floor(now / windowMs) * windowMs;
+}
+
+async function checkRateLimitPersistent(
+  key: string,
+  config: RateLimitConfig
+): Promise<{ allowed: boolean; remaining: number; resetAt: number; retryAfter?: number }> {
+  const now = Date.now();
+  const windowStart = normalizeRateLimitWindowStart(now, config.windowMs);
+  const resetAt = windowStart + config.windowMs;
+
+  const rows = await sql`
+    INSERT INTO public.security_rate_limits (key, window_start_ms, window_ms, count, reset_at)
+    VALUES (${key}, ${windowStart}, ${config.windowMs}, 1, to_timestamp(${resetAt} / 1000.0))
+    ON CONFLICT (key, window_start_ms)
+    DO UPDATE SET count = public.security_rate_limits.count + 1,
+                  reset_at = EXCLUDED.reset_at
+    RETURNING count, floor(extract(epoch from reset_at) * 1000)::bigint AS reset_at_ms
+  ` as Array<{ count: number; reset_at_ms: string | number }>;
+
+  const row = rows[0];
+  const count = Number(row?.count ?? 0);
+  const persistedResetAt = Number(row?.reset_at_ms ?? resetAt);
+
+  if (count > config.maxRequests) {
+    return {
+      allowed: false,
+      remaining: 0,
+      resetAt: persistedResetAt,
+      retryAfter: Math.max(1, Math.ceil((persistedResetAt - now) / 1000)),
+    };
+  }
+
+  return {
+    allowed: true,
+    remaining: Math.max(0, config.maxRequests - count),
+    resetAt: persistedResetAt,
+  };
+}
 
 /**
  * Generate a rate limit key based on request
@@ -129,42 +159,11 @@ export function getRateLimitKey(req: Request, endpoint: string): string {
  * Check and update rate limit
  * Returns { allowed: boolean, remaining: number, resetAt: number }
  */
-export function checkRateLimit(
+export async function checkRateLimit(
   key: string,
   config: RateLimitConfig
-): { allowed: boolean; remaining: number; resetAt: number; retryAfter?: number } {
-  const now = Date.now();
-  const existing = rateLimitStore.get(key);
-  
-  if (!existing || existing.resetAt < now) {
-    // New window
-    const resetAt = now + config.windowMs;
-    rateLimitStore.set(key, { count: 1, resetAt });
-    return {
-      allowed: true,
-      remaining: config.maxRequests - 1,
-      resetAt,
-    };
-  }
-  
-  if (existing.count >= config.maxRequests) {
-    // Rate limited
-    return {
-      allowed: false,
-      remaining: 0,
-      resetAt: existing.resetAt,
-      retryAfter: Math.ceil((existing.resetAt - now) / 1000),
-    };
-  }
-  
-  // Increment counter
-  existing.count++;
-  rateLimitStore.set(key, existing);
-  return {
-    allowed: true,
-    remaining: config.maxRequests - existing.count,
-    resetAt: existing.resetAt,
-  };
+): Promise<{ allowed: boolean; remaining: number; resetAt: number; retryAfter?: number }> {
+  return checkRateLimitPersistent(key, config);
 }
 
 /**
@@ -186,13 +185,13 @@ export function buildRateLimitHeaders(
  * Apply rate limiting to a request
  * Returns response if rate limited, null if OK to proceed
  */
-export function applyRateLimit(
+export async function applyRateLimit(
   req: Request,
   endpoint: string,
   config: RateLimitConfig
-): Response | null {
+): Promise<Response | null> {
   const key = getRateLimitKey(req, endpoint);
-  const result = checkRateLimit(key, config);
+  const result = await checkRateLimit(key, config);
   
   if (!result.allowed) {
     console.warn(`[RateLimit] Exceeded limit for ${endpoint}: ${key}`);
@@ -225,25 +224,20 @@ export interface WebhookVerificationResult {
 }
 
 /**
- * Store for processed webhook nonces (to prevent replay attacks)
- * Keys expire after the timestamp window
+ * Shared webhook nonce persistence avoids replay bypasses across instances.
  */
-const processedNonces = new Map<string, number>();
+async function registerWebhookNonce(nonce: string, maxAge: number): Promise<boolean> {
+  const expiresAt = new Date(Date.now() + (maxAge * 1000));
 
-/**
- * Clean up expired nonces
- */
-function cleanupNonces() {
-  const now = Date.now();
-  for (const [nonce, expiresAt] of processedNonces.entries()) {
-    if (expiresAt < now) {
-      processedNonces.delete(nonce);
-    }
-  }
+  const rows = await sql`
+    INSERT INTO public.security_webhook_nonces (nonce, expires_at)
+    VALUES (${nonce}, ${expiresAt.toISOString()})
+    ON CONFLICT (nonce) DO NOTHING
+    RETURNING nonce
+  ` as Array<{ nonce: string }>;
+
+  return rows.length > 0;
 }
-
-// Run cleanup every 5 minutes
-setInterval(cleanupNonces, 5 * 60 * 1000);
 
 /**
  * Verify webhook timestamp and nonce to prevent replay attacks
@@ -251,11 +245,11 @@ setInterval(cleanupNonces, 5 * 60 * 1000);
  * @param nonceHeader - Unique nonce from webhook header
  * @param maxAge - Maximum allowed age in seconds (default: 5 minutes)
  */
-export function verifyWebhookTimestamp(
+export async function verifyWebhookTimestamp(
   timestampHeader: string | null,
   nonceHeader: string | null,
   maxAge = 300
-): WebhookVerificationResult {
+): Promise<WebhookVerificationResult> {
   if (!timestampHeader) {
     return { valid: false, error: 'Missing timestamp header' };
   }
@@ -281,14 +275,11 @@ export function verifyWebhookTimestamp(
   
   // Check nonce if provided
   if (nonceHeader) {
-    if (processedNonces.has(nonceHeader)) {
+    const inserted = await registerWebhookNonce(nonceHeader, maxAge);
+    if (!inserted) {
       console.warn(`[Webhook] Replay attack detected: duplicate nonce`);
       return { valid: false, error: 'Duplicate nonce' };
     }
-    
-    // Store nonce with expiration
-    const expiresAt = Date.now() + (maxAge * 1000);
-    processedNonces.set(nonceHeader, expiresAt);
   }
   
   return { valid: true, timestamp, nonce: nonceHeader || undefined };

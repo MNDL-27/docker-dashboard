@@ -6,6 +6,7 @@ import { normalizeAdminReason, assertAdminReason, recordAdminAudit } from "./adm
 import { extractDnr8Token, parseFiniteNumber, coerceString } from "./donor-billing-helpers.mjs";
 import { donorActivationTemplate, donorRenewalReminderTemplate } from "./donor-email-templates.mjs";
 import { sendEmail } from "./email.mjs";
+import { verifyWebhookTimestamp } from "./security.mjs";
 
 export type DonorProvider = "liberapay" | "paypal";
 
@@ -71,6 +72,43 @@ function verifySharedSecret(req: Request, envName: string): { verified: boolean;
     : { verified: false, error: "Webhook secret mismatch" };
 }
 
+function extractReplayHeaders(provider: DonorProvider, req: Request, payload: Record<string, unknown>) {
+  const timestampHeader =
+    req.headers.get("x-webhook-timestamp") ||
+    req.headers.get("x-paypal-transmission-time") ||
+    req.headers.get("x-liberapay-timestamp") ||
+    (typeof payload.timestamp === "string" ? payload.timestamp : null) ||
+    (typeof payload.created_at === "string" ? payload.created_at : null);
+
+  const nonceHeader =
+    req.headers.get("x-webhook-id") ||
+    req.headers.get("x-paypal-transmission-id") ||
+    req.headers.get("x-liberapay-event-id") ||
+    (typeof payload.id === "string" ? payload.id : null) ||
+    (typeof payload.event_id === "string" ? payload.event_id : null) ||
+    (typeof payload.txn_id === "string" ? payload.txn_id : null);
+
+  return {
+    timestampHeader,
+    nonceHeader: nonceHeader ? `${provider}:${nonceHeader}` : null,
+  };
+}
+
+function normalizeTimestampHeader(value: string | null): string | null {
+  if (!value) return null;
+
+  if (/^\d+$/.test(value)) {
+    return value;
+  }
+
+  const parsed = Date.parse(value);
+  if (Number.isNaN(parsed)) {
+    return null;
+  }
+
+  return String(Math.floor(parsed / 1000));
+}
+
 export async function parseDonorWebhookEvent(provider: DonorProvider, req: Request, rawBody: string): Promise<ParsedDonorEvent> {
   const payload = parsePayload(rawBody);
   const envName = provider === "liberapay" ? "LIBERAPAY_WEBHOOK_SECRET" : "PAYPAL_WEBHOOK_SECRET";
@@ -120,6 +158,19 @@ export async function parseDonorWebhookEvent(provider: DonorProvider, req: Reque
     coerceString(payload.organization_id) ||
     null;
 
+  let replayVerificationError: string | null = null;
+  const replayHeaders = extractReplayHeaders(provider, req, payload);
+  const normalizedTimestamp = normalizeTimestampHeader(replayHeaders.timestampHeader);
+
+  if (normalizedTimestamp && replayHeaders.nonceHeader) {
+    const replayResult = await verifyWebhookTimestamp(normalizedTimestamp, replayHeaders.nonceHeader);
+    if (!replayResult.valid) {
+      replayVerificationError = replayResult.error || "Webhook replay verification failed";
+    }
+  }
+
+  const verificationError = [verification.error, replayVerificationError].filter(Boolean).join("; ") || null;
+
   return {
     provider,
     providerEventId,
@@ -133,10 +184,12 @@ export async function parseDonorWebhookEvent(provider: DonorProvider, req: Reque
       payer_email: payerEmail,
       note,
       reference_token: referenceToken,
+      replay_timestamp: normalizedTimestamp,
+      replay_nonce: replayHeaders.nonceHeader,
     },
     rawPayload: payload,
-    verified: verification.verified,
-    verificationError: verification.error,
+    verified: verification.verified && !replayVerificationError,
+    verificationError,
   };
 }
 

@@ -33,7 +33,7 @@ export default async (req: Request) => {
   }
 
   // Apply rate limiting for webhook endpoint
-  const rateLimitResponse = applyRateLimit(req, 'webhook:paddle', RATE_LIMITS.WEBHOOK);
+  const rateLimitResponse = await applyRateLimit(req, 'webhook:paddle', RATE_LIMITS.WEBHOOK);
   if (rateLimitResponse) {
     return rateLimitResponse;
   }
@@ -48,7 +48,7 @@ export default async (req: Request) => {
   const nonceMatch = signature.match(/h1=([a-f0-9]+)/);
   const nonceHeader = nonceMatch ? nonceMatch[1] : null;
   
-  const timestampResult = verifyWebhookTimestamp(timestampHeader, nonceHeader);
+  const timestampResult = await verifyWebhookTimestamp(timestampHeader, nonceHeader);
   if (!timestampResult.valid) {
     logSecurityEvent({
       type: 'replay_attack',

@@ -1,6 +1,18 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { buildCorsHeaders, getAllowedOrigin, TRUSTED_ORIGINS } from "./security.mts";
+vi.mock("./db.mjs", () => ({
+  sql: vi.fn(),
+}));
+
+import { sql } from "./db.mjs";
+import { buildCorsHeaders, checkRateLimit, getAllowedOrigin, TRUSTED_ORIGINS, verifyWebhookTimestamp } from "./security.mts";
+
+const mockedSql = vi.mocked(sql);
+
+afterEach(() => {
+  mockedSql.mockReset();
+  vi.useRealTimers();
+});
 
 describe("security CORS helpers", () => {
   it("allows only trusted origins", () => {
@@ -46,5 +58,41 @@ describe("security CORS helpers", () => {
 
   it("keeps localhost origins in trusted set for local development", () => {
     expect(TRUSTED_ORIGINS.has("http://localhost:8080")).toBe(true);
+  });
+});
+
+describe("distributed security persistence", () => {
+  it("uses shared SQL storage for rate limiting windows", async () => {
+    mockedSql.mockResolvedValueOnce([{ count: 1, reset_at_ms: String(60_000) }]);
+
+    const result = await checkRateLimit("api:127.0.0.1", { windowMs: 60_000, maxRequests: 3 });
+
+    expect(mockedSql).toHaveBeenCalledTimes(1);
+    expect(result).toEqual({
+      allowed: true,
+      remaining: 2,
+      resetAt: 60_000,
+    });
+  });
+
+  it("blocks requests once the shared counter exceeds the configured maximum", async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-04-18T00:00:30.000Z"));
+    mockedSql.mockResolvedValueOnce([{ count: 4, reset_at_ms: String(Date.parse("2026-04-18T00:01:00.000Z")) }]);
+
+    const result = await checkRateLimit("api:127.0.0.1", { windowMs: 60_000, maxRequests: 3 });
+
+    expect(result.allowed).toBe(false);
+    expect(result.remaining).toBe(0);
+    expect(result.retryAfter).toBe(30);
+  });
+
+  it("rejects duplicate webhook nonces using shared SQL persistence", async () => {
+    mockedSql.mockResolvedValueOnce([]);
+
+    const result = await verifyWebhookTimestamp(String(Math.floor(Date.now() / 1000)), "nonce-1", 300);
+
+    expect(result).toEqual({ valid: false, error: "Duplicate nonce" });
+    expect(mockedSql).toHaveBeenCalledTimes(1);
   });
 });
