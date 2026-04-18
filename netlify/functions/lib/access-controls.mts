@@ -1,5 +1,6 @@
 import { sql } from "./db.mjs";
 import { ensureAdminSchema } from "./ensure-admin-schema.mjs";
+import { isDonorPremiumActive } from "./donor-billing.mjs";
 
 function requiresPlatformApproval() {
   const value = (process.env.REQUIRE_PLATFORM_APPROVALS || "").trim().toLowerCase();
@@ -168,4 +169,28 @@ export async function assertHostProxyAllowed({
   if (control.is_quarantined) {
     throw new Error(control.quarantine_reason || "This host is quarantined by platform admin.");
   }
+}
+
+export async function assertAdvancedAlertsAccessAllowed({
+  organizationId,
+  isPlatformAdmin,
+}: {
+  organizationId: string;
+  isPlatformAdmin: boolean;
+}) {
+  await ensureAdminSchema();
+  if (isPlatformAdmin) return;
+
+  const control = await getOrganizationAccessControl(organizationId);
+  const isPremium =
+    control.plan_override === "pro" ||
+    control.plan_override === "team" ||
+    control.plan_override === "enterprise";
+
+  if (isPremium) return;
+
+  const { active: isDonorPremium } = await isDonorPremiumActive(organizationId);
+  if (isDonorPremium) return;
+
+  throw new Error("Advanced Alert Rules require a Premium or Team subscription.");
 }
