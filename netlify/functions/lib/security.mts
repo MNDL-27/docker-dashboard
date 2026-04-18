@@ -57,7 +57,7 @@ export function buildCorsHeaders(req: Request, allowCredentials = true): Record<
     console.warn(`[CORS] Blocked untrusted origin: ${requestOrigin}`);
   }
   
-  headers['Access-Control-Allow-Headers'] = 'Content-Type, Authorization, Idempotency-Key, X-Idempotency-Key, X-Test-Bypass, X-Test-User-Id, X-Test-Org-Id, X-Test-Platform-Admin, X-Test-Email';
+  headers['Access-Control-Allow-Headers'] = 'Content-Type, Authorization, Idempotency-Key, X-Idempotency-Key';
   headers['Access-Control-Allow-Methods'] = 'GET, POST, PUT, PATCH, DELETE, OPTIONS';
   
   return headers;
