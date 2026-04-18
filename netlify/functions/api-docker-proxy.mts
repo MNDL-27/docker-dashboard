@@ -11,10 +11,13 @@ import { ProxyRequestParamsSchema } from '../../shared/schema/proxy.ts';
 import { buildCorsHeaders, applyRateLimit, RATE_LIMITS, logSecurityEvent, getClientIp } from './lib/security.mjs';
 
 function sanitizeContainerId(id: string): string {
-  if (!/^[a-zA-Z0-9][a-zA-Z0-9_.\-]{0,127}$/.test(id)) {
+  const normalized = id.trim();
+
+  if (!/^[a-f0-9]{12,64}$/i.test(normalized)) {
     throw new Error('Invalid container ID format');
   }
-  return id;
+
+  return normalized;
 }
 
 function buildRequest(
