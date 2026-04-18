@@ -76,6 +76,35 @@ respond_json() {
   printf '%s' "$body"
 }
 
+json_escape() {
+  printf '%s' "$1" | sed 's/\\/\\\\/g; s/"/\\"/g'
+}
+
+validate_docker_path() {
+  local path="$1"
+
+  [ -n "$path" ] || return 1
+
+  case "$path" in
+    /*) ;;
+    *) return 1 ;;
+  esac
+
+  case "$path" in
+    *$'\r'*|*$'\n'*|*' '*|*'\t'*|*'\\'*|*'"'*|*"'"*|*'`'*|*';'*|*'|'*|*'&'*|*'<'*|*'>'*|*'('*|*')'*|*'{'*|*'}'*|*'['*|*']'*)
+      return 1
+      ;;
+  esac
+
+  case "$path" in
+    *'..'*)
+      return 1
+      ;;
+  esac
+
+  return 0
+}
+
 cleanup_handler() {
   rm -f "${REQUEST_BODY_FILE:-}" "${RESPONSE_BODY_FILE:-}" "${RESPONSE_HEADERS_FILE:-}" "${CURL_ERROR_FILE:-}"
 }
@@ -273,15 +302,21 @@ fi
 # system_time_ns = system CPU time delta (aggregate across cores)
 # Backend computes: cpu % = Σ (cpu_time_ns / system_time_ns * online_cpus) × 100
 # This matches Docker's standard formula: (cpuDelta / systemDelta) * onlineCPUs * 100
-  if [ "$PATH_RAW" = "/metrics" ]; then
-    HOST_CORES=$(nproc 2>/dev/null || echo 1)
-    UPTIME_SECONDS=null
-    if [ -f /proc/uptime ]; then
-      UPTIME_SECONDS="$(awk '{printf "%d", $1}' /proc/uptime 2>/dev/null || true)"
-      if [ -z "$UPTIME_SECONDS" ]; then
-        UPTIME_SECONDS=null
-      fi
+if [ "$PATH_RAW" = "/metrics" ]; then
+  [ -S "$SOCKET_PATH" ] || {
+    ESCAPED_SOCKET_PATH="$(json_escape "$SOCKET_PATH")"
+    respond_json '500 Internal Server Error' "{\"error\":\"Docker socket not found at ${ESCAPED_SOCKET_PATH}\"}"
+    exit 0
+  }
+
+  HOST_CORES=$(nproc 2>/dev/null || echo 1)
+  UPTIME_SECONDS=null
+  if [ -f /proc/uptime ]; then
+    UPTIME_SECONDS="$(awk '{printf "%d", $1}' /proc/uptime 2>/dev/null || true)"
+    if [ -z "$UPTIME_SECONDS" ]; then
+      UPTIME_SECONDS=null
     fi
+  fi
 
     TOTAL_CPU_TICKS=0
     ACTIVE_CPU_TICKS=0
@@ -488,8 +523,14 @@ EOF
 DOCKER_PATH="${PATH_RAW#/docker}"
 [ -n "$DOCKER_PATH" ] || DOCKER_PATH="/"
 
+if ! validate_docker_path "$DOCKER_PATH"; then
+  respond_json '400 Bad Request' '{"error":"Invalid Docker API path"}'
+  exit 0
+fi
+
 [ -S "$SOCKET_PATH" ] || {
-  respond_json '500 Internal Server Error' "{\"error\":\"Docker socket not found at $SOCKET_PATH\"}"
+  ESCAPED_SOCKET_PATH="$(json_escape "$SOCKET_PATH")"
+  respond_json '500 Internal Server Error' "{\"error\":\"Docker socket not found at ${ESCAPED_SOCKET_PATH}\"}"
   exit 0
 }
 
