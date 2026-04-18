@@ -121,6 +121,8 @@ export default async (req: Request) => {
     const timestamp = now.getTime();
     const timeStr = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false });
 
+    const connectedHostIds: string[] = [];
+
     const metricsPromises = hosts.map(async (host) => {
       try {
         // Get decrypted secrets for this host
@@ -139,6 +141,7 @@ export default async (req: Request) => {
         if (!apiKey) return null;
 
         const metrics = await fetchHostMetrics(host.host_url, apiKey);
+        if (metrics) connectedHostIds.push(host.id);
         return metrics;
       } catch {
         return null;
@@ -146,6 +149,19 @@ export default async (req: Request) => {
     });
 
     const results = await Promise.all(metricsPromises);
+
+    // Update heartbeat for hosts that returned valid metrics
+    if (connectedHostIds.length > 0) {
+      try {
+        await sql`
+          UPDATE docker_hosts
+          SET status = 'connected', last_seen_at = now(), consecutive_failures = 0
+          WHERE id = ANY(${connectedHostIds})
+        `;
+      } catch (e) {
+        console.error('[fleet-metrics] heartbeat update failed', e);
+      }
+    }
 
      // Aggregate: calculate fleet-wide CPU and memory utilization
      // For CPU: 

@@ -453,6 +453,9 @@ export default async (req: Request) => {
           const containers = await listResp.json();
           if (!Array.isArray(containers) || containers.length === 0) return;
 
+          // Update heartbeat — agent responded successfully
+          await sql`UPDATE docker_hosts SET status = 'connected', last_seen_at = now(), consecutive_failures = 0 WHERE id = ${host.id}`;
+
           // Cap at 20 containers per host to bound latency
           const capped = containers.slice(0, 20);
 
