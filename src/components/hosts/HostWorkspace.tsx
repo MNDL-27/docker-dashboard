@@ -505,13 +505,19 @@ function AgentUpdateDialog({
   const upgradeCommand = buildWatchtowerAgentUpgradeCommand(CURRENT_WATCHTOWER_AGENT_RELEASE);
   const verifyCommand = buildWatchtowerAgentVerifyCommand();
   const repairCommand = buildWatchtowerAgentRepairCommand();
+  const dialogTitle =
+    normalizedStatus === "verification_required"
+      ? "Verify Host Agent"
+      : normalizedStatus === "current"
+        ? "Host Agent"
+        : "Update Host Agent";
 
   return (
     <Dialog>
       <DialogTrigger asChild>{trigger}</DialogTrigger>
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Update Host Agent</DialogTitle>
+          <DialogTitle>{dialogTitle}</DialogTitle>
           <DialogDescription>{updateCopy.dialogDescription}</DialogDescription>
         </DialogHeader>
 
@@ -981,7 +987,7 @@ export function HostWorkspace() {
                     status={agentUpdateStatus}
                     statusCopy={agentUpdateStatusCopy}
                     verificationReason={verificationReason}
-                    trigger={<Button className="gap-2"><Terminal className="h-4 w-4" />Open Update Steps</Button>}
+                    trigger={<Button className="gap-2"><Terminal className="h-4 w-4" />{agentUpdateStatus === "verification_required" ? "Open Verification Steps" : "Open Update Steps"}</Button>}
                   />
                 </div>
               )}

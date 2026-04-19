@@ -121,7 +121,7 @@ export function useHostContainers(hostId?: string | null) {
     retry: false,
     refetchOnWindowFocus: false,
     refetchOnReconnect: false,
-    refetchInterval: 15000,
+    refetchInterval: (query) => (query.state.error ? false : 15000),
   });
 }
 

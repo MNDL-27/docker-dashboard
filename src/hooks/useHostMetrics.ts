@@ -280,7 +280,10 @@ export function useHostMetrics(hostId?: string | null, options: UseHostMetricsOp
     retry: false,
     refetchOnWindowFocus: false,
     refetchOnReconnect: false,
-    refetchInterval: enabled ? refetchInterval : false,
+    refetchInterval: (query) => {
+      if (!enabled || !hostId) return false;
+      return query.state.error ? false : refetchInterval;
+    },
   });
 
   return {

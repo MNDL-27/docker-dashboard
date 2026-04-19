@@ -79,6 +79,76 @@ function trimDiagnostic(value: string, maxLength = 160) {
   return value.length > maxLength ? `${value.slice(0, maxLength - 3)}...` : value;
 }
 
+function extractDiagnosticMessage(details: unknown): string | null {
+  if (!details) {
+    return null;
+  }
+
+  if (typeof details === 'string') {
+    const normalized = details.trim();
+    return normalized ? trimDiagnostic(normalized) : null;
+  }
+
+  if (typeof details === 'object') {
+    const detailRecord = details as Record<string, unknown>;
+    const candidates = [
+      detailRecord.detail,
+      detailRecord.error,
+      detailRecord.title,
+      detailRecord.message,
+    ];
+
+    for (const candidate of candidates) {
+      if (typeof candidate === 'string' && candidate.trim()) {
+        return trimDiagnostic(candidate.trim());
+      }
+    }
+
+    try {
+      return trimDiagnostic(JSON.stringify(details));
+    } catch {
+      return null;
+    }
+  }
+
+  return trimDiagnostic(String(details));
+}
+
+function summarizeAgentConnectionFailure(
+  status: number,
+  rawDetails: string,
+  connectionMode: string,
+) {
+  const parsedDetails = parseDiagnosticPayload(rawDetails);
+  const diagnostic = extractDiagnosticMessage(parsedDetails);
+  const isCloudflareHtml =
+    typeof diagnostic === 'string' && /Cloudflare HTML error page:/i.test(diagnostic);
+
+  if (status === 504) {
+    return 'The Watchtower agent did not respond in time. Verify the agent service is running and reachable from Dockerdash.';
+  }
+
+  if (status === 502 && isCloudflareHtml) {
+    if (connectionMode === 'cloudflare_tunnel') {
+      return 'Cloudflare Tunnel could not reach your Watchtower agent. Verify the tunnel is healthy, the route points to the agent, and any CF Access service token is correct.';
+    }
+
+    return 'A gateway in front of your Watchtower agent returned 502. Verify the saved host URL, reverse proxy, and agent service.';
+  }
+
+  if (status === 502) {
+    return diagnostic
+      ? `Dockerdash could not reach the Watchtower agent: ${diagnostic}`
+      : 'Dockerdash could not reach the Watchtower agent. Verify the saved host URL and that the agent service is running.';
+  }
+
+  if (diagnostic) {
+    return `The Watchtower agent returned HTTP ${status}: ${diagnostic}`;
+  }
+
+  return `The Watchtower agent returned HTTP ${status}.`;
+}
+
 function toFiniteNumber(value: unknown): number | null {
   const numeric = typeof value === 'number' ? value : Number(value);
   return Number.isFinite(numeric) ? numeric : null;
@@ -692,6 +762,21 @@ export default async (req: Request) => {
       const text = await dockerResponse.text();
       const statusText = formatDiagnosticDetail(parseDiagnosticPayload(text)) ?? trimDiagnostic(text.replace(/\s+/g, ' ').trim());
       const ok = dockerResponse.ok;
+
+      if (!ok) {
+        await sql`
+          UPDATE docker_hosts
+          SET status = 'error'
+          WHERE id = ${hostId}
+        `;
+
+        return createProblemResponse(
+          dockerResponse.status || 502,
+          'Connection test failed',
+          summarizeAgentConnectionFailure(dockerResponse.status || 502, text, host.connection_mode),
+          'agent_connection_failed',
+        );
+      }
 
       let dockerVersion = null;
       let agentVersion = null;
