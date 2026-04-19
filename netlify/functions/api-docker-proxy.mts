@@ -8,6 +8,7 @@ import { ensureDockerHostSchema } from './lib/ensure-docker-host-schema.mjs';
 import { buildValidatedAgentUrl } from './lib/host-url.mjs';
 import { createProblemResponse } from '../../shared/schema/error.ts';
 import { ProxyRequestParamsSchema } from '../../shared/schema/proxy.ts';
+import { parseDiagnosticPayload } from '../../shared/lib/diagnostics.ts';
 import { buildCorsHeaders, applyRateLimit, RATE_LIMITS, logSecurityEvent, getClientIp } from './lib/security.mjs';
 
 function sanitizeContainerId(id: string): string {
@@ -116,14 +117,6 @@ function normalizeDiskMetric(value: any) {
     readBytesPerSec,
     writeBytesPerSec,
   };
-}
-
-function parseDiagnosticPayload(rawDetails: string) {
-  try {
-    return JSON.parse(rawDetails);
-  } catch {
-    return rawDetails;
-  }
 }
 
 function classifyHostMetricsFailure(status: number, details: unknown) {
