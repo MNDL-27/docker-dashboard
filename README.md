@@ -243,7 +243,9 @@ GET https://your-site.netlify.app/api/host-health-poll
 Header: x-cron-secret: <your HEALTH_POLL_SECRET value>
 ```
 
-A 60-second interval is recommended.
+A 60-second interval is recommended. This repository includes a native Netlify schedule for
+`api-host-health-poll`; when Netlify invokes it directly, the function accepts the platform
+schedule signal. External cron callers can continue to use the `x-cron-secret` header.
 
 ### In Local Development
 

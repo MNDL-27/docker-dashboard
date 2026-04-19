@@ -19,6 +19,18 @@ const headers = {
 
 const PING_TIMEOUT_MS = 10000
 
+function isAuthorizedSchedulerRequest(req: Request) {
+  const expectedSecret = (process.env.HEALTH_POLL_SECRET || '').trim()
+  const providedSecret = (req.headers.get('x-cron-secret') || '').trim()
+  const schedulerEvent = (req.headers.get('x-nf-event') || '').trim().toLowerCase()
+
+  if (expectedSecret && providedSecret === expectedSecret) {
+    return true
+  }
+
+  return schedulerEvent === 'schedule'
+}
+
 function buildPingRequest(
   host: { host_url: string; connection_mode: string; docker_socket_path: string | null },
   secrets: { agent_api_key?: string; cf_service_token_id?: string; cf_service_token_secret?: string } | null,
@@ -97,10 +109,7 @@ export default async (req: Request) => {
   try {
     await ensureDockerHostSchema();
 
-    const cronSecret = req.headers.get('x-cron-secret')
-    const expectedSecret = process.env.HEALTH_POLL_SECRET
-
-    if (!expectedSecret || !cronSecret || cronSecret !== expectedSecret) {
+    if (!isAuthorizedSchedulerRequest(req)) {
       return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers })
     }
 

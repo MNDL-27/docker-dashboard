@@ -48,6 +48,10 @@
   function = "api-donor-reminders"
   cron = "0 8 * * *"
 
+[[scheduled]]
+  function = "api-host-health-poll"
+  cron = "* * * * *"
+
 # Catch-all rule for React Router (must be at the very bottom)
 [[redirects]]
   from = "/*"
