@@ -8,21 +8,7 @@ import { useEffect, useState } from "react";
 import { useOrganization, useUser } from "@clerk/clerk-react";
 import { useQuery } from "@tanstack/react-query";
 import { apiFetch } from "@/lib/api";
-
-const planDetails = {
-  pro: { 
-    name: "Pro", 
-    price: "$29/mo", 
-    priceId: import.meta.env.VITE_PADDLE_PRO_PRICE_ID || "pri_01j7p3v1v1v1v1v1v1v1v1v1v1", // Fallback example
-    features: ["10 hosts", "5 users", "7-day retention", "Advanced alerts", "API access"] 
-  },
-  team: { 
-    name: "Team", 
-    price: "$79/mo", 
-    priceId: import.meta.env.VITE_PADDLE_TEAM_PRICE_ID || "pri_01j7p3v2v2v2v2v2v2v2v2v2v2", // Fallback example
-    features: ["50 hosts", "25 users", "30-day retention", "Custom dashboards", "Priority support", "SSO"] 
-  },
-};
+import { getCheckoutPriceId, getPricingPlan } from "@/lib/pricing";
 
 export default function BillingPage() {
   const [searchParams] = useSearchParams();
@@ -30,7 +16,7 @@ export default function BillingPage() {
   const { organization } = useOrganization();
   const { user } = useUser();
   const { toast } = useToast();
-  const [selectedPlan, setSelectedPlan] = useState<string | null>(null);
+  const [selectedPlan, setSelectedPlan] = useState<"pro" | "team" | null>(null);
   const [donorIntentLoading, setDonorIntentLoading] = useState(false);
   const [donorIntent, setDonorIntent] = useState<null | {
     reference_token: string;
@@ -118,9 +104,7 @@ export default function BillingPage() {
       return;
     }
 
-    const priceId = selectedPlan === 'pro' 
-      ? import.meta.env.VITE_PADDLE_LAUNCH_PRICE_ID 
-      : import.meta.env.VITE_PADDLE_SCALE_PRICE_ID;
+    const priceId = getCheckoutPriceId(selectedPlan);
 
     if (!priceId) {
       console.error("Missing Price ID for plan:", selectedPlan);
@@ -270,7 +254,7 @@ export default function BillingPage() {
           <div className="glass-card p-6">
             <h4 className="font-semibold mb-4">Plan Limits</h4>
             <ul className="space-y-3">
-              {planDetails[orgDetails.plan as keyof typeof planDetails]?.features.map(f => (
+              {(getPricingPlan(orgDetails.plan as "free" | "pro" | "team" | "enterprise")?.highlights ?? []).map(f => (
                 <li key={f} className="flex items-center gap-2 text-xs">
                   <Check className="h-3 w-3 text-success shrink-0" /> {f}
                 </li>
@@ -284,13 +268,16 @@ export default function BillingPage() {
 
   // Checkout State View (User selected a plan but hasn't paid)
   if (selectedPlan && (selectedPlan === "pro" || selectedPlan === "team")) {
-    const details = planDetails[selectedPlan as keyof typeof planDetails];
+    const details = getPricingPlan(selectedPlan);
+    if (!details) {
+      return null;
+    }
     const paddleBlocked = paddleStatus === "unavailable";
     return (
       <div className="space-y-6 animate-fade-in">
         <PageHeader
           title="Complete your Subscription"
-          description={`Almost there! Set up your ${details.name} plan to activate all features.`}
+          description={`Almost there. Activate the ${details.name} plan to unlock the paid operating envelope and premium alerting.`}
           breadcrumbs={[{ label: "Management" }, { label: "Billing" }, { label: "Checkout" }]}
         />
         
@@ -299,7 +286,7 @@ export default function BillingPage() {
             <div className="p-6 border-b border-border bg-primary/5 flex justify-between items-center">
               <div>
                 <h3 className="font-bold text-lg">{details.name} Plan</h3>
-                <p className="text-2xl font-bold">{details.price}<span className="text-sm font-normal text-muted-foreground">/mo</span></p>
+                <p className="text-2xl font-bold">{details.priceLabel}</p>
               </div>
               <Button variant="ghost" size="icon" onClick={handleClearPlan}>
                 <X className="h-4 w-4" />
@@ -316,7 +303,7 @@ export default function BillingPage() {
                 </Alert>
               )}
               <ul className="space-y-2">
-                {details.features.map(f => (
+                {details.highlights.map(f => (
                   <li key={f} className="flex items-center gap-2 text-sm">
                     <Check className="h-4 w-4 text-success" /> {f}
                   </li>
@@ -414,11 +401,11 @@ export default function BillingPage() {
           </div>
           <ul className="space-y-2 mb-8">
             <li className="flex items-center gap-2 text-sm"><Check className="h-4 w-4 text-success" /> 2 hosts</li>
-            <li className="flex items-center gap-2 text-sm"><Check className="h-4 w-4 text-success" /> 1 user</li>
-            <li className="flex items-center gap-2 text-sm"><Check className="h-4 w-4 text-success" /> 24h data retention</li>
+            <li className="flex items-center gap-2 text-sm"><Check className="h-4 w-4 text-success" /> 1 operator seat</li>
+            <li className="flex items-center gap-2 text-sm"><Check className="h-4 w-4 text-success" /> Core host and container visibility</li>
           </ul>
           <div className="p-4 rounded-lg bg-primary/5 border border-primary/10">
-            <p className="text-sm mb-4">Need more capacity? Upgrade to Pro or Team for advanced features.</p>
+            <p className="text-sm mb-4">Need advanced alerting, more seats, or a support response target? Upgrade to Pro or Team.</p>
             <Button className="w-full" onClick={() => navigate('/pricing')}>View Paid Plans</Button>
           </div>
         </div>
