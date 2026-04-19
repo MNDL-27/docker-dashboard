@@ -8,7 +8,7 @@ import { ensureDockerHostSchema } from './lib/ensure-docker-host-schema.mjs';
 import { buildValidatedAgentUrl } from './lib/host-url.mjs';
 import { createProblemResponse } from '../../shared/schema/error.ts';
 import { ProxyRequestParamsSchema } from '../../shared/schema/proxy.ts';
-import { parseDiagnosticPayload } from '../../shared/lib/diagnostics.ts';
+import { formatDiagnosticDetail, parseDiagnosticPayload } from '../../shared/lib/diagnostics.ts';
 import { buildCorsHeaders, applyRateLimit, RATE_LIMITS, logSecurityEvent, getClientIp } from './lib/security.mjs';
 
 function sanitizeContainerId(id: string): string {
@@ -225,6 +225,42 @@ function classifyHostMetricsFailure(status: number, details: unknown) {
   };
 }
 
+function classifyDockerProxyFailure(status: number, details: unknown) {
+  if (status === 404 || status === 405) {
+    return {
+      error: 'Docker API endpoint unsupported',
+      code: 'docker_endpoint_unsupported',
+      details,
+      upstream_status: status,
+    };
+  }
+
+  if (status === 504) {
+    return {
+      error: 'Docker API request timed out',
+      code: 'agent_timeout',
+      details,
+      upstream_status: status,
+    };
+  }
+
+  if (status === 502) {
+    return {
+      error: 'Docker API connection failed',
+      code: 'agent_connection_failed',
+      details,
+      upstream_status: status,
+    };
+  }
+
+  return {
+    error: `Docker API error: ${status}`,
+    code: 'docker_api_error',
+    details,
+    upstream_status: status,
+  };
+}
+
 function createHostMetricsPoint(data: any) {
   const cpuTimeNs = Math.max(0, toFiniteNumber(data?.cpu_time_ns) ?? 0);
   const systemTimeNs = Math.max(0, toFiniteNumber(data?.system_time_ns) ?? 0);
@@ -302,7 +338,7 @@ async function fetchAgentVersionReport(
     const resp = await dockerFetch(req.url, req.method, req.headers, 5000);
 
     if (!resp.ok) {
-      const body = trimDiagnostic((await resp.text()).replace(/\s+/g, ' ').trim());
+      const body = formatDiagnosticDetail(parseDiagnosticPayload(await resp.text()));
       return {
         agentVersion: null as string | null,
         agentVersionError: trimDiagnostic(
@@ -724,6 +760,7 @@ export default async (req: Request) => {
 
     if (action === 'ping') {
       const text = await dockerResponse.text();
+      const statusText = formatDiagnosticDetail(parseDiagnosticPayload(text)) ?? trimDiagnostic(text.replace(/\s+/g, ' ').trim());
       const ok = dockerResponse.ok;
 
       if (!ok) {
@@ -781,7 +818,7 @@ export default async (req: Request) => {
 
       return new Response(JSON.stringify({
         ok,
-        status: text,
+        status: statusText,
         docker_version: dockerVersion,
         agent_version: agentVersion,
         os_info: osInfo,
@@ -795,6 +832,11 @@ export default async (req: Request) => {
     if (action === 'container-logs') {
       if (dockerResponse.status === 413) {
         return createProblemResponse(413, "Logs too large", "Exceeded 4MB limit");
+      }
+      if (!dockerResponse.ok) {
+        const rawDetails = await dockerResponse.text();
+        const failure = classifyDockerProxyFailure(dockerResponse.status || 502, parseDiagnosticPayload(rawDetails));
+        return new Response(JSON.stringify(failure), { status: dockerResponse.status || 502, headers: corsHeaders });
       }
       const rawBytes = new Uint8Array(await dockerResponse.arrayBuffer());
       const lines: string[] = [];
@@ -814,16 +856,17 @@ export default async (req: Request) => {
     if (['container-start', 'container-stop', 'container-restart'].includes(action)) {
       const text = await dockerResponse.text();
       const ok = dockerResponse.status === 204 || dockerResponse.status === 304 || dockerResponse.ok;
-      return new Response(JSON.stringify({ ok, status: dockerResponse.status, message: text }), { headers: corsHeaders });
+      if (!ok) {
+        const failure = classifyDockerProxyFailure(dockerResponse.status || 502, parseDiagnosticPayload(text));
+        return new Response(JSON.stringify(failure), { status: dockerResponse.status || 502, headers: corsHeaders });
+      }
+      return new Response(JSON.stringify({ ok, status: dockerResponse.status, message: formatDiagnosticDetail(parseDiagnosticPayload(text)) ?? "" }), { headers: corsHeaders });
     }
 
     if (!dockerResponse.ok) {
-      return createProblemResponse(
-        502,
-        `Docker API error: ${dockerResponse.status}`,
-        summarizeAgentConnectionFailure(dockerResponse.status || 502, await dockerResponse.text(), host.connection_mode),
-        'agent_connection_failed',
-      );
+      const rawDetails = await dockerResponse.text();
+      const failure = classifyDockerProxyFailure(dockerResponse.status || 502, parseDiagnosticPayload(rawDetails));
+      return new Response(JSON.stringify(failure), { status: dockerResponse.status || 502, headers: corsHeaders });
     }
 
     const payload = await dockerResponse.json();

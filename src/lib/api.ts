@@ -1,5 +1,7 @@
 const API_BASE = import.meta.env.VITE_API_BASE_URL || '/api';
 
+import { summarizeDiagnosticText } from "../../shared/lib/diagnostics";
+
 export interface ApiErrorBody {
   error?: string;
   code?: string;
@@ -129,7 +131,7 @@ export async function apiFetch(path: string, options: RequestInit = {}) {
     try {
       errorData = JSON.parse(errorText);
     } catch {
-      errorData = errorText ? { error: errorText } : null;
+      errorData = errorText ? { error: summarizeDiagnosticText(errorText) } : null;
     }
     throw new ApiError(response.status, errorData, errorText);
   }

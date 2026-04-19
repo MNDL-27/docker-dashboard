@@ -278,6 +278,8 @@ export function useHostMetrics(hostId?: string | null, options: UseHostMetricsOp
     },
     enabled: enabled && !!hostId,
     retry: false,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
     refetchInterval: (query) => {
       if (!enabled || !hostId) return false;
       return query.state.error ? false : refetchInterval;
