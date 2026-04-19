@@ -680,10 +680,11 @@ export function HostWorkspace() {
 
   const selectedHostReadable = isReadableHostStatus(selectedHost?.status);
   const selectedHostDisconnected = isDisconnectedHostStatus(selectedHost?.status);
+  const selectedHostAutoProbe = normalizeHostStatus(selectedHost?.status) === "connected";
 
-  const containersQuery = useHostContainers(selectedHostReadable ? selectedHost?.id : null);
-  const metricsQuery = useHostMetricsHistory(selectedHostReadable ? selectedHost?.id : null, {
-    enabled: selectedHostReadable,
+  const containersQuery = useHostContainers(selectedHostAutoProbe ? selectedHost?.id : null);
+  const metricsQuery = useHostMetricsHistory(selectedHostAutoProbe ? selectedHost?.id : null, {
+    enabled: selectedHostAutoProbe,
     refetchInterval: 10000,
     maxDataPoints: 24,
   });
@@ -752,7 +753,6 @@ export function HostWorkspace() {
           : undefined,
       });
       await refetch();
-      await metricsQuery.refetch();
     } catch (error: any) {
       toast({ title: "Connection failed", description: error.message, variant: "destructive" });
     } finally {
@@ -962,7 +962,7 @@ export function HostWorkspace() {
 
               {normalizeHostStatus(selectedHost.status) === "stale" && (
                 <div className="rounded-xl border border-warning/20 bg-warning/10 px-4 py-3 text-sm text-warning">
-                  This host heartbeat is stale. The page will keep trying to read metrics and containers, but the data may be delayed or partially unavailable until the next successful health check.
+                  This host heartbeat is stale. Automatic metrics and container reads are paused until the next successful health check or a manual connection test.
                 </div>
               )}
 

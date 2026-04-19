@@ -53,3 +53,32 @@ export function parseDiagnosticPayload(rawDetails: string) {
     return summarizeDiagnosticText(rawDetails);
   }
 }
+
+export function formatDiagnosticDetail(details: unknown) {
+  if (details === null || details === undefined) {
+    return null;
+  }
+
+  if (typeof details === "string") {
+    return summarizeDiagnosticText(details);
+  }
+
+  if (typeof details === "object") {
+    const error =
+      typeof (details as { error?: unknown }).error === "string"
+        ? summarizeDiagnosticText((details as { error: string }).error)
+        : null;
+
+    if (error) {
+      return error;
+    }
+
+    try {
+      return JSON.stringify(details);
+    } catch {
+      return "Upstream error details were unavailable.";
+    }
+  }
+
+  return String(details);
+}

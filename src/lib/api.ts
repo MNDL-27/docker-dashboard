@@ -1,10 +1,14 @@
 const API_BASE = import.meta.env.VITE_API_BASE_URL || '/api';
 
+import { summarizeDiagnosticText } from "../../shared/lib/diagnostics";
+
 export interface ApiErrorBody {
   error?: string;
   code?: string;
   details?: unknown;
   upstream_status?: number;
+  title?: string;
+  detail?: string;
   [key: string]: unknown;
 }
 
@@ -17,12 +21,17 @@ export class ApiError extends Error {
   upstreamStatus?: number;
 
   constructor(status: number, body: ApiErrorBody | null, rawText: string) {
-    super(body?.error || rawText || `HTTP error ${status}`);
+    super(
+      body?.error ||
+      body?.title ||
+      summarizeDiagnosticText(rawText) ||
+      `HTTP error ${status}`,
+    );
     this.name = "ApiError";
     this.status = status;
     this.body = body;
     this.rawText = rawText;
-    this.details = body?.details;
+    this.details = body?.details ?? body?.detail;
     this.code = typeof body?.code === "string" ? body.code : undefined;
     this.upstreamStatus =
       typeof body?.upstream_status === "number" ? body.upstream_status : undefined;
@@ -61,7 +70,7 @@ export async function apiFetch(path: string, options: RequestInit = {}) {
     try {
       errorData = JSON.parse(errorText);
     } catch {
-      errorData = errorText ? { error: errorText } : null;
+      errorData = errorText ? { error: summarizeDiagnosticText(errorText) } : null;
     }
     throw new ApiError(response.status, errorData, errorText);
   }

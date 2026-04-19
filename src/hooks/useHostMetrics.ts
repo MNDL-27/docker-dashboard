@@ -278,6 +278,8 @@ export function useHostMetrics(hostId?: string | null, options: UseHostMetricsOp
     },
     enabled: enabled && !!hostId,
     retry: false,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
     refetchInterval: enabled ? refetchInterval : false,
   });
 

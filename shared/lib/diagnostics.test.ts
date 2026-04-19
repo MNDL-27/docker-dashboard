@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest";
 
-import { parseDiagnosticPayload, summarizeDiagnosticText } from "./diagnostics";
+import {
+  formatDiagnosticDetail,
+  parseDiagnosticPayload,
+  summarizeDiagnosticText,
+} from "./diagnostics";
 
 describe("diagnostics", () => {
   it("summarizes Cloudflare HTML error pages into a short message", () => {
@@ -28,5 +32,9 @@ describe("diagnostics", () => {
 
   it("trims plain text diagnostics", () => {
     expect(parseDiagnosticPayload("  upstream timed out   ")).toBe("upstream timed out");
+  });
+
+  it("formats object diagnostics using nested error when present", () => {
+    expect(formatDiagnosticDetail({ error: "  gateway down " })).toBe("gateway down");
   });
 });
