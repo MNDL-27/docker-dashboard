@@ -1,8 +1,10 @@
 import { SignUp } from "@clerk/clerk-react";
 import { Link } from "react-router-dom";
+import { useSearchParams } from "react-router-dom";
 import { LogoLink } from "@/components/shared/LogoLink";
 import { Box, Server, Shield, Activity } from "lucide-react";
 import { LoginBackground } from "@/components/ui/LoginBackground";
+import { getSafeNextPath } from "@/lib/auth-redirect";
 
 const features = [
   { icon: Server, title: "Multi-Host Monitoring", desc: "Monitor all your Docker hosts from a single pane of glass." },
@@ -11,6 +13,9 @@ const features = [
 ];
 
 export default function SignupPage() {
+  const [searchParams] = useSearchParams();
+  const nextPath = getSafeNextPath(searchParams.get("next"), "/app");
+
   return (
     <div className="min-h-screen flex flex-col md:flex-row bg-background relative overflow-hidden">
       <LoginBackground />
@@ -69,8 +74,8 @@ export default function SignupPage() {
             routing="path"
             path="/sign-up"
             signInUrl="/login"
-            forceRedirectUrl="/app"
-            fallbackRedirectUrl="/app"
+            forceRedirectUrl={nextPath}
+            fallbackRedirectUrl={nextPath}
             appearance={{
               layout: {
                 socialButtonsPlacement: "bottom",

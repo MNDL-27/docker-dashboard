@@ -12,6 +12,9 @@ export interface ViewerState {
   onboarding_status: string | null;
   active_org_id: string | null;
   active_org_clerk_id: string | null;
+  active_org_plan: string | null;
+  dedicated_deployment_status: string | null;
+  dedicated_deployment_updated_at: string | null;
   is_platform_admin: boolean;
   is_suspended: boolean;
   is_hard_disabled: boolean;

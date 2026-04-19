@@ -26,6 +26,8 @@ const PrivacyPage = lazy(() => import("./pages/PrivacyPage"));
 const RefundsPage = lazy(() => import("./pages/RefundsPage"));
 const ContactPage = lazy(() => import("./pages/ContactPage"));
 const OnboardingPage = lazy(() => import("./pages/OnboardingPage"));
+const DedicatedStartPage = lazy(() => import("./pages/DedicatedStartPage"));
+const DedicatedIntakePage = lazy(() => import("./pages/DedicatedIntakePage"));
 const DashboardPage = lazy(() => import("./pages/app/DashboardPage"));
 const HostsPage = lazy(() => import("./pages/app/HostsPage"));
 const HostDetailPage = lazy(() => import("./pages/app/HostDetailPage"));
@@ -40,6 +42,7 @@ const OrganizationsPage = lazy(() => import("./pages/app/OrganizationsPage"));
 const AdminPage = lazy(() => import("./pages/app/AdminPage"));
 const HelpPage = lazy(() => import("./pages/app/HelpPage"));
 const SetupGuidePage = lazy(() => import("./pages/app/SetupGuidePage"));
+const DedicatedDeploymentPage = lazy(() => import("./pages/app/DedicatedDeploymentPage"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 const queryClient = new QueryClient();
@@ -114,6 +117,7 @@ const App = () => (
                   <Route path="/security" element={<SecurityPage />} />
                   <Route path="/docs" element={<DocsPage />} />
                   <Route path="/contact" element={<ContactPage />} />
+                  <Route path="/dedicated/start" element={<DedicatedStartPage />} />
                   <Route path="/tos" element={<TermsPage />} />
                   <Route path="/privacy" element={<PrivacyPage />} />
                   <Route path="/refunds" element={<RefundsPage />} />
@@ -123,6 +127,16 @@ const App = () => (
                   <Route path="/signup" element={<RequireAppSubdomain><Navigate to="/sign-up" replace /></RequireAppSubdomain>} />
                   <Route path="/create-org" element={<RequireAppSubdomain><CreateOrgPage /></RequireAppSubdomain>} />
                   <Route path="/onboarding" element={<RequireAppSubdomain key="onboarding"><ProtectedRoute requireOnboarded={false}><OnboardingPage /></ProtectedRoute></RequireAppSubdomain>} />
+                  <Route
+                    path="/dedicated/intake"
+                    element={
+                      <RequireAppSubdomain key="dedicated-intake">
+                        <ProtectedRoute requireOnboarded={false} allowMissingOrganization skipResolvedRedirect>
+                          <DedicatedIntakePage />
+                        </ProtectedRoute>
+                      </RequireAppSubdomain>
+                    }
+                  />
                   {/* App Shell - Protected */}
                   <Route path="/app" element={<RequireAppSubdomain key="app"><ProtectedRoute><AppShell /></ProtectedRoute></RequireAppSubdomain>}>
                     <Route index element={<DashboardPage />} />
@@ -139,6 +153,7 @@ const App = () => (
                     <Route path="deployments" element={<Navigate to="/app/hosts" replace />} />
                     <Route path="members" element={<MembersPage />} />
                     <Route path="billing" element={<BillingPage />} />
+                    <Route path="dedicated-deployment" element={<DedicatedDeploymentPage />} />
                     <Route path="settings" element={<SettingsPage />} />
                     <Route path="admin" element={<RequirePlatformAdmin><AdminPage /></RequirePlatformAdmin>} />
                     <Route path="help" element={<HelpPage />} />

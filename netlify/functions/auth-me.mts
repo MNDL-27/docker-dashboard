@@ -4,6 +4,7 @@ import { requireAuth } from './lib/auth.mjs';
 import { ensureOnboardingSchema } from './lib/ensure-onboarding-schema.mjs';
 import { ensureAdminSchema } from './lib/ensure-admin-schema.mjs';
 import { isPlatformAdminEmail } from './lib/platform-admin.mjs';
+import { ensureDedicatedDeploymentSchema } from './lib/ensure-dedicated-deployment-schema.mjs';
 
 const allowedOrigins = new Set([
   'https://app.dockerdash.app',
@@ -35,6 +36,7 @@ export default async (req: Request) => {
   try {
     await ensureOnboardingSchema();
     await ensureAdminSchema();
+    await ensureDedicatedDeploymentSchema();
     const authContext = await requireAuth(req, { requireOrg: false });
 
     const users = await sql`
@@ -60,6 +62,7 @@ export default async (req: Request) => {
         o.id,
         o.clerk_org_id,
         o.onboarding_status,
+        o.plan,
         om.created_at
       FROM organization_members om
       JOIN organizations o ON o.id = om.organization_id
@@ -74,6 +77,15 @@ export default async (req: Request) => {
     const effectiveOrg = activeOrg ?? orgMemberships[0] ?? null;
     const onboardingStatus = (effectiveOrg?.onboarding_status as string | undefined) ?? null;
     const needsOnboarding = !effectiveOrg || onboardingStatus === 'not_started';
+    const dedicatedDeployment =
+      effectiveOrg
+        ? await sql`
+            SELECT status, updated_at
+            FROM public.dedicated_deployments
+            WHERE organization_id = ${effectiveOrg.id}
+            LIMIT 1
+          `
+        : [];
 
     return new Response(JSON.stringify({
       user: {
@@ -83,6 +95,9 @@ export default async (req: Request) => {
         onboarding_status: onboardingStatus,
         active_org_id: effectiveOrg?.id ?? null,
         active_org_clerk_id: effectiveOrg?.clerk_org_id ?? null,
+        active_org_plan: effectiveOrg?.plan ?? null,
+        dedicated_deployment_status: dedicatedDeployment[0]?.status ?? null,
+        dedicated_deployment_updated_at: dedicatedDeployment[0]?.updated_at ? new Date(String(dedicatedDeployment[0].updated_at)).toISOString() : null,
         is_platform_admin: isPlatformAdminEmail(users[0].email),
         is_suspended: Boolean(users[0].is_suspended),
         is_hard_disabled: Boolean(users[0].is_hard_disabled),

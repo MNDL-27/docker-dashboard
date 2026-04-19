@@ -101,7 +101,7 @@ export const pricingPlans: PricingPlan[] = [
       "Provisioned per customer environment",
       "Not self-serve",
     ],
-    ctaLabel: "Contact Sales",
+    ctaLabel: "Start Private Deployment",
   },
 ];
 

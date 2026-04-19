@@ -12,9 +12,11 @@ const features = [
 
 import { useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
+import { getSafeNextPath } from "@/lib/auth-redirect";
 
 export default function LoginPage() {
   const [searchParams] = useSearchParams();
+  const nextPath = getSafeNextPath(searchParams.get("next"), "/app");
   
   // Capture and persist plan intent
   useEffect(() => {
@@ -88,8 +90,8 @@ export default function LoginPage() {
             routing="path" 
             path="/login" 
             signUpUrl="/sign-up"
-            forceRedirectUrl="/app"
-            fallbackRedirectUrl="/app" 
+            forceRedirectUrl={nextPath}
+            fallbackRedirectUrl={nextPath} 
             appearance={{
               layout: {
                 socialButtonsPlacement: 'bottom',

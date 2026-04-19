@@ -9,12 +9,14 @@ import { useOrganization, useUser } from "@clerk/clerk-react";
 import { useQuery } from "@tanstack/react-query";
 import { apiFetch } from "@/lib/api";
 import { getCheckoutPriceId, getPricingPlan } from "@/lib/pricing";
+import { useViewerState } from "@/hooks/useViewerState";
 
 export default function BillingPage() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const { organization } = useOrganization();
   const { user } = useUser();
+  const { data: viewer } = useViewerState();
   const { toast } = useToast();
   const [selectedPlan, setSelectedPlan] = useState<"pro" | "team" | null>(null);
   const [donorIntentLoading, setDonorIntentLoading] = useState(false);
@@ -239,6 +241,11 @@ export default function BillingPage() {
             </div>
 
             <div className="mt-8 flex gap-3">
+              {orgDetails.plan === "enterprise" || viewer?.dedicated_deployment_status ? (
+                <Button variant="secondary" size="sm" onClick={() => navigate('/app/dedicated-deployment')}>
+                  Deployment Status
+                </Button>
+              ) : null}
               <Button variant="outline" size="sm" onClick={() => window.open('https://paddle.com/support', '_blank')}>
                 Billing Support
               </Button>
@@ -417,6 +424,29 @@ export default function BillingPage() {
           <p className="text-sm text-muted-foreground max-w-xs mx-auto">
             Invoice history and self-serve plan switching are under development.
           </p>
+        </div>
+
+        <div className="glass-card p-8 md:col-span-2">
+          <div className="flex items-start gap-3">
+            <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center">
+              <HeartHandshake className="h-6 w-6 text-primary" />
+            </div>
+            <div>
+              <h3 className="text-xl font-bold">Dedicated managed instance</h3>
+              <p className="text-sm text-muted-foreground">
+                Need isolated infrastructure, custom allocations, and a guided deployment handoff instead of self-serve checkout?
+              </p>
+            </div>
+          </div>
+
+          <div className="mt-6 flex flex-wrap gap-3">
+            <Button onClick={() => navigate('/dedicated/start')}>View dedicated deployment</Button>
+            {viewer?.dedicated_deployment_status ? (
+              <Button variant="outline" onClick={() => navigate('/app/dedicated-deployment')}>
+                Open deployment status
+              </Button>
+            ) : null}
+          </div>
         </div>
 
         <div className="glass-card p-8 md:col-span-2">

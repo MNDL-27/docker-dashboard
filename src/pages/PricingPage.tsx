@@ -73,7 +73,7 @@ export default function PricingPage() {
                   </div>
 
                   <div className="mt-auto">
-                    <Link to={plan.id === "enterprise" ? "/contact" : `/login?plan=${plan.id}`}>
+                    <Link to={plan.id === "enterprise" ? "/dedicated/start" : `/login?plan=${plan.id}`}>
                       <Button className="w-full" variant={plan.id === "pro" ? "default" : "outline"} size="sm">
                         {plan.ctaLabel}
                       </Button>

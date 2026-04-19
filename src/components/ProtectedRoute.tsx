@@ -6,9 +6,13 @@ import { deriveNeedsOnboarding, normalizeOnboardingStatus, type OnboardingStatus
 export function ProtectedRoute({
   children,
   requireOnboarded = true,
+  allowMissingOrganization = false,
+  skipResolvedRedirect = false,
 }: {
   children: React.ReactNode;
   requireOnboarded?: boolean;
+  allowMissingOrganization?: boolean;
+  skipResolvedRedirect?: boolean;
 }) {
   const { isLoaded, isSignedIn, getToken } = useAuth();
   const [authState, setAuthState] = useState<{
@@ -16,13 +20,29 @@ export function ProtectedRoute({
     hasOrgs: boolean;
     onboardingStatus: OnboardingStatus;
     needsOnboarding: boolean;
-  }>({ status: "loading", hasOrgs: false, onboardingStatus: null, needsOnboarding: true });
+    activeOrgPlan: string | null;
+    dedicatedDeploymentStatus: string | null;
+  }>({
+    status: "loading",
+    hasOrgs: false,
+    onboardingStatus: null,
+    needsOnboarding: true,
+    activeOrgPlan: null,
+    dedicatedDeploymentStatus: null,
+  });
 
   useEffect(() => {
     if (!isLoaded) return;
 
     if (!isSignedIn) {
-      setAuthState({ status: "unauthenticated", hasOrgs: false, onboardingStatus: null, needsOnboarding: true });
+      setAuthState({
+        status: "unauthenticated",
+        hasOrgs: false,
+        onboardingStatus: null,
+        needsOnboarding: true,
+        activeOrgPlan: null,
+        dedicatedDeploymentStatus: null,
+      });
       return;
     }
 
@@ -37,7 +57,14 @@ export function ProtectedRoute({
 
           if (!token) {
             if (!cancelled) {
-              setAuthState({ status: "unauthenticated", hasOrgs: false, onboardingStatus: null, needsOnboarding: true });
+              setAuthState({
+                status: "unauthenticated",
+                hasOrgs: false,
+                onboardingStatus: null,
+                needsOnboarding: true,
+                activeOrgPlan: null,
+                dedicatedDeploymentStatus: null,
+              });
             }
             return;
           }
@@ -84,6 +111,8 @@ export function ProtectedRoute({
               hasOrgs,
               onboardingStatus,
               needsOnboarding,
+              activeOrgPlan: data.user?.active_org_plan ?? null,
+              dedicatedDeploymentStatus: data.user?.dedicated_deployment_status ?? null,
             });
           }
           return;
@@ -145,14 +174,31 @@ export function ProtectedRoute({
 
   const pathname = window.location.pathname;
   const isOnboardingRoute = pathname.startsWith("/onboarding");
+  const isDedicatedIntakeRoute = pathname.startsWith("/dedicated/intake");
+  const isDedicatedStatusRoute = pathname.startsWith("/app/dedicated-deployment");
+  const dedicatedStatus = authState.dedicatedDeploymentStatus;
+  const deploymentBlocked =
+    dedicatedStatus !== null &&
+    dedicatedStatus !== "ready_for_handoff" &&
+    dedicatedStatus !== "active";
 
-  if (!authState.hasOrgs || authState.needsOnboarding) {
+  if (deploymentBlocked && !isDedicatedStatusRoute && !isDedicatedIntakeRoute) {
+    return <Navigate to="/app/dedicated-deployment" replace />;
+  }
+
+  if (!authState.hasOrgs && !allowMissingOrganization) {
     if (!isOnboardingRoute) {
       return <Navigate to="/onboarding" replace />;
     }
   }
 
-  if (!requireOnboarded && authState.hasOrgs && !authState.needsOnboarding) {
+  if (authState.hasOrgs && requireOnboarded && authState.needsOnboarding && !deploymentBlocked) {
+    if (!isOnboardingRoute) {
+      return <Navigate to="/onboarding" replace />;
+    }
+  }
+
+  if (!requireOnboarded && !skipResolvedRedirect && authState.hasOrgs && !authState.needsOnboarding && !deploymentBlocked) {
     return <Navigate to="/app" replace />;
   }
 
