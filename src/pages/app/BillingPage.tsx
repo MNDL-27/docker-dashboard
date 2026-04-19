@@ -189,6 +189,7 @@ export default function BillingPage() {
 
   // Active or Pending Subscription View
   if (orgDetails && orgDetails.plan !== 'free') {
+    const activePlan = getPricingPlan(orgDetails.plan as "free" | "pro" | "team" | "enterprise");
     return (
       <div className="space-y-6 animate-fade-in">
         <PageHeader
@@ -204,7 +205,7 @@ export default function BillingPage() {
                 <Zap className="h-6 w-6 text-primary" />
               </div>
               <div>
-                <h3 className="text-xl font-bold capitalize">{orgDetails.plan} Plan</h3>
+                <h3 className="text-xl font-bold">{activePlan?.name ?? orgDetails.plan} Plan</h3>
                 <p className="text-sm text-muted-foreground">Status: <span className="text-foreground font-medium capitalize">{orgDetails.subscription_status || 'Active'}</span></p>
               </div>
               <div className="ml-auto">
@@ -254,7 +255,7 @@ export default function BillingPage() {
           <div className="glass-card p-6">
             <h4 className="font-semibold mb-4">Plan Limits</h4>
             <ul className="space-y-3">
-              {(getPricingPlan(orgDetails.plan as "free" | "pro" | "team" | "enterprise")?.highlights ?? []).map(f => (
+              {(activePlan?.highlights ?? []).map(f => (
                 <li key={f} className="flex items-center gap-2 text-xs">
                   <Check className="h-3 w-3 text-success shrink-0" /> {f}
                 </li>
