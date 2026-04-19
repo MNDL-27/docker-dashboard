@@ -100,7 +100,10 @@ export function useContainers(orgId?: string | null, hasHosts = true) {
     queryKey: ['containers', orgId],
     queryFn: () => dockerApi.allContainers(orgId!),
     enabled: !!orgId && hasHosts,
-    refetchInterval: 30000,
+    retry: false,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+    refetchInterval: (query) => (query.state.error ? false : 30000),
   });
 }
 
@@ -109,7 +112,10 @@ export function useAllContainerStats(orgId?: string | null, hasHosts = true) {
     queryKey: ['all-container-stats', orgId],
     queryFn: () => dockerApi.allContainerStats(orgId!),
     enabled: !!orgId && hasHosts,
-    refetchInterval: 15000,
+    retry: false,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+    refetchInterval: (query) => (query.state.error ? false : 15000),
   });
 }
 

@@ -3,12 +3,18 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { adminApi } from "@/services/admin-api";
 import type { AdminBillingUpdate } from "@/types/admin";
 
+const adminQueryOptions = {
+  retry: false as const,
+  refetchOnWindowFocus: false as const,
+  refetchOnReconnect: false as const,
+};
+
 export function useAdminOverview() {
-  return useQuery({ queryKey: ["admin-overview"], queryFn: adminApi.getOverview });
+  return useQuery({ queryKey: ["admin-overview"], queryFn: adminApi.getOverview, ...adminQueryOptions });
 }
 
 export function useAdminUsers() {
-  return useQuery({ queryKey: ["admin-users"], queryFn: adminApi.getUsers });
+  return useQuery({ queryKey: ["admin-users"], queryFn: adminApi.getUsers, ...adminQueryOptions });
 }
 
 export function useAdminUser(userId: string | null) {
@@ -16,11 +22,12 @@ export function useAdminUser(userId: string | null) {
     queryKey: ["admin-user", userId],
     queryFn: () => adminApi.getUser(userId!),
     enabled: Boolean(userId),
+    ...adminQueryOptions,
   });
 }
 
 export function useAdminOrganizations() {
-  return useQuery({ queryKey: ["admin-organizations"], queryFn: adminApi.getOrganizations });
+  return useQuery({ queryKey: ["admin-organizations"], queryFn: adminApi.getOrganizations, ...adminQueryOptions });
 }
 
 export function useAdminOrganization(organizationId: string | null) {
@@ -28,19 +35,20 @@ export function useAdminOrganization(organizationId: string | null) {
     queryKey: ["admin-organization", organizationId],
     queryFn: () => adminApi.getOrganization(organizationId!),
     enabled: Boolean(organizationId),
+    ...adminQueryOptions,
   });
 }
 
 export function useAdminHosts() {
-  return useQuery({ queryKey: ["admin-hosts"], queryFn: adminApi.getHosts });
+  return useQuery({ queryKey: ["admin-hosts"], queryFn: adminApi.getHosts, ...adminQueryOptions });
 }
 
 export function useAdminAuditLog() {
-  return useQuery({ queryKey: ["admin-audit-log"], queryFn: adminApi.getAuditLog });
+  return useQuery({ queryKey: ["admin-audit-log"], queryFn: adminApi.getAuditLog, ...adminQueryOptions });
 }
 
 export function useAdminOperations() {
-  return useQuery({ queryKey: ["admin-operations"], queryFn: adminApi.getOperations });
+  return useQuery({ queryKey: ["admin-operations"], queryFn: adminApi.getOperations, ...adminQueryOptions });
 }
 
 function useAdminMutation<TVariables>(mutationFn: (variables: TVariables) => Promise<unknown>) {
@@ -132,6 +140,7 @@ export function useAdminUnmatchedBillingEvents(limit = 50) {
   return useQuery({
     queryKey: ["admin-billing-unmatched", limit],
     queryFn: () => adminApi.getUnmatchedBillingEvents(limit),
+    ...adminQueryOptions,
   });
 }
 
@@ -144,6 +153,7 @@ export function useAdminDonorEmailDeliveries(limit = 100) {
   return useQuery({
     queryKey: ["admin-donor-email-deliveries", limit],
     queryFn: () => adminApi.getDonorEmailDeliveries(limit),
+    ...adminQueryOptions,
   });
 }
 
@@ -152,6 +162,7 @@ export function useAdminDonorEmailDelivery(deliveryId: string | null) {
     queryKey: ["admin-donor-email-delivery", deliveryId],
     queryFn: () => adminApi.getDonorEmailDelivery(deliveryId!),
     enabled: Boolean(deliveryId),
+    ...adminQueryOptions,
   });
 }
 

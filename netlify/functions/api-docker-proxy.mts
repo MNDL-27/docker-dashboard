@@ -149,6 +149,29 @@ function summarizeAgentConnectionFailure(
   return `The Watchtower agent returned HTTP ${status}.`;
 }
 
+function classifyTopLevelProxyError(error: unknown) {
+  const message = error instanceof Error ? error.message : String(error ?? "Unknown error");
+  const lower = message.toLowerCase();
+
+  if (lower.includes("sync pending")) {
+    return { status: 202, title: "Sync pending", detail: message, type: "sync_pending" };
+  }
+
+  if (lower.includes("forbidden") || lower.includes("awaiting platform approval") || lower.includes("disabled by a platform administrator")) {
+    return { status: 403, title: "Forbidden", detail: message, type: "forbidden" };
+  }
+
+  if (lower.includes("unauthorized")) {
+    return { status: 401, title: "Unauthorized", detail: message, type: "unauthorized" };
+  }
+
+  if (lower.includes("no active organization selected")) {
+    return { status: 409, title: "No active organization selected", detail: message, type: "missing_organization" };
+  }
+
+  return { status: 502, title: "Docker connection failed", detail: message, type: "docker_connection_failed" };
+}
+
 function toFiniteNumber(value: unknown): number | null {
   const numeric = typeof value === 'number' ? value : Number(value);
   return Number.isFinite(numeric) ? numeric : null;
@@ -879,7 +902,8 @@ export default async (req: Request) => {
     if (error instanceof SecretCryptoError) {
       return createProblemResponse(500, 'Secret storage failed', error.message);
     }
-    return createProblemResponse(502, 'Docker connection failed', error.message);
+    const classified = classifyTopLevelProxyError(error);
+    return createProblemResponse(classified.status, classified.title, classified.detail, classified.type);
   }
 };
 
