@@ -10,8 +10,6 @@ export interface ApiErrorBody {
   detail?: string;
   type?: string;
   upstream_status?: number;
-  title?: string;
-  detail?: string;
   [key: string]: unknown;
 }
 

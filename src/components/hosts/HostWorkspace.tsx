@@ -227,11 +227,13 @@ function ContainerSummaryCard({
   running,
   loading,
   disconnected,
+  paused,
 }: {
   total: number;
   running: number;
   loading: boolean;
   disconnected: boolean;
+  paused?: boolean;
 }) {
   const stopped = Math.max(0, total - running);
 
@@ -247,6 +249,8 @@ function ContainerSummaryCard({
 
       {disconnected ? (
         <p className="text-sm text-muted-foreground">Reconnect the host to load container counts.</p>
+      ) : paused && total === 0 ? (
+        <p className="text-sm text-muted-foreground">Container counts are paused while the host heartbeat is stale.</p>
       ) : loading ? (
         <div className="flex flex-1 items-center justify-center">
           <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
@@ -264,7 +268,7 @@ function ContainerSummaryCard({
         </div>
       )}
 
-      {!disconnected && !loading ? (
+      {!disconnected && !paused && !loading ? (
         <p className="text-sm text-muted-foreground">{stopped} stopped containers on this host.</p>
       ) : null}
     </div>
@@ -687,6 +691,7 @@ export function HostWorkspace() {
   const selectedHostReadable = isReadableHostStatus(selectedHost?.status);
   const selectedHostDisconnected = isDisconnectedHostStatus(selectedHost?.status);
   const selectedHostAutoProbe = normalizeHostStatus(selectedHost?.status) === "connected";
+  const selectedHostStale = normalizeHostStatus(selectedHost?.status) === "stale";
 
   const containersQuery = useHostContainers(selectedHostAutoProbe ? selectedHost?.id : null);
   const metricsQuery = useHostMetricsHistory(selectedHostAutoProbe ? selectedHost?.id : null, {
@@ -1005,6 +1010,8 @@ export function HostWorkspace() {
                     />
                   ) : metricsQuery.latestPoint ? (
                     <RingCard point={metricsQuery.latestPoint} />
+                  ) : selectedHostStale ? (
+                    <EmptyState title="Metrics paused" description="Automatic metrics collection is paused while the host heartbeat is stale. Data will resume after a successful health check or connection test." />
                   ) : (
                     <EmptyState title="No CPU metrics yet" description="The host is connected, but the agent has not returned a usable metrics sample yet." />
                   )}
@@ -1014,6 +1021,7 @@ export function HostWorkspace() {
                     running={runningCount}
                     loading={containersQuery.isLoading}
                     disconnected={selectedHostDisconnected}
+                    paused={selectedHostStale}
                   />
                 </div>
 
@@ -1036,6 +1044,8 @@ export function HostWorkspace() {
                         progress={metricsQuery.latestPoint.memory}
                         footer={`${metricsQuery.latestPoint.memory.toFixed(0)}% utilized`}
                       />
+                    ) : selectedHostStale ? (
+                      <EmptyState title="Memory metrics paused" description="Automatic metrics collection is paused while the host heartbeat is stale." />
                     ) : (
                       <EmptyState
                         title="Memory metrics unavailable"
@@ -1060,6 +1070,8 @@ export function HostWorkspace() {
                       metricsQuery.latestPoint.disks.map((disk) => (
                         <DiskUsageCard key={`${disk.device}-${disk.mount}`} disk={disk} />
                       ))
+                    ) : selectedHostStale && !metricsQuery.latestPoint ? (
+                      <EmptyState title="Disk metrics paused" description="Automatic metrics collection is paused while the host heartbeat is stale." />
                     ) : (
                       <EmptyState
                         title="Disk usage unavailable"
@@ -1117,6 +1129,8 @@ export function HostWorkspace() {
                       <p className="text-sm text-muted-foreground">
                         {metricsFailureDisplay?.description || "The host metrics probe failed before network history could be rendered."}
                       </p>
+                    ) : selectedHostStale && !metricsQuery.history.length ? (
+                      <p className="text-sm text-muted-foreground">Network throughput history is paused while the host heartbeat is stale.</p>
                     ) : (
                       <TrendBars 
                         history={metricsQuery.history} 

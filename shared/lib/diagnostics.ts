@@ -74,7 +74,7 @@ export function formatDiagnosticDetail(details: unknown) {
     }
 
     try {
-      return JSON.stringify(details);
+      return trimDiagnostic(JSON.stringify(details));
     } catch {
       return "Upstream error details were unavailable.";
     }
