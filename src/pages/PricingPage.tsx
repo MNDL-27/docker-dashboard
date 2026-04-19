@@ -28,7 +28,7 @@ export default function PricingPage() {
                   key={plan.id}
                   className={cn(
                     "glass-card flex h-full flex-col rounded-[1.6rem] border p-6",
-                    plan.id === "team" && "border-primary/50 bg-primary/10 shadow-[0_24px_60px_-40px_hsl(var(--primary))]",
+                    plan.id === "pro" && "border-primary/50 bg-primary/10 shadow-[0_24px_60px_-40px_hsl(var(--primary))]",
                   )}
                 >
                   <div className="mb-5 flex items-start justify-between gap-3">
@@ -36,7 +36,7 @@ export default function PricingPage() {
                       <p className="text-xs font-semibold uppercase tracking-[0.24em] text-muted-foreground">{plan.name}</p>
                       <div className="mt-3 text-4xl font-bold tracking-tight">{plan.priceLabel}</div>
                     </div>
-                    {plan.id === "team" ? (
+                    {plan.id === "pro" ? (
                       <span className="rounded-full bg-primary px-3 py-1 text-[10px] font-bold uppercase tracking-[0.18em] text-primary-foreground">
                         Most balanced
                       </span>
@@ -74,7 +74,7 @@ export default function PricingPage() {
 
                   <div className="mt-auto">
                     <Link to={plan.id === "enterprise" ? "/contact" : `/login?plan=${plan.id}`}>
-                      <Button className="w-full" variant={plan.id === "team" ? "default" : "outline"} size="sm">
+                      <Button className="w-full" variant={plan.id === "pro" ? "default" : "outline"} size="sm">
                         {plan.ctaLabel}
                       </Button>
                     </Link>
