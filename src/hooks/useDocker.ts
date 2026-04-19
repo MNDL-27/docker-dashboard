@@ -119,7 +119,7 @@ export function useHostContainers(hostId?: string | null) {
     queryFn: () => dockerApi.listContainers(hostId!),
     enabled: !!hostId,
     retry: false,
-    refetchInterval: 15000,
+    refetchInterval: (query) => (query.state.error ? false : 15000),
   });
 }
 
