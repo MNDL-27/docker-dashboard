@@ -102,6 +102,43 @@ interface PersistedRateLimitState {
   resetAt: number;
 }
 
+let securitySchemaEnsured = false;
+
+async function ensureSecuritySchema() {
+  if (securitySchemaEnsured) return;
+
+  await sql`
+    CREATE TABLE IF NOT EXISTS public.security_rate_limits (
+      key text NOT NULL,
+      window_start_ms bigint NOT NULL,
+      window_ms bigint NOT NULL,
+      count integer NOT NULL DEFAULT 0,
+      reset_at timestamptz NOT NULL,
+      PRIMARY KEY (key, window_start_ms)
+    )
+  `;
+
+  await sql`
+    CREATE INDEX IF NOT EXISTS idx_security_rate_limits_reset
+    ON public.security_rate_limits (reset_at)
+  `;
+
+  await sql`
+    CREATE TABLE IF NOT EXISTS public.security_webhook_nonces (
+      nonce text PRIMARY KEY,
+      expires_at timestamptz NOT NULL,
+      created_at timestamptz NOT NULL DEFAULT now()
+    )
+  `;
+
+  await sql`
+    CREATE INDEX IF NOT EXISTS idx_security_webhook_nonces_expires
+    ON public.security_webhook_nonces (expires_at)
+  `;
+
+  securitySchemaEnsured = true;
+}
+
 function normalizeRateLimitWindowStart(now: number, windowMs: number) {
   return Math.floor(now / windowMs) * windowMs;
 }
@@ -110,6 +147,7 @@ async function checkRateLimitPersistent(
   key: string,
   config: RateLimitConfig
 ): Promise<{ allowed: boolean; remaining: number; resetAt: number; retryAfter?: number }> {
+  await ensureSecuritySchema();
   const now = Date.now();
   const windowStart = normalizeRateLimitWindowStart(now, config.windowMs);
   const resetAt = windowStart + config.windowMs;
@@ -227,6 +265,7 @@ export interface WebhookVerificationResult {
  * Shared webhook nonce persistence avoids replay bypasses across instances.
  */
 async function registerWebhookNonce(nonce: string, maxAge: number): Promise<boolean> {
+  await ensureSecuritySchema();
   const expiresAt = new Date(Date.now() + (maxAge * 1000));
 
   const rows = await sql`
