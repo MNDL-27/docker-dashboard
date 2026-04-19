@@ -469,7 +469,7 @@ async function dockerFetch(url: string, method: string, reqHeaders: Record<strin
 
 export default async (req: Request) => {
   // Apply rate limiting for proxy endpoint
-  const rateLimitResponse = applyRateLimit(req, 'proxy', RATE_LIMITS.PROXY);
+  const rateLimitResponse = await applyRateLimit(req, 'proxy', RATE_LIMITS.PROXY);
   if (rateLimitResponse) {
     return rateLimitResponse;
   }
@@ -894,7 +894,7 @@ export default async (req: Request) => {
 
     const payload = await dockerResponse.json();
     if (req.method === 'GET') {
-      headers['Cache-Control'] = 'private, max-age=0, must-revalidate';
+      corsHeaders['Cache-Control'] = 'private, max-age=0, must-revalidate';
     }
     return new Response(JSON.stringify(payload), { headers: corsHeaders });
 
