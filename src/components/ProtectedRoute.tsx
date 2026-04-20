@@ -2,6 +2,7 @@ import { Navigate } from "react-router-dom";
 import { useAuth, useClerk } from "@clerk/clerk-react";
 import { useState, useEffect } from "react";
 import { deriveNeedsOnboarding, normalizeOnboardingStatus, type OnboardingStatus } from "@/lib/onboarding-gate";
+import { isPreviewAuthBypassEnabled } from "@/lib/hostname";
 
 export function ProtectedRoute({
   children,
@@ -16,6 +17,7 @@ export function ProtectedRoute({
 }) {
   const { isLoaded, isSignedIn, getToken } = useAuth();
   const { signOut } = useClerk();
+  const previewBypass = isPreviewAuthBypassEnabled();
   const [authState, setAuthState] = useState<{
     status: "loading" | "resolved" | "error" | "unauthenticated";
     hasOrgs: boolean;
@@ -40,6 +42,10 @@ export function ProtectedRoute({
     activeOrgPlan: null,
     dedicatedDeploymentStatus: null,
   };
+
+  if (previewBypass) {
+    return <>{children}</>;
+  }
 
   useEffect(() => {
     if (!isLoaded) return;

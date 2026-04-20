@@ -21,6 +21,10 @@ export function isNetlifyPreview(): boolean {
   return window.location.hostname.endsWith(NETLIFY_PREVIEW_SUFFIX);
 }
 
+export function isPreviewAuthBypassEnabled(): boolean {
+  return isNetlifyPreview() && import.meta.env.VITE_PREVIEW_BYPASS_AUTH === "true";
+}
+
 export function isAppHost(): boolean {
   return isLocalDev() || isNetlifyPreview() || window.location.hostname === APP_SUBDOMAIN;
 }
