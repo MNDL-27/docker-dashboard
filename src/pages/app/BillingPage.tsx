@@ -30,13 +30,15 @@ export default function BillingPage() {
     typeof window !== "undefined" && window.Paddle ? "ready" : "checking",
   );
   const freePlanDetails = getPricingPlan("free");
+  const activeOrganizationId = viewer?.active_org_id ?? null;
 
   // Fetch real organization details including billing state
   const { data: orgDetails, isLoading } = useQuery({
-    queryKey: ['billing-org-details', organization?.id],
+    queryKey: ['billing-org-details', activeOrganizationId ?? organization?.id],
     queryFn: async () => {
       const orgs = await apiFetch('/organizations') as Array<{
         id: string;
+        clerk_org_id?: string;
         plan: string;
         subscription_status?: string;
         current_period_ends_at?: string;
@@ -44,9 +46,9 @@ export default function BillingPage() {
         donor_premium_expires_at?: string | null;
         payment_provider?: string | null;
       }>;
-      return orgs.find(o => o.id === organization?.id);
+      return orgs.find((o) => o.id === activeOrganizationId);
     },
-    enabled: !!organization?.id,
+    enabled: Boolean(activeOrganizationId),
   });
 
   useEffect(() => {
@@ -93,7 +95,7 @@ export default function BillingPage() {
   };
 
   const handleCheckout = () => {
-    if (!selectedPlan || !organization) {
+    if (!selectedPlan || !activeOrganizationId) {
       return;
     }
 
@@ -123,7 +125,7 @@ export default function BillingPage() {
       items: [{ priceId: priceId, quantity: 1 }],
       customer: user?.primaryEmailAddress?.emailAddress ? { email: user.primaryEmailAddress.emailAddress } : undefined,
       customData: {
-        organization_id: organization.id,
+        organization_id: activeOrganizationId,
         intended_plan: selectedPlan
       },
       settings: {
@@ -140,14 +142,14 @@ export default function BillingPage() {
   const paypalDonationUrl = import.meta.env.VITE_PAYPAL_DONATION_URL || "https://paypal.me";
 
   const handleCreateDonorIntent = async () => {
-    if (!organization?.id) return;
+    if (!activeOrganizationId) return;
 
     setDonorIntentLoading(true);
     try {
       const response = await apiFetch('/donor-intent', {
         method: 'POST',
         body: {
-          organization_id: organization.id,
+          organization_id: activeOrganizationId,
           intended_plan: selectedPlan || 'pro',
           payer_email: user?.primaryEmailAddress?.emailAddress || undefined,
         },
