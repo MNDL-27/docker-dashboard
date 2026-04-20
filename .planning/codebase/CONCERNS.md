@@ -1,113 +1,93 @@
-# Concerns & Technical Debt
+# Codebase Concerns
 
-## 🔴 Critical UX Issues
+**Analysis Date:** 2026-04-20
 
-### Cloudflare Tunnel Users Don't Know Which Port to Point Their Domain At
+## Tech Debt
 
-**Severity**: High — blocks onboarding for CF Tunnel users
-**Location**: Onboarding flow + SetupGuidePage + Agent docs
+**Restriction policy is mostly content-level, not enforcement-level:**
+- Issue: Pricing restrictions are defined as display text and comparison copy, but there is no shared entitlement engine consumed by routes and APIs.
+- Files: `src/lib/pricing.ts`, `src/pages/PricingPage.tsx`, `src/components/ProtectedRoute.tsx`, `src/App.tsx`, `netlify/functions/lib/access-controls.mts`
+- Impact: Users can navigate and use many app areas regardless of plan promises, creating product-policy drift and support disputes.
+- Fix approach: Centralize entitlement checks in one backend module (source of truth from `organizations.plan` + `subscription_status` + overrides), expose entitlement snapshot via `/api/auth/me`, and enforce in both API handlers and UI route/components.
 
-When a user selects "Agent via CF Tunnel" as their connection mode, the onboarding flow does **not tell them which port** to configure in their Cloudflare Tunnel's public hostname routing. The Watchtower Agent listens on **port 9876** by default, and the tunnel must forward traffic to `http://127.0.0.1:9876` — but this is never surfaced in the UI.
+**Premium integration surfaces are exposed without plan gating:**
+- Issue: Slack and webhook destination APIs only check role/admin, not subscription entitlement.
+- Files: `netlify/functions/api-slack-destinations.mts`, `netlify/functions/api-webhook-destinations.mts`, `src/pages/app/SettingsPage.tsx`, `src/components/layout/AppSidebar.tsx`
+- Impact: Free-tier organizations can potentially configure integrations that pricing labels as restricted to higher tiers.
+- Fix approach: Add explicit entitlement checks in these endpoints and hide/disable related UI tabs and navigation when entitlement is absent.
 
-**Evidence:**
-- `src/pages/onboarding/StepHostBasics.tsx` line 77: Placeholder says `https://docker.your-team.cloudflareaccess.com` — no mention of port 9876
-- `src/pages/onboarding/StepHostCredentials.tsx`: Shows install command and verify command but never mentions the port the tunnel should forward to
-- `src/pages/app/SetupGuidePage.tsx` line 254-256: Shows `cloudflared tunnel run --url http://127.0.0.1:9876` — this is the ONLY place port 9876 appears, but it's on the post-onboarding setup guide, not during onboarding
-- `shared/watchtower-agent-release.ts` line 156: `getWatchtowerAgentRecommendedBindAddress()` returns `127.0.0.1` for CF Tunnel but doesn't surface port
-- `netlify/functions/api-agent-enrollments.mts` line 361: Exchange endpoint returns `port: "9876"` but it's only sent to the agent install script, never shown in the UI
+## Known Bugs
 
-**What needs fixing:**
-1. **Onboarding StepHostCredentials**: When `connectionMode === "cloudflare_tunnel"`, add a visible info block: "Point your Cloudflare Tunnel's public hostname to `http://127.0.0.1:9876`"
-2. **Onboarding StepHostBasics**: Update the helper info card to mention port 9876 for CF Tunnel mode
-3. **SetupGuidePage**: Already has this info in Step 3 of the CF Tunnel tab, but could be more prominent
-4. **Consider adding a dedicated "Configure your tunnel" step** in the CF Tunnel onboarding flow
+**Paid organizations can be denied advanced alert rules:**
+- Symptoms: Organization admins on paid plans may receive `Advanced Alert Rules require a Premium or Team subscription.` while creating/updating rules.
+- Files: `netlify/functions/lib/access-controls.mts`, `netlify/functions/api-alert-rules.mts`
+- Trigger: `assertAdvancedAlertsAccessAllowed` evaluates `plan_override` and donor premium only; it does not evaluate base `organizations.plan` / `subscription_status`.
+- Workaround: Apply `plan_override` manually via admin controls, or donor premium path.
+
+**Organization access handler source appears incomplete:**
+- Symptoms: Organization access flow is fragile at source level (handler references helpers but file only contains route dispatch scaffolding).
+- Files: `netlify/functions/lib/org-access-handler.mts`, `netlify/functions/api-org-access.mts`, `netlify/functions/api-org-access-splat.mts`
+- Trigger: Any change/rebuild touching this handler may fail or diverge from expected behavior.
+- Workaround: None reliable; validate runtime bundle behavior before release.
+
+## Security Considerations
+
+**Authorization and billing entitlement are conflated inconsistently:**
+- Risk: API endpoints correctly check tenant membership/role but often skip billing entitlement checks, enabling access to commercially restricted capabilities.
+- Files: `netlify/functions/lib/auth.mts`, `netlify/functions/api-docker-hosts.mts`, `netlify/functions/api-docker-proxy.mts`, `netlify/functions/api-slack-destinations.mts`, `netlify/functions/api-webhook-destinations.mts`
+- Current mitigation: Tenant + role checks (`requireAuth`, org membership checks, admin checks).
+- Recommendations: Introduce mandatory `assertFeatureEntitlement` middleware per feature class and fail closed when entitlement metadata is missing.
+
+## Performance Bottlenecks
+
+**Not a primary concern for pricing enforcement analysis:**
+- Problem: Not assessed in this focused refresh.
+- Files: `Not applicable`
+- Cause: Scope targeted restriction consistency.
+- Improvement path: Run dedicated performance audit separately.
+
+## Fragile Areas
+
+**Route-level gating uses onboarding/deployment state but not plan state:**
+- Files: `src/components/ProtectedRoute.tsx`, `src/App.tsx`
+- Why fragile: New premium routes/features can be added under `/app` without any entitlement barrier by default.
+- Safe modification: Add a route guard wrapper that requires explicit entitlement flags per route segment.
+- Test coverage: No frontend tests validating plan-based route denial/allow behavior detected.
+
+**Documentation and implementation drift on billing/restrictions:**
+- Files: `src/pages/DocsPage.tsx`, `src/pages/PricingPage.tsx`, `src/pages/app/BillingPage.tsx`
+- Why fragile: Docs state billing/subscriptions as placeholder while billing UI and donor flow exist, increasing user confusion and support burden.
+- Safe modification: Align docs with implemented behavior and explicitly list enforced vs informational limits.
+- Test coverage: No documentation consistency checks detected.
+
+## Scaling Limits
+
+**Policy scaling limit (not compute):**
+- Current capacity: Restriction enforcement is ad hoc per endpoint/component.
+- Limit: As features grow, missed entitlement checks increase linearly and become difficult to audit.
+- Scaling path: Adopt centralized entitlement matrix and automated endpoint inventory checks in CI.
+
+## Dependencies at Risk
+
+**Billing-state dependency without uniform enforcement contract:**
+- Risk: `organizations.plan` / `subscription_status` / donor premium / admin overrides exist, but feature checks do not consume them consistently.
+- Impact: Plan changes do not deterministically affect feature access sitewide.
+- Migration plan: Standardize a single computed entitlement object and deprecate direct ad hoc checks.
+
+## Missing Critical Features
+
+**Sitewide entitlement enforcement layer:**
+- Problem: No global mechanism guarantees that pricing restrictions from `/pricing` are enforced across routes, APIs, and settings surfaces.
+- Blocks: Reliable monetization boundaries, predictable customer experience, and low-friction support resolution.
+
+## Test Coverage Gaps
+
+**No active tests for access-control enforcement paths:**
+- What's not tested: Plan/subscription entitlement behavior for feature endpoints and UI route/tab gating.
+- Files: `netlify/functions/lib/access-controls.test.ts`, `src/components/ProtectedRoute.tsx`, `netlify/functions/api-alert-rules.mts`, `netlify/functions/api-slack-destinations.mts`, `netlify/functions/api-webhook-destinations.mts`
+- Risk: Regressions and policy drift can ship unnoticed.
+- Priority: High
 
 ---
 
-## 🟡 Code Health
-
-### Large File Sizes
-
-Several files have grown beyond maintainable sizes:
-
-| File | Lines | Concern |
-|------|-------|---------|
-| `src/pages/DocsPage.tsx` | 1011 | Inline docs content — should be externalized |
-| `netlify/functions/api-docker-proxy.mts` | 753 | Monolithic function handling 15+ actions |
-| `netlify/functions/api-agent-enrollments.mts` | 595 | Complex enrollment flow in single file |
-| `src/components/hosts/HostWorkspace.tsx` | ~52KB | Massive host detail component |
-| `src/pages/app/AdminPage.tsx` | ~41KB | Platform admin with many inline sub-components |
-| `src/pages/app/ContainersPage.tsx` | ~23KB | Container list with inline filtering logic |
-| `src/pages/app/ContainerDetailPage.tsx` | ~20KB | Container detail with 4 tab panels inline |
-| `src/pages/onboarding/useOnboardingState.ts` | 398 | Complex state machine (recently refactored from 692-line monolith) |
-
-### Cyclomatic Complexity
-- `OnboardingPage.tsx` was recently refactored (conversation history shows it had CC=116)
-- `api-docker-proxy.mts` action switch with 15+ branches is a candidate for splitting
-
-## 🟡 Security Concerns
-
-### Agent API Key in Manual Install Command
-- The "advanced manual install" command in `StepHostCredentials.tsx` embeds the raw agent API key
-- It's masked by default with reveal toggle, but the key is in the browser DOM
-- The enrollment-token flow is the recommended path (key never leaves server until agent claims it)
-
-### CORS Wildcard
-- Backend functions use `Access-Control-Allow-Origin: *` (see `api-docker-proxy.mts` line 14)
-- Auth is JWT-based so this is safe, but it's worth documenting the rationale
-
-### Platform Admin Email Allowlist
-- `PLATFORM_ADMIN_EMAILS` env var controls god-mode access
-- No MFA enforcement documented for admin access
-
-## 🟡 Missing Features / Incomplete Areas
-
-### Empty Contexts Directory
-- `src/contexts/` is empty — state is managed through hooks + React Query
-- This is fine architecturally but the empty directory is noise
-
-### No Test Framework
-- No test runner configured despite `CLAUDE.md` referencing `npm test`
-- Only 2 tiny test files exist (see TESTING.md)
-- Security-critical code (crypto, URL validation, auth) has zero test coverage
-
-### Redirect Pages
-- Several pages are just redirects, suggesting incomplete feature work:
-  - `MonitoringPage.tsx` → redirects to `/app/alerts`
-  - `IncidentsPage.tsx` → redirects to `/app/alerts`
-  - `DeploymentsPage.tsx` → redirects to `/app/hosts`
-
-### Build Artifacts in Repo
-- `build-final.log`, `build.log`, `build2.log`, `build3.log`, `dev.log`, `error.log` — should be gitignored
-- `netlify-live.err`, `netlify-live.out` — deployment output files in repo
-- `bun.lock` and `bun.lockb` alongside `package-lock.json` — dual lockfile confusion
-
-## 🟡 Performance Concerns
-
-### Serial Container Stats
-- `api-docker-proxy.mts` `all-container-stats` action queries all hosts sequentially (bounded at 5 concurrent)
-- Each host caps at 20 containers, each with a 3-second timeout
-- Worst case: 5 hosts × 20 containers × 3s = potentially very slow
-
-### Large Inline Documentation
-- `DocsPage.tsx` at 58KB is entirely inline React JSX — no markdown processing
-- Changes to documentation require React component edits
-
-### No Frontend Caching Strategy
-- `useHostMetrics.ts` polls every interval but doesn't cache across navigation
-- React Query default caching helps, but no explicit staleTime configuration visible
-
-## 🟢 Positive Patterns
-
-### Good Security Practices
-- AES-256-GCM encryption at rest for all secrets with key rotation support
-- Agent API keys never returned to browser after initial enrollment
-- URL validation blocks SSRF (private IPs, loopback, link-local)
-- Idempotency keys required for mutations
-- SHA-256 checksum verification for agent installer downloads
-
-### Good Architecture Decisions
-- Agent-proxy pattern keeps Docker sockets off the internet
-- Enrollment-token flow avoids embedding long-lived secrets in install commands
-- Server-side health polling with alert rules for proactive monitoring
-- Multi-tenant org-based isolation with role-based access
+*Concerns audit: 2026-04-20*

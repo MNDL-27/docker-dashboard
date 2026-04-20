@@ -1,118 +1,99 @@
-# Code Conventions
+﻿# Coding Conventions
 
-## Code Style
-
-### TypeScript
-- **Strict mode**: Standard TypeScript strict config
-- **Path aliases**: `@/` maps to `src/` (configured in `vite.config.ts` and `tsconfig.app.json`)
-- **Module system**: ESM throughout (`"type": "module"` in `package.json`)
-- **Backend extension**: `.mts` for Netlify Functions (ESM TypeScript)
-- **`@ts-expect-error`**: Used for Clerk global (`window.Clerk`) access patterns
-
-### React
-- **Functional components only**: No class components
-- **Named exports** for components, `export default` for page-level components
-- **Lazy loading**: All page components use `React.lazy()` with `Suspense` fallback
-- **Props interfaces**: Explicit `interface Props` or inline destructured types
-- **Hooks naming**: `use` prefix consistently (e.g., `useDocker`, `useHostMetrics`)
-
-### CSS / Styling
-- **TailwindCSS 3.4** with class-based dark mode (`darkMode: ["class"]`)
-- **HSL CSS custom properties**: All colors defined as CSS vars in `index.css`, consumed via `hsl(var(--name))`
-- **shadcn/ui**: Component library built on Radix primitives + Tailwind
-- **`cn()` utility**: `clsx` + `tailwind-merge` for conditional class composition (`src/lib/utils.ts`)
-- **Custom animations**: `fade-in`, `pulse-dot`, `accordion-down/up` defined in Tailwind config
-- **Glass cards**: `.glass-card` utility class for frosted glass card effect
+**Analysis Date:** 2026-04-20
 
 ## Naming Patterns
 
-### Files
-| Context | Pattern | Example |
-|---------|---------|---------|
-| React pages | `PascalCase + Page` | `DashboardPage.tsx` |
-| React components | `PascalCase` | `KPICard.tsx` |
-| Hooks | `camelCase` with `use` prefix | `useDocker.ts` |
-| Services | `kebab-case` with `-api` suffix | `docker-api.ts` |
-| Backend functions | `api-` prefix, kebab-case | `api-docker-proxy.mts` |
-| Backend lib | kebab-case | `host-url.mts` |
-| Types | kebab-case | `database.ts` |
-| Shared | kebab-case | `watchtower-agent-release.ts` |
+**Files:**
+- React pages and UI components use `PascalCase.tsx` (for example `src/pages/PricingPage.tsx`, `src/components/ProtectedRoute.tsx`).
+- Frontend hooks and utility modules use lowercase/hyphen names with hook prefix where applicable (for example `src/hooks/useViewerState.ts`, `src/lib/host-health-state.ts`, `src/lib/pricing.ts`).
+- Netlify functions use kebab-case with API naming prefixes (for example `netlify/functions/api-alert-rules.mts`, `netlify/functions/auth-me.mts`).
 
-### Variables & Functions
-- **React components**: PascalCase (`StepHostBasics`, `CopyBlock`)
-- **Functions**: camelCase (`apiFetch`, `buildValidatedAgentUrl`, `requireAuth`)
-- **Constants**: UPPER_SNAKE_CASE (`CURRENT_WATCHTOWER_AGENT_RELEASE`, `CONNECTION_MODES`)
-- **Types/Interfaces**: PascalCase (`DockerHost`, `AlertRule`, `AgentEnrollmentSession`)
-- **Type aliases**: PascalCase (`ConnectionMode`, `AlertSeverity`)
-- **Enums**: Not used — string literal union types preferred
+**Functions:**
+- Component functions are `PascalCase` (`PricingPage`, `BillingPage`).
+- Helpers and guards are `camelCase` (`getCheckoutPriceId`, `assertAdvancedAlertsAccessAllowed`).
 
-### Database
-- **Tables**: snake_case (`docker_hosts`, `alert_events`)
-- **Columns**: snake_case (`host_url`, `connection_mode`, `last_seen_at`)
-- **Timestamps**: `created_at`, `updated_at` with auto-update triggers
-- **Foreign keys**: `{entity}_id` pattern (`organization_id`, `host_id`)
+**Variables:**
+- Local variables use `camelCase`; shared constants use `UPPER_SNAKE_CASE` when globally scoped (`TRUSTED_ORIGINS` in `netlify/functions/lib/security.mts`).
 
-## Patterns
+**Types:**
+- Interfaces and type aliases use `PascalCase` (`PricingPlan` in `src/lib/pricing.ts`, `ViewerState` in `src/hooks/useViewerState.ts`).
 
-### API Layer Pattern
-```typescript
-// Service (src/services/docker-api.ts)
-export const dockerApi = {
-  action: (params) => apiFetch("/docker-proxy", { method: "POST", body: JSON.stringify(params) }),
-};
+## Code Style
 
-// Hook (src/hooks/useDocker.ts)
-export function useDocker() {
-  const queryClient = useQueryClient();
-  // React Query queries + mutations wrapping service calls
-}
-```
+**Formatting:**
+- No Prettier/Biome config file detected.
+- Semicolons and trailing commas are used broadly.
+- Quote style differs by layer: frontend often uses double quotes (`src/App.tsx`), functions often use single quotes (`netlify/functions/auth-me.mts`).
 
-### Backend Function Pattern
-```typescript
-// netlify/functions/api-*.mts
-export default async (req: Request) => {
-  if (req.method === "OPTIONS") return new Response(null, { headers });
-  
-  const auth = await requireAuth(req);
-  // ... business logic ...
-  return new Response(JSON.stringify(data), { headers });
-};
+**Linting:**
+- ESLint with `typescript-eslint` is configured in `eslint.config.js`.
+- React hooks rules are enabled via `eslint-plugin-react-hooks`.
+- Fast-refresh export guard is warning-level (`react-refresh/only-export-components`).
+- `@typescript-eslint/no-unused-vars` is disabled.
 
-export const config: Config = { path: "/api/endpoint-name" };
-```
+## Import Organization
 
-### Encryption Pattern
-```typescript
-// Encryption at rest for secrets
-const encrypted = encryptSecret(plaintext, contextId, fieldName);
-const decrypted = decryptSecret(ciphertext, contextId, fieldName);
-// Uses AES-256-GCM with key rotation support (APP_ENCRYPTION_KEY_V1, V2, etc.)
-```
+**Order:**
+1. External packages (`react-router-dom`, `@clerk/clerk-react`, `@tanstack/react-query`, icon libs).
+2. Internal alias imports using `@/`.
+3. Relative local imports.
 
-### Schema Ensure Pattern
-```typescript
-// netlify/functions/lib/ensure-*.mts
-// Idempotent schema migration — runs ALTER TABLE IF NOT EXISTS on each function call
-// Ensures backward-compatible schema evolution without downtime
-await ensureAgentEnrollmentSchema();
-```
+**Path Aliases:**
+- `@/*` is mapped to `./src/*` in `tsconfig.json` and `tsconfig.app.json`.
 
 ## Error Handling
 
-### Frontend
-- `ApiError` class with `status`, `body`, `rawText`, `code`, `upstreamStatus`
-- Toast notifications for user-facing errors via `useToast()` and Sonner
-- Try/catch in hooks with error state management
+**Patterns:**
+- Netlify handlers map failures to explicit HTTP responses and JSON payloads (`netlify/functions/auth-me.mts`, `netlify/functions/api-alert-rules.mts`).
+- Frontend pages handle recoverable states with branch-based UI and toast messaging (`src/pages/app/BillingPage.tsx`).
+- Error normalization helpers convert heterogeneous backend payloads into readable strings (`src/lib/api.ts`, tested in `src/lib/api.test.ts`).
 
-### Backend
-- `createProblemResponse()` for RFC 7807 problem detail responses
-- `badRequest()` helper for 400-class errors with optional error codes
-- `SecretCryptoError` class for encryption failures
-- Consistent `try/catch` with error code classification
+## Logging
 
-## Import Conventions
-- **Absolute imports**: `@/components/...`, `@/lib/...`, `@/hooks/...`
-- **Relative imports**: Only within the same feature directory
-- **Shared code**: `../../shared/...` from backend functions
-- **lucide-react**: Individual icon imports (not barrel)
+**Framework:**
+- Native `console` logging.
+
+**Patterns:**
+- Bootstrap and integration checks log warnings/errors (`src/App.tsx`, `src/pages/app/BillingPage.tsx`).
+- Function handlers log caught errors before returning mapped status codes (`netlify/functions/auth-me.mts`).
+
+## Comments
+
+**When to Comment:**
+- Comments are used sparingly to mark major render branches or flow intent (`src/pages/app/BillingPage.tsx`).
+
+**JSDoc/TSDoc:**
+- Not a dominant convention in sampled frontend/functions modules.
+
+## Function Design
+
+**Size:**
+- Utility modules trend small and single-purpose (`src/lib/pricing.ts`, `netlify/functions/lib/org-access.mts`).
+- Feature pages can be large and branch-heavy (`src/pages/app/BillingPage.tsx`).
+
+**Parameters:**
+- Multi-condition policy functions use object parameter bags for readability (`assertTenantAccessAllowed`, `assertAdvancedAlertsAccessAllowed` in `netlify/functions/lib/access-controls.mts`).
+
+**Return Values:**
+- Guards throw typed error messages for callers to map (`netlify/functions/lib/access-controls.mts`).
+- Query hooks and auth checks return structured objects (`src/hooks/useViewerState.ts`, `src/components/ProtectedRoute.tsx`).
+
+## Module Design
+
+**Exports:**
+- Default exports for page components (`src/pages/PricingPage.tsx`, `src/pages/app/BillingPage.tsx`).
+- Named exports for helpers/types (`src/lib/pricing.ts`, `netlify/functions/lib/org-access.mts`).
+
+**Barrel Files:**
+- Limited usage; direct module imports are the dominant pattern.
+
+## Pricing Restriction Enforcement Convention
+
+- Treat restriction strings in `src/lib/pricing.ts` and rendering in `src/pages/PricingPage.tsx` as product copy and plan metadata, not as automatic sitewide authorization.
+- Current hard enforcement in sampled code is endpoint-scoped policy checks, especially `assertAdvancedAlertsAccessAllowed` in `netlify/functions/lib/access-controls.mts`, invoked by `netlify/functions/api-alert-rules.mts`.
+- Route guard logic in `src/components/ProtectedRoute.tsx` enforces auth/onboarding/dedicated-deployment state and does not apply plan-tier gating across all `/app/*` routes.
+
+---
+
+*Convention analysis: 2026-04-20*

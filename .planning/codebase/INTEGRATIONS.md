@@ -1,128 +1,92 @@
-# External Integrations
+﻿# External Integrations
 
-## Authentication — Clerk
+**Analysis Date:** 2026-04-20
 
-**Integration type**: OAuth/SSO provider + JWT authentication
+## APIs & External Services
 
-- **Frontend**: `@clerk/clerk-react` wraps entire app in `ClerkProvider` (`src/App.tsx`)
-- **Backend**: `@clerk/backend` verifies JWTs in `netlify/functions/lib/auth.mts`
-- **Webhook**: Clerk user/org sync webhook at `netlify/functions/api-clerk-webhook.mts`
-  - Uses Svix for webhook signature verification
-  - Syncs Clerk users/orgs to local PostgreSQL tables
-- **Key files**:
-  - `src/App.tsx` — ClerkProvider initialization
-  - `netlify/functions/lib/auth.mts` — `requireAuth()` middleware
-  - `netlify/functions/lib/clerk.mts` — Clerk backend client
-  - `netlify/functions/api-clerk-webhook.mts` — Webhook handler
-  - `netlify/functions/auth-me.mts` — `/auth/me` endpoint returning user profile + org data
+**Identity & Auth:**
+- Clerk - session auth and org context.
+  - SDK/Client: `@clerk/clerk-react`, `@clerk/backend` (`src/App.tsx`, `netlify/functions/lib/clerk.mts`, `netlify/functions/lib/auth.mts`).
+  - Auth: `VITE_CLERK_PUBLISHABLE_KEY`, `CLERK_SECRET_KEY`, `CLERK_JWT_KEY`, `CLERK_AUTHORIZED_PARTIES` (`src/App.tsx`, `netlify/functions/lib/auth.mts`).
 
-## Database — Neon PostgreSQL
+**Billing & Payments:**
+- Paddle checkout and subscription webhooks - paid plan checkout and org billing status updates.
+  - SDK/Client: Paddle JS script + direct webhook handler (`index.html`, `src/App.tsx`, `netlify/functions/api-billing-webhook.mts`).
+  - Auth: `VITE_PADDLE_CLIENT_TOKEN`, Paddle price env vars, `PADDLE_WEBHOOK_SECRET` (`src/lib/pricing.ts`, `netlify/functions/api-billing-webhook.mts`).
+- PayPal/Liberapay donor pathway - manual donor premium grant flow.
+  - SDK/Client: custom webhook parsing in donor billing module (`netlify/functions/api-billing-webhook-paypal.mts`, `netlify/functions/api-billing-webhook-liberapay.mts`, `netlify/functions/lib/donor-billing.mts`).
+  - Auth: provider webhook secret headers validated against provider-specific env vars (`netlify/functions/lib/donor-billing.mts`).
 
-**Integration type**: Serverless PostgreSQL
+**Alerts Destinations:**
+- Slack incoming webhooks and generic outbound webhooks for alert delivery.
+  - SDK/Client: internal delivery modules (`netlify/functions/api-slack-destinations.mts`, `netlify/functions/api-webhook-destinations.mts`, `netlify/functions/lib/slack-delivery.mts`, `netlify/functions/lib/webhook-destinations.mts`).
+  - Auth: user-supplied destination credentials/URLs are stored and used by backend delivery modules.
 
-- **Driver**: `@neondatabase/serverless` with `sql` tagged template literal
-- **Connection**: Via `DATABASE_URL` environment variable
-- **Schema**: `netlify/schema.sql` (main schema, 335 lines)
-- **Migrations**: `db-migrations/` directory (7 incremental SQL files)
-- **Init script**: `netlify/init-db.mjs`
-- **Key file**: `netlify/functions/lib/db.mts` — exports shared `sql` client
+## Data Storage
 
-### Core Tables
-| Table | Purpose |
-|-------|---------|
-| `users` | User accounts (synced from Clerk) |
-| `organizations` | Multi-tenant workspaces |
-| `organization_members` | User ↔ org membership with roles |
-| `docker_hosts` | Registered Docker host connections |
-| `docker_host_secrets` | Encrypted agent API keys + CF tokens |
-| `agent_enrollment_sessions` | One-time agent install enrollment flow |
-| `alert_rules` | User-defined alert conditions |
-| `alert_events` | Triggered alert instances |
-| `incidents` | Grouped alert incidents |
-| `webhook_destinations` | Outbound webhook delivery targets |
-| `slack_destinations` | Slack notification targets |
-| `alert_delivery_attempts` | Webhook delivery audit log |
-| `mock_agent_config` | Dev/test mock agent behavior |
+**Databases:**
+- Neon Postgres (serverless Postgres).
+  - Connection: `NETLIFY_DATABASE_URL` (`netlify/functions/lib/db.mts`).
+  - Client: `@neondatabase/serverless` (`netlify/functions/lib/db.mts`).
 
-## Billing — Paddle
+**File Storage:**
+- Local repository files for frontend assets/build artifacts; no cloud object storage integration detected in source.
 
-**Integration type**: Payment processing (SaaS subscriptions)
+**Caching:**
+- Not detected as a dedicated external cache service.
 
-- **Frontend**: Paddle.js SDK loaded via `<script>` in `index.html`, initialized in `src/App.tsx`
-- **Backend**: Paddle webhook handler at `netlify/functions/api-billing-webhook.mts`
-- **Key columns**: `organizations.plan`, `organizations.subscription_status`, `organizations.paddle_subscription_id`
+## Authentication & Identity
 
-## Watchtower Agent — Custom Docker Proxy
+**Auth Provider:**
+- Clerk.
+  - Implementation: frontend Clerk provider + backend token authentication mapped to internal user/org records (`src/App.tsx`, `netlify/functions/lib/auth.mts`, `netlify/functions/auth-me.mts`).
 
-**Integration type**: Self-hosted agent on customer Docker hosts
+## Monitoring & Observability
 
-The Watchtower Agent is a bash-based HTTP service that runs on customer Linux hosts. The dashboard backend proxies Docker API requests through this agent.
+**Error Tracking:**
+- No external error-tracking SaaS detected.
 
-### Agent Communication Flow
-```
-Browser → Dashboard Backend → Watchtower Agent → Docker Engine (Unix socket)
-```
+**Logs:**
+- Function-level console logging and security event logging utilities (`netlify/functions/api-billing-webhook.mts`, `netlify/functions/api-clerk-webhook.mts`, `netlify/functions/lib/security.mts`).
 
-### Agent Endpoints Called by Backend
-| Endpoint | Purpose |
-|----------|---------|
-| `/_ping` (via `/docker/_ping`) | Docker health check |
-| `/docker/version` | Docker version info |
-| `/docker/containers/json` | List containers |
-| `/docker/containers/{id}/json` | Container inspect |
-| `/docker/containers/{id}/stats` | Container resource stats |
-| `/docker/containers/{id}/logs` | Container log output |
-| `/docker/containers/{id}/start` | Start container |
-| `/docker/containers/{id}/stop` | Stop container |
-| `/docker/containers/{id}/restart` | Restart container |
-| `/agent/version` | Agent version info |
-| `/metrics` | Host-level resource metrics (CPU, memory, disk, network, uptime) |
+## CI/CD & Deployment
 
-### Agent Authentication
-- **X-Agent-Key** header: shared secret (AES-256-GCM encrypted at rest in `docker_host_secrets`)
-- **X-Docker-Socket** header: custom Docker socket path (optional)
+**Hosting:**
+- Netlify for SPA hosting, redirects, scheduled functions, and serverless functions (`netlify.toml`).
 
-### Cloudflare Tunnel Mode
-When `connection_mode = 'cloudflare_tunnel'`:
-- Agent binds to `127.0.0.1` (localhost only)
-- Traffic routed through Cloudflare Tunnel
-- Optional CF Access service tokens: `CF-Access-Client-Id` + `CF-Access-Client-Secret` headers
-- CF tokens encrypted at rest alongside agent API key
+**CI Pipeline:**
+- Not detected as repository-native workflow files (`.github/workflows/**` not present).
 
-### Agent Files
-| File | Purpose |
-|------|---------|
-| `public/watchtower-agent-install.sh` | Installer script (36KB) |
-| `public/watchtower-agent.sh` | Runtime agent script (18KB) |
-| `public/watchtower-agent-uninstall.sh` | Uninstaller script |
-| `shared/watchtower-agent-release.ts` | Release metadata, command builders, version utils |
-| `shared/agent-version.ts` | Version constants |
+## Environment Configuration
 
-### Agent Enrollment Flow
-Guided one-time enrollment to bootstrap agent on a new host:
-1. Dashboard generates enrollment token + encrypted API key (`api-agent-enrollments.mts`)
-2. User runs install command on host (contains enrollment token)
-3. Agent calls `/api/agent-enrollments/exchange` to redeem token for API key
-4. Dashboard finalizes by pinging the agent to verify connectivity
+**Required env vars:**
+- Core/auth/data: `NETLIFY_DATABASE_URL`, `VITE_CLERK_PUBLISHABLE_KEY`, `CLERK_SECRET_KEY`, `CLERK_JWT_KEY` (`netlify/functions/lib/db.mts`, `src/App.tsx`, `netlify/functions/lib/auth.mts`).
+- Billing: `VITE_PADDLE_CLIENT_TOKEN`, Paddle price IDs, `PADDLE_WEBHOOK_SECRET` (`src/App.tsx`, `src/lib/pricing.ts`, `netlify/functions/api-billing-webhook.mts`).
+- Donor flow: provider webhook secrets, donation URL overrides (`netlify/functions/lib/donor-billing.mts`, `src/pages/app/BillingPage.tsx`).
+- Ops/security/email: `HEALTH_POLL_SECRET`, `DONOR_REMINDER_CRON_SECRET`, `RESEND_API_KEY`, `EMAIL_PROVIDER`, encryption key vars (`netlify/functions/api-host-health-poll.mts`, `netlify/functions/api-donor-reminders.mts`, `netlify/functions/lib/email.mts`, `netlify/functions/lib/crypto.mts`).
 
-## Cloudflare (Indirect)
+**Secrets location:**
+- Environment variables provided to Netlify Functions/frontend build; secrets are read from `process.env` and not hardcoded (`netlify/functions/**/*.mts`, `src/**/*.ts*`).
 
-- **Cloudflare Tunnel**: Users configure `cloudflared` on their hosts to route traffic to the agent
-- **Cloudflare Access**: Optional service token authentication layer on tunnel hostnames
-- Dashboard stores and forwards CF Access tokens but does not directly integrate with Cloudflare APIs
+## Webhooks & Callbacks
 
-## Outbound Webhooks
+**Incoming:**
+- `/api/billing/webhook` (Paddle) (`netlify/functions/api-billing-webhook.mts`).
+- `/api/billing/webhook/paypal` and `/api/billing/webhook/liberapay` (`netlify/functions/api-billing-webhook-paypal.mts`, `netlify/functions/api-billing-webhook-liberapay.mts`).
+- Clerk webhook endpoint (`netlify/functions/api-clerk-webhook.mts`).
 
-- **Webhook destinations**: Custom outbound webhooks for alert delivery
-  - HMAC-SHA256 signed payloads
-  - Delivery attempt tracking with audit log
-  - Key file: `netlify/functions/lib/webhook-destinations.mts`
-- **Slack destinations**: Slack incoming webhook integration
-  - URL validated against `hooks.slack.com`
-  - Key file: `netlify/functions/lib/slack-delivery.mts`
+**Outgoing:**
+- Resend email API (`netlify/functions/lib/email.mts`).
+- Slack webhook posts (`netlify/functions/lib/slack-delivery.mts`).
+- Generic webhook destination posts (`netlify/functions/lib/webhook-destinations.mts`).
 
-## Health Poller
+## Pricing Restriction Enforcement Lens
 
-- Server-side scheduled health polling at `netlify/functions/api-host-health-poll.mts`
-- Periodically pings all hosts and updates `docker_hosts.status`
-- Triggers alert events based on configured alert rules
+- Pricing restrictions are defined and marketed in frontend pricing models (`src/lib/pricing.ts`, `src/pages/PricingPage.tsx`).
+- Billing state is written into organization records by checkout/donor webhooks (`netlify/functions/api-billing-webhook.mts`, `netlify/functions/lib/donor-billing.mts`, `netlify/functions/auth-me.mts`).
+- Enforcement appears **localized**, not sitewide: explicit plan-gated backend checks are present for advanced alert rule mutation (`netlify/functions/api-alert-rules.mts`, `netlify/functions/lib/access-controls.mts`).
+- No broad, cross-endpoint plan/seat/node quota middleware was detected across core host/member/org endpoints (`netlify/functions/api-docker-hosts.mts`, `netlify/functions/api-members.mts`, `netlify/functions/api-organizations.mts`).
+
+---
+
+*Integration audit: 2026-04-20*
