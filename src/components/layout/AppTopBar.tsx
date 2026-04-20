@@ -1,8 +1,8 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Search, Command, Moon, Sun, LayoutDashboard, Server, Box, ActivitySquare, Settings, LifeBuoy } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { UserButton, OrganizationSwitcher } from "@clerk/clerk-react";
+import { UserButton, OrganizationSwitcher, useOrganization } from "@clerk/clerk-react";
 import {
   CommandDialog,
   CommandEmpty,
@@ -12,6 +12,16 @@ import {
   CommandList,
   CommandShortcut,
 } from "@/components/ui/command";
+import { useContainers, useDockerHosts } from "@/hooks/useDocker";
+
+type SearchableContainer = {
+  Id?: string;
+  Names?: string[];
+  Image?: string;
+  State?: string;
+  _hostId?: string;
+  _hostName?: string;
+};
 
 const quickSearchItems = [
   { label: "Dashboard", path: "/app", keywords: "overview metrics", Icon: LayoutDashboard },
@@ -24,8 +34,39 @@ const quickSearchItems = [
 
 export function AppTopBar() {
   const navigate = useNavigate();
+  const { organization } = useOrganization();
   const [isDark, setIsDark] = useState(() => document.documentElement.classList.contains("dark"));
   const [searchOpen, setSearchOpen] = useState(false);
+  const { data: hosts = [] } = useDockerHosts(organization?.id);
+  const { data: rawContainers } = useContainers(organization?.id, searchOpen && hosts.length > 0);
+
+  const containers = useMemo(() => (Array.isArray(rawContainers) ? (rawContainers as SearchableContainer[]) : []), [rawContainers]);
+
+  const hostResults = useMemo(() => {
+    return hosts.map((host) => ({
+      id: host.id,
+      label: host.name,
+      subtitle: `${host.status} · ${host.connection_mode}`,
+      value: `${host.name} ${host.host_url} ${host.connection_mode} ${host.status}`,
+      path: `/app/hosts/${host.id}`,
+    }));
+  }, [hosts]);
+
+  const containerResults = useMemo(() => {
+    return containers.map((container) => {
+      const id = container.Id ?? "";
+      const shortId = id.slice(0, 12);
+      const label = (container.Names?.[0] || shortId || "Unknown container").replace(/^\//, "");
+      const hostId = container._hostId;
+      return {
+        id,
+        label,
+        subtitle: `${container._hostName || "Unknown host"} · ${container.State || "unknown"}`,
+        value: `${label} ${container.Image || ""} ${container._hostName || ""} ${container.State || ""}`,
+        path: hostId && shortId ? `/app/containers/${shortId}?host=${hostId}` : "/app/containers",
+      };
+    });
+  }, [containers]);
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
@@ -100,6 +141,34 @@ export function AppTopBar() {
               </CommandItem>
             ))}
           </CommandGroup>
+
+          {hostResults.length > 0 ? (
+            <CommandGroup heading="Hosts">
+              {hostResults.map((host) => (
+                <CommandItem key={host.id} value={host.value} onSelect={() => handleSearchNavigate(host.path)}>
+                  <Server className="mr-2 h-4 w-4" />
+                  <div className="flex min-w-0 flex-col">
+                    <span className="truncate">{host.label}</span>
+                    <span className="truncate text-xs text-muted-foreground">{host.subtitle}</span>
+                  </div>
+                </CommandItem>
+              ))}
+            </CommandGroup>
+          ) : null}
+
+          {containerResults.length > 0 ? (
+            <CommandGroup heading="Containers">
+              {containerResults.map((container) => (
+                <CommandItem key={container.id || container.path} value={container.value} onSelect={() => handleSearchNavigate(container.path)}>
+                  <Box className="mr-2 h-4 w-4" />
+                  <div className="flex min-w-0 flex-col">
+                    <span className="truncate">{container.label}</span>
+                    <span className="truncate text-xs text-muted-foreground">{container.subtitle}</span>
+                  </div>
+                </CommandItem>
+              ))}
+            </CommandGroup>
+          ) : null}
         </CommandList>
       </CommandDialog>
     </>
