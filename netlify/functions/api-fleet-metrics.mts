@@ -1,6 +1,7 @@
 import type { Config } from '@netlify/functions';
 import { sql } from './lib/db.mjs';
 import { requireAuth } from './lib/auth.mjs';
+import { enforceOrganizationNodeLimit } from './lib/access-controls.mjs';
 import { decryptHostSecrets } from './lib/crypto.mjs';
 import { buildValidatedAgentUrl } from './lib/host-url.mjs';
 
@@ -105,11 +106,21 @@ export default async (req: Request) => {
       return new Response(JSON.stringify({ error: 'Access denied' }), { status: 403, headers });
     }
 
+    const limitState = await enforceOrganizationNodeLimit({
+      organizationId: orgId,
+      isPlatformAdmin: auth.isPlatformAdmin,
+    });
+
+    if (limitState.allowedHostIds.length === 0) {
+      return new Response(JSON.stringify([]), { headers });
+    }
+
     // Get all hosts for the org
     const hosts = await sql`
       SELECT h.id, h.host_url, h.name 
       FROM docker_hosts h
       WHERE h.organization_id = ${orgId}
+        AND h.id = ANY(${limitState.allowedHostIds})
     `;
 
     if (hosts.length === 0) {

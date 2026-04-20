@@ -2,7 +2,7 @@ import crypto from "crypto";
 import type { Config } from "@netlify/functions";
 import { sql } from "./lib/db.mjs";
 import { requireAuth } from "./lib/auth.mjs";
-import { assertOrganizationNodeCapacityAvailable, assertOrganizationWriteAllowed } from "./lib/access-controls.mjs";
+import { assertOrganizationNodeCapacityAvailable, assertOrganizationWriteAllowed, enforceOrganizationNodeLimit } from "./lib/access-controls.mjs";
 import { decryptSecret, encryptSecret } from "./lib/crypto.mjs";
 import { ensureAgentEnrollmentSchema } from "./lib/ensure-agent-enrollment-schema.mjs";
 import { buildValidatedAgentUrl, normalizeAndValidateHostUrl } from "./lib/host-url.mjs";
@@ -460,6 +460,19 @@ export default async (req: Request) => {
               onboarding_completed_at = COALESCE(onboarding_completed_at, now())
           WHERE id = ${auth.orgId}
         `;
+      }
+
+      const limitState = await enforceOrganizationNodeLimit({
+        organizationId: auth.orgId,
+        isPlatformAdmin: auth.isPlatformAdmin,
+      });
+
+      if (!limitState.allowedHostIds.includes(hostId!)) {
+        return badRequest(
+          "This host is over your current plan limit. Remove extra hosts or upgrade to reactivate it.",
+          "host_plan_limit_exceeded",
+          402,
+        );
       }
 
       const pingResult = await pingEnrollmentHost({

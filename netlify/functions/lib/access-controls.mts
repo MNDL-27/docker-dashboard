@@ -57,6 +57,9 @@ type OrganizationFeature =
   | "advanced_alerts"
   | "team_collaboration";
 
+const HOST_LIMIT_EXCEEDED_ERROR =
+  "Host is inactive because your current plan limit has been exceeded. Remove extra hosts or upgrade to re-enable this host.";
+
 export function computeOrganizationEntitlements({
   plan,
   subscriptionStatus,
@@ -200,7 +203,52 @@ export async function assertOrganizationNodeCapacityAvailable({
     return entitlements;
   }
 
-  throw new Error(`This plan allows up to ${entitlements.nodeLimit} connected node(s). Upgrade to add more hosts.`);
+  throw new Error(`This plan allows up to ${entitlements.nodeLimit} connected host(s). Upgrade to add more hosts.`);
+}
+
+export async function enforceOrganizationNodeLimit({
+  organizationId,
+  isPlatformAdmin,
+}: {
+  organizationId: string;
+  isPlatformAdmin: boolean;
+}) {
+  const entitlements = await resolveOrganizationEntitlements({ organizationId, isPlatformAdmin });
+
+  const hosts = await sql<Array<{ id: string }>>`
+    SELECT id
+    FROM public.docker_hosts
+    WHERE organization_id = ${organizationId}
+    ORDER BY created_at ASC, id ASC
+  `;
+
+  if (entitlements.nodeLimit === null) {
+    return {
+      entitlements,
+      allowedHostIds: hosts.map((host) => host.id),
+      blockedHostIds: [] as string[],
+    };
+  }
+
+  const allowedHostIds = hosts.slice(0, entitlements.nodeLimit).map((host) => host.id);
+  const blockedHostIds = hosts.slice(entitlements.nodeLimit).map((host) => host.id);
+
+  if (blockedHostIds.length > 0) {
+    await sql`
+      UPDATE public.docker_hosts
+      SET
+        status = 'disconnected',
+        last_error = ${HOST_LIMIT_EXCEEDED_ERROR},
+        consecutive_failures = GREATEST(COALESCE(consecutive_failures, 0), 1)
+      WHERE id = ANY(${blockedHostIds})
+    `;
+  }
+
+  return {
+    entitlements,
+    allowedHostIds,
+    blockedHostIds,
+  };
 }
 
 export async function assertOrganizationSeatCapacityAvailable({

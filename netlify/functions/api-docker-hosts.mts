@@ -1,7 +1,7 @@
 import type { Config } from '@netlify/functions';
 import { sql } from './lib/db.mjs';
 import { requireAuth } from './lib/auth.mjs';
-import { assertHostProxyAllowed, assertOrganizationNodeCapacityAvailable, assertOrganizationWriteAllowed } from './lib/access-controls.mjs';
+import { assertHostProxyAllowed, assertOrganizationNodeCapacityAvailable, assertOrganizationWriteAllowed, enforceOrganizationNodeLimit } from './lib/access-controls.mjs';
 import { decryptHostSecrets, encryptSecret } from './lib/crypto.mjs';
 import { ensureOnboardingSchema } from './lib/ensure-onboarding-schema.mjs';
 import { parseStaleThresholdMinutes, staleCutoffDate } from './lib/host-health.mjs';
@@ -66,6 +66,18 @@ export default async (req: Request) => {
         `;
         if (hosts.length === 0) return new Response(JSON.stringify({ error: 'Not found' }), { status: 404, headers });
 
+        const limitState = await enforceOrganizationNodeLimit({
+          organizationId: hosts[0].organization_id,
+          isPlatformAdmin: auth.isPlatformAdmin,
+        });
+
+        if (!limitState.allowedHostIds.includes(hostId)) {
+          return new Response(
+            JSON.stringify({ error: 'This host is over your current plan limit. Remove extra hosts or upgrade to reactivate it.' }),
+            { status: 402, headers },
+          );
+        }
+
         const includeSecrets = url.searchParams.get('includeSecrets') === 'true';
         if (!includeSecrets) {
           return new Response(JSON.stringify(hosts[0]), { headers });
@@ -94,6 +106,11 @@ export default async (req: Request) => {
       }
 
       if (!orgId) return new Response(JSON.stringify({ error: 'Active org required' }), { status: 400, headers });
+
+      await enforceOrganizationNodeLimit({
+        organizationId: orgId,
+        isPlatformAdmin: auth.isPlatformAdmin,
+      });
 
       await sql`
         UPDATE docker_hosts

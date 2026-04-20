@@ -1,7 +1,7 @@
 import type { Config } from '@netlify/functions';
 import { sql } from './lib/db.mjs';
 import { requireAuth } from './lib/auth.mjs';
-import { assertHostProxyAllowed, assertOrganizationWriteAllowed } from './lib/access-controls.mjs';
+import { assertHostProxyAllowed, assertOrganizationWriteAllowed, enforceOrganizationNodeLimit } from './lib/access-controls.mjs';
 import { decryptHostSecrets, SecretCryptoError } from './lib/crypto.mjs';
 import { buildWatchtowerAgentReleaseResponse } from './lib/agent-release.mts';
 import { ensureDockerHostSchema } from './lib/ensure-docker-host-schema.mjs';
@@ -509,11 +509,21 @@ export default async (req: Request) => {
       `;
       if (memberships.length === 0) return createProblemResponse(403, "Access denied");
 
+      const limitState = await enforceOrganizationNodeLimit({
+        organizationId: orgId,
+        isPlatformAdmin: auth.isPlatformAdmin,
+      });
+
+      if (limitState.allowedHostIds.length === 0) {
+        return new Response(JSON.stringify([]), { headers: corsHeaders });
+      }
+
       const hosts = await sql`
         SELECT h.*
         FROM docker_hosts h
         LEFT JOIN docker_host_admin_controls hac ON hac.host_id = h.id
         WHERE h.organization_id = ${orgId}
+          AND h.id = ANY(${limitState.allowedHostIds})
           AND COALESCE(hac.is_quarantined, false) = false
       `;
       const allContainers: any[] = [];
@@ -553,11 +563,21 @@ export default async (req: Request) => {
       `;
       if (memberships.length === 0) return createProblemResponse(403, "Access denied");
 
+      const limitState = await enforceOrganizationNodeLimit({
+        organizationId: orgId,
+        isPlatformAdmin: auth.isPlatformAdmin,
+      });
+
+      if (limitState.allowedHostIds.length === 0) {
+        return new Response(JSON.stringify([]), { headers: corsHeaders });
+      }
+
       const hosts = await sql`
         SELECT h.*
         FROM docker_hosts h
         LEFT JOIN docker_host_admin_controls hac ON hac.host_id = h.id
         WHERE h.organization_id = ${orgId}
+          AND h.id = ANY(${limitState.allowedHostIds})
           AND h.status = 'connected'
           AND COALESCE(hac.is_quarantined, false) = false
       `;
@@ -641,6 +661,21 @@ export default async (req: Request) => {
       return createProblemResponse(404, "Host not found or access denied");
     }
     const host = hostRecords[0];
+
+    const limitState = await enforceOrganizationNodeLimit({
+      organizationId: host.organization_id,
+      isPlatformAdmin: auth.isPlatformAdmin,
+    });
+
+    if (!limitState.allowedHostIds.includes(host.id)) {
+      return createProblemResponse(
+        402,
+        "Host over plan limit",
+        "This host is inactive because your current plan limit has been exceeded. Remove extra hosts or upgrade to reactivate it.",
+        "host_plan_limit_exceeded",
+      );
+    }
+
     await assertHostProxyAllowed({ hostId, isPlatformAdmin: auth.isPlatformAdmin });
 
     const secretsRecord = await sql`
