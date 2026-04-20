@@ -1,6 +1,15 @@
 import { sql } from "./db.mjs";
 import { ensureAdminSchema } from "./ensure-admin-schema.mjs";
 import { isDonorPremiumActive } from "./donor-billing.mjs";
+import {
+  PLAN_POLICY_BY_PLAN,
+  getEffectivePlanForEnforcement,
+  normalizePlan,
+  normalizeSubscriptionStatus,
+  isPaidSubscriptionStatus,
+  type PlanId,
+  type SubscriptionStatus,
+} from "../../../shared/schema/plan-policy.ts";
 
 function requiresPlatformApproval() {
   const value = (process.env.REQUIRE_PLATFORM_APPROVALS || "").trim().toLowerCase();
@@ -29,9 +38,6 @@ export interface DockerHostAdminControl {
   needs_reconnect: boolean;
 }
 
-type PlanId = "free" | "pro" | "team" | "enterprise";
-type SubscriptionStatus = "active" | "inactive" | "past_due" | "canceled" | "paused";
-
 export interface OrganizationEntitlements {
   plan: PlanId;
   subscriptionStatus: SubscriptionStatus;
@@ -50,27 +56,6 @@ type OrganizationFeature =
   | "slack_destinations"
   | "advanced_alerts"
   | "team_collaboration";
-
-function normalizePlan(value: string | null | undefined): PlanId {
-  if (value === "pro" || value === "team" || value === "enterprise") {
-    return value;
-  }
-
-  return "free";
-}
-
-function normalizeSubscriptionStatus(value: string | null | undefined): SubscriptionStatus {
-  if (value === "active" || value === "past_due" || value === "inactive" || value === "canceled" || value === "paused") {
-    return value;
-  }
-
-  return "inactive";
-}
-
-function isPaidSubscriptionStatus(status: SubscriptionStatus) {
-  // Keep paid access available for past_due during recovery windows.
-  return status === "active" || status === "past_due";
-}
 
 export function computeOrganizationEntitlements({
   plan,
@@ -103,33 +88,23 @@ export function computeOrganizationEntitlements({
 
   const isPaidPlan = normalizedPlan !== "free";
   const isPaidSubscriptionActive = isPaidPlan && isPaidSubscriptionStatus(normalizedStatus);
-  const paidTier = isPaidSubscriptionActive ? normalizedPlan : "free";
-
-  const seatLimitByTier: Record<PlanId, number | null> = {
-    free: 1,
-    pro: 1,
-    team: 10,
-    enterprise: null,
-  };
-
-  const nodeLimitByTier: Record<PlanId, number | null> = {
-    free: 1,
-    pro: 5,
-    team: 25,
-    enterprise: null,
-  };
+  const paidTier = getEffectivePlanForEnforcement({
+    plan: normalizedPlan,
+    subscriptionStatus: normalizedStatus,
+  });
+  const paidTierPolicy = PLAN_POLICY_BY_PLAN[paidTier];
 
   return {
     plan: normalizedPlan,
     subscriptionStatus: normalizedStatus,
     isPaidSubscriptionActive,
     isDonorPremium,
-    seatLimit: seatLimitByTier[paidTier],
-    nodeLimit: nodeLimitByTier[paidTier],
-    canUseWebhookDestinations: paidTier === "pro" || paidTier === "team" || paidTier === "enterprise",
-    canUseSlackDestinations: paidTier === "team" || paidTier === "enterprise",
-    canUseAdvancedAlerts: paidTier === "pro" || paidTier === "team" || paidTier === "enterprise" || isDonorPremium,
-    canUseTeamCollaboration: paidTier === "team" || paidTier === "enterprise",
+    seatLimit: paidTierPolicy.seatLimit,
+    nodeLimit: paidTierPolicy.nodeLimit,
+    canUseWebhookDestinations: paidTierPolicy.canUseWebhookDestinations,
+    canUseSlackDestinations: paidTierPolicy.canUseSlackDestinations,
+    canUseAdvancedAlerts: paidTierPolicy.canUseAdvancedAlerts || isDonorPremium,
+    canUseTeamCollaboration: paidTierPolicy.canUseTeamCollaboration,
   };
 }
 

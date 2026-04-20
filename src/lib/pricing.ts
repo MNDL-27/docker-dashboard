@@ -1,4 +1,4 @@
-export type PlanId = "free" | "pro" | "team" | "enterprise";
+import { PLAN_POLICY_BY_PLAN, type PlanId } from "../../shared/schema/plan-policy.ts";
 
 export interface PricingPlan {
   id: PlanId;
@@ -25,8 +25,8 @@ export const pricingPlans: PricingPlan[] = [
     supportLabel: "Community and self-serve docs",
     sloLabel: "Best effort only",
     highlights: [
-      "1 connected node",
-      "1 operator seat",
+      `${PLAN_POLICY_BY_PLAN.free.nodeLimit} connected node`,
+      `${PLAN_POLICY_BY_PLAN.free.seatLimit} operator seat`,
       "100 scans per month",
       "7 days of log history",
     ],
@@ -47,7 +47,7 @@ export const pricingPlans: PricingPlan[] = [
     supportLabel: "Email support",
     sloLabel: "1 business day response target",
     highlights: [
-      "Up to 5 nodes",
+      `Up to ${PLAN_POLICY_BY_PLAN.pro.nodeLimit} nodes`,
       "Unlimited manual scans",
       "Automated hourly checks",
       "30 days of history",
@@ -69,10 +69,10 @@ export const pricingPlans: PricingPlan[] = [
     supportLabel: "Priority support",
     sloLabel: "4 business hour response target",
     highlights: [
-      "15 to 25 nodes",
+      `Up to ${PLAN_POLICY_BY_PLAN.team.nodeLimit} nodes`,
       "Continuous scanning and real-time alerting",
       "1 year of retention",
-      "Up to 10 seats with RBAC",
+      `Up to ${PLAN_POLICY_BY_PLAN.team.seatLimit} seats with RBAC`,
     ],
     restrictions: [
       "Additional node packs sold separately",
@@ -118,9 +118,9 @@ export const pricingComparisonRows = [
   {
     label: "Node allowance",
     values: {
-      free: "1 node",
-      pro: "Up to 5 nodes",
-      team: "15 to 25 nodes",
+      free: `${PLAN_POLICY_BY_PLAN.free.nodeLimit} node`,
+      pro: `Up to ${PLAN_POLICY_BY_PLAN.pro.nodeLimit} nodes`,
+      team: `Up to ${PLAN_POLICY_BY_PLAN.team.nodeLimit} nodes`,
       enterprise: "Custom",
     },
   },
@@ -145,9 +145,9 @@ export const pricingComparisonRows = [
   {
     label: "Seats",
     values: {
-      free: "1 seat",
-      pro: "1 seat",
-      team: "Up to 10 seats with RBAC",
+      free: `${PLAN_POLICY_BY_PLAN.free.seatLimit} seat`,
+      pro: `${PLAN_POLICY_BY_PLAN.pro.seatLimit} seat`,
+      team: `Up to ${PLAN_POLICY_BY_PLAN.team.seatLimit} seats with RBAC`,
       enterprise: "Unlimited with SSO",
     },
   },

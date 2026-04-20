@@ -29,6 +29,7 @@ export default function BillingPage() {
   const [paddleStatus, setPaddleStatus] = useState<"checking" | "ready" | "unavailable">(() =>
     typeof window !== "undefined" && window.Paddle ? "ready" : "checking",
   );
+  const freePlanDetails = getPricingPlan("free");
 
   // Fetch real organization details including billing state
   const { data: orgDetails, isLoading } = useQuery({
@@ -403,17 +404,25 @@ export default function BillingPage() {
               <Box className="h-6 w-6 text-muted-foreground" />
             </div>
             <div>
-              <h3 className="text-xl font-bold">Free Plan</h3>
-              <p className="text-sm text-muted-foreground">Basic monitoring for small setups</p>
+              <h3 className="text-xl font-bold">{freePlanDetails?.name ?? "Free"} Plan</h3>
+              <p className="text-sm text-muted-foreground">{freePlanDetails?.audience ?? "Basic monitoring for small setups"}</p>
             </div>
           </div>
           <ul className="space-y-2 mb-8">
-            <li className="flex items-center gap-2 text-sm"><Check className="h-4 w-4 text-success" /> 2 hosts</li>
-            <li className="flex items-center gap-2 text-sm"><Check className="h-4 w-4 text-success" /> 1 operator seat</li>
-            <li className="flex items-center gap-2 text-sm"><Check className="h-4 w-4 text-success" /> Core host and container visibility</li>
+            {(freePlanDetails?.highlights ?? []).map((feature) => (
+              <li key={feature} className="flex items-center gap-2 text-sm"><Check className="h-4 w-4 text-success" /> {feature}</li>
+            ))}
           </ul>
+          <div className="mb-8 rounded-lg border border-dashed border-border p-4">
+            <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-2">Restrictions</p>
+            <ul className="space-y-1">
+              {(freePlanDetails?.restrictions ?? []).map((restriction) => (
+                <li key={restriction} className="text-sm text-muted-foreground">{restriction}</li>
+              ))}
+            </ul>
+          </div>
           <div className="p-4 rounded-lg bg-primary/5 border border-primary/10">
-            <p className="text-sm mb-4">Need advanced alerting, more seats, or a support response target? Upgrade to Pro or Team.</p>
+            <p className="text-sm mb-4">Need advanced alerting, more seats, or a support response target? Upgrade to Individual or Business.</p>
             <Button className="w-full" onClick={() => navigate('/pricing')}>View Paid Plans</Button>
           </div>
         </div>
