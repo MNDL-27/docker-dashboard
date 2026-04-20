@@ -40,8 +40,8 @@ export const pricingPlans: PricingPlan[] = [
   {
     id: "pro",
     name: "Individual",
-    priceLabel: "$29/mo",
-    monthlyPrice: 29,
+    priceLabel: "$24/mo",
+    monthlyPrice: 24,
     audience: "Solo developers managing a few remote environments.",
     summary: "Built for individual operators who need more nodes, more history, and reliable alert delivery without paying for team administration.",
     supportLabel: "Email support",
@@ -84,7 +84,7 @@ export const pricingPlans: PricingPlan[] = [
   {
     id: "enterprise",
     name: "Dedicated",
-    priceLabel: "Custom",
+    priceLabel: "From $500/mo",
     monthlyPrice: null,
     audience: "Managed, isolated infrastructure for high-trust customers.",
     summary: "Use this when the customer needs dedicated hosting, isolated data, negotiated allocations, and identity integration on infrastructure you manage for them.",
