@@ -45,6 +45,7 @@ export interface OrganizationEntitlements {
   isDonorPremium: boolean;
   seatLimit: number | null;
   nodeLimit: number | null;
+  monthlyScanLimit: number | null;
   canUseWebhookDestinations: boolean;
   canUseSlackDestinations: boolean;
   canUseAdvancedAlerts: boolean;
@@ -82,6 +83,7 @@ export function computeOrganizationEntitlements({
       isDonorPremium,
       seatLimit: null,
       nodeLimit: null,
+      monthlyScanLimit: null,
       canUseWebhookDestinations: true,
       canUseSlackDestinations: true,
       canUseAdvancedAlerts: true,
@@ -104,6 +106,7 @@ export function computeOrganizationEntitlements({
     isDonorPremium,
     seatLimit: paidTierPolicy.seatLimit,
     nodeLimit: paidTierPolicy.nodeLimit,
+    monthlyScanLimit: paidTierPolicy.monthlyScanLimit,
     canUseWebhookDestinations: paidTierPolicy.canUseWebhookDestinations,
     canUseSlackDestinations: paidTierPolicy.canUseSlackDestinations,
     canUseAdvancedAlerts: paidTierPolicy.canUseAdvancedAlerts || isDonorPremium,

@@ -163,8 +163,8 @@ export default function ContainersPage() {
   const { organization: currentOrg } = useOrganization();
   const { data: hosts = [], isLoading: hostsLoading } = useDockerHosts(currentOrg?.id);
   const { data: rawContainers, isLoading: containersLoading, error } = useContainers(currentOrg?.id, hosts.length > 0);
-  const { data: rawStats } = useAllContainerStats(currentOrg?.id, hosts.length > 0);
-  const { data: fleetMetrics = [], isLoading: fleetMetricsLoading } = useFleetMetrics(currentOrg?.id, 15000);
+  const { data: rawStats, error: statsError } = useAllContainerStats(currentOrg?.id, hosts.length > 0);
+  const { data: fleetMetrics = [], isLoading: fleetMetricsLoading, error: fleetMetricsError } = useFleetMetrics(currentOrg?.id, 15000);
 
   const [search, setSearch] = useState("");
   const [stateTab, setStateTab] = useState("all");
@@ -261,6 +261,13 @@ export default function ContainersPage() {
   const activeHostLabel = uniqueHosts.find(([id]) => id === hostFilter)?.[1] || "";
   const telemetryAvailable = !!latestFleetMetrics;
   const telemetryPartial = latestFleetMetrics?.isPartial === true;
+  const scanQuotaWarning = useMemo(() => {
+    const messages = [error, statsError, fleetMetricsError]
+      .map((value) => (value instanceof Error ? value.message : ""))
+      .filter(Boolean);
+    const quotaMessage = messages.find((message) => /scan quota|monthly scan quota|scan quota reached/i.test(message));
+    return quotaMessage || null;
+  }, [error, statsError, fleetMetricsError]);
 
   async function handleAction(hostIdValue: string, containerId: string, action: "start" | "stop" | "restart") {
     setActionLoading(containerId);
@@ -287,10 +294,11 @@ export default function ContainersPage() {
   }
 
   if (error) {
+    const errorMessage = error instanceof Error ? error.message : "Unknown error";
     return (
       <div className="space-y-6 animate-fade-in">
         <PageHeader title="Containers" breadcrumbs={[{ label: "Infrastructure" }, { label: "Containers" }]} />
-        <div className="glass-card p-8 text-center"><p className="text-sm text-destructive">Failed to load containers: {(error as Error).message}</p></div>
+        <div className="glass-card p-8 text-center"><p className="text-sm text-destructive">Failed to load containers: {errorMessage}</p></div>
       </div>
     );
   }
@@ -319,6 +327,18 @@ export default function ContainersPage() {
         breadcrumbs={[{ label: "Infrastructure" }, { label: "Containers" }]}
         actions={<TelemetryBadge loading={fleetMetricsLoading} available={telemetryAvailable} partial={telemetryPartial} />}
       />
+
+      {scanQuotaWarning ? (
+        <div className="glass-card rounded-[24px] border border-warning/40 bg-warning/10 px-5 py-4">
+          <div className="flex items-start gap-3">
+            <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-warning" />
+            <div>
+              <p className="text-sm font-semibold text-foreground">Monthly scan limit reached</p>
+              <p className="mt-1 text-sm text-muted-foreground">{scanQuotaWarning}</p>
+            </div>
+          </div>
+        </div>
+      ) : null}
 
       <div className="grid gap-6 xl:grid-cols-[minmax(0,1.55fr),minmax(320px,0.9fr)]">
         <div className="glass-card relative overflow-hidden rounded-[28px] p-7">

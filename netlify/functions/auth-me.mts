@@ -6,6 +6,7 @@ import { ensureAdminSchema } from './lib/ensure-admin-schema.mjs';
 import { isPlatformAdminEmail } from './lib/platform-admin.mjs';
 import { ensureDedicatedDeploymentSchema } from './lib/ensure-dedicated-deployment-schema.mjs';
 import { resolveOrganizationEntitlements } from './lib/access-controls.mjs';
+import { getOrganizationScanQuotaSummary } from './lib/scan-usage.mjs';
 
 const allowedOrigins = new Set([
   'https://app.dockerdash.app',
@@ -93,6 +94,12 @@ export default async (req: Request) => {
           isPlatformAdmin: isPlatformAdminEmail(users[0].email),
         })
       : null;
+    const scanQuota = effectiveOrg
+      ? await getOrganizationScanQuotaSummary({
+          organizationId: effectiveOrg.id,
+          isPlatformAdmin: isPlatformAdminEmail(users[0].email),
+        })
+      : null;
 
     return new Response(JSON.stringify({
       user: {
@@ -109,6 +116,7 @@ export default async (req: Request) => {
         is_suspended: Boolean(users[0].is_suspended),
         is_hard_disabled: Boolean(users[0].is_hard_disabled),
         entitlements,
+        scan_quota: scanQuota,
       },
     }), { headers });
 

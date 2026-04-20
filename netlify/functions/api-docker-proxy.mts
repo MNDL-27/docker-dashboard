@@ -10,6 +10,38 @@ import { createProblemResponse } from '../../shared/schema/error.ts';
 import { ProxyRequestParamsSchema } from '../../shared/schema/proxy.ts';
 import { formatDiagnosticDetail, parseDiagnosticPayload } from '../../shared/lib/diagnostics.ts';
 import { buildCorsHeaders, applyRateLimit, RATE_LIMITS, logSecurityEvent, getClientIp } from './lib/security.mjs';
+import { consumeOrganizationScanQuota } from './lib/scan-usage.mjs';
+
+const ORG_WIDE_SCAN_ACTIONS = new Set(['all-containers', 'all-container-stats']);
+const HOST_SCAN_ACTIONS = new Set(['containers', 'container-stats', 'host-metrics']);
+
+function createScanQuotaExceededResponse(
+  corsHeaders: Record<string, string>,
+  quota: {
+    monthBucket: string;
+    monthlyScanLimit: number | null;
+    scansUsed: number;
+    scansRemaining: number | null;
+  },
+) {
+  return new Response(
+    JSON.stringify({
+      error: 'Monthly scan quota reached',
+      code: 'scan_quota_exceeded',
+      details: quota.monthlyScanLimit
+        ? `Your current plan allows ${quota.monthlyScanLimit} scans per month. You have used ${quota.scansUsed} in ${quota.monthBucket}. Upgrade to continue scanning.`
+        : 'Your current plan cannot run scans right now.',
+      limit: quota.monthlyScanLimit,
+      used: quota.scansUsed,
+      remaining: quota.scansRemaining,
+      month_bucket: quota.monthBucket,
+    }),
+    {
+      status: 402,
+      headers: corsHeaders,
+    },
+  );
+}
 
 function sanitizeContainerId(id: string): string {
   const normalized = id.trim();
@@ -518,6 +550,16 @@ export default async (req: Request) => {
         return new Response(JSON.stringify([]), { headers: corsHeaders });
       }
 
+      if (ORG_WIDE_SCAN_ACTIONS.has(action)) {
+        const quotaResult = await consumeOrganizationScanQuota({
+          organizationId: orgId,
+          isPlatformAdmin: auth.isPlatformAdmin,
+        });
+        if (!quotaResult.allowed) {
+          return createScanQuotaExceededResponse(corsHeaders, quotaResult);
+        }
+      }
+
       const hosts = await sql`
         SELECT h.*
         FROM docker_hosts h
@@ -570,6 +612,16 @@ export default async (req: Request) => {
 
       if (limitState.allowedHostIds.length === 0) {
         return new Response(JSON.stringify([]), { headers: corsHeaders });
+      }
+
+      if (ORG_WIDE_SCAN_ACTIONS.has(action)) {
+        const quotaResult = await consumeOrganizationScanQuota({
+          organizationId: orgId,
+          isPlatformAdmin: auth.isPlatformAdmin,
+        });
+        if (!quotaResult.allowed) {
+          return createScanQuotaExceededResponse(corsHeaders, quotaResult);
+        }
       }
 
       const hosts = await sql`
@@ -685,6 +737,14 @@ export default async (req: Request) => {
     const secrets = decryptHostSecrets(secretsRecord[0] || null, host.id);
 
     if (action === 'host-metrics') {
+      const quotaResult = await consumeOrganizationScanQuota({
+        organizationId: host.organization_id,
+        isPlatformAdmin: auth.isPlatformAdmin,
+      });
+      if (!quotaResult.allowed) {
+        return createScanQuotaExceededResponse(corsHeaders, quotaResult);
+      }
+
       const metricsReq = buildAgentRequest(host as any, secrets, '/metrics', 'GET');
       const metricsResponse = await dockerFetch(metricsReq.url, metricsReq.method, metricsReq.headers, 5000);
 
@@ -802,6 +862,16 @@ export default async (req: Request) => {
     }
 
     const reqData = buildRequest(host as any, secrets, dockerPath, method);
+
+    if (HOST_SCAN_ACTIONS.has(action)) {
+      const quotaResult = await consumeOrganizationScanQuota({
+        organizationId: host.organization_id,
+        isPlatformAdmin: auth.isPlatformAdmin,
+      });
+      if (!quotaResult.allowed) {
+        return createScanQuotaExceededResponse(corsHeaders, quotaResult);
+      }
+    }
 
     if (['container-start', 'container-stop', 'container-restart'].includes(action)) {
       const idempotencyKey = req.headers.get('x-idempotency-key') || req.headers.get('idempotency-key');

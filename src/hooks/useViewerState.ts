@@ -8,6 +8,7 @@ export interface ViewerEntitlements {
   isDonorPremium: boolean;
   seatLimit: number | null;
   nodeLimit: number | null;
+  monthlyScanLimit: number | null;
   canUseWebhookDestinations: boolean;
   canUseSlackDestinations: boolean;
   canUseAdvancedAlerts: boolean;
@@ -32,6 +33,13 @@ export interface ViewerState {
   is_suspended: boolean;
   is_hard_disabled: boolean;
   entitlements: ViewerEntitlements | null;
+  scan_quota: {
+    monthBucket: string;
+    monthlyScanLimit: number | null;
+    scansUsed: number;
+    scansRemaining: number | null;
+    scansExceeded: boolean;
+  } | null;
 }
 
 export function useViewerState() {
