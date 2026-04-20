@@ -1,5 +1,5 @@
 import { sql } from './db.mjs';
-import { clerkClient } from './clerk.mjs';
+import { clerkClient, getClerkConfig } from './clerk.mjs';
 import { assertTenantAccessAllowed } from './access-controls.mjs';
 import { ensureAdminSchema } from './ensure-admin-schema.mjs';
 import { isPlatformAdminEmail } from './platform-admin.mjs';
@@ -99,9 +99,7 @@ export async function requireAuth(
   // See: /workspace/netlify/functions/lib/auth.test.mts for test mocks
 
   const requestState = await clerkClient.authenticateRequest(req, {
-    secretKey: process.env.CLERK_SECRET_KEY,
-    publishableKey: process.env.CLERK_PUBLISHABLE_KEY || process.env.VITE_CLERK_PUBLISHABLE_KEY,
-    jwtKey: process.env.CLERK_JWT_KEY,
+    ...getClerkConfig(),
     authorizedParties: getAuthorizedParties(req),
   });
 
