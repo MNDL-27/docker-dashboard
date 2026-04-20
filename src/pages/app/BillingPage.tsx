@@ -138,8 +138,8 @@ export default function BillingPage() {
     sessionStorage.removeItem("dockerdash_pending_plan");
   };
 
-  const donationUrl = import.meta.env.VITE_DONATION_URL || "https://liberapay.com";
-  const paypalDonationUrl = import.meta.env.VITE_PAYPAL_DONATION_URL || "https://paypal.me";
+  const donationUrl = import.meta.env.VITE_DONATION_URL || "https://liberapay.com/MNDL-27/";
+  const paypalDonationUrl = import.meta.env.VITE_PAYPAL_DONATION_URL || "https://www.paypal.com/paypalme/ProtikMondal27";
 
   const handleCreateDonorIntent = async () => {
     if (!activeOrganizationId) return;
