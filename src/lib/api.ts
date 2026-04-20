@@ -99,9 +99,13 @@ export class ApiError extends Error {
   }
 }
 
+async function getClerkSessionToken(forceFresh = false) {
+  // @ts-expect-error window.Clerk is injected globally
+  return await window.Clerk?.session?.getToken(forceFresh ? { skipCache: true } : undefined);
+}
+
 export async function apiFetch(path: string, options: RequestInit = {}) {
-  // @ts-expect-error window.Clerk is injected globally 
-  const token = await window.Clerk?.session?.getToken();
+  let token = await getClerkSessionToken(false);
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
     ...((options.headers as Record<string, string>) || {}),
@@ -123,7 +127,18 @@ export async function apiFetch(path: string, options: RequestInit = {}) {
     fetchOptions.body = JSON.stringify(options.body);
   }
 
-  const response = await fetch(`${API_BASE}${path}`, fetchOptions);
+  let response = await fetch(`${API_BASE}${path}`, fetchOptions);
+
+  if (response.status === 401 && token) {
+    token = await getClerkSessionToken(true);
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+      response = await fetch(`${API_BASE}${path}`, {
+        ...fetchOptions,
+        headers,
+      });
+    }
+  }
 
   if (!response.ok) {
     const errorText = await response.text();
