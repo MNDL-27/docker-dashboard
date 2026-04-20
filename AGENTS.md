@@ -1,19 +1,22 @@
-# Obsidian memory policy
+Memory system: Obsidian vault
 
-Use Obsidian MCP as long-term memory for this workspace.
+This environment uses an Obsidian vault as long-term shared memory.
 
 Rules:
-1. Before starting meaningful work, search Obsidian memory for relevant notes, decisions, entities, playbooks, handoffs, or project context.
-2. If relevant memory exists, summarize it briefly and use it before proceeding.
-3. If no relevant memory exists, say that briefly and continue normally.
-4. Do not claim Obsidian contains full previous conversation history unless a note actually exists for it.
-5. Treat Obsidian as structured long-term memory, not as a transcript store.
-6. After completing meaningful work, save useful reusable outcomes back into Obsidian:
-   - decisions
-   - playbooks
-   - project summaries
-   - handoffs
-   - concepts
-   - entities
-7. Prefer updating an existing related note instead of creating duplicates.
-8. Keep saved memory concise, structured, and reusable.
+
+1. Before creating new information, check if relevant knowledge already exists.
+2. Prefer updating existing notes over creating duplicates.
+3. After completing any meaningful task (planning, debugging, implementation, architecture):
+   - evaluate if the result is reusable
+   - if yes, write it to the Obsidian vault
+
+Memory routing:
+- Active project state → 10_Flow/Projects/
+- Agent continuation → 10_Flow/Handoffs/
+- Reusable knowledge (patterns, decisions, lessons) → 20_Atlas/
+- Tools / systems → 30_Entities/
+- External references → 40_Sources/
+
+A task is not considered complete until relevant reusable knowledge is stored in Obsidian.
+
+Do not store secrets, credentials, or runtime data in notes.
