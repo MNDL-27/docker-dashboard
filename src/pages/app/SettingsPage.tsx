@@ -1,6 +1,6 @@
 import { PageHeader } from "@/components/shared/PageHeader";
 import { OrganizationMembersWorkspaceContainer } from "@/components/settings/OrganizationMembersWorkspace";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { ProfileSettings } from "@/components/settings/ProfileSettings";
 import { useSearchParams } from "react-router-dom";
 import { SlackDestinationsPanel } from "@/components/settings/SlackDestinationsPanel";
@@ -11,22 +11,36 @@ import { useOrganization } from "@clerk/clerk-react";
 import { useCreateWebhookDestination, useTestWebhookDestination, useUpdateWebhookDestination, useWebhookDestinations } from "@/hooks/useWebhookDestinations";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import type { SlackDestinationFormValues, WebhookDestinationFormValues } from "@/types/alerts";
+import { useViewerState } from "@/hooks/useViewerState";
 
-const tabs = ["Members", "Profile", "Webhooks", "Notifications"];
+const allTabs = ["Members", "Profile", "Webhooks", "Notifications"];
 
 export default function SettingsPage() {
   const { organization: currentOrg } = useOrganization();
+  const { data: viewer } = useViewerState();
+  const entitlements = viewer?.entitlements;
+  const canUseTeamCollaboration = entitlements?.canUseTeamCollaboration ?? false;
+  const canUseWebhookDestinations = entitlements?.canUseWebhookDestinations ?? false;
+  const canUseSlackDestinations = entitlements?.canUseSlackDestinations ?? false;
+
+  const tabs = allTabs.filter((value) => {
+    if (value === "Members") return canUseTeamCollaboration;
+    if (value === "Webhooks") return canUseWebhookDestinations;
+    if (value === "Notifications") return canUseSlackDestinations;
+    return true;
+  });
+
   const { toast } = useToast();
   const [searchParams, setSearchParams] = useSearchParams();
   const requestedTab = searchParams.get("tab");
   const [tab, setTab] = useState(requestedTab && tabs.includes(requestedTab) ? requestedTab : "Profile");
   const [latestSecret, setLatestSecret] = useState<{ destinationName: string; value: string } | null>(null);
 
-  const slackDestinationsQuery = useSlackDestinations(currentOrg?.id);
+  const slackDestinationsQuery = useSlackDestinations(currentOrg?.id, canUseSlackDestinations);
   const createSlackMutation = useCreateSlackDestination();
   const updateSlackMutation = useUpdateSlackDestination();
   const testSlackMutation = useTestSlackDestination();
-  const webhookDestinationsQuery = useWebhookDestinations(currentOrg?.id);
+  const webhookDestinationsQuery = useWebhookDestinations(currentOrg?.id, canUseWebhookDestinations);
   const createWebhookMutation = useCreateWebhookDestination();
   const updateWebhookMutation = useUpdateWebhookDestination();
   const testWebhookMutation = useTestWebhookDestination();
@@ -48,6 +62,15 @@ export default function SettingsPage() {
     }
     setSearchParams(nextParams, { replace: true });
   };
+
+  useEffect(() => {
+    if (!tabs.includes(tab)) {
+      setTab("Profile");
+      const nextParams = new URLSearchParams(searchParams);
+      nextParams.delete("tab");
+      setSearchParams(nextParams, { replace: true });
+    }
+  }, [tab, tabs, searchParams, setSearchParams]);
 
   const handleWebhookError = (title: string, error: unknown) => {
     toast({

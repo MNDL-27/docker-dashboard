@@ -5,6 +5,7 @@ import { ensureOnboardingSchema } from './lib/ensure-onboarding-schema.mjs';
 import { ensureAdminSchema } from './lib/ensure-admin-schema.mjs';
 import { isPlatformAdminEmail } from './lib/platform-admin.mjs';
 import { ensureDedicatedDeploymentSchema } from './lib/ensure-dedicated-deployment-schema.mjs';
+import { resolveOrganizationEntitlements } from './lib/access-controls.mjs';
 
 const allowedOrigins = new Set([
   'https://app.dockerdash.app',
@@ -86,6 +87,12 @@ export default async (req: Request) => {
             LIMIT 1
           `
         : [];
+    const entitlements = effectiveOrg
+      ? await resolveOrganizationEntitlements({
+          organizationId: effectiveOrg.id,
+          isPlatformAdmin: isPlatformAdminEmail(users[0].email),
+        })
+      : null;
 
     return new Response(JSON.stringify({
       user: {
@@ -101,6 +108,7 @@ export default async (req: Request) => {
         is_platform_admin: isPlatformAdminEmail(users[0].email),
         is_suspended: Boolean(users[0].is_suspended),
         is_hard_disabled: Boolean(users[0].is_hard_disabled),
+        entitlements,
       },
     }), { headers });
 

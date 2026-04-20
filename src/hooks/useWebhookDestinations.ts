@@ -3,11 +3,11 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { webhookDestinationsApi } from "@/services/webhook-destinations-api";
 import type { WebhookDestinationFormValues } from "@/types/alerts";
 
-export function useWebhookDestinations(orgId?: string | null) {
+export function useWebhookDestinations(orgId?: string | null, enabled = true) {
   return useQuery({
     queryKey: ["webhook-destinations", orgId],
     queryFn: () => webhookDestinationsApi.listDestinations(),
-    enabled: !!orgId,
+    enabled: !!orgId && enabled,
   });
 }
 

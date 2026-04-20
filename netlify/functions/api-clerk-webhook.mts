@@ -1,5 +1,6 @@
 import { Webhook } from 'svix';
 import { sql } from './lib/db.mjs';
+import { assertOrganizationSeatCapacityAvailable } from './lib/access-controls.mjs';
 import { applyRateLimit, RATE_LIMITS, verifyWebhookTimestamp, logSecurityEvent, getClientIp } from './lib/security.mjs';
 
 const webhookSecret = process.env.CLERK_WEBHOOK_SIGNING_SECRET;
@@ -155,6 +156,20 @@ export default async (req: Request) => {
       if (orgData.length > 0 && userData.length > 0) {
         const internalOrgId = orgData[0].id;
         const internalUserId = userData[0].id;
+
+        const existingMembership = await sql`
+          SELECT 1
+          FROM public.organization_members
+          WHERE organization_id = ${internalOrgId} AND user_id = ${internalUserId}
+          LIMIT 1
+        `;
+
+        if (existingMembership.length === 0) {
+          await assertOrganizationSeatCapacityAvailable({
+            organizationId: internalOrgId,
+            isPlatformAdmin: false,
+          });
+        }
 
         await sql`
           INSERT INTO public.organization_members (organization_id, user_id, role)

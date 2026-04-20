@@ -1,7 +1,7 @@
 import type { Config } from '@netlify/functions';
 import { sql } from './lib/db.mjs';
 import { requireAuth } from './lib/auth.mjs';
-import { assertHostProxyAllowed, assertOrganizationWriteAllowed } from './lib/access-controls.mjs';
+import { assertHostProxyAllowed, assertOrganizationNodeCapacityAvailable, assertOrganizationWriteAllowed } from './lib/access-controls.mjs';
 import { decryptHostSecrets, encryptSecret } from './lib/crypto.mjs';
 import { ensureOnboardingSchema } from './lib/ensure-onboarding-schema.mjs';
 import { parseStaleThresholdMinutes, staleCutoffDate } from './lib/host-health.mjs';
@@ -120,6 +120,10 @@ export default async (req: Request) => {
       if (!isAdmin) {
         return new Response(JSON.stringify({ error: 'Admin access required for active org' }), { status: 403, headers });
       }
+      await assertOrganizationNodeCapacityAvailable({
+        organizationId: orgId,
+        isPlatformAdmin: auth.isPlatformAdmin,
+      });
       let hostUrl: string;
       try {
         hostUrl = normalizeAndValidateHostUrl(String(body.host_url ?? ""));

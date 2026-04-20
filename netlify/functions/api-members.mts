@@ -1,6 +1,7 @@
 import type { Config } from '@netlify/functions';
 import { sql } from './lib/db.mjs';
 import { requireAuth } from './lib/auth.mjs';
+import { assertOrganizationFeatureAllowed } from './lib/access-controls.mjs';
 
 const headers = {
   'Access-Control-Allow-Origin': '*',
@@ -26,6 +27,12 @@ export default async (req: Request) => {
     if (!orgId) {
       return new Response(JSON.stringify({ error: 'orgId required' }), { status: 400, headers });
     }
+
+    await assertOrganizationFeatureAllowed({
+      organizationId: orgId,
+      isPlatformAdmin: authContext.isPlatformAdmin,
+      feature: 'team_collaboration',
+    });
 
     const members = await sql`
       SELECT u.id as user_id, u.full_name, u.avatar_url, om.role, om.created_at as joined_at
