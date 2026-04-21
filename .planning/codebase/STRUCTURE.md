@@ -1,199 +1,190 @@
-# Directory Structure
+# Codebase Structure
 
-## Root Layout
+**Analysis Date:** 2026-04-22
 
-```
-docker-watchtower-dash/
-├── src/                        # Frontend React application
-├── netlify/                    # Backend serverless functions + DB
-│   ├── functions/              # Netlify Function handlers
-│   │   └── lib/                # Shared backend utilities
-│   ├── schema.sql              # Main database schema
-│   ├── init-db.mjs             # DB initialization script
-│   └── check-db.mjs            # DB verification script
-├── shared/                     # Code shared between frontend & backend
-│   ├── schema/                 # Zod schemas (API, error, proxy)
-│   ├── watchtower-agent-release.ts  # Agent release metadata + command builders
-│   └── agent-version.ts        # Agent version constants
-├── public/                     # Static assets served by Vite/Netlify
-│   ├── watchtower-agent-install.sh  # Agent installer (36KB)
-│   ├── watchtower-agent.sh     # Agent runtime (18KB)
-│   └── watchtower-agent-uninstall.sh # Agent uninstaller
-├── db-migrations/              # Incremental SQL migration files
-├── scripts/                    # Build/release helper scripts
-├── .planning/                  # GSD planning artifacts
-├── .agent/                     # Agent skill configurations
-├── .clean-test/                # Manual test/verification scripts
-└── dist/                       # Build output (gitignored)
+## Directory Layout
+
+```text
+[project-root]/
+|-- src/                    # Vite React SPA source
+|-- netlify/functions/      # Netlify serverless endpoints
+|-- shared/                 # Cross-runtime schemas and helpers
+|-- public/                 # Static assets and install scripts
+|-- db-migrations/          # SQL migrations applied outside the app runtime
+|-- scripts/                # Repository scripts such as release prep
+|-- netlify/                # Netlify SQL snapshot and local DB helpers
+|-- dist/                   # Built frontend output
+|-- .planning/codebase/     # Generated codebase map documents
+|-- package.json            # Scripts and dependency manifest
+|-- netlify.toml            # Redirects, scheduled jobs, and build config
+`-- vite.config.ts          # Frontend bundler config
 ```
 
-## Frontend (`src/`)
+## Directory Purposes
 
-```
-src/
-├── main.tsx                    # App bootstrap (renders App into #root)
-├── App.tsx                     # Router, providers, lazy-loaded pages
-├── App.css                     # App-level styles
-├── index.css                   # Global CSS + design token variables
-├── vite-env.d.ts               # Vite type declarations + Paddle global
-├── components/
-│   ├── ui/                     # shadcn/ui primitives (button, input, dialog, etc.)
-│   │   └── LoginBackground.tsx # Three.js animated login background
-│   ├── layout/                 # App shell, sidebar, header
-│   ├── dashboard/              # Dashboard-specific components
-│   │   ├── KPICard.tsx         # Summary metric cards
-│   │   ├── FleetResourceChart.tsx  # Fleet-level resource charts
-│   │   ├── HostHealthGrid.tsx  # Host status overview grid
-│   │   ├── ContainersTable.tsx # Recent containers table
-│   │   ├── DashboardOverview.tsx   # Dashboard layout orchestrator
-│   │   ├── DashboardAlerts.tsx     # Dashboard alert section
-│   │   └── DashboardEmptyHostsState.tsx / DashboardNoOrganizationState.tsx
-│   ├── hosts/
-│   │   └── HostWorkspace.tsx   # Host detail view (52KB, largest component)
-│   ├── docker/                 # Docker-specific UI components
-│   ├── alerts/                 # Alert rule/event UI components
-│   ├── settings/               # Settings page components
-│   ├── shared/                 # Cross-cutting UI (PageHeader, LogoLink, etc.)
-│   ├── ProtectedRoute.tsx      # Auth gate with onboarding detection
-│   ├── AppRootRedirect.tsx     # Root path redirect logic
-│   ├── RequireAppSubdomain.tsx # Subdomain enforcement
-│   ├── RequirePlatformAdmin.tsx# Platform admin gate
-│   └── NavLink.tsx             # Active navigation link
-├── pages/
-│   ├── LandingPage.tsx         # Marketing homepage
-│   ├── FeaturesPage.tsx        # Features page
-│   ├── PricingPage.tsx         # Pricing page
-│   ├── SecurityPage.tsx        # Security page
-│   ├── DocsPage.tsx            # Documentation (58KB, inline docs)
-│   ├── LoginPage.tsx           # Clerk login
-│   ├── SignupPage.tsx          # Clerk signup
-│   ├── OnboardingPage.tsx      # Onboarding wizard orchestrator
-│   ├── onboarding/             # Onboarding step components
-│   │   ├── useOnboardingState.ts   # Onboarding state machine (398 lines)
-│   │   ├── StepCreateOrg.tsx       # Step 0: Create organization
-│   │   ├── StepHostBasics.tsx      # Step 1a: Host name + URL + connection mode
-│   │   ├── StepHostCredentials.tsx # Step 1b: Install command + verification
-│   │   ├── StepTestFailed.tsx      # Step 1c: Connection test failure UI
-│   │   ├── StepComplete.tsx        # Step 2: Success state
-│   │   ├── CopyBlock.tsx           # Copy-to-clipboard code block
-│   │   ├── ErrorBanner.tsx         # Error display banner
-│   │   └── LoadingCard.tsx         # Loading state card
-│   └── app/                    # Protected app routes (inside AppShell)
-│       ├── DashboardPage.tsx   # Main dashboard
-│       ├── HostsPage.tsx       # Hosts list (thin wrapper)
-│       ├── HostDetailPage.tsx  # Host detail (thin wrapper)
-│       ├── ContainersPage.tsx  # All containers across hosts (23KB)
-│       ├── ContainerDetailPage.tsx # Container inspect/logs/env/network (20KB)
-│       ├── LogsPage.tsx        # Cross-host log viewer
-│       ├── AlertsPage.tsx      # Alert rules + events management (13KB)
-│       ├── MembersPage.tsx     # Org member management
-│       ├── OrganizationsPage.tsx # Org switcher
-│       ├── BillingPage.tsx     # Paddle billing management (13KB)
-│       ├── SettingsPage.tsx    # Org settings
-│       ├── AdminPage.tsx       # Platform admin panel (41KB)
-│       ├── SetupGuidePage.tsx  # Agent setup documentation (16KB)
-│       └── HelpPage.tsx        # Help/support page
-├── hooks/                      # Custom React hooks
-│   ├── useDocker.ts            # Docker proxy API calls
-│   ├── useHostMetrics.ts       # Host metrics polling (10KB)
-│   ├── useFleetMetrics.ts      # Fleet-wide metrics aggregation
-│   ├── useAlerts.ts            # Alert rules/events hooks
-│   ├── useAdmin.ts             # Platform admin hooks
-│   ├── useOrganizationAccess.ts# Org access management
-│   ├── useWebhookDestinations.ts # Webhook destination CRUD
-│   ├── useSlackDestinations.ts # Slack destination CRUD
-│   ├── useViewerState.ts       # Current user viewer state
-│   ├── use-toast.ts            # Toast notification hook
-│   └── use-mobile.tsx          # Mobile viewport detection
-├── services/                   # API client layer
-│   ├── docker-api.ts           # Docker proxy service
-│   ├── agent-enrollment.ts     # Agent enrollment API
-│   ├── admin-api.ts            # Admin API calls
-│   ├── alerts-api.ts           # Alerts API calls
-│   ├── organization-access-api.ts # Org access API
-│   ├── webhook-destinations-api.ts # Webhook API
-│   └── slack-destinations-api.ts   # Slack API
-├── types/                      # TypeScript type definitions
-│   ├── database.ts             # Database row types (186 lines)
-│   ├── admin.ts                # Admin-specific types
-│   ├── alerts.ts               # Alert types
-│   └── organization-access.ts  # Org access types
-├── lib/                        # Utilities
-│   ├── api.ts                  # apiFetch() + ApiError class
-│   ├── hostname.ts             # Subdomain detection utilities
-│   ├── onboarding-gate.ts      # Onboarding status logic
-│   ├── dashboard-summary.ts    # Dashboard data aggregation
-│   ├── host-health-state.ts    # Host health state derivation
-│   ├── agent-release.ts        # Frontend re-export of agent release utils
-│   ├── agent-version.ts        # Frontend re-export of agent version
-│   └── utils.ts                # Tailwind utility (cn)
-└── contexts/                   # React contexts (currently empty)
-```
+**`src/`:**
+- Purpose: all browser application code.
+- Contains: route pages, feature components, UI primitives, hooks, typed service wrappers, and browser-only utilities.
+- Key files: `src/App.tsx`, `src/main.tsx`, `src/lib/api.ts`, `src/components/layout/AppShell.tsx`
 
-## Backend (`netlify/functions/`)
+**`src/pages/`:**
+- Purpose: route-level screens.
+- Contains: public marketing/docs pages, auth pages, onboarding screens, and app workspace pages under `src/pages/app/`.
+- Key files: `src/pages/LandingPage.tsx`, `src/pages/DocsPage.tsx`, `src/pages/app/DashboardPage.tsx`, `src/pages/onboarding/index.ts`
 
-```
-netlify/functions/
-├── api-docker-proxy.mts        # Docker commands proxy (29KB, largest function)
-├── api-agent-enrollments.mts   # Agent enrollment flow (21KB)
-├── api-docker-hosts.mts        # Host CRUD operations (10KB)
-├── api-fleet-metrics.mts       # Fleet-wide metrics aggregation (8KB)
-├── api-host-health-poll.mts    # Scheduled host health checks (9KB)
-├── api-organizations.mts       # Org CRUD + onboarding status (7KB)
-├── api-clerk-webhook.mts       # Clerk user/org sync webhook (6KB)
-├── api-billing-webhook.mts     # Paddle billing webhook (4KB)
-├── api-admin-splat.mts         # Admin API catch-all route
-├── api-admin-stats.mts         # Platform-wide statistics
-├── api-admin.mts               # Admin API entry
-├── api-alert-rules.mts         # Alert rule CRUD (4KB)
-├── api-alerts.mts              # Alert events (4KB)
-├── api-incidents.mts           # Incident management (3KB)
-├── api-webhook-destinations.mts# Webhook destination management (3KB)
-├── api-slack-destinations.mts  # Slack destination management (3KB)
-├── api-mock-docker-agent.mts   # Dev mock agent (2KB)
-├── api-members.mts             # Org member management
-├── api-org-access.mts          # Org access management
-├── api-profile.mts             # User profile
-├── api-docs.mts                # API documentation endpoint
-├── auth-me.mts                 # Auth verification + user profile
-└── lib/
-    ├── auth.mts                # requireAuth() middleware (6KB)
-    ├── crypto.mts              # AES-256-GCM encryption (8KB)
-    ├── db.mts                  # Database client export
-    ├── host-url.mts            # URL validation + normalization (5KB)
-    ├── access-controls.mts     # Permission checks (5KB)
-    ├── alerts.mts              # Alert processing logic (21KB)
-    ├── admin-handler.mts       # Admin route handler (32KB)
-    ├── org-access-handler.mts  # Org access route handler (12KB)
-    ├── webhook-destinations.mts# Webhook delivery logic (12KB)
-    ├── slack-delivery.mts      # Slack delivery logic (14KB)
-    ├── ensure-*.mts            # Schema migration helpers (5 files)
-    ├── platform-admin.mts      # Platform admin check
-    └── secret-migration.mts    # Secret encryption migration
-```
+**`src/components/`:**
+- Purpose: reusable view building blocks.
+- Contains: feature areas such as `src/components/dashboard/`, `src/components/alerts/`, `src/components/hosts/`, `src/components/settings/`, plus shadcn-style primitives under `src/components/ui/`.
+- Key files: `src/components/ProtectedRoute.tsx`, `src/components/layout/AppShell.tsx`, `src/components/hosts/HostWorkspace.tsx`
+
+**`src/hooks/`:**
+- Purpose: React Query wrappers and UI helper hooks.
+- Contains: feature hooks such as `src/hooks/useDocker.ts`, `src/hooks/useViewerState.ts`, `src/hooks/useOrganizationAccess.ts`
+- Key files: `src/hooks/useDocker.ts`, `src/hooks/useAlerts.ts`, `src/hooks/useAdmin.ts`
+
+**`src/services/`:**
+- Purpose: browser-side API method wrappers.
+- Contains: one service module per backend concern.
+- Key files: `src/services/docker-api.ts`, `src/services/organization-access-api.ts`, `src/services/admin-api.ts`
+
+**`src/lib/`:**
+- Purpose: shared browser utilities and domain helpers.
+- Contains: fetch abstraction, routing hostname utilities, summary builders, pricing helpers, health-state logic, tests for pure helpers.
+- Key files: `src/lib/api.ts`, `src/lib/hostname.ts`, `src/lib/dashboard-summary.ts`
+
+**`src/types/`:**
+- Purpose: frontend-facing TypeScript type definitions.
+- Contains: feature data models that match backend payloads and database rows.
+- Key files: `src/types/database.ts`, `src/types/alerts.ts`, `src/types/organization-access.ts`
+
+**`netlify/functions/`:**
+- Purpose: backend HTTP entry points.
+- Contains: one file per route or scheduled job, each exporting a default handler and Netlify `config.path`.
+- Key files: `netlify/functions/api-docker-proxy.mts`, `netlify/functions/api-docker-hosts.mts`, `netlify/functions/auth-me.mts`, `netlify/functions/api-host-health-poll.mts`
+
+**`netlify/functions/lib/`:**
+- Purpose: shared backend helpers.
+- Contains: auth, SQL access, tenant checks, admin helpers, crypto, email, alert dispatch, schema bootstrapping, tests.
+- Key files: `netlify/functions/lib/db.mts`, `netlify/functions/lib/auth.mts`, `netlify/functions/lib/access-controls.mts`, `netlify/functions/lib/security.mts`
+
+**`shared/`:**
+- Purpose: code imported by both the browser and Netlify functions.
+- Contains: Zod schemas, OpenAPI generation, diagnostics formatting, agent release metadata.
+- Key files: `shared/schema/api.ts`, `shared/schema/proxy.ts`, `shared/lib/diagnostics.ts`, `shared/watchtower-agent-release.ts`
+
+**`public/`:**
+- Purpose: static files copied as-is into the frontend build.
+- Contains: favicon/assets plus shell scripts used to install, uninstall, or connect the Watchtower agent.
+- Key files: `public/watchtower-agent-install.sh`, `public/watchtower-agent.sh`, `public/watchtower-agent-uninstall.sh`
+
+**`db-migrations/`:**
+- Purpose: SQL migration history for application schema changes.
+- Contains: timestamped `.sql` files grouped by migration date.
+- Key files: `db-migrations/20260418000000_add_security_rate_limit_and_webhook_nonce_tables.sql`, `db-migrations/20260417010000_add_donor_billing.sql`
+
+**`netlify/`:**
+- Purpose: local platform support files, not route handlers.
+- Contains: database bootstrap/check scripts and a schema snapshot.
+- Key files: `netlify/schema.sql`, `netlify/init-db.mjs`, `netlify/check-db.mjs`
+
+## Key File Locations
+
+**Entry Points:**
+- `src/main.tsx`: browser bootstrap.
+- `src/App.tsx`: frontend provider stack and all route declarations.
+- `netlify/functions/auth-me.mts`: auth/session resolution endpoint used by route guards.
+- `netlify/functions/api-docker-proxy.mts`: remote Docker and Watchtower agent orchestration endpoint.
+
+**Configuration:**
+- `package.json`: npm scripts and dependencies.
+- `netlify.toml`: redirects, build command, scheduled jobs.
+- `vite.config.ts`: Vite alias and dev-server settings.
+- `tsconfig.json`: TypeScript baseline with `@/*` path alias.
+- `components.json`: shadcn UI alias/config metadata.
+
+**Core Logic:**
+- `src/lib/api.ts`: authenticated frontend fetch path.
+- `src/hooks/useDocker.ts`: canonical host/container data hooks.
+- `netlify/functions/lib/auth.mts`: tenant-aware auth context builder.
+- `netlify/functions/lib/access-controls.mts`: authorization gates.
+- `netlify/functions/lib/db.mts`: Neon SQL client.
+
+**Testing:**
+- `src/lib/*.test.ts`: frontend/pure-helper tests such as `src/lib/api.test.ts` and `src/lib/host-health-state.test.ts`
+- `shared/lib/*.test.ts`: shared helper tests such as `shared/lib/diagnostics.test.ts`
+- `netlify/functions/lib/*.test.ts`: backend helper tests such as `netlify/functions/lib/access-controls.test.ts`
 
 ## Naming Conventions
 
-| Pattern | Convention | Example |
-|---------|-----------|---------|
-| Pages | PascalCase + `Page` suffix | `DashboardPage.tsx` |
-| Components | PascalCase | `KPICard.tsx`, `HostHealthGrid.tsx` |
-| Hooks | camelCase with `use` prefix | `useDocker.ts`, `useHostMetrics.ts` |
-| Services | kebab-case + `-api` suffix | `docker-api.ts`, `alerts-api.ts` |
-| API Functions | `api-` prefix + kebab-case | `api-docker-proxy.mts` |
-| Types | PascalCase interfaces/types | `DockerHost`, `AlertRule` |
-| Lib utilities | kebab-case | `host-health-state.ts` |
+**Files:**
+- Route pages use PascalCase names with `Page` suffix, for example `src/pages/app/AlertsPage.tsx`.
+- React components use PascalCase names without a `Page` suffix unless they are route entries, for example `src/components/dashboard/DashboardOverview.tsx`.
+- Hooks use `useX.ts` or `use-x.tsx` naming, for example `src/hooks/useDocker.ts` and `src/hooks/use-mobile.tsx`.
+- Service and helper modules use kebab-case, for example `src/services/docker-api.ts` and `netlify/functions/lib/access-controls.mts`.
+- Netlify handlers use `api-*` or `auth-*` prefixes that mirror the public route, for example `netlify/functions/api-org-access-splat.mts`.
 
-## Key Locations
+**Directories:**
+- Feature areas are grouped by concern, for example `src/components/alerts/`, `src/components/dashboard/`, `src/components/settings/`.
+- App-only route pages live in `src/pages/app/`; onboarding-only screens live in `src/pages/onboarding/`.
+- Backend shared logic is always under `netlify/functions/lib/`, not mixed into route handler files.
 
-| What | Where |
-|------|-------|
-| Main entry | `src/main.tsx` |
-| Route definitions | `src/App.tsx` |
-| API client | `src/lib/api.ts` |
-| Database types | `src/types/database.ts` |
-| Database schema | `netlify/schema.sql` |
-| Agent release info | `shared/watchtower-agent-release.ts` |
-| Agent installer | `public/watchtower-agent-install.sh` |
-| Design tokens | `src/index.css` (CSS custom properties) |
-| Tailwind config | `tailwind.config.ts` |
+## Where to Add New Code
+
+**New frontend route/page:**
+- Primary code: add the page under `src/pages/` or `src/pages/app/` depending on whether it belongs inside the protected app shell.
+- Route wiring: update `src/App.tsx`.
+- Supporting UI: place feature components under the closest feature folder in `src/components/`.
+
+**New backend endpoint:**
+- Implementation: add a new handler file under `netlify/functions/` named after the route, for example `netlify/functions/api-foo-bar.mts`.
+- Shared backend logic: put reusable helpers in `netlify/functions/lib/`.
+- Frontend caller: add a service wrapper in `src/services/` and a React Query hook in `src/hooks/` if the data is cached.
+
+**New shared contract:**
+- Validation/schema: put it in `shared/schema/` when both runtimes need it.
+- Cross-runtime utility: put it in `shared/lib/`.
+- Browser-only helper: keep it in `src/lib/` instead.
+
+**New feature component/module:**
+- Implementation: use the nearest feature directory under `src/components/`, for example `src/components/alerts/` for alerts UI.
+- Page-level orchestration: keep it in the route page file under `src/pages/`.
+
+**Utilities:**
+- Shared browser helpers: `src/lib/`
+- Shared backend helpers: `netlify/functions/lib/`
+- Shared between browser and backend: `shared/lib/`
+
+**Database changes:**
+- Migration SQL: add a new timestamped file under `db-migrations/`.
+- Runtime bootstrap needed by handlers: add/update an `ensure-*.mts` helper under `netlify/functions/lib/` and call it from the affected handler.
+
+## Special Directories
+
+**`dist/`:**
+- Purpose: generated Vite build output.
+- Generated: Yes.
+- Committed: Yes in the current repo state.
+
+**`.planning/codebase/`:**
+- Purpose: generated architecture, stack, testing, and concern maps consumed by GSD workflows.
+- Generated: Yes.
+- Committed: Yes in the current repo state.
+
+**`.netlify/` and `.netlify-appdata/`:**
+- Purpose: local Netlify dev/runtime artifacts.
+- Generated: Yes.
+- Committed: No in normal source control workflows.
+
+**`node_modules/`:**
+- Purpose: installed package dependencies.
+- Generated: Yes.
+- Committed: No in normal source control workflows.
+
+**`.obsidian-mcp-local/`:**
+- Purpose: local Obsidian MCP integration files for this workspace.
+- Generated: Yes.
+- Committed: No in normal source control workflows.
+
+---
+
+*Structure analysis: 2026-04-22*

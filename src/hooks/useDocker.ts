@@ -95,7 +95,7 @@ export function useUpdateDockerHost() {
   });
 }
 
-export function useContainers(orgId?: string | null, hasHosts = true) {
+export function useContainers(orgId?: string | null, hasHosts = true, refetchInterval: number | false = 30000) {
   return useQuery({
     queryKey: ['containers', orgId],
     queryFn: () => dockerApi.allContainers(orgId!),
@@ -103,11 +103,11 @@ export function useContainers(orgId?: string | null, hasHosts = true) {
     retry: false,
     refetchOnWindowFocus: false,
     refetchOnReconnect: false,
-    refetchInterval: (query) => (query.state.error ? false : 30000),
+    refetchInterval: (query) => (query.state.error || refetchInterval === false ? false : refetchInterval),
   });
 }
 
-export function useAllContainerStats(orgId?: string | null, hasHosts = true) {
+export function useAllContainerStats(orgId?: string | null, hasHosts = true, refetchInterval: number | false = 15000) {
   return useQuery({
     queryKey: ['all-container-stats', orgId],
     queryFn: () => dockerApi.allContainerStats(orgId!),
@@ -115,11 +115,11 @@ export function useAllContainerStats(orgId?: string | null, hasHosts = true) {
     retry: false,
     refetchOnWindowFocus: false,
     refetchOnReconnect: false,
-    refetchInterval: (query) => (query.state.error ? false : 15000),
+    refetchInterval: (query) => (query.state.error || refetchInterval === false ? false : refetchInterval),
   });
 }
 
-export function useHostContainers(hostId?: string | null) {
+export function useHostContainers(hostId?: string | null, refetchInterval: number | false = 15000) {
   return useQuery({
     queryKey: ['host-containers', hostId],
     queryFn: () => dockerApi.listContainers(hostId!),
@@ -127,7 +127,7 @@ export function useHostContainers(hostId?: string | null) {
     retry: false,
     refetchOnWindowFocus: false,
     refetchOnReconnect: false,
-    refetchInterval: (query) => (query.state.error ? false : 15000),
+    refetchInterval: (query) => (query.state.error || refetchInterval === false ? false : refetchInterval),
   });
 }
 
@@ -139,12 +139,19 @@ export function useContainerInspect(hostId?: string | null, containerId?: string
   });
 }
 
-export function useContainerStats(hostId?: string | null, containerId?: string | null) {
+export function useContainerStats(
+  hostId?: string | null,
+  containerId?: string | null,
+  refetchInterval: number | false = 10000,
+) {
   return useQuery({
     queryKey: ['container-stats', hostId, containerId],
     queryFn: () => dockerApi.containerStats(hostId!, containerId!),
     enabled: !!hostId && !!containerId,
-    refetchInterval: 10000,
+    retry: false,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+    refetchInterval,
   });
 }
 

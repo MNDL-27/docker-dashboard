@@ -24,6 +24,8 @@ import { Input } from "@/components/ui/input";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useAllContainerStats, useContainers, useDockerHosts } from "@/hooks/useDocker";
 import { useFleetMetrics } from "@/hooks/useFleetMetrics";
+import { useViewerState } from "@/hooks/useViewerState";
+import { formatScanQuotaSummary, isManualScanPlan } from "@/lib/scan-quota";
 import { dockerApi } from "@/services/docker-api";
 import { cn } from "@/lib/utils";
 
@@ -102,7 +104,17 @@ function SummaryChip({ label, value }: { label: string; value: string }) {
   );
 }
 
-function TelemetryBadge({ loading, available, partial }: { loading: boolean; available: boolean; partial: boolean }) {
+function TelemetryBadge({
+  loading,
+  available,
+  partial,
+  autoRefresh,
+}: {
+  loading: boolean;
+  available: boolean;
+  partial: boolean;
+  autoRefresh: boolean;
+}) {
   const tone = loading
     ? "border-white/10 bg-background/50 text-muted-foreground"
     : !available
@@ -115,6 +127,8 @@ function TelemetryBadge({ loading, available, partial }: { loading: boolean; ava
     ? "Updating telemetry"
     : !available
       ? "Telemetry unavailable"
+      : !autoRefresh
+        ? "Manual telemetry"
       : partial
         ? "Partial telemetry"
         : "Fleet telemetry live";
@@ -161,10 +175,34 @@ function FleetSignalCard({
 
 export default function ContainersPage() {
   const { organization: currentOrg } = useOrganization();
+  const { data: viewer } = useViewerState();
   const { data: hosts = [], isLoading: hostsLoading } = useDockerHosts(currentOrg?.id);
-  const { data: rawContainers, isLoading: containersLoading, error } = useContainers(currentOrg?.id, hosts.length > 0);
-  const { data: rawStats } = useAllContainerStats(currentOrg?.id, hosts.length > 0);
-  const { data: fleetMetrics = [], isLoading: fleetMetricsLoading } = useFleetMetrics(currentOrg?.id, 15000);
+  const manualScanMode = isManualScanPlan(viewer?.active_org_plan);
+  const scanQuotaSummary = formatScanQuotaSummary({
+    plan: viewer?.active_org_plan,
+    limit: viewer?.active_org_scan_limit,
+    remaining: viewer?.active_org_scan_remaining,
+  });
+  const {
+    data: rawContainers,
+    isLoading: containersLoading,
+    isFetching: containersFetching,
+    refetch: refetchContainers,
+    error,
+  } = useContainers(currentOrg?.id, hosts.length > 0, manualScanMode ? false : 30000);
+  const {
+    data: rawStats,
+    isFetching: statsFetching,
+    refetch: refetchStats,
+    error: statsError,
+  } = useAllContainerStats(currentOrg?.id, hosts.length > 0, manualScanMode ? false : 15000);
+  const {
+    data: fleetMetrics = [],
+    isLoading: fleetMetricsLoading,
+    isFetching: fleetMetricsFetching,
+    refetch: refetchFleetMetrics,
+    error: fleetMetricsError,
+  } = useFleetMetrics(currentOrg?.id, manualScanMode ? false : 15000);
 
   const [search, setSearch] = useState("");
   const [stateTab, setStateTab] = useState("all");
@@ -261,6 +299,11 @@ export default function ContainersPage() {
   const activeHostLabel = uniqueHosts.find(([id]) => id === hostFilter)?.[1] || "";
   const telemetryAvailable = !!latestFleetMetrics;
   const telemetryPartial = latestFleetMetrics?.isPartial === true;
+  const liveRefreshPending = containersFetching || statsFetching || fleetMetricsFetching;
+  const auxiliaryErrorMessage = [statsError, fleetMetricsError]
+    .map((queryError) => (queryError instanceof Error ? queryError.message : null))
+    .filter(Boolean)
+    .join(" ");
 
   async function handleAction(hostIdValue: string, containerId: string, action: "start" | "stop" | "restart") {
     setActionLoading(containerId);
@@ -317,8 +360,27 @@ export default function ContainersPage() {
         title="Containers"
         description={`${containers.length} containers across ${uniqueHosts.length} host(s)`}
         breadcrumbs={[{ label: "Infrastructure" }, { label: "Containers" }]}
-        actions={<TelemetryBadge loading={fleetMetricsLoading} available={telemetryAvailable} partial={telemetryPartial} />}
+        actions={
+          <div className="flex flex-wrap items-center gap-2">
+            {manualScanMode ? (
+              <Button variant="outline" className="gap-2" onClick={() => void Promise.all([refetchContainers(), refetchStats(), refetchFleetMetrics()])} disabled={liveRefreshPending}>
+                {liveRefreshPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <RotateCw className="h-4 w-4" />}
+                Refresh Live Data
+              </Button>
+            ) : null}
+            <TelemetryBadge loading={fleetMetricsLoading} available={telemetryAvailable} partial={telemetryPartial} autoRefresh={!manualScanMode} />
+          </div>
+        }
       />
+
+      {manualScanMode || auxiliaryErrorMessage ? (
+        <div className="rounded-2xl border border-white/10 bg-background/35 px-4 py-3 text-sm text-muted-foreground">
+          {manualScanMode ? (
+            <p>Automatic live refresh is disabled on the Free plan. {scanQuotaSummary || "Use Refresh Live Data when you need a fresh snapshot."}</p>
+          ) : null}
+          {auxiliaryErrorMessage ? <p className={manualScanMode ? "mt-2 text-destructive" : "text-destructive"}>{auxiliaryErrorMessage}</p> : null}
+        </div>
+      ) : null}
 
       <div className="grid gap-6 xl:grid-cols-[minmax(0,1.55fr),minmax(320px,0.9fr)]">
         <div className="glass-card relative overflow-hidden rounded-[28px] p-7">
@@ -355,7 +417,11 @@ export default function ContainersPage() {
           <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
             <div>
               <h3 className="text-lg font-semibold tracking-tight text-foreground">Containers</h3>
-              <p className="mt-1 text-sm text-muted-foreground">Live stats update automatically. Use the control rail to narrow the dataset before acting.</p>
+              <p className="mt-1 text-sm text-muted-foreground">
+                {manualScanMode
+                  ? "Free plan live stats refresh only when you request them."
+                  : "Live stats update automatically. Use the control rail to narrow the dataset before acting."}
+              </p>
             </div>
             <div className="rounded-full border border-white/10 bg-background/35 px-4 py-2 text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">Showing {filtered.length} of {containers.length}</div>
           </div>

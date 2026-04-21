@@ -5,6 +5,7 @@ import { ensureOnboardingSchema } from './lib/ensure-onboarding-schema.mjs';
 import { ensureAdminSchema } from './lib/ensure-admin-schema.mjs';
 import { isPlatformAdminEmail } from './lib/platform-admin.mjs';
 import { ensureDedicatedDeploymentSchema } from './lib/ensure-dedicated-deployment-schema.mjs';
+import { getOrganizationScanQuotaSnapshot } from './lib/scan-quota.mjs';
 
 const allowedOrigins = new Set([
   'https://app.dockerdash.app',
@@ -86,6 +87,7 @@ export default async (req: Request) => {
             LIMIT 1
           `
         : [];
+    const scanQuota = effectiveOrg ? await getOrganizationScanQuotaSnapshot(String(effectiveOrg.id)) : null;
 
     return new Response(JSON.stringify({
       user: {
@@ -95,7 +97,12 @@ export default async (req: Request) => {
         onboarding_status: onboardingStatus,
         active_org_id: effectiveOrg?.id ?? null,
         active_org_clerk_id: effectiveOrg?.clerk_org_id ?? null,
-        active_org_plan: effectiveOrg?.plan ?? null,
+        active_org_plan: scanQuota?.effectivePlan ?? effectiveOrg?.plan ?? null,
+        active_org_effective_plan: scanQuota?.effectivePlan ?? effectiveOrg?.plan ?? null,
+        active_org_scan_limit: scanQuota?.monthlyScanLimit ?? null,
+        active_org_scan_used: scanQuota?.usedScans ?? 0,
+        active_org_scan_remaining: scanQuota?.remainingScans ?? null,
+        active_org_scan_reset_at: scanQuota?.resetAt ?? null,
         dedicated_deployment_status: dedicatedDeployment[0]?.status ?? null,
         dedicated_deployment_updated_at: dedicatedDeployment[0]?.updated_at ? new Date(String(dedicatedDeployment[0].updated_at)).toISOString() : null,
         is_platform_admin: isPlatformAdminEmail(users[0].email),

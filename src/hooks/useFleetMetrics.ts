@@ -155,7 +155,7 @@ function normalizeFleetMetricPoint(point: FleetMetricsApiPoint): FleetMetrics | 
   };
 }
 
-export function useFleetMetrics(orgId: string | null | undefined, refetchInterval = 10000) {
+export function useFleetMetrics(orgId: string | null | undefined, refetchInterval: number | false = 10000) {
   return useQuery({
     queryKey: ['fleet-metrics', orgId],
     queryFn: async (): Promise<FleetMetrics[]> => {
@@ -163,27 +163,25 @@ export function useFleetMetrics(orgId: string | null | undefined, refetchInterva
         return [];
       }
 
-      try {
-        const data = await apiFetch('/fleet-metrics', {
-          method: 'POST',
-          body: JSON.stringify({ orgId }),
-        });
+      const data = await apiFetch('/fleet-metrics', {
+        method: 'POST',
+        body: JSON.stringify({ orgId }),
+      });
 
-        if (!Array.isArray(data)) {
-          return [];
-        }
-
-        const normalized = data
-          .map((point) => normalizeFleetMetricPoint((point ?? {}) as FleetMetricsApiPoint))
-          .filter((point): point is FleetMetrics => point !== null);
-
-        return normalized;
-      } catch (error) {
-        console.error('Failed to fetch fleet metrics:', error);
+      if (!Array.isArray(data)) {
         return [];
       }
+
+      const normalized = data
+        .map((point) => normalizeFleetMetricPoint((point ?? {}) as FleetMetricsApiPoint))
+        .filter((point): point is FleetMetrics => point !== null);
+
+      return normalized;
     },
     refetchInterval,
     enabled: !!orgId,
+    retry: false,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
   });
 }

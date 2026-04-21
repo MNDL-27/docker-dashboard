@@ -10,6 +10,11 @@ import { createProblemResponse } from '../../shared/schema/error.ts';
 import { ProxyRequestParamsSchema } from '../../shared/schema/proxy.ts';
 import { formatDiagnosticDetail, parseDiagnosticPayload } from '../../shared/lib/diagnostics.ts';
 import { buildCorsHeaders, applyRateLimit, RATE_LIMITS, logSecurityEvent, getClientIp } from './lib/security.mjs';
+import {
+  createScanQuotaExceededResponse,
+  recordOrganizationScan,
+  withScanQuotaHeaders,
+} from './lib/scan-quota.mjs';
 
 function sanitizeContainerId(id: string): string {
   const normalized = id.trim();
@@ -352,6 +357,16 @@ function createHostMetricsPoint(data: any) {
   };
 }
 
+function isScanCountedDockerAction(action: string) {
+  return (
+    action === 'all-containers' ||
+    action === 'all-container-stats' ||
+    action === 'containers' ||
+    action === 'container-stats' ||
+    action === 'host-metrics'
+  );
+}
+
 async function fetchAgentVersionReport(
   host: { id: string; host_url: string; connection_mode: string; docker_socket_path: string },
   secrets: { agent_api_key?: string; cf_service_token_id?: string; cf_service_token_secret?: string } | null,
@@ -541,7 +556,14 @@ export default async (req: Request) => {
         }
       });
 
-      return new Response(JSON.stringify(allContainers), { headers: corsHeaders });
+      const scan = await recordOrganizationScan(orgId);
+      if (scan.exhausted) {
+        return createScanQuotaExceededResponse(scan, corsHeaders);
+      }
+
+      return new Response(JSON.stringify(allContainers), {
+        headers: withScanQuotaHeaders(corsHeaders, scan, scan.counted),
+      });
     }
 
     // ── Org-wide: fetch stats for all running containers ──
@@ -625,7 +647,14 @@ export default async (req: Request) => {
         } catch (_) { /* skip host on error */ }
       });
 
-      return new Response(JSON.stringify(allStats), { headers: corsHeaders });
+      const scan = await recordOrganizationScan(orgId);
+      if (scan.exhausted) {
+        return createScanQuotaExceededResponse(scan, corsHeaders);
+      }
+
+      return new Response(JSON.stringify(allStats), {
+        headers: withScanQuotaHeaders(corsHeaders, scan, scan.counted),
+      });
     }
 
     // ── Host-specific actions ──
@@ -715,7 +744,14 @@ export default async (req: Request) => {
         WHERE id = ${hostId}
       `;
 
-      return new Response(JSON.stringify(normalizedMetrics), { headers: corsHeaders });
+      const scan = await recordOrganizationScan(host.organization_id);
+      if (scan.exhausted) {
+        return createScanQuotaExceededResponse(scan, corsHeaders);
+      }
+
+      return new Response(JSON.stringify(normalizedMetrics), {
+        headers: withScanQuotaHeaders(corsHeaders, scan, scan.counted),
+      });
     }
 
     let dockerPath: string;
@@ -893,10 +929,20 @@ export default async (req: Request) => {
     }
 
     const payload = await dockerResponse.json();
-    if (req.method === 'GET') {
-      corsHeaders['Cache-Control'] = 'private, max-age=0, must-revalidate';
+    let responseHeaders = { ...corsHeaders };
+
+    if (isScanCountedDockerAction(action)) {
+      const scan = await recordOrganizationScan(host.organization_id);
+      if (scan.exhausted) {
+        return createScanQuotaExceededResponse(scan, corsHeaders);
+      }
+      responseHeaders = withScanQuotaHeaders(responseHeaders, scan, scan.counted);
     }
-    return new Response(JSON.stringify(payload), { headers: corsHeaders });
+
+    if (req.method === 'GET') {
+      responseHeaders['Cache-Control'] = 'private, max-age=0, must-revalidate';
+    }
+    return new Response(JSON.stringify(payload), { headers: responseHeaders });
 
   } catch (error: any) {
     if (error instanceof SecretCryptoError) {

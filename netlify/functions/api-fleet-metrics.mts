@@ -3,6 +3,11 @@ import { sql } from './lib/db.mjs';
 import { requireAuth } from './lib/auth.mjs';
 import { decryptHostSecrets } from './lib/crypto.mjs';
 import { buildValidatedAgentUrl } from './lib/host-url.mjs';
+import {
+  createScanQuotaExceededResponse,
+  recordOrganizationScan,
+  withScanQuotaHeaders,
+} from './lib/scan-quota.mjs';
 
 const headers = {
   'Access-Control-Allow-Origin': '*',
@@ -251,7 +256,14 @@ export default async (req: Request) => {
         isPartial: hostCount > 0 && hostCount < hosts.length,
       }];
 
-    return new Response(JSON.stringify(fleetMetrics), { headers });
+    const scan = await recordOrganizationScan(orgId);
+    if (scan.exhausted) {
+      return createScanQuotaExceededResponse(scan, headers);
+    }
+
+    return new Response(JSON.stringify(fleetMetrics), {
+      headers: withScanQuotaHeaders(headers, scan, scan.counted),
+    });
 
   } catch (error: any) {
     return new Response(JSON.stringify({ error: 'Failed to fetch fleet metrics', details: error.message }), { status: 500, headers });

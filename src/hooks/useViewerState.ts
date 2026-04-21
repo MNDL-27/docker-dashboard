@@ -13,6 +13,11 @@ export interface ViewerState {
   active_org_id: string | null;
   active_org_clerk_id: string | null;
   active_org_plan: string | null;
+  active_org_effective_plan: string | null;
+  active_org_scan_limit: number | null;
+  active_org_scan_used: number;
+  active_org_scan_remaining: number | null;
+  active_org_scan_reset_at: string | null;
   dedicated_deployment_status: string | null;
   dedicated_deployment_updated_at: string | null;
   is_platform_admin: boolean;

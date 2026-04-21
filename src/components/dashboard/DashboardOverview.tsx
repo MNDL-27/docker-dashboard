@@ -4,7 +4,8 @@ import { HostHealthGrid } from "@/components/dashboard/HostHealthGrid";
 import { FleetResourceChart } from "@/components/dashboard/FleetResourceChart";
 import { ContainersTable } from "@/components/dashboard/ContainersTable";
 import { DashboardAlerts } from "@/components/dashboard/DashboardAlerts";
-import { Activity, AlertCircle, Box, Server } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Activity, AlertCircle, Box, Loader2, RefreshCw, Server } from "lucide-react";
 import type { DockerHost } from "@/types/database";
 import type { DashboardStats } from "@/lib/dashboard-summary";
 
@@ -14,6 +15,12 @@ interface DashboardOverviewProps {
   hosts: DockerHost[];
   stats: DashboardStats;
   containersLoading: boolean;
+  liveDataError?: string | null;
+  scanQuotaSummary?: string | null;
+  manualScanMode?: boolean;
+  isRefreshingLiveData?: boolean;
+  fleetMetricsRefetchInterval?: number | false;
+  onRefreshLiveData?: () => void | Promise<void>;
 }
 
 export function DashboardOverview({
@@ -22,6 +29,12 @@ export function DashboardOverview({
   hosts,
   stats,
   containersLoading,
+  liveDataError,
+  scanQuotaSummary,
+  manualScanMode = false,
+  isRefreshingLiveData = false,
+  fleetMetricsRefetchInterval = 10000,
+  onRefreshLiveData,
 }: DashboardOverviewProps) {
   return (
     <div className="space-y-6 animate-fade-in pb-10">
@@ -30,8 +43,27 @@ export function DashboardOverview({
           title="Dashboard"
           description={organizationName || "Overview"}
           breadcrumbs={[{ label: "Operations" }, { label: "Fleet Summary" }]}
+          actions={
+            manualScanMode && onRefreshLiveData ? (
+              <Button variant="outline" className="gap-2" onClick={() => void onRefreshLiveData()} disabled={isRefreshingLiveData}>
+                {isRefreshingLiveData ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
+                Refresh Live Data
+              </Button>
+            ) : null
+          }
         />
       </div>
+
+      {manualScanMode || liveDataError ? (
+        <div className="px-6">
+          <div className="rounded-2xl border border-white/10 bg-background/35 px-4 py-3 text-sm text-muted-foreground">
+            {manualScanMode ? (
+              <p>Automatic live refresh is disabled on the Free plan. {scanQuotaSummary || "Use Refresh Live Data when you need a fresh snapshot."}</p>
+            ) : null}
+            {liveDataError ? <p className={manualScanMode ? "mt-2 text-destructive" : "text-destructive"}>{liveDataError}</p> : null}
+          </div>
+        </div>
+      ) : null}
 
       <div className="px-6 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
         <KPICard label="Total Hosts" value={stats.hostsCount} subtext="Connected infra" icon={Server} status={stats.hostsCount > 0 ? "success" : "neutral"} />
@@ -47,7 +79,7 @@ export function DashboardOverview({
           <HostHealthGrid hosts={hosts} />
         </div>
         <div className="lg:col-span-2 h-[350px]">
-          <FleetResourceChart orgId={organizationId} />
+          <FleetResourceChart orgId={organizationId} refetchInterval={fleetMetricsRefetchInterval} />
         </div>
       </div>
 

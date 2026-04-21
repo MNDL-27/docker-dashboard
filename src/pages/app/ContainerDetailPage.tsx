@@ -32,6 +32,8 @@ import {
 } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
 import { useContainerInspect, useContainerLogs, useContainerStats } from "@/hooks/useDocker";
+import { useViewerState } from "@/hooks/useViewerState";
+import { formatScanQuotaSummary, isManualScanPlan } from "@/lib/scan-quota";
 import { dockerApi } from "@/services/docker-api";
 import { useToast } from "@/hooks/use-toast";
 
@@ -190,12 +192,24 @@ export default function ContainerDetailPage() {
   const { id: containerId } = useParams();
   const [searchParams] = useSearchParams();
   const hostId = searchParams.get("host");
+  const { data: viewer } = useViewerState();
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [actionLoading, setActionLoading] = useState<string | null>(null);
+  const manualScanMode = isManualScanPlan(viewer?.active_org_plan);
+  const scanQuotaSummary = formatScanQuotaSummary({
+    plan: viewer?.active_org_plan,
+    limit: viewer?.active_org_scan_limit,
+    remaining: viewer?.active_org_scan_remaining,
+  });
 
   const { data: inspect, isLoading: inspectLoading, error: inspectError } = useContainerInspect(hostId, containerId);
-  const { data: stats } = useContainerStats(hostId, containerId);
+  const {
+    data: stats,
+    error: statsError,
+    isFetching: statsFetching,
+    refetch: refetchStats,
+  } = useContainerStats(hostId, containerId, manualScanMode ? false : 10000);
   const { data: logsData, isLoading: logsLoading, refetch: refetchLogs } = useContainerLogs(hostId, containerId, 200);
 
   const handleAction = async (action: "container-start" | "container-stop" | "container-restart") => {
@@ -352,6 +366,12 @@ export default function ContainerDetailPage() {
             </div>
 
             <div className="flex flex-wrap items-center gap-3">
+              {manualScanMode ? (
+                <Button variant="outline" className="gap-2 rounded-full px-7" onClick={() => void refetchStats()} disabled={statsFetching}>
+                  {statsFetching ? <Loader2 className="h-4 w-4 animate-spin" /> : <RotateCcw className="h-4 w-4" />}
+                  Refresh live stats
+                </Button>
+              ) : null}
               <Sheet>
                 <SheetTrigger asChild>
                   <Button className="gap-2 rounded-full px-7">
@@ -448,6 +468,15 @@ export default function ContainerDetailPage() {
             </div>
           </div>
         </div>
+
+        {manualScanMode || statsError ? (
+          <div className="rounded-2xl border border-white/10 bg-background/35 px-4 py-3 text-sm text-muted-foreground">
+            {manualScanMode ? (
+              <p>Automatic container stats refresh is disabled on the Free plan. {scanQuotaSummary || "Use Refresh live stats when you need a fresh sample."}</p>
+            ) : null}
+            {statsError instanceof Error ? <p className={manualScanMode ? "mt-2 text-destructive" : "text-destructive"}>{statsError.message}</p> : null}
+          </div>
+        ) : null}
 
         <div className="grid gap-5 xl:grid-cols-4">
           <DetailStatCard

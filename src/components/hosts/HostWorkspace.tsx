@@ -33,10 +33,12 @@ import { cn } from "@/lib/utils";
 import { getHostStatusAppearance, isReadableHostStatus, normalizeHostStatus } from "@/lib/host-health-state";
 import { useDeleteDockerHost, useDockerHosts, useHostContainers } from "@/hooks/useDocker";
 import { HostMetricsDisk, HostMetricsFailure, HostMetricsPoint, useHostMetricsHistory } from "@/hooks/useHostMetrics";
+import { useViewerState } from "@/hooks/useViewerState";
 import { useToast } from "@/hooks/use-toast";
 import { dockerApi } from "@/services/docker-api";
 import type { DockerHost } from "@/types/database";
 import { CURRENT_WATCHTOWER_AGENT_VERSION } from "@/lib/agent-version";
+import { formatScanQuotaSummary, isManualScanPlan } from "@/lib/scan-quota";
 import {
   CURRENT_WATCHTOWER_AGENT_RELEASE,
   buildWatchtowerAgentPreflightCommand,
@@ -653,12 +655,19 @@ export function HostWorkspace() {
   const navigate = useNavigate();
   const { id: routeHostId } = useParams();
   const { organization: currentOrg } = useOrganization();
+  const { data: viewer } = useViewerState();
   const { toast } = useToast();
   const deleteHost = useDeleteDockerHost();
   const { data: hosts = [], isLoading, refetch } = useDockerHosts(currentOrg?.id);
   const [search, setSearch] = useState("");
   const [testing, setTesting] = useState(false);
   const [isInfrastructureVisible, setIsInfrastructureVisible] = useState(true);
+  const manualScanMode = isManualScanPlan(viewer?.active_org_plan);
+  const scanQuotaSummary = formatScanQuotaSummary({
+    plan: viewer?.active_org_plan,
+    limit: viewer?.active_org_scan_limit,
+    remaining: viewer?.active_org_scan_remaining,
+  });
 
   const filteredHosts = useMemo(() => {
     const query = search.trim().toLowerCase();
@@ -693,10 +702,10 @@ export function HostWorkspace() {
   const selectedHostAutoProbe = normalizeHostStatus(selectedHost?.status) === "connected";
   const selectedHostStale = normalizeHostStatus(selectedHost?.status) === "stale";
 
-  const containersQuery = useHostContainers(selectedHostAutoProbe ? selectedHost?.id : null);
+  const containersQuery = useHostContainers(selectedHostAutoProbe ? selectedHost?.id : null, manualScanMode ? false : 15000);
   const metricsQuery = useHostMetricsHistory(selectedHostAutoProbe ? selectedHost?.id : null, {
     enabled: selectedHostAutoProbe,
-    refetchInterval: 10000,
+    refetchInterval: manualScanMode ? false : 10000,
     maxDataPoints: 24,
   });
   const metricsFailureDisplay = formatHostMetricsFailure(metricsQuery.failure, selectedHost);
@@ -714,6 +723,8 @@ export function HostWorkspace() {
         .filter(Boolean)
         .join(" ")
     : null;
+  const containersErrorMessage = containersQuery.error instanceof Error ? containersQuery.error.message : null;
+  const liveRefreshPending = containersQuery.isFetching || metricsQuery.isFetching;
 
   const containers = Array.isArray(containersQuery.data) ? containersQuery.data : [];
   const runningCount = containers.filter((container: any) => container.State === "running").length;
@@ -739,6 +750,10 @@ export function HostWorkspace() {
   ) : null;
 
   const handleSelectHost = (hostId: string) => navigate(`/app/hosts/${hostId}`);
+
+  const handleRefreshLiveData = async () => {
+    await Promise.all([containersQuery.refetch(), metricsQuery.refetch()]);
+  };
 
   const handleTest = async () => {
     if (!selectedHost) return;
@@ -906,6 +921,12 @@ export function HostWorkspace() {
                       {testing ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
                       Test Connection
                     </Button>
+                    {manualScanMode ? (
+                      <Button variant="outline" className="gap-2" onClick={() => void handleRefreshLiveData()} disabled={liveRefreshPending || !selectedHostAutoProbe}>
+                        {liveRefreshPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
+                        Refresh Live Data
+                      </Button>
+                    ) : null}
                     {showAgentUpdateCta ? (
                       <AgentUpdateDialog
                         host={selectedHost}
@@ -976,6 +997,15 @@ export function HostWorkspace() {
                   This host heartbeat is stale. Automatic metrics and container reads are paused until the next successful health check or a manual connection test.
                 </div>
               )}
+
+              {manualScanMode || containersErrorMessage ? (
+                <div className="rounded-xl border border-white/10 bg-background/35 px-4 py-3 text-sm text-muted-foreground">
+                  {manualScanMode ? (
+                    <p>Automatic host telemetry refresh is disabled on the Free plan. {scanQuotaSummary || "Use Refresh Live Data when you need a fresh snapshot."}</p>
+                  ) : null}
+                  {containersErrorMessage ? <p className={manualScanMode ? "mt-2 text-destructive" : "text-destructive"}>{containersErrorMessage}</p> : null}
+                </div>
+              ) : null}
 
               {showAgentUpdateCta && (
                 <div className="flex flex-col gap-3 rounded-xl border border-primary/20 bg-primary/5 px-4 py-4 text-sm text-muted-foreground md:flex-row md:items-center md:justify-between">
