@@ -1,7 +1,7 @@
 import type { Config } from '@netlify/functions';
 import { sql } from './lib/db.mjs';
 import { requireAuth } from './lib/auth.mjs';
-import { assertHostProxyAllowed, assertOrganizationWriteAllowed, enforceOrganizationNodeLimit } from './lib/access-controls.mjs';
+import { assertHostProxyAllowed, assertOrganizationWriteAllowed, enforceOrganizationNodeLimit, resolveOrganizationEntitlements } from './lib/access-controls.mjs';
 import { decryptHostSecrets, SecretCryptoError } from './lib/crypto.mjs';
 import { buildWatchtowerAgentReleaseResponse } from './lib/agent-release.mts';
 import { ensureDockerHostSchema } from './lib/ensure-docker-host-schema.mjs';
@@ -422,7 +422,7 @@ async function mapConcurrent<T, R>(items: T[], limit: number, fn: (item: T) => P
   return results;
 }
 
-async function dockerFetch(url: string, method: string, reqHeaders: Record<string, string>, timeoutMs = 5000) {
+async function dockerFetch(url: string, method: string, reqHeaders: Record<string, string>, timeoutMs = 5000, maxPayloadSize = 4 * 1024 * 1024) {
   let response: Response;
   try {
     response = await fetch(url, {
@@ -437,7 +437,6 @@ async function dockerFetch(url: string, method: string, reqHeaders: Record<strin
     return new Response(JSON.stringify({ error: 'Agent connection failed', details: err.message }), { status: 502, headers: { 'Content-Type': 'application/json' } });
   }
 
-  const MAX_PAYLOAD_SIZE = 4 * 1024 * 1024; // 4MB
   if (!response.body) return response;
 
   const reader = response.body.getReader();
@@ -450,9 +449,10 @@ async function dockerFetch(url: string, method: string, reqHeaders: Record<strin
       if (done) break;
       if (value) {
         totalSize += value.length;
-        if (totalSize > MAX_PAYLOAD_SIZE) {
+        if (totalSize > maxPayloadSize) {
           reader.cancel('Payload too large');
-          return new Response(JSON.stringify({ error: 'Payload too large (exceeds 4MB limit)' }), {
+          const limitMB = Math.round(maxPayloadSize / (1024 * 1024));
+          return new Response(JSON.stringify({ error: `Payload too large (exceeds ${limitMB}MB limit)` }), {
             status: 413,
             headers: { 'Content-Type': 'application/json' }
           });
@@ -845,11 +845,18 @@ export default async (req: Request) => {
       case 'container-logs': 
         if (!containerId) return createProblemResponse(400, "containerId required");
         {
-          const tail = (params as any)?.tail || 100;
+          const entitlements = await resolveOrganizationEntitlements({
+            organizationId: host.organization_id,
+            isPlatformAdmin: auth.isPlatformAdmin,
+          });
+          const requestedTail = Number((params as any)?.tail) || 100;
+          const tail = Math.min(Math.max(1, requestedTail), entitlements.logTailLines);
           const since = (params as any)?.since ? `&since=${(params as any).since}` : '';
           const until = (params as any)?.until ? `&until=${(params as any).until}` : '';
           dockerPath = `/containers/${sanitizeContainerId(containerId)}/logs?stdout=true&stderr=true&tail=${tail}&timestamps=true${since}${until}`; 
           timeoutMs = 6000;
+          // Store entitlements for use during fetch
+          (params as any).__maxPayloadBytes = entitlements.maxPayloadBytes;
         }
         break;
       case 'container-start': 
@@ -895,7 +902,8 @@ export default async (req: Request) => {
       });
     }
 
-    const dockerResponse = await dockerFetch(reqData.url, reqData.method, reqData.headers, timeoutMs);
+    const maxPayloadBytes = (params as any)?.__maxPayloadBytes;
+    const dockerResponse = await dockerFetch(reqData.url, reqData.method, reqData.headers, timeoutMs, maxPayloadBytes || undefined);
 
     if (action === 'ping') {
       const text = await dockerResponse.text();
@@ -970,7 +978,7 @@ export default async (req: Request) => {
 
     if (action === 'container-logs') {
       if (dockerResponse.status === 413) {
-        return createProblemResponse(413, "Logs too large", "Exceeded 4MB limit");
+        return createProblemResponse(413, "Logs too large", "Payload exceeded your plan's log size limit. Upgrade for higher limits.");
       }
       if (!dockerResponse.ok) {
         const rawDetails = await dockerResponse.text();

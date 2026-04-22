@@ -47,6 +47,8 @@ export interface OrganizationEntitlements {
   seatLimit: number | null;
   nodeLimit: number | null;
   monthlyScanLimit: number | null;
+  logTailLines: number;
+  maxPayloadBytes: number;
   canUseWebhookDestinations: boolean;
   canUseSlackDestinations: boolean;
   canUseAdvancedAlerts: boolean;
@@ -86,6 +88,8 @@ export function computeOrganizationEntitlements({
       seatLimit: null,
       nodeLimit: null,
       monthlyScanLimit: null,
+      logTailLines: PLAN_POLICY_BY_PLAN.enterprise.logTailLines,
+      maxPayloadBytes: PLAN_POLICY_BY_PLAN.enterprise.maxPayloadBytes,
       canUseWebhookDestinations: true,
       canUseSlackDestinations: true,
       canUseAdvancedAlerts: true,
@@ -111,6 +115,8 @@ export function computeOrganizationEntitlements({
     seatLimit: paidTierPolicy.seatLimit,
     nodeLimit: paidTierPolicy.nodeLimit,
     monthlyScanLimit: isDonorPremium ? null : paidTierPolicy.monthlyScanLimit,
+    logTailLines: paidTierPolicy.logTailLines,
+    maxPayloadBytes: paidTierPolicy.maxPayloadBytes,
     canUseWebhookDestinations: paidTierPolicy.canUseWebhookDestinations,
     canUseSlackDestinations: paidTierPolicy.canUseSlackDestinations,
     canUseAdvancedAlerts: paidTierPolicy.canUseAdvancedAlerts || isDonorPremium,
