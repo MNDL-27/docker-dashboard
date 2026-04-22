@@ -43,11 +43,9 @@ export function ProtectedRoute({
     dedicatedDeploymentStatus: null,
   };
 
-  if (previewBypass) {
-    return <>{children}</>;
-  }
-
   useEffect(() => {
+    if (previewBypass) return;
+
     if (!isLoaded) return;
 
     if (!isSignedIn) {
@@ -137,7 +135,11 @@ export function ProtectedRoute({
     return () => {
       cancelled = true;
     };
-  }, [getToken, isLoaded, isSignedIn, signOut]);
+  }, [getToken, isLoaded, isSignedIn, previewBypass, signOut]);
+
+  if (previewBypass) {
+    return <>{children}</>;
+  }
 
   if (!isLoaded) {
     return (
