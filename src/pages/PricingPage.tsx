@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { Check } from "lucide-react";
+import { Check, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { PublicNavbar } from "@/components/layout/PublicNavbar";
 import { PublicFooter } from "@/components/layout/PublicFooter";
@@ -110,7 +110,11 @@ export default function PricingPage() {
                         <td className="px-6 py-4 font-medium">{row.label}</td>
                         {pricingPlans.map((plan) => (
                           <td key={plan.id} className="px-6 py-4 text-muted-foreground">
-                            {row.values[plan.id]}
+                            {row.values[plan.id] === false ? (
+                              <X className="h-4 w-4 text-destructive" />
+                            ) : (
+                              row.values[plan.id]
+                            )}
                           </td>
                         ))}
                       </tr>

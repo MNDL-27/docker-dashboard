@@ -22,13 +22,12 @@ export const pricingPlans: PricingPlan[] = [
     monthlyPrice: 0,
     audience: "Proof-of-value for a single small environment.",
     summary: "Validate the platform on one connected host with strict limits on storage, scans, and integrations so infrastructure growth creates a clear upgrade point.",
-    supportLabel: "Community and self-serve docs",
-    sloLabel: "Best effort only",
+    supportLabel: "Community support",
+    sloLabel: "Best effort",
     highlights: [
       `${PLAN_POLICY_BY_PLAN.free.nodeLimit} connected host`,
       `${PLAN_POLICY_BY_PLAN.free.seatLimit} operator seat`,
       "100 scans per month",
-      "7 days of log history",
     ],
     restrictions: [
       "In-app notifications only",
@@ -145,7 +144,7 @@ export const pricingComparisonRows = [
   {
     label: "Retention",
     values: {
-      free: "7 days",
+      free: false as const,
       pro: "30 days",
       team: "1 year",
       enterprise: "Contract-defined",
@@ -172,7 +171,7 @@ export const pricingComparisonRows = [
   {
     label: "Support / SLO",
     values: {
-      free: "Best effort only",
+      free: "Community support",
       pro: "Email support, 1 business day",
       team: "Priority support, 4 business hours",
       enterprise: "Named support path, custom SLA/SLO",
