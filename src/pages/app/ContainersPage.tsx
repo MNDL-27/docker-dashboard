@@ -1,6 +1,7 @@
 import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { useOrganization } from "@clerk/clerk-react";
+import { useQueryClient } from "@tanstack/react-query";
 import {
   Activity,
   AlertTriangle,
@@ -18,6 +19,7 @@ import {
 
 import { KPICard } from "@/components/dashboard/KPICard";
 import { PageHeader } from "@/components/shared/PageHeader";
+import { ScanQuotaStatusStrip } from "@/components/shared/ScanQuotaStatusStrip";
 import { StatusBadge } from "@/components/shared/StatusBadge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -25,7 +27,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { useAllContainerStats, useContainers, useDockerHosts } from "@/hooks/useDocker";
 import { useFleetMetrics } from "@/hooks/useFleetMetrics";
 import { useViewerState } from "@/hooks/useViewerState";
-import { formatScanQuotaSummary, isManualScanPlan } from "@/lib/scan-quota";
+import { isManualScanPlan, isScanQuotaExhausted, SCAN_REFRESH_COSTS } from "@/lib/scan-quota";
 import { dockerApi } from "@/services/docker-api";
 import { cn } from "@/lib/utils";
 
@@ -174,16 +176,13 @@ function FleetSignalCard({
 }
 
 export default function ContainersPage() {
+  const queryClient = useQueryClient();
   const { organization: currentOrg } = useOrganization();
   const { data: viewer } = useViewerState();
   const { data: hosts = [], isLoading: hostsLoading } = useDockerHosts(currentOrg?.id);
   const effectivePlan = viewer?.active_org_effective_plan ?? viewer?.active_org_plan;
   const manualScanMode = isManualScanPlan(effectivePlan, viewer?.active_org_scan_limit);
-  const scanQuotaSummary = formatScanQuotaSummary({
-    plan: effectivePlan,
-    limit: viewer?.active_org_scan_limit,
-    remaining: viewer?.active_org_scan_remaining,
-  });
+  const scanQuotaExhausted = isScanQuotaExhausted(viewer?.active_org_scan_limit, viewer?.active_org_scan_remaining);
   const {
     data: rawContainers,
     isLoading: containersLoading,
@@ -310,6 +309,11 @@ export default function ContainersPage() {
     .filter((message): message is string => !!message && message !== scanQuotaWarning)
     .join(" ");
 
+  async function handleRefreshLiveData() {
+    await Promise.allSettled([refetchContainers(), refetchStats(), refetchFleetMetrics()]);
+    await queryClient.invalidateQueries({ queryKey: ['auth-me'] });
+  }
+
   async function handleAction(hostIdValue: string, containerId: string, action: "start" | "stop" | "restart") {
     setActionLoading(containerId);
     try {
@@ -369,7 +373,7 @@ export default function ContainersPage() {
         actions={
           <div className="flex flex-wrap items-center gap-2">
             {manualScanMode ? (
-              <Button variant="outline" className="gap-2" onClick={() => void Promise.all([refetchContainers(), refetchStats(), refetchFleetMetrics()])} disabled={liveRefreshPending}>
+              <Button variant="outline" className="gap-2" onClick={() => void handleRefreshLiveData()} disabled={liveRefreshPending || scanQuotaExhausted}>
                 {liveRefreshPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <RotateCw className="h-4 w-4" />}
                 Refresh Live Data
               </Button>
@@ -378,6 +382,17 @@ export default function ContainersPage() {
           </div>
         }
       />
+
+      {manualScanMode ? (
+        <ScanQuotaStatusStrip
+          plan={effectivePlan}
+          limit={viewer?.active_org_scan_limit}
+          used={viewer?.active_org_scan_used}
+          remaining={viewer?.active_org_scan_remaining}
+          resetAt={viewer?.active_org_scan_reset_at}
+          scanCost={SCAN_REFRESH_COSTS.containers}
+        />
+      ) : null}
 
       {scanQuotaWarning ? (
         <div className="glass-card rounded-[24px] border border-warning/40 bg-warning/10 px-5 py-4">
@@ -391,12 +406,9 @@ export default function ContainersPage() {
         </div>
       ) : null}
 
-      {manualScanMode || auxiliaryErrorMessage ? (
+      {auxiliaryErrorMessage ? (
         <div className="rounded-2xl border border-white/10 bg-background/35 px-4 py-3 text-sm text-muted-foreground">
-          {manualScanMode ? (
-            <p>Automatic live refresh is disabled on the Free plan. {scanQuotaSummary || "Use Refresh Live Data when you need a fresh snapshot."}</p>
-          ) : null}
-          {auxiliaryErrorMessage ? <p className={manualScanMode ? "mt-2 text-destructive" : "text-destructive"}>{auxiliaryErrorMessage}</p> : null}
+          <p className="text-destructive">{auxiliaryErrorMessage}</p>
         </div>
       ) : null}
 

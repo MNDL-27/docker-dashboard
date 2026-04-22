@@ -1,4 +1,5 @@
 import { PageHeader } from "@/components/shared/PageHeader";
+import { ScanQuotaUsageCard } from "@/components/billing/ScanQuotaUsageCard";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
@@ -31,6 +32,16 @@ export default function BillingPage() {
   );
   const freePlanDetails = getPricingPlan("free");
   const activeOrganizationId = viewer?.active_org_id ?? null;
+  const effectivePlan = viewer?.active_org_effective_plan ?? viewer?.active_org_plan;
+  const quotaUsageCard = (
+    <ScanQuotaUsageCard
+      plan={effectivePlan}
+      limit={viewer?.active_org_scan_limit}
+      used={viewer?.active_org_scan_used}
+      remaining={viewer?.active_org_scan_remaining}
+      resetAt={viewer?.active_org_scan_reset_at}
+    />
+  );
 
   // Fetch real organization details including billing state
   const { data: orgDetails, isLoading } = useQuery({
@@ -202,6 +213,8 @@ export default function BillingPage() {
           description="Manage your subscription and billing"
           breadcrumbs={[{ label: "Management" }, { label: "Billing" }]}
         />
+
+        {quotaUsageCard}
         
         <div className="grid md:grid-cols-3 gap-6">
           <div className="glass-card p-6 md:col-span-2">
@@ -291,6 +304,8 @@ export default function BillingPage() {
           description={`Almost there. Activate the ${details.name} plan to unlock the paid operating envelope and premium alerting.`}
           breadcrumbs={[{ label: "Management" }, { label: "Billing" }, { label: "Checkout" }]}
         />
+
+        {quotaUsageCard}
         
         <div className="max-w-md mx-auto space-y-4">
           <div className="glass-card overflow-hidden ring-2 ring-primary">
@@ -399,6 +414,7 @@ export default function BillingPage() {
         description="Manage your subscription and billing"
         breadcrumbs={[{ label: "Management" }, { label: "Billing" }]}
       />
+      {quotaUsageCard}
       <div className="grid md:grid-cols-2 gap-6">
         <div className="glass-card p-8">
           <div className="flex items-center gap-3 mb-6">

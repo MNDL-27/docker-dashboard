@@ -4,7 +4,7 @@ import { useOrganization, useOrganizationList } from "@clerk/clerk-react";
 import { useDockerHosts, useContainers } from "@/hooks/useDocker";
 import { useViewerState } from "@/hooks/useViewerState";
 import { buildDashboardStats } from "@/lib/dashboard-summary";
-import { formatScanQuotaSummary, isManualScanPlan } from "@/lib/scan-quota";
+import { isManualScanPlan, isScanQuotaExhausted } from "@/lib/scan-quota";
 import { DashboardLoadingState } from "@/components/dashboard/DashboardLoadingState";
 import { DashboardNoOrganizationState } from "@/components/dashboard/DashboardNoOrganizationState";
 import { DashboardEmptyHostsState } from "@/components/dashboard/DashboardEmptyHostsState";
@@ -25,11 +25,7 @@ export default function DashboardPage() {
   const orgLoading = !orgLoaded || !listLoaded;
   const effectivePlan = viewer?.active_org_effective_plan ?? viewer?.active_org_plan;
   const manualScanMode = isManualScanPlan(effectivePlan, viewer?.active_org_scan_limit);
-  const scanQuotaSummary = formatScanQuotaSummary({
-    plan: effectivePlan,
-    limit: viewer?.active_org_scan_limit,
-    remaining: viewer?.active_org_scan_remaining,
-  });
+  const scanQuotaExhausted = isScanQuotaExhausted(viewer?.active_org_scan_limit, viewer?.active_org_scan_remaining);
 
   const { data: hosts = [], isLoading: hostsLoading } = useDockerHosts(currentOrg?.id);
   const {
@@ -67,15 +63,21 @@ export default function DashboardPage() {
       stats={stats}
       containersLoading={containersLoading}
       liveDataError={containersError instanceof Error ? containersError.message : null}
-      scanQuotaSummary={scanQuotaSummary}
+      scanQuotaPlan={effectivePlan}
+      scanQuotaLimit={viewer?.active_org_scan_limit}
+      scanQuotaUsed={viewer?.active_org_scan_used}
+      scanQuotaRemaining={viewer?.active_org_scan_remaining}
+      scanQuotaResetAt={viewer?.active_org_scan_reset_at}
+      scanQuotaExhausted={scanQuotaExhausted}
       manualScanMode={manualScanMode}
       isRefreshingLiveData={containersFetching}
       fleetMetricsRefetchInterval={manualScanMode ? false : 10000}
       onRefreshLiveData={async () => {
-        await Promise.all([
+        await Promise.allSettled([
           refetchContainers(),
           queryClient.invalidateQueries({ queryKey: ['fleet-metrics', currentOrg?.id] }),
         ]);
+        await queryClient.invalidateQueries({ queryKey: ['auth-me'] });
       }}
     />
   );
