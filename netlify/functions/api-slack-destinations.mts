@@ -1,6 +1,7 @@
 import type { Config } from '@netlify/functions';
 
 import { requireAuth } from './lib/auth.mjs';
+import { assertOrganizationFeatureAllowed } from './lib/access-controls.mjs';
 import { ensureAlertsSchema } from './lib/ensure-alerts-schema.mjs';
 import { getOrganizationRole, requireOrganizationAdmin } from './lib/alerts.mjs';
 import {
@@ -24,6 +25,11 @@ export default async (req: Request) => {
   try {
     await ensureAlertsSchema();
     const auth = await requireAuth(req);
+    await assertOrganizationFeatureAllowed({
+      organizationId: auth.orgId!,
+      isPlatformAdmin: auth.isPlatformAdmin,
+      feature: 'slack_destinations',
+    });
     const role = await getOrganizationRole(auth);
 
     if (req.method === 'GET') {

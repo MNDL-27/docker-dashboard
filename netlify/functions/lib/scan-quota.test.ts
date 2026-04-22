@@ -8,44 +8,72 @@ vi.mock("./ensure-admin-schema.mjs", () => ({
   ensureAdminSchema: vi.fn(),
 }));
 
-import {
-  buildScanQuotaEntitlement,
-  FREE_PLAN_MONTHLY_SCAN_LIMIT,
-  getCurrentScanMonthBucket,
-  getNextScanResetAt,
-} from "./scan-quota.mts";
+vi.mock("./ensure-scan-usage-schema.mjs", () => ({
+  ensureScanUsageSchema: vi.fn(),
+}));
+
+import { computeOrganizationEntitlements } from "./access-controls.mts";
+import { getCurrentScanMonthBucket, getNextScanResetAt } from "./scan-usage.mts";
 
 describe("scan quota entitlement", () => {
   it("keeps free organizations on the monthly scan cap", () => {
-    expect(buildScanQuotaEntitlement({ basePlan: "free" })).toEqual({
-      basePlan: "free",
-      effectivePlan: "free",
-      planOverride: null,
-      donorPremiumActive: false,
-      isUnlimited: false,
-      monthlyScanLimit: FREE_PLAN_MONTHLY_SCAN_LIMIT,
+    expect(
+      computeOrganizationEntitlements({
+        plan: "free",
+        subscriptionStatus: "inactive",
+        isDonorPremium: false,
+        isPlatformAdmin: false,
+      }),
+    ).toMatchObject({
+      plan: "free",
+      monthlyScanLimit: 100,
+      canUseAdvancedAlerts: false,
     });
   });
 
-  it("promotes donor premium organizations to unlimited premium scans", () => {
-    expect(buildScanQuotaEntitlement({ basePlan: "free", donorPremiumActive: true })).toEqual({
-      basePlan: "free",
-      effectivePlan: "pro",
-      planOverride: null,
-      donorPremiumActive: true,
-      isUnlimited: true,
+  it("promotes donor premium organizations to unlimited scans", () => {
+    expect(
+      computeOrganizationEntitlements({
+        plan: "free",
+        subscriptionStatus: "inactive",
+        isDonorPremium: true,
+        isPlatformAdmin: false,
+      }),
+    ).toMatchObject({
+      plan: "free",
+      isDonorPremium: true,
       monthlyScanLimit: null,
+      canUseAdvancedAlerts: true,
     });
   });
 
-  it("respects plan overrides ahead of the stored base plan", () => {
-    expect(buildScanQuotaEntitlement({ basePlan: "free", planOverride: "team" })).toEqual({
-      basePlan: "free",
-      effectivePlan: "team",
-      planOverride: "team",
-      donorPremiumActive: false,
-      isUnlimited: true,
+  it("keeps paid organizations unlimited while subscriptions are active", () => {
+    expect(
+      computeOrganizationEntitlements({
+        plan: "team",
+        subscriptionStatus: "active",
+        isDonorPremium: false,
+        isPlatformAdmin: false,
+      }),
+    ).toMatchObject({
+      plan: "team",
       monthlyScanLimit: null,
+      nodeLimit: 25,
+    });
+  });
+
+  it("falls back to the free scan cap when a paid subscription is inactive", () => {
+    expect(
+      computeOrganizationEntitlements({
+        plan: "pro",
+        subscriptionStatus: "inactive",
+        isDonorPremium: false,
+        isPlatformAdmin: false,
+      }),
+    ).toMatchObject({
+      plan: "pro",
+      monthlyScanLimit: 100,
+      nodeLimit: 1,
     });
   });
 });

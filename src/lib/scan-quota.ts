@@ -1,4 +1,8 @@
-export function isManualScanPlan(plan: string | null | undefined) {
+export function isManualScanPlan(plan: string | null | undefined, limit?: number | null) {
+  if (typeof limit === "number") {
+    return true;
+  }
+
   return (plan || "").trim().toLowerCase() === "free";
 }
 
@@ -11,7 +15,7 @@ export function formatScanQuotaSummary({
   limit: number | null | undefined;
   remaining: number | null | undefined;
 }) {
-  if (!isManualScanPlan(plan)) {
+  if (!isManualScanPlan(plan, limit)) {
     return null;
   }
 

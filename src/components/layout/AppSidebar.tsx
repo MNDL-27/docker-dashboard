@@ -56,7 +56,11 @@ export function AppSidebar() {
 
   const visibleGroups = navGroups.map((group) => ({
     ...group,
-    items: group.items.filter((item) => item.href !== "/app/admin" || viewer?.is_platform_admin),
+    items: group.items.filter((item) => {
+      if (item.href === "/app/admin" && !viewer?.is_platform_admin) return false;
+      if (item.href === "/app/members" && !viewer?.entitlements?.canUseTeamCollaboration) return false;
+      return true;
+    }),
   }));
 
   return (

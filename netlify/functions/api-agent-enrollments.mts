@@ -2,7 +2,7 @@ import crypto from "crypto";
 import type { Config } from "@netlify/functions";
 import { sql } from "./lib/db.mjs";
 import { requireAuth } from "./lib/auth.mjs";
-import { assertOrganizationWriteAllowed } from "./lib/access-controls.mjs";
+import { assertOrganizationNodeCapacityAvailable, assertOrganizationWriteAllowed, enforceOrganizationNodeLimit } from "./lib/access-controls.mjs";
 import { decryptSecret, encryptSecret } from "./lib/crypto.mjs";
 import { ensureAgentEnrollmentSchema } from "./lib/ensure-agent-enrollment-schema.mjs";
 import { buildValidatedAgentUrl, normalizeAndValidateHostUrl } from "./lib/host-url.mjs";
@@ -426,6 +426,11 @@ export default async (req: Request) => {
       }
 
       if (!host) {
+        await assertOrganizationNodeCapacityAvailable({
+          organizationId: auth.orgId,
+          isPlatformAdmin: auth.isPlatformAdmin,
+        });
+
         const inserted = await sql`
           INSERT INTO docker_hosts (organization_id, name, host_url, connection_mode, docker_socket_path, created_by, status)
           VALUES (${auth.orgId}, ${session.host_name}, ${session.host_url}, ${session.connection_mode}, ${session.docker_socket_path || "/var/run/docker.sock"}, ${auth.userId}, 'unknown')
@@ -455,6 +460,19 @@ export default async (req: Request) => {
               onboarding_completed_at = COALESCE(onboarding_completed_at, now())
           WHERE id = ${auth.orgId}
         `;
+      }
+
+      const limitState = await enforceOrganizationNodeLimit({
+        organizationId: auth.orgId,
+        isPlatformAdmin: auth.isPlatformAdmin,
+      });
+
+      if (!limitState.allowedHostIds.includes(hostId!)) {
+        return badRequest(
+          "This host is over your current plan limit. Remove extra hosts or upgrade to reactivate it.",
+          "host_plan_limit_exceeded",
+          402,
+        );
       }
 
       const pingResult = await pingEnrollmentHost({
@@ -488,6 +506,11 @@ export default async (req: Request) => {
 
     if (req.method === "POST") {
       const body = await req.json().catch(() => null);
+      await assertOrganizationNodeCapacityAvailable({
+        organizationId: auth.orgId,
+        isPlatformAdmin: auth.isPlatformAdmin,
+      });
+
       const connectionMode = parseConnectionMode(body?.connection_mode);
       if (!connectionMode) {
         return badRequest("connection_mode must be 'agent' or 'cloudflare_tunnel'");

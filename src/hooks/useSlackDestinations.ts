@@ -3,11 +3,11 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { slackDestinationsApi } from "@/services/slack-destinations-api";
 import type { SlackDestinationFormValues } from "@/types/alerts";
 
-export function useSlackDestinations(orgId?: string | null) {
+export function useSlackDestinations(orgId?: string | null, enabled = true) {
   return useQuery({
     queryKey: ["slack-destinations", orgId],
     queryFn: () => slackDestinationsApi.listDestinations(),
-    enabled: !!orgId,
+    enabled: !!orgId && enabled,
   });
 }
 

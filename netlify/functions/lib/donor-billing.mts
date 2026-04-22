@@ -515,8 +515,7 @@ export async function createDonorIntent(req: Request) {
       false,
       now()
     )
-    ON CONFLICT (provider, provider_event_id)
-    DO NOTHING
+    ON CONFLICT DO NOTHING
   `;
 
   return new Response(

@@ -7,6 +7,7 @@ import {
   staleCutoffDate,
   failureStatusForCount,
 } from './lib/host-health.mjs';
+import { enforceOrganizationNodeLimit } from './lib/access-controls.mjs';
 import { buildWatchtowerAgentReleaseResponse } from './lib/agent-release.mts';
 import { ensureDockerHostSchema } from './lib/ensure-docker-host-schema.mjs';
 import { buildValidatedAgentUrl } from './lib/host-url.mjs';
@@ -113,7 +114,31 @@ export default async (req: Request) => {
       return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers })
     }
 
-    const hosts = await sql`SELECT * FROM docker_hosts`;
+    const orgRows = await sql<Array<{ organization_id: string | null }>>`
+      SELECT DISTINCT organization_id
+      FROM docker_hosts
+      WHERE organization_id IS NOT NULL
+    `;
+
+    const allowedHostIds: string[] = [];
+    for (const row of orgRows) {
+      if (!row.organization_id) continue;
+      const limitState = await enforceOrganizationNodeLimit({
+        organizationId: row.organization_id,
+        isPlatformAdmin: false,
+      });
+      allowedHostIds.push(...limitState.allowedHostIds);
+    }
+
+    if (allowedHostIds.length === 0) {
+      return new Response(JSON.stringify({ polled: 0, message: 'No eligible hosts to poll' }), { headers });
+    }
+
+    const hosts = await sql`
+      SELECT *
+      FROM docker_hosts
+      WHERE id = ANY(${allowedHostIds})
+    `;
 
     const staleThresholdMinutes = parseStaleThresholdMinutes(process.env.HOST_STALE_THRESHOLD_MINUTES)
     const staleCutoff = staleCutoffDate(new Date(), staleThresholdMinutes)
@@ -122,6 +147,7 @@ export default async (req: Request) => {
       UPDATE docker_hosts
       SET status = 'stale'
       WHERE status = 'connected'
+        AND id = ANY(${allowedHostIds})
         AND last_seen_at IS NOT NULL
         AND last_seen_at < ${staleCutoff.toISOString()}
       RETURNING id

@@ -10,6 +10,7 @@ import { isAppSubdomain, isDocsSubdomain, isPreviewAuthBypassEnabled } from "@/l
 import { RequireAppSubdomain } from "@/components/RequireAppSubdomain";
 import { ClerkProvider } from "@clerk/clerk-react";
 import { RequirePlatformAdmin } from "@/components/RequirePlatformAdmin";
+import { RequireFeatureEntitlement } from "@/components/RequireFeatureEntitlement";
 import { Loader2 } from "lucide-react";
 import { lazy, Suspense, useEffect } from "react";
 
@@ -154,7 +155,14 @@ const App = () => {
                     <Route path="incidents" element={<Navigate to="/app/alerts" replace />} />
                     <Route path="incidents/:id" element={<Navigate to="/app/alerts" replace />} />
                     <Route path="deployments" element={<Navigate to="/app/hosts" replace />} />
-                    <Route path="members" element={<MembersPage />} />
+                    <Route
+                      path="members"
+                      element={
+                        <RequireFeatureEntitlement feature="canUseTeamCollaboration">
+                          <MembersPage />
+                        </RequireFeatureEntitlement>
+                      }
+                    />
                     <Route path="billing" element={<BillingPage />} />
                     <Route path="dedicated-deployment" element={<DedicatedDeploymentPage />} />
                     <Route path="settings" element={<SettingsPage />} />

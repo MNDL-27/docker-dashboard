@@ -196,9 +196,10 @@ export default function ContainerDetailPage() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [actionLoading, setActionLoading] = useState<string | null>(null);
-  const manualScanMode = isManualScanPlan(viewer?.active_org_plan);
+  const effectivePlan = viewer?.active_org_effective_plan ?? viewer?.active_org_plan;
+  const manualScanMode = isManualScanPlan(effectivePlan, viewer?.active_org_scan_limit);
   const scanQuotaSummary = formatScanQuotaSummary({
-    plan: viewer?.active_org_plan,
+    plan: effectivePlan,
     limit: viewer?.active_org_scan_limit,
     remaining: viewer?.active_org_scan_remaining,
   });

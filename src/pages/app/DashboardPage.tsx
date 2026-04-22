@@ -23,9 +23,10 @@ export default function DashboardPage() {
   const currentOrg = organization;
   const hasOrgs = userMemberships.count ? userMemberships.count > 0 : false;
   const orgLoading = !orgLoaded || !listLoaded;
-  const manualScanMode = isManualScanPlan(viewer?.active_org_plan);
+  const effectivePlan = viewer?.active_org_effective_plan ?? viewer?.active_org_plan;
+  const manualScanMode = isManualScanPlan(effectivePlan, viewer?.active_org_scan_limit);
   const scanQuotaSummary = formatScanQuotaSummary({
-    plan: viewer?.active_org_plan,
+    plan: effectivePlan,
     limit: viewer?.active_org_scan_limit,
     remaining: viewer?.active_org_scan_remaining,
   });

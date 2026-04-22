@@ -178,7 +178,10 @@ export function useFleetMetrics(orgId: string | null | undefined, refetchInterva
 
       return normalized;
     },
-    refetchInterval,
+    refetchInterval: (query) => {
+      if (!orgId || refetchInterval === false) return false;
+      return query.state.error ? false : refetchInterval;
+    },
     enabled: !!orgId,
     retry: false,
     refetchOnWindowFocus: false,

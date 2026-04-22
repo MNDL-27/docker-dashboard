@@ -1,4 +1,4 @@
-export type PlanId = "free" | "pro" | "team" | "enterprise";
+import { PLAN_POLICY_BY_PLAN, type PlanId } from "../../shared/schema/plan-policy.ts";
 
 export interface PricingPlan {
   id: PlanId;
@@ -21,12 +21,12 @@ export const pricingPlans: PricingPlan[] = [
     priceLabel: "$0",
     monthlyPrice: 0,
     audience: "Proof-of-value for a single small environment.",
-    summary: "Validate the platform on one connected node with strict limits on storage, scans, and integrations so infrastructure growth creates a clear upgrade point.",
+    summary: "Validate the platform on one connected host with strict limits on storage, scans, and integrations so infrastructure growth creates a clear upgrade point.",
     supportLabel: "Community and self-serve docs",
     sloLabel: "Best effort only",
     highlights: [
-      "1 connected node",
-      "1 operator seat",
+      `${PLAN_POLICY_BY_PLAN.free.nodeLimit} connected host`,
+      `${PLAN_POLICY_BY_PLAN.free.seatLimit} operator seat`,
       "100 scans per month",
       "7 days of log history",
     ],
@@ -40,14 +40,14 @@ export const pricingPlans: PricingPlan[] = [
   {
     id: "pro",
     name: "Individual",
-    priceLabel: "$29/mo",
-    monthlyPrice: 29,
+    priceLabel: "$24/mo",
+    monthlyPrice: 24,
     audience: "Solo developers managing a few remote environments.",
-    summary: "Built for individual operators who need more nodes, more history, and reliable alert delivery without paying for team administration.",
+    summary: "Built for individual operators who need more hosts, more history, and reliable alert delivery without paying for team administration.",
     supportLabel: "Email support",
     sloLabel: "1 business day response target",
     highlights: [
-      "Up to 5 nodes",
+      `Up to ${PLAN_POLICY_BY_PLAN.pro.nodeLimit} hosts`,
       "Unlimited manual scans",
       "Automated hourly checks",
       "30 days of history",
@@ -65,17 +65,17 @@ export const pricingPlans: PricingPlan[] = [
     priceLabel: "$79/mo",
     monthlyPrice: 79,
     audience: "Small businesses and agencies managing client or internal fleets.",
-    summary: "This is the primary commercial tier for teams that need collaboration, long retention, premium integrations, and room to expand with extra node packs.",
+    summary: "This is the primary commercial tier for teams that need collaboration, long retention, premium integrations, and room to expand with extra host packs.",
     supportLabel: "Priority support",
     sloLabel: "4 business hour response target",
     highlights: [
-      "15 to 25 nodes",
+      `Up to ${PLAN_POLICY_BY_PLAN.team.nodeLimit} hosts`,
       "Continuous scanning and real-time alerting",
       "1 year of retention",
-      "Up to 10 seats with RBAC",
+      `Up to ${PLAN_POLICY_BY_PLAN.team.seatLimit} seats with RBAC`,
     ],
     restrictions: [
-      "Additional node packs sold separately",
+      "Additional host packs sold separately",
       "Premium integrations include AWS ECR, Slack, PagerDuty, and scheduled PDF reports",
       "Best fit for commercial auditing and client-facing reporting",
     ],
@@ -84,14 +84,14 @@ export const pricingPlans: PricingPlan[] = [
   {
     id: "enterprise",
     name: "Dedicated",
-    priceLabel: "Custom",
+    priceLabel: "From $500/mo",
     monthlyPrice: null,
     audience: "Managed, isolated infrastructure for high-trust customers.",
     summary: "Use this when the customer needs dedicated hosting, isolated data, negotiated allocations, and identity integration on infrastructure you manage for them.",
     supportLabel: "Named support path",
     sloLabel: "Custom SLA/SLO",
     highlights: [
-      "Custom nodes and scan allocations",
+      "Custom hosts and scan allocations",
       "Isolated database and dedicated compute",
       "Unlimited organization seats",
       "SSO integration",
@@ -116,11 +116,11 @@ export const pricingComparisonRows = [
     },
   },
   {
-    label: "Node allowance",
+    label: "Host allowance",
     values: {
-      free: "1 node",
-      pro: "Up to 5 nodes",
-      team: "15 to 25 nodes",
+      free: `${PLAN_POLICY_BY_PLAN.free.nodeLimit} host`,
+      pro: `Up to ${PLAN_POLICY_BY_PLAN.pro.nodeLimit} hosts`,
+      team: `Up to ${PLAN_POLICY_BY_PLAN.team.nodeLimit} hosts`,
       enterprise: "Custom",
     },
   },
@@ -145,9 +145,9 @@ export const pricingComparisonRows = [
   {
     label: "Seats",
     values: {
-      free: "1 seat",
-      pro: "1 seat",
-      team: "Up to 10 seats with RBAC",
+      free: `${PLAN_POLICY_BY_PLAN.free.seatLimit} seat`,
+      pro: `${PLAN_POLICY_BY_PLAN.pro.seatLimit} seat`,
+      team: `Up to ${PLAN_POLICY_BY_PLAN.team.seatLimit} seats with RBAC`,
       enterprise: "Unlimited with SSO",
     },
   },
@@ -172,9 +172,9 @@ export const pricingComparisonRows = [
   {
     label: "Commercial restrictions",
     values: {
-      free: "Single-node proof tier",
+      free: "Single-host proof tier",
       pro: "Individual operator only",
-      team: "Extra capacity via node packs",
+      team: "Extra capacity via host packs",
       enterprise: "Dedicated managed instance",
     },
   },

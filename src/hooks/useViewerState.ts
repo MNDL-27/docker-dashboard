@@ -1,6 +1,20 @@
 import { useQuery } from "@tanstack/react-query";
 import { apiFetch } from "@/lib/api";
 
+export interface ViewerEntitlements {
+  plan: "free" | "pro" | "team" | "enterprise";
+  subscriptionStatus: "active" | "inactive" | "past_due" | "canceled" | "paused";
+  isPaidSubscriptionActive: boolean;
+  isDonorPremium: boolean;
+  seatLimit: number | null;
+  nodeLimit: number | null;
+  monthlyScanLimit: number | null;
+  canUseWebhookDestinations: boolean;
+  canUseSlackDestinations: boolean;
+  canUseAdvancedAlerts: boolean;
+  canUseTeamCollaboration: boolean;
+}
+
 export interface ViewerState {
   id: string;
   email: string;
@@ -23,6 +37,14 @@ export interface ViewerState {
   is_platform_admin: boolean;
   is_suspended: boolean;
   is_hard_disabled: boolean;
+  entitlements: ViewerEntitlements | null;
+  scan_quota: {
+    monthBucket: string;
+    monthlyScanLimit: number | null;
+    scansUsed: number;
+    scansRemaining: number | null;
+    scansExceeded: boolean;
+  } | null;
 }
 
 export function useViewerState() {

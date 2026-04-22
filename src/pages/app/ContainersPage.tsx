@@ -177,9 +177,10 @@ export default function ContainersPage() {
   const { organization: currentOrg } = useOrganization();
   const { data: viewer } = useViewerState();
   const { data: hosts = [], isLoading: hostsLoading } = useDockerHosts(currentOrg?.id);
-  const manualScanMode = isManualScanPlan(viewer?.active_org_plan);
+  const effectivePlan = viewer?.active_org_effective_plan ?? viewer?.active_org_plan;
+  const manualScanMode = isManualScanPlan(effectivePlan, viewer?.active_org_scan_limit);
   const scanQuotaSummary = formatScanQuotaSummary({
-    plan: viewer?.active_org_plan,
+    plan: effectivePlan,
     limit: viewer?.active_org_scan_limit,
     remaining: viewer?.active_org_scan_remaining,
   });
@@ -300,9 +301,13 @@ export default function ContainersPage() {
   const telemetryAvailable = !!latestFleetMetrics;
   const telemetryPartial = latestFleetMetrics?.isPartial === true;
   const liveRefreshPending = containersFetching || statsFetching || fleetMetricsFetching;
+  const scanQuotaWarning = [statsError, fleetMetricsError]
+    .map((queryError) => (queryError instanceof Error ? queryError.message : null))
+    .filter((message): message is string => !!message)
+    .find((message) => /scan quota|monthly scan quota|scan quota reached/i.test(message)) ?? null;
   const auxiliaryErrorMessage = [statsError, fleetMetricsError]
     .map((queryError) => (queryError instanceof Error ? queryError.message : null))
-    .filter(Boolean)
+    .filter((message): message is string => !!message && message !== scanQuotaWarning)
     .join(" ");
 
   async function handleAction(hostIdValue: string, containerId: string, action: "start" | "stop" | "restart") {
@@ -330,10 +335,11 @@ export default function ContainersPage() {
   }
 
   if (error) {
+    const errorMessage = error instanceof Error ? error.message : "Unknown error";
     return (
       <div className="space-y-6 animate-fade-in">
         <PageHeader title="Containers" breadcrumbs={[{ label: "Infrastructure" }, { label: "Containers" }]} />
-        <div className="glass-card p-8 text-center"><p className="text-sm text-destructive">Failed to load containers: {(error as Error).message}</p></div>
+        <div className="glass-card p-8 text-center"><p className="text-sm text-destructive">Failed to load containers: {errorMessage}</p></div>
       </div>
     );
   }
@@ -372,6 +378,18 @@ export default function ContainersPage() {
           </div>
         }
       />
+
+      {scanQuotaWarning ? (
+        <div className="glass-card rounded-[24px] border border-warning/40 bg-warning/10 px-5 py-4">
+          <div className="flex items-start gap-3">
+            <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-warning" />
+            <div>
+              <p className="text-sm font-semibold text-foreground">Monthly scan limit reached</p>
+              <p className="mt-1 text-sm text-muted-foreground">{scanQuotaWarning}</p>
+            </div>
+          </div>
+        </div>
+      ) : null}
 
       {manualScanMode || auxiliaryErrorMessage ? (
         <div className="rounded-2xl border border-white/10 bg-background/35 px-4 py-3 text-sm text-muted-foreground">

@@ -39,7 +39,7 @@ const INTEGRATION_OPTIONS: Array<{ value: IntegrationNeed; label: string }> = [
 ];
 
 const STEP_LABELS = [
-  { id: "scope", label: "Scope", kicker: "Company, timing, and node envelope" },
+  { id: "scope", label: "Scope", kicker: "Company, timing, and host envelope" },
   { id: "infrastructure", label: "Infrastructure", kicker: "Region, network, and exposure model" },
   { id: "security", label: "Security", kicker: "Compliance and retention requirements" },
   { id: "integrations", label: "Integrations", kicker: "Alerting and workflow connections" },
@@ -104,7 +104,7 @@ export default function DedicatedIntakePage() {
   const summaryRows = useMemo(
     () => [
       { label: "Go-live window", value: state.data.targetGoLiveWindow.replaceAll("_", " ") },
-      { label: "Node range", value: state.data.estimatedNodeRange.replaceAll("_", " to ") },
+      { label: "Host range", value: state.data.estimatedNodeRange.replaceAll("_", " to ") },
       { label: "Preferred region", value: state.data.preferredRegion.replaceAll("-", " ") },
       { label: "Seat estimate", value: `${state.data.operatorSeatEstimate} operators` },
     ],
@@ -257,7 +257,7 @@ export default function DedicatedIntakePage() {
                       <option value="custom">Custom window</option>
                     </select>
                   </Fieldset>
-                  <Fieldset label="Estimated node range">
+                  <Fieldset label="Estimated host range">
                     <select
                       className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
                       value={state.data.estimatedNodeRange}
@@ -265,10 +265,10 @@ export default function DedicatedIntakePage() {
                         updateField("estimatedNodeRange", event.target.value as typeof state.data.estimatedNodeRange)
                       }
                     >
-                      <option value="1_5">1 to 5 nodes</option>
-                      <option value="6_15">6 to 15 nodes</option>
-                      <option value="16_25">16 to 25 nodes</option>
-                      <option value="26_plus">26 plus nodes</option>
+                      <option value="1_5">1 to 5 hosts</option>
+                      <option value="6_15">6 to 15 hosts</option>
+                      <option value="16_25">16 to 25 hosts</option>
+                      <option value="26_plus">26 plus hosts</option>
                     </select>
                   </Fieldset>
                   <Fieldset label="Environment count">
@@ -523,7 +523,7 @@ export default function DedicatedIntakePage() {
                     ["Company", state.data.companyName || "Not provided"],
                     ["Primary contact", `${state.data.primaryContactName || "Not provided"}${state.data.primaryContactEmail ? ` • ${state.data.primaryContactEmail}` : ""}`],
                     ["Go-live", state.data.targetGoLiveWindow.replaceAll("_", " ")],
-                    ["Node range", state.data.estimatedNodeRange.replaceAll("_", " to ")],
+                    ["Host range", state.data.estimatedNodeRange.replaceAll("_", " to ")],
                     ["Region", state.data.preferredRegion.replaceAll("-", " ")],
                     ["Compliance", state.data.complianceNeeds.length ? state.data.complianceNeeds.join(", ") : "None selected"],
                     ["Integrations", state.data.integrations.length ? state.data.integrations.join(", ") : "None selected"],

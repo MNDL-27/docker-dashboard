@@ -1,13 +1,15 @@
 import type { Config } from '@netlify/functions';
 import { sql } from './lib/db.mjs';
 import { requireAuth } from './lib/auth.mjs';
+import { enforceOrganizationNodeLimit } from './lib/access-controls.mjs';
 import { decryptHostSecrets } from './lib/crypto.mjs';
 import { buildValidatedAgentUrl } from './lib/host-url.mjs';
 import {
   createScanQuotaExceededResponse,
-  recordOrganizationScan,
+  consumeOrganizationScanQuota,
+  getOrganizationScanQuotaSummary,
   withScanQuotaHeaders,
-} from './lib/scan-quota.mjs';
+} from './lib/scan-usage.mjs';
 
 const headers = {
   'Access-Control-Allow-Origin': '*',
@@ -110,11 +112,30 @@ export default async (req: Request) => {
       return new Response(JSON.stringify({ error: 'Access denied' }), { status: 403, headers });
     }
 
+    const limitState = await enforceOrganizationNodeLimit({
+      organizationId: orgId,
+      isPlatformAdmin: auth.isPlatformAdmin,
+    });
+
+    if (limitState.allowedHostIds.length === 0) {
+      return new Response(JSON.stringify([]), { headers });
+    }
+
+    const quotaSummary = await getOrganizationScanQuotaSummary({
+      organizationId: orgId,
+      isPlatformAdmin: auth.isPlatformAdmin,
+    });
+
+    if (quotaSummary.scansExceeded) {
+      return createScanQuotaExceededResponse(headers, quotaSummary);
+    }
+
     // Get all hosts for the org
     const hosts = await sql`
       SELECT h.id, h.host_url, h.name 
       FROM docker_hosts h
       WHERE h.organization_id = ${orgId}
+        AND h.id = ANY(${limitState.allowedHostIds})
     `;
 
     if (hosts.length === 0) {
@@ -256,13 +277,17 @@ export default async (req: Request) => {
         isPartial: hostCount > 0 && hostCount < hosts.length,
       }];
 
-    const scan = await recordOrganizationScan(orgId);
-    if (scan.exhausted) {
-      return createScanQuotaExceededResponse(scan, headers);
+    const quotaResult = await consumeOrganizationScanQuota({
+      organizationId: orgId,
+      isPlatformAdmin: auth.isPlatformAdmin,
+    });
+
+    if (!quotaResult.allowed) {
+      return createScanQuotaExceededResponse(headers, quotaResult);
     }
 
     return new Response(JSON.stringify(fleetMetrics), {
-      headers: withScanQuotaHeaders(headers, scan, scan.counted),
+      headers: withScanQuotaHeaders(headers, quotaResult, quotaResult.counted),
     });
 
   } catch (error: any) {

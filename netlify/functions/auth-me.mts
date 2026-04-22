@@ -5,7 +5,8 @@ import { ensureOnboardingSchema } from './lib/ensure-onboarding-schema.mjs';
 import { ensureAdminSchema } from './lib/ensure-admin-schema.mjs';
 import { isPlatformAdminEmail } from './lib/platform-admin.mjs';
 import { ensureDedicatedDeploymentSchema } from './lib/ensure-dedicated-deployment-schema.mjs';
-import { getOrganizationScanQuotaSnapshot } from './lib/scan-quota.mjs';
+import { resolveOrganizationEntitlements } from './lib/access-controls.mjs';
+import { getOrganizationScanQuotaSummary } from './lib/scan-usage.mjs';
 
 const allowedOrigins = new Set([
   'https://app.dockerdash.app',
@@ -41,7 +42,7 @@ export default async (req: Request) => {
     const authContext = await requireAuth(req, { requireOrg: false });
 
     const users = await sql`
-      SELECT 
+      SELECT
         u.id,
         u.email,
         u.full_name,
@@ -59,7 +60,7 @@ export default async (req: Request) => {
     }
 
     const orgMemberships = await sql`
-      SELECT 
+      SELECT
         o.id,
         o.clerk_org_id,
         o.onboarding_status,
@@ -78,6 +79,7 @@ export default async (req: Request) => {
     const effectiveOrg = activeOrg ?? orgMemberships[0] ?? null;
     const onboardingStatus = (effectiveOrg?.onboarding_status as string | undefined) ?? null;
     const needsOnboarding = !effectiveOrg || onboardingStatus === 'not_started';
+    const isPlatformAdmin = isPlatformAdminEmail(users[0].email);
     const dedicatedDeployment =
       effectiveOrg
         ? await sql`
@@ -87,7 +89,21 @@ export default async (req: Request) => {
             LIMIT 1
           `
         : [];
-    const scanQuota = effectiveOrg ? await getOrganizationScanQuotaSnapshot(String(effectiveOrg.id)) : null;
+    const entitlements = effectiveOrg
+      ? await resolveOrganizationEntitlements({
+          organizationId: effectiveOrg.id,
+          isPlatformAdmin,
+        })
+      : null;
+    const scanQuota = effectiveOrg
+      ? await getOrganizationScanQuotaSummary({
+          organizationId: effectiveOrg.id,
+          isPlatformAdmin,
+        })
+      : null;
+    const effectivePlan =
+      scanQuota?.effectivePlan ??
+      (scanQuota?.monthlyScanLimit === null ? effectiveOrg?.plan ?? null : 'free');
 
     return new Response(JSON.stringify({
       user: {
@@ -97,17 +113,29 @@ export default async (req: Request) => {
         onboarding_status: onboardingStatus,
         active_org_id: effectiveOrg?.id ?? null,
         active_org_clerk_id: effectiveOrg?.clerk_org_id ?? null,
-        active_org_plan: scanQuota?.effectivePlan ?? effectiveOrg?.plan ?? null,
-        active_org_effective_plan: scanQuota?.effectivePlan ?? effectiveOrg?.plan ?? null,
+        active_org_plan: effectiveOrg?.plan ?? null,
+        active_org_effective_plan: effectivePlan,
         active_org_scan_limit: scanQuota?.monthlyScanLimit ?? null,
-        active_org_scan_used: scanQuota?.usedScans ?? 0,
-        active_org_scan_remaining: scanQuota?.remainingScans ?? null,
+        active_org_scan_used: scanQuota?.scansUsed ?? 0,
+        active_org_scan_remaining: scanQuota?.scansRemaining ?? null,
         active_org_scan_reset_at: scanQuota?.resetAt ?? null,
         dedicated_deployment_status: dedicatedDeployment[0]?.status ?? null,
         dedicated_deployment_updated_at: dedicatedDeployment[0]?.updated_at ? new Date(String(dedicatedDeployment[0].updated_at)).toISOString() : null,
-        is_platform_admin: isPlatformAdminEmail(users[0].email),
+        is_platform_admin: isPlatformAdmin,
         is_suspended: Boolean(users[0].is_suspended),
         is_hard_disabled: Boolean(users[0].is_hard_disabled),
+        entitlements,
+        scan_quota: scanQuota
+          ? {
+              monthBucket: scanQuota.monthBucket,
+              monthlyScanLimit: scanQuota.monthlyScanLimit,
+              scansUsed: scanQuota.scansUsed,
+              scansRemaining: scanQuota.scansRemaining,
+              scansExceeded: scanQuota.scansExceeded,
+              resetAt: scanQuota.resetAt,
+              effectivePlan: scanQuota.effectivePlan,
+            }
+          : null,
       },
     }), { headers });
 

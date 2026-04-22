@@ -257,18 +257,6 @@ export async function ensureAdminSchema() {
     `;
 
     await sql`
-      CREATE TABLE IF NOT EXISTS public.organization_monthly_scan_usage (
-        organization_id uuid NOT NULL REFERENCES public.organizations(id) ON DELETE CASCADE,
-        month_bucket text NOT NULL,
-        used_scans integer NOT NULL DEFAULT 0,
-        created_at timestamptz NOT NULL DEFAULT now(),
-        updated_at timestamptz NOT NULL DEFAULT now(),
-        PRIMARY KEY (organization_id, month_bucket),
-        CONSTRAINT organization_monthly_scan_usage_used_scans_check CHECK (used_scans >= 0)
-      )
-    `;
-
-    await sql`
       CREATE TABLE IF NOT EXISTS public.organization_user_bans (
         organization_id uuid NOT NULL REFERENCES public.organizations(id) ON DELETE CASCADE,
         user_id uuid NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,

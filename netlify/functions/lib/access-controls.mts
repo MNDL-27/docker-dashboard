@@ -1,6 +1,15 @@
 import { sql } from "./db.mjs";
 import { ensureAdminSchema } from "./ensure-admin-schema.mjs";
 import { isDonorPremiumActive } from "./donor-billing.mjs";
+import {
+  PLAN_POLICY_BY_PLAN,
+  getEffectivePlanForEnforcement,
+  normalizePlan,
+  normalizeSubscriptionStatus,
+  isPaidSubscriptionStatus,
+  type PlanId,
+  type SubscriptionStatus,
+} from "../../../shared/schema/plan-policy.ts";
 
 function requiresPlatformApproval() {
   const value = (process.env.REQUIRE_PLATFORM_APPROVALS || "").trim().toLowerCase();
@@ -27,6 +36,248 @@ export interface DockerHostAdminControl {
   is_quarantined: boolean;
   quarantine_reason: string | null;
   needs_reconnect: boolean;
+}
+
+export interface OrganizationEntitlements {
+  plan: PlanId;
+  subscriptionStatus: SubscriptionStatus;
+  isPaidSubscriptionActive: boolean;
+  isDonorPremium: boolean;
+  seatLimit: number | null;
+  nodeLimit: number | null;
+  monthlyScanLimit: number | null;
+  canUseWebhookDestinations: boolean;
+  canUseSlackDestinations: boolean;
+  canUseAdvancedAlerts: boolean;
+  canUseTeamCollaboration: boolean;
+}
+
+type OrganizationFeature =
+  | "webhook_destinations"
+  | "slack_destinations"
+  | "advanced_alerts"
+  | "team_collaboration";
+
+const HOST_LIMIT_EXCEEDED_ERROR =
+  "Host is inactive because your current plan limit has been exceeded. Remove extra hosts or upgrade to re-enable this host.";
+
+export function computeOrganizationEntitlements({
+  plan,
+  subscriptionStatus,
+  isDonorPremium,
+  isPlatformAdmin,
+}: {
+  plan: string | null | undefined;
+  subscriptionStatus: string | null | undefined;
+  isDonorPremium: boolean;
+  isPlatformAdmin: boolean;
+}): OrganizationEntitlements {
+  const normalizedPlan = normalizePlan(plan);
+  const normalizedStatus = normalizeSubscriptionStatus(subscriptionStatus);
+
+  if (isPlatformAdmin) {
+    return {
+      plan: normalizedPlan,
+      subscriptionStatus: normalizedStatus,
+      isPaidSubscriptionActive: true,
+      isDonorPremium,
+      seatLimit: null,
+      nodeLimit: null,
+      monthlyScanLimit: null,
+      canUseWebhookDestinations: true,
+      canUseSlackDestinations: true,
+      canUseAdvancedAlerts: true,
+      canUseTeamCollaboration: true,
+    };
+  }
+
+  const isPaidPlan = normalizedPlan !== "free";
+  const isPaidSubscriptionActive = isPaidPlan && isPaidSubscriptionStatus(normalizedStatus);
+  const paidTier = getEffectivePlanForEnforcement({
+    plan: normalizedPlan,
+    subscriptionStatus: normalizedStatus,
+  });
+  const paidTierPolicy = PLAN_POLICY_BY_PLAN[paidTier];
+
+  return {
+    plan: normalizedPlan,
+    subscriptionStatus: normalizedStatus,
+    isPaidSubscriptionActive,
+    isDonorPremium,
+    seatLimit: paidTierPolicy.seatLimit,
+    nodeLimit: paidTierPolicy.nodeLimit,
+    monthlyScanLimit: isDonorPremium ? null : paidTierPolicy.monthlyScanLimit,
+    canUseWebhookDestinations: paidTierPolicy.canUseWebhookDestinations,
+    canUseSlackDestinations: paidTierPolicy.canUseSlackDestinations,
+    canUseAdvancedAlerts: paidTierPolicy.canUseAdvancedAlerts || isDonorPremium,
+    canUseTeamCollaboration: paidTierPolicy.canUseTeamCollaboration,
+  };
+}
+
+export async function resolveOrganizationEntitlements({
+  organizationId,
+  isPlatformAdmin,
+}: {
+  organizationId: string;
+  isPlatformAdmin: boolean;
+}): Promise<OrganizationEntitlements> {
+  await ensureAdminSchema();
+
+  const [organization] = await sql<
+    Array<{
+      plan: string | null;
+      subscription_status: string | null;
+    }>
+  >`
+    SELECT plan, subscription_status
+    FROM public.organizations
+    WHERE id = ${organizationId}
+    LIMIT 1
+  `;
+
+  if (!organization) {
+    throw new Error("Organization not found");
+  }
+
+  const control = await getOrganizationAccessControl(organizationId);
+
+  const { active: isDonorPremium } = await isDonorPremiumActive(organizationId);
+
+  return computeOrganizationEntitlements({
+    plan: control.plan_override ?? organization.plan,
+    subscriptionStatus: control.subscription_status_override ?? organization.subscription_status,
+    isDonorPremium,
+    isPlatformAdmin,
+  });
+}
+
+export async function assertOrganizationFeatureAllowed({
+  organizationId,
+  isPlatformAdmin,
+  feature,
+}: {
+  organizationId: string;
+  isPlatformAdmin: boolean;
+  feature: OrganizationFeature;
+}) {
+  const entitlements = await resolveOrganizationEntitlements({ organizationId, isPlatformAdmin });
+
+  const allowedByFeature: Record<OrganizationFeature, boolean> = {
+    webhook_destinations: entitlements.canUseWebhookDestinations,
+    slack_destinations: entitlements.canUseSlackDestinations,
+    advanced_alerts: entitlements.canUseAdvancedAlerts,
+    team_collaboration: entitlements.canUseTeamCollaboration,
+  };
+
+  if (allowedByFeature[feature]) {
+    return entitlements;
+  }
+
+  const messages: Record<OrganizationFeature, string> = {
+    webhook_destinations: "Webhook destinations require an Individual, Business, or Dedicated subscription.",
+    slack_destinations: "Slack destinations require a Business or Dedicated subscription.",
+    advanced_alerts: "Advanced Alert Rules require an Individual, Business, or Dedicated subscription.",
+    team_collaboration: "Team collaboration requires a Business or Dedicated subscription.",
+  };
+
+  throw new Error(messages[feature]);
+}
+
+export async function assertOrganizationNodeCapacityAvailable({
+  organizationId,
+  isPlatformAdmin,
+}: {
+  organizationId: string;
+  isPlatformAdmin: boolean;
+}) {
+  const entitlements = await resolveOrganizationEntitlements({ organizationId, isPlatformAdmin });
+  if (entitlements.nodeLimit === null) {
+    return entitlements;
+  }
+
+  const [{ count }] = await sql<Array<{ count: string }>>`
+    SELECT COUNT(*)::text AS count
+    FROM public.docker_hosts
+    WHERE organization_id = ${organizationId}
+  `;
+
+  const nodeCount = Number.parseInt(count ?? "0", 10);
+  if (Number.isFinite(nodeCount) && nodeCount < entitlements.nodeLimit) {
+    return entitlements;
+  }
+
+  throw new Error(`This plan allows up to ${entitlements.nodeLimit} connected host(s). Upgrade to add more hosts.`);
+}
+
+export async function enforceOrganizationNodeLimit({
+  organizationId,
+  isPlatformAdmin,
+}: {
+  organizationId: string;
+  isPlatformAdmin: boolean;
+}) {
+  const entitlements = await resolveOrganizationEntitlements({ organizationId, isPlatformAdmin });
+
+  const hosts = await sql<Array<{ id: string }>>`
+    SELECT id
+    FROM public.docker_hosts
+    WHERE organization_id = ${organizationId}
+    ORDER BY created_at ASC, id ASC
+  `;
+
+  if (entitlements.nodeLimit === null) {
+    return {
+      entitlements,
+      allowedHostIds: hosts.map((host) => host.id),
+      blockedHostIds: [] as string[],
+    };
+  }
+
+  const allowedHostIds = hosts.slice(0, entitlements.nodeLimit).map((host) => host.id);
+  const blockedHostIds = hosts.slice(entitlements.nodeLimit).map((host) => host.id);
+
+  if (blockedHostIds.length > 0) {
+    await sql`
+      UPDATE public.docker_hosts
+      SET
+        status = 'disconnected',
+        last_error = ${HOST_LIMIT_EXCEEDED_ERROR},
+        consecutive_failures = GREATEST(COALESCE(consecutive_failures, 0), 1)
+      WHERE id = ANY(${blockedHostIds})
+    `;
+  }
+
+  return {
+    entitlements,
+    allowedHostIds,
+    blockedHostIds,
+  };
+}
+
+export async function assertOrganizationSeatCapacityAvailable({
+  organizationId,
+  isPlatformAdmin,
+}: {
+  organizationId: string;
+  isPlatformAdmin: boolean;
+}) {
+  const entitlements = await resolveOrganizationEntitlements({ organizationId, isPlatformAdmin });
+  if (entitlements.seatLimit === null) {
+    return entitlements;
+  }
+
+  const [{ count }] = await sql<Array<{ count: string }>>`
+    SELECT COUNT(*)::text AS count
+    FROM public.organization_members
+    WHERE organization_id = ${organizationId}
+  `;
+
+  const memberCount = Number.parseInt(count ?? "0", 10);
+  if (Number.isFinite(memberCount) && memberCount < entitlements.seatLimit) {
+    return entitlements;
+  }
+
+  throw new Error(`This plan allows up to ${entitlements.seatLimit} seat(s). Upgrade for team access.`);
 }
 
 export async function getUserAccessControl(userId: string): Promise<UserAccessControl> {
@@ -178,19 +429,9 @@ export async function assertAdvancedAlertsAccessAllowed({
   organizationId: string;
   isPlatformAdmin: boolean;
 }) {
-  await ensureAdminSchema();
-  if (isPlatformAdmin) return;
-
-  const control = await getOrganizationAccessControl(organizationId);
-  const isPremium =
-    control.plan_override === "pro" ||
-    control.plan_override === "team" ||
-    control.plan_override === "enterprise";
-
-  if (isPremium) return;
-
-  const { active: isDonorPremium } = await isDonorPremiumActive(organizationId);
-  if (isDonorPremium) return;
-
-  throw new Error("Advanced Alert Rules require a Premium or Team subscription.");
+  await assertOrganizationFeatureAllowed({
+    organizationId,
+    isPlatformAdmin,
+    feature: "advanced_alerts",
+  });
 }

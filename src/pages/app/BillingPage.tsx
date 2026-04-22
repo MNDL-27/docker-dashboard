@@ -29,13 +29,16 @@ export default function BillingPage() {
   const [paddleStatus, setPaddleStatus] = useState<"checking" | "ready" | "unavailable">(() =>
     typeof window !== "undefined" && window.Paddle ? "ready" : "checking",
   );
+  const freePlanDetails = getPricingPlan("free");
+  const activeOrganizationId = viewer?.active_org_id ?? null;
 
   // Fetch real organization details including billing state
   const { data: orgDetails, isLoading } = useQuery({
-    queryKey: ['billing-org-details', organization?.id],
+    queryKey: ['billing-org-details', activeOrganizationId ?? organization?.id],
     queryFn: async () => {
       const orgs = await apiFetch('/organizations') as Array<{
         id: string;
+        clerk_org_id?: string;
         plan: string;
         subscription_status?: string;
         current_period_ends_at?: string;
@@ -43,9 +46,9 @@ export default function BillingPage() {
         donor_premium_expires_at?: string | null;
         payment_provider?: string | null;
       }>;
-      return orgs.find(o => o.id === organization?.id);
+      return orgs.find((o) => o.id === activeOrganizationId);
     },
-    enabled: !!organization?.id,
+    enabled: Boolean(activeOrganizationId),
   });
 
   useEffect(() => {
@@ -92,7 +95,7 @@ export default function BillingPage() {
   };
 
   const handleCheckout = () => {
-    if (!selectedPlan || !organization) {
+    if (!selectedPlan || !activeOrganizationId) {
       return;
     }
 
@@ -122,7 +125,7 @@ export default function BillingPage() {
       items: [{ priceId: priceId, quantity: 1 }],
       customer: user?.primaryEmailAddress?.emailAddress ? { email: user.primaryEmailAddress.emailAddress } : undefined,
       customData: {
-        organization_id: organization.id,
+        organization_id: activeOrganizationId,
         intended_plan: selectedPlan
       },
       settings: {
@@ -135,18 +138,18 @@ export default function BillingPage() {
     sessionStorage.removeItem("dockerdash_pending_plan");
   };
 
-  const donationUrl = import.meta.env.VITE_DONATION_URL || "https://liberapay.com";
-  const paypalDonationUrl = import.meta.env.VITE_PAYPAL_DONATION_URL || "https://paypal.me";
+  const donationUrl = import.meta.env.VITE_DONATION_URL || "https://liberapay.com/MNDL-27/";
+  const paypalDonationUrl = import.meta.env.VITE_PAYPAL_DONATION_URL || "https://www.paypal.com/paypalme/ProtikMondal27";
 
   const handleCreateDonorIntent = async () => {
-    if (!organization?.id) return;
+    if (!activeOrganizationId) return;
 
     setDonorIntentLoading(true);
     try {
       const response = await apiFetch('/donor-intent', {
         method: 'POST',
         body: {
-          organization_id: organization.id,
+          organization_id: activeOrganizationId,
           intended_plan: selectedPlan || 'pro',
           payer_email: user?.primaryEmailAddress?.emailAddress || undefined,
         },
@@ -403,17 +406,25 @@ export default function BillingPage() {
               <Box className="h-6 w-6 text-muted-foreground" />
             </div>
             <div>
-              <h3 className="text-xl font-bold">Free Plan</h3>
-              <p className="text-sm text-muted-foreground">Basic monitoring for small setups</p>
+              <h3 className="text-xl font-bold">{freePlanDetails?.name ?? "Free"} Plan</h3>
+              <p className="text-sm text-muted-foreground">{freePlanDetails?.audience ?? "Basic monitoring for small setups"}</p>
             </div>
           </div>
           <ul className="space-y-2 mb-8">
-            <li className="flex items-center gap-2 text-sm"><Check className="h-4 w-4 text-success" /> 2 hosts</li>
-            <li className="flex items-center gap-2 text-sm"><Check className="h-4 w-4 text-success" /> 1 operator seat</li>
-            <li className="flex items-center gap-2 text-sm"><Check className="h-4 w-4 text-success" /> Core host and container visibility</li>
+            {(freePlanDetails?.highlights ?? []).map((feature) => (
+              <li key={feature} className="flex items-center gap-2 text-sm"><Check className="h-4 w-4 text-success" /> {feature}</li>
+            ))}
           </ul>
+          <div className="mb-8 rounded-lg border border-dashed border-border p-4">
+            <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground mb-2">Restrictions</p>
+            <ul className="space-y-1">
+              {(freePlanDetails?.restrictions ?? []).map((restriction) => (
+                <li key={restriction} className="text-sm text-muted-foreground">{restriction}</li>
+              ))}
+            </ul>
+          </div>
           <div className="p-4 rounded-lg bg-primary/5 border border-primary/10">
-            <p className="text-sm mb-4">Need advanced alerting, more seats, or a support response target? Upgrade to Pro or Team.</p>
+            <p className="text-sm mb-4">Need advanced alerting, more seats, or a support response target? Upgrade to Individual or Business.</p>
             <Button className="w-full" onClick={() => navigate('/pricing')}>View Paid Plans</Button>
           </div>
         </div>

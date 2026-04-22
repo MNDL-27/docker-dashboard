@@ -1,7 +1,7 @@
 import type { Config } from '@netlify/functions';
 import { sql } from './lib/db.mjs';
 import { requireAuth } from './lib/auth.mjs';
-import { assertHostProxyAllowed, assertOrganizationWriteAllowed } from './lib/access-controls.mjs';
+import { assertHostProxyAllowed, assertOrganizationWriteAllowed, enforceOrganizationNodeLimit } from './lib/access-controls.mjs';
 import { decryptHostSecrets, SecretCryptoError } from './lib/crypto.mjs';
 import { buildWatchtowerAgentReleaseResponse } from './lib/agent-release.mts';
 import { ensureDockerHostSchema } from './lib/ensure-docker-host-schema.mjs';
@@ -11,10 +11,11 @@ import { ProxyRequestParamsSchema } from '../../shared/schema/proxy.ts';
 import { formatDiagnosticDetail, parseDiagnosticPayload } from '../../shared/lib/diagnostics.ts';
 import { buildCorsHeaders, applyRateLimit, RATE_LIMITS, logSecurityEvent, getClientIp } from './lib/security.mjs';
 import {
+  consumeOrganizationScanQuota,
   createScanQuotaExceededResponse,
-  recordOrganizationScan,
+  getOrganizationScanQuotaSummary,
   withScanQuotaHeaders,
-} from './lib/scan-quota.mjs';
+} from './lib/scan-usage.mjs';
 
 function sanitizeContainerId(id: string): string {
   const normalized = id.trim();
@@ -524,11 +525,29 @@ export default async (req: Request) => {
       `;
       if (memberships.length === 0) return createProblemResponse(403, "Access denied");
 
+      const limitState = await enforceOrganizationNodeLimit({
+        organizationId: orgId,
+        isPlatformAdmin: auth.isPlatformAdmin,
+      });
+
+      if (limitState.allowedHostIds.length === 0) {
+        return new Response(JSON.stringify([]), { headers: corsHeaders });
+      }
+
+      const quotaSummary = await getOrganizationScanQuotaSummary({
+        organizationId: orgId,
+        isPlatformAdmin: auth.isPlatformAdmin,
+      });
+      if (quotaSummary.scansExceeded) {
+        return createScanQuotaExceededResponse(corsHeaders, quotaSummary);
+      }
+
       const hosts = await sql`
         SELECT h.*
         FROM docker_hosts h
         LEFT JOIN docker_host_admin_controls hac ON hac.host_id = h.id
         WHERE h.organization_id = ${orgId}
+          AND h.id = ANY(${limitState.allowedHostIds})
           AND COALESCE(hac.is_quarantined, false) = false
       `;
       const allContainers: any[] = [];
@@ -556,13 +575,16 @@ export default async (req: Request) => {
         }
       });
 
-      const scan = await recordOrganizationScan(orgId);
-      if (scan.exhausted) {
-        return createScanQuotaExceededResponse(scan, corsHeaders);
+      const quotaResult = await consumeOrganizationScanQuota({
+        organizationId: orgId,
+        isPlatformAdmin: auth.isPlatformAdmin,
+      });
+      if (!quotaResult.allowed) {
+        return createScanQuotaExceededResponse(corsHeaders, quotaResult);
       }
 
       return new Response(JSON.stringify(allContainers), {
-        headers: withScanQuotaHeaders(corsHeaders, scan, scan.counted),
+        headers: withScanQuotaHeaders(corsHeaders, quotaResult, quotaResult.counted),
       });
     }
 
@@ -575,11 +597,29 @@ export default async (req: Request) => {
       `;
       if (memberships.length === 0) return createProblemResponse(403, "Access denied");
 
+      const limitState = await enforceOrganizationNodeLimit({
+        organizationId: orgId,
+        isPlatformAdmin: auth.isPlatformAdmin,
+      });
+
+      if (limitState.allowedHostIds.length === 0) {
+        return new Response(JSON.stringify([]), { headers: corsHeaders });
+      }
+
+      const quotaSummary = await getOrganizationScanQuotaSummary({
+        organizationId: orgId,
+        isPlatformAdmin: auth.isPlatformAdmin,
+      });
+      if (quotaSummary.scansExceeded) {
+        return createScanQuotaExceededResponse(corsHeaders, quotaSummary);
+      }
+
       const hosts = await sql`
         SELECT h.*
         FROM docker_hosts h
         LEFT JOIN docker_host_admin_controls hac ON hac.host_id = h.id
         WHERE h.organization_id = ${orgId}
+          AND h.id = ANY(${limitState.allowedHostIds})
           AND h.status = 'connected'
           AND COALESCE(hac.is_quarantined, false) = false
       `;
@@ -647,13 +687,16 @@ export default async (req: Request) => {
         } catch (_) { /* skip host on error */ }
       });
 
-      const scan = await recordOrganizationScan(orgId);
-      if (scan.exhausted) {
-        return createScanQuotaExceededResponse(scan, corsHeaders);
+      const quotaResult = await consumeOrganizationScanQuota({
+        organizationId: orgId,
+        isPlatformAdmin: auth.isPlatformAdmin,
+      });
+      if (!quotaResult.allowed) {
+        return createScanQuotaExceededResponse(corsHeaders, quotaResult);
       }
 
       return new Response(JSON.stringify(allStats), {
-        headers: withScanQuotaHeaders(corsHeaders, scan, scan.counted),
+        headers: withScanQuotaHeaders(corsHeaders, quotaResult, quotaResult.counted),
       });
     }
 
@@ -670,6 +713,21 @@ export default async (req: Request) => {
       return createProblemResponse(404, "Host not found or access denied");
     }
     const host = hostRecords[0];
+
+    const limitState = await enforceOrganizationNodeLimit({
+      organizationId: host.organization_id,
+      isPlatformAdmin: auth.isPlatformAdmin,
+    });
+
+    if (!limitState.allowedHostIds.includes(host.id)) {
+      return createProblemResponse(
+        402,
+        "Host over plan limit",
+        "This host is inactive because your current plan limit has been exceeded. Remove extra hosts or upgrade to reactivate it.",
+        "host_plan_limit_exceeded",
+      );
+    }
+
     await assertHostProxyAllowed({ hostId, isPlatformAdmin: auth.isPlatformAdmin });
 
     const secretsRecord = await sql`
@@ -679,6 +737,14 @@ export default async (req: Request) => {
     const secrets = decryptHostSecrets(secretsRecord[0] || null, host.id);
 
     if (action === 'host-metrics') {
+      const quotaSummary = await getOrganizationScanQuotaSummary({
+        organizationId: host.organization_id,
+        isPlatformAdmin: auth.isPlatformAdmin,
+      });
+      if (quotaSummary.scansExceeded) {
+        return createScanQuotaExceededResponse(corsHeaders, quotaSummary);
+      }
+
       const metricsReq = buildAgentRequest(host as any, secrets, '/metrics', 'GET');
       const metricsResponse = await dockerFetch(metricsReq.url, metricsReq.method, metricsReq.headers, 5000);
 
@@ -744,13 +810,16 @@ export default async (req: Request) => {
         WHERE id = ${hostId}
       `;
 
-      const scan = await recordOrganizationScan(host.organization_id);
-      if (scan.exhausted) {
-        return createScanQuotaExceededResponse(scan, corsHeaders);
+      const quotaResult = await consumeOrganizationScanQuota({
+        organizationId: host.organization_id,
+        isPlatformAdmin: auth.isPlatformAdmin,
+      });
+      if (!quotaResult.allowed) {
+        return createScanQuotaExceededResponse(corsHeaders, quotaResult);
       }
 
       return new Response(JSON.stringify(normalizedMetrics), {
-        headers: withScanQuotaHeaders(corsHeaders, scan, scan.counted),
+        headers: withScanQuotaHeaders(corsHeaders, quotaResult, quotaResult.counted),
       });
     }
 
@@ -803,6 +872,17 @@ export default async (req: Request) => {
     }
 
     const reqData = buildRequest(host as any, secrets, dockerPath, method);
+
+    const shouldCountScan = isScanCountedDockerAction(action);
+    if (shouldCountScan) {
+      const quotaSummary = await getOrganizationScanQuotaSummary({
+        organizationId: host.organization_id,
+        isPlatformAdmin: auth.isPlatformAdmin,
+      });
+      if (quotaSummary.scansExceeded) {
+        return createScanQuotaExceededResponse(corsHeaders, quotaSummary);
+      }
+    }
 
     if (['container-start', 'container-stop', 'container-restart'].includes(action)) {
       const idempotencyKey = req.headers.get('x-idempotency-key') || req.headers.get('idempotency-key');
@@ -931,12 +1011,15 @@ export default async (req: Request) => {
     const payload = await dockerResponse.json();
     let responseHeaders = { ...corsHeaders };
 
-    if (isScanCountedDockerAction(action)) {
-      const scan = await recordOrganizationScan(host.organization_id);
-      if (scan.exhausted) {
-        return createScanQuotaExceededResponse(scan, corsHeaders);
+    if (shouldCountScan) {
+      const quotaResult = await consumeOrganizationScanQuota({
+        organizationId: host.organization_id,
+        isPlatformAdmin: auth.isPlatformAdmin,
+      });
+      if (!quotaResult.allowed) {
+        return createScanQuotaExceededResponse(corsHeaders, quotaResult);
       }
-      responseHeaders = withScanQuotaHeaders(responseHeaders, scan, scan.counted);
+      responseHeaders = withScanQuotaHeaders(responseHeaders, quotaResult, quotaResult.counted);
     }
 
     if (req.method === 'GET') {
