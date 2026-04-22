@@ -36,7 +36,6 @@ const ContainersPage = lazy(() => import("./pages/app/ContainersPage"));
 const ContainerDetailPage = lazy(() => import("./pages/app/ContainerDetailPage"));
 const LogsPage = lazy(() => import("./pages/app/LogsPage"));
 const AlertsPage = lazy(() => import("./pages/app/AlertsPage"));
-const MembersPage = lazy(() => import("./pages/app/MembersPage"));
 const BillingPage = lazy(() => import("./pages/app/BillingPage"));
 const SettingsPage = lazy(() => import("./pages/app/SettingsPage"));
 const OrganizationsPage = lazy(() => import("./pages/app/OrganizationsPage"));
@@ -155,14 +154,6 @@ const App = () => {
                     <Route path="incidents" element={<Navigate to="/app/alerts" replace />} />
                     <Route path="incidents/:id" element={<Navigate to="/app/alerts" replace />} />
                     <Route path="deployments" element={<Navigate to="/app/hosts" replace />} />
-                    <Route
-                      path="members"
-                      element={
-                        <RequireFeatureEntitlement feature="canUseTeamCollaboration">
-                          <MembersPage />
-                        </RequireFeatureEntitlement>
-                      }
-                    />
                     <Route path="billing" element={<BillingPage />} />
                     <Route path="dedicated-deployment" element={<DedicatedDeploymentPage />} />
                     <Route path="settings" element={<SettingsPage />} />
