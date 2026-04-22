@@ -21,6 +21,7 @@ import {
 
 import { LogConsole } from "@/components/docker/LogConsole";
 import { PageHeader } from "@/components/shared/PageHeader";
+import { ScanQuotaStatusStrip } from "@/components/shared/ScanQuotaStatusStrip";
 import { Button } from "@/components/ui/button";
 import {
   Sheet,
@@ -33,7 +34,7 @@ import {
 import { cn } from "@/lib/utils";
 import { useContainerInspect, useContainerLogs, useContainerStats } from "@/hooks/useDocker";
 import { useViewerState } from "@/hooks/useViewerState";
-import { formatScanQuotaSummary, isManualScanPlan } from "@/lib/scan-quota";
+import { isManualScanPlan, isScanQuotaExhausted, SCAN_REFRESH_COSTS } from "@/lib/scan-quota";
 import { dockerApi } from "@/services/docker-api";
 import { useToast } from "@/hooks/use-toast";
 
@@ -198,11 +199,7 @@ export default function ContainerDetailPage() {
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const effectivePlan = viewer?.active_org_effective_plan ?? viewer?.active_org_plan;
   const manualScanMode = isManualScanPlan(effectivePlan, viewer?.active_org_scan_limit);
-  const scanQuotaSummary = formatScanQuotaSummary({
-    plan: effectivePlan,
-    limit: viewer?.active_org_scan_limit,
-    remaining: viewer?.active_org_scan_remaining,
-  });
+  const scanQuotaExhausted = isScanQuotaExhausted(viewer?.active_org_scan_limit, viewer?.active_org_scan_remaining);
 
   const { data: inspect, isLoading: inspectLoading, error: inspectError } = useContainerInspect(hostId, containerId);
   const {
@@ -368,7 +365,15 @@ export default function ContainerDetailPage() {
 
             <div className="flex flex-wrap items-center gap-3">
               {manualScanMode ? (
-                <Button variant="outline" className="gap-2 rounded-full px-7" onClick={() => void refetchStats()} disabled={statsFetching}>
+                <Button
+                  variant="outline"
+                  className="gap-2 rounded-full px-7"
+                  onClick={async () => {
+                    await refetchStats();
+                    await queryClient.invalidateQueries({ queryKey: ["auth-me"] });
+                  }}
+                  disabled={statsFetching || scanQuotaExhausted}
+                >
                   {statsFetching ? <Loader2 className="h-4 w-4 animate-spin" /> : <RotateCcw className="h-4 w-4" />}
                   Refresh live stats
                 </Button>
@@ -470,12 +475,20 @@ export default function ContainerDetailPage() {
           </div>
         </div>
 
-        {manualScanMode || statsError ? (
-          <div className="rounded-2xl border border-white/10 bg-background/35 px-4 py-3 text-sm text-muted-foreground">
-            {manualScanMode ? (
-              <p>Automatic container stats refresh is disabled on the Free plan. {scanQuotaSummary || "Use Refresh live stats when you need a fresh sample."}</p>
-            ) : null}
-            {statsError instanceof Error ? <p className={manualScanMode ? "mt-2 text-destructive" : "text-destructive"}>{statsError.message}</p> : null}
+        {manualScanMode ? (
+          <ScanQuotaStatusStrip
+            plan={effectivePlan}
+            limit={viewer?.active_org_scan_limit}
+            used={viewer?.active_org_scan_used}
+            remaining={viewer?.active_org_scan_remaining}
+            resetAt={viewer?.active_org_scan_reset_at}
+            scanCost={SCAN_REFRESH_COSTS.containerDetail}
+          />
+        ) : null}
+
+        {statsError instanceof Error ? (
+          <div className="rounded-2xl border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
+            {statsError.message}
           </div>
         ) : null}
 

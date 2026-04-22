@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { formatDistanceToNowStrict } from "date-fns";
 import { useOrganization } from "@clerk/clerk-react";
+import { useQueryClient } from "@tanstack/react-query";
 import { useNavigate, useParams } from "react-router-dom";
 import {
   Activity,
@@ -25,6 +26,7 @@ import {
 
 import { AddHostDialog } from "@/components/docker/AddHostDialog";
 import { PageHeader } from "@/components/shared/PageHeader";
+import { ScanQuotaStatusStrip } from "@/components/shared/ScanQuotaStatusStrip";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -38,7 +40,7 @@ import { useToast } from "@/hooks/use-toast";
 import { dockerApi } from "@/services/docker-api";
 import type { DockerHost } from "@/types/database";
 import { CURRENT_WATCHTOWER_AGENT_VERSION } from "@/lib/agent-version";
-import { formatScanQuotaSummary, isManualScanPlan } from "@/lib/scan-quota";
+import { isManualScanPlan, isScanQuotaExhausted, SCAN_REFRESH_COSTS } from "@/lib/scan-quota";
 import {
   CURRENT_WATCHTOWER_AGENT_RELEASE,
   buildWatchtowerAgentPreflightCommand,
@@ -652,6 +654,7 @@ function formatHostMetricsFailure(
 }
 
 export function HostWorkspace() {
+  const queryClient = useQueryClient();
   const navigate = useNavigate();
   const { id: routeHostId } = useParams();
   const { organization: currentOrg } = useOrganization();
@@ -664,11 +667,7 @@ export function HostWorkspace() {
   const [isInfrastructureVisible, setIsInfrastructureVisible] = useState(true);
   const effectivePlan = viewer?.active_org_effective_plan ?? viewer?.active_org_plan;
   const manualScanMode = isManualScanPlan(effectivePlan, viewer?.active_org_scan_limit);
-  const scanQuotaSummary = formatScanQuotaSummary({
-    plan: effectivePlan,
-    limit: viewer?.active_org_scan_limit,
-    remaining: viewer?.active_org_scan_remaining,
-  });
+  const scanQuotaExhausted = isScanQuotaExhausted(viewer?.active_org_scan_limit, viewer?.active_org_scan_remaining);
 
   const filteredHosts = useMemo(() => {
     const query = search.trim().toLowerCase();
@@ -753,7 +752,8 @@ export function HostWorkspace() {
   const handleSelectHost = (hostId: string) => navigate(`/app/hosts/${hostId}`);
 
   const handleRefreshLiveData = async () => {
-    await Promise.all([containersQuery.refetch(), metricsQuery.refetch()]);
+    await Promise.allSettled([containersQuery.refetch(), metricsQuery.refetch()]);
+    await queryClient.invalidateQueries({ queryKey: ["auth-me"] });
   };
 
   const handleTest = async () => {
@@ -923,7 +923,7 @@ export function HostWorkspace() {
                       Test Connection
                     </Button>
                     {manualScanMode ? (
-                      <Button variant="outline" className="gap-2" onClick={() => void handleRefreshLiveData()} disabled={liveRefreshPending || !selectedHostAutoProbe}>
+                      <Button variant="outline" className="gap-2" onClick={() => void handleRefreshLiveData()} disabled={liveRefreshPending || !selectedHostAutoProbe || scanQuotaExhausted}>
                         {liveRefreshPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
                         Refresh Live Data
                       </Button>
@@ -999,12 +999,21 @@ export function HostWorkspace() {
                 </div>
               )}
 
-              {manualScanMode || containersErrorMessage ? (
-                <div className="rounded-xl border border-white/10 bg-background/35 px-4 py-3 text-sm text-muted-foreground">
-                  {manualScanMode ? (
-                    <p>Automatic host telemetry refresh is disabled on the Free plan. {scanQuotaSummary || "Use Refresh Live Data when you need a fresh snapshot."}</p>
-                  ) : null}
-                  {containersErrorMessage ? <p className={manualScanMode ? "mt-2 text-destructive" : "text-destructive"}>{containersErrorMessage}</p> : null}
+              {manualScanMode ? (
+                <ScanQuotaStatusStrip
+                  plan={effectivePlan}
+                  limit={viewer?.active_org_scan_limit}
+                  used={viewer?.active_org_scan_used}
+                  remaining={viewer?.active_org_scan_remaining}
+                  resetAt={viewer?.active_org_scan_reset_at}
+                  scanCost={SCAN_REFRESH_COSTS.host}
+                  className="rounded-xl"
+                />
+              ) : null}
+
+              {containersErrorMessage ? (
+                <div className="rounded-xl border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
+                  {containersErrorMessage}
                 </div>
               ) : null}
 
