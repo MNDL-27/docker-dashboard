@@ -6,6 +6,16 @@ export async function ensureDedicatedDeploymentSchema() {
   if (schemaEnsured) return;
 
   await sql`
+    CREATE OR REPLACE FUNCTION public.set_updated_at()
+    RETURNS trigger AS $$
+    BEGIN
+      NEW.updated_at = now();
+      RETURN NEW;
+    END;
+    $$ LANGUAGE plpgsql
+  `;
+
+  await sql`
     CREATE TABLE IF NOT EXISTS public.dedicated_deployments (
       organization_id uuid PRIMARY KEY REFERENCES public.organizations(id) ON DELETE CASCADE,
       reference_id text UNIQUE NOT NULL,

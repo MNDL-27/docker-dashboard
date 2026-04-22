@@ -1,5 +1,6 @@
 import { Navigate } from "react-router-dom";
 import { useAuth } from "@clerk/clerk-react";
+import { isPreviewAuthBypassEnabled } from "@/lib/hostname";
 
 /**
  * Root redirect for the app subdomain (app.dockerdash.app).
@@ -10,6 +11,11 @@ import { useAuth } from "@clerk/clerk-react";
  */
 export default function AppRootRedirect() {
   const { isLoaded, isSignedIn } = useAuth();
+  const previewBypass = isPreviewAuthBypassEnabled();
+
+  if (previewBypass) {
+    return <Navigate to="/app" replace />;
+  }
 
   if (!isLoaded) {
     return (

@@ -1,11 +1,12 @@
 import React from "react";
 import { useAuth } from "@clerk/clerk-react";
+import { getAppOrigin, getPublicOrigin, isLocalDev } from "@/lib/hostname";
 
 /**
- * Shared LogoLink that strictly controls cross-domain navigation rules.
+ * Shared LogoLink that controls cross-origin navigation rules.
  * 
- * - Logged out -> https://dockerdash.app (Apex public site)
- * - Logged in  -> https://app.dockerdash.app (Protected app)
+ * - Logged out -> public origin
+ * - Logged in  -> app origin
  * 
  * Uses standard <a> tags instead of React Router <Link> to ensure that 
  * clicking the logo properly exits the current subdomain context and 
@@ -22,21 +23,16 @@ export function LogoLink({
 }) {
   const { isLoaded, isSignedIn } = useAuth();
 
-  const isLocalDev = () => {
-    const host = window.location.hostname;
-    return host === "localhost" || host === "127.0.0.1" || host.endsWith(".local");
-  };
-
   // Default to apex while auth loads to prevent wrong routing traps
-  let targetUrl = isLocalDev() ? "/" : "https://dockerdash.app";
+  let targetUrl = isLocalDev() ? "/" : getPublicOrigin();
 
   if (forcePublic) {
-    targetUrl = isLocalDev() ? "/" : "https://dockerdash.app";
+    targetUrl = isLocalDev() ? "/" : getPublicOrigin();
   } else if (isLoaded) {
     if (isSignedIn) {
-      targetUrl = isLocalDev() ? "/app" : "https://app.dockerdash.app";
+      targetUrl = isLocalDev() ? "/app" : getAppOrigin();
     } else {
-      targetUrl = isLocalDev() ? "/" : "https://dockerdash.app";
+      targetUrl = isLocalDev() ? "/" : getPublicOrigin();
     }
   }
 

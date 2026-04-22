@@ -2,8 +2,12 @@ import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { LogoLink } from "@/components/shared/LogoLink";
 import { Box } from "lucide-react";
+import { isPreviewAuthBypassEnabled } from "@/lib/hostname";
 
 export function PublicNavbar() {
+  const authHref = isPreviewAuthBypassEnabled() ? "/app" : "/login";
+  const signupHref = isPreviewAuthBypassEnabled() ? "/app" : "/sign-up";
+
   return (
     <nav className="border-b border-border bg-card/50 backdrop-blur-sm sticky top-0 z-50">
       <div className="max-w-6xl mx-auto px-4 h-14 flex items-center justify-between">
@@ -20,8 +24,8 @@ export function PublicNavbar() {
           <Link to="/docs" className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">Docs</Link>
         </div>
         <div className="flex items-center gap-2">
-          <Link to="/login"><Button variant="ghost" size="sm">Log in</Button></Link>
-          <Link to="/sign-up"><Button size="sm">Start Free</Button></Link>
+          <Link to={authHref}><Button variant="ghost" size="sm">Log in</Button></Link>
+          <Link to={signupHref}><Button size="sm">Start Free</Button></Link>
         </div>
       </div>
     </nav>

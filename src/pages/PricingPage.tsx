@@ -5,8 +5,11 @@ import { PublicNavbar } from "@/components/layout/PublicNavbar";
 import { PublicFooter } from "@/components/layout/PublicFooter";
 import { pricingComparisonRows, pricingPlans } from "@/lib/pricing";
 import { cn } from "@/lib/utils";
+import { isPreviewAuthBypassEnabled } from "@/lib/hostname";
 
 export default function PricingPage() {
+  const previewBypass = isPreviewAuthBypassEnabled();
+
   return (
     <div className="min-h-screen flex flex-col bg-background">
       <PublicNavbar />
@@ -73,7 +76,7 @@ export default function PricingPage() {
                   </div>
 
                   <div className="mt-auto">
-                    <Link to={plan.id === "enterprise" ? "/dedicated/start" : `/login?plan=${plan.id}`}>
+                    <Link to={plan.id === "enterprise" ? "/dedicated/start" : previewBypass ? "/app" : `/login?plan=${plan.id}`}>
                       <Button className="w-full" variant={plan.id === "pro" ? "default" : "outline"} size="sm">
                         {plan.ctaLabel}
                       </Button>

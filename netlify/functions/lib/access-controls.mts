@@ -106,7 +106,7 @@ export function computeOrganizationEntitlements({
     isDonorPremium,
     seatLimit: paidTierPolicy.seatLimit,
     nodeLimit: paidTierPolicy.nodeLimit,
-    monthlyScanLimit: paidTierPolicy.monthlyScanLimit,
+    monthlyScanLimit: isDonorPremium ? null : paidTierPolicy.monthlyScanLimit,
     canUseWebhookDestinations: paidTierPolicy.canUseWebhookDestinations,
     canUseSlackDestinations: paidTierPolicy.canUseSlackDestinations,
     canUseAdvancedAlerts: paidTierPolicy.canUseAdvancedAlerts || isDonorPremium,

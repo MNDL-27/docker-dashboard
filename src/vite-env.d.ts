@@ -3,6 +3,7 @@
 interface ImportMetaEnv {
   readonly VITE_API_BASE_URL?: string;
   readonly VITE_CLERK_PUBLISHABLE_KEY?: string;
+  readonly VITE_PREVIEW_BYPASS_AUTH?: string;
   readonly VITE_PADDLE_CLIENT_TOKEN?: string;
   readonly VITE_PADDLE_ENV?: "sandbox" | "production";
   readonly VITE_PADDLE_LAUNCH_PRICE_ID?: string;

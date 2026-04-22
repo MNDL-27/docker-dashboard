@@ -51,7 +51,7 @@ async function markOnboardingStatus(
 
   for (let attempt = 1; attempt <= maxAttempts; attempt++) {
     // @ts-expect-error window.Clerk is injected globally by ClerkProvider
-    const token = await window.Clerk?.session?.getToken();
+    const token = await window.Clerk?.session?.getToken(attempt > 1 ? { skipCache: true } : undefined);
     if (!token) throw new Error("Unauthorized");
 
     const res = await fetch("/api/organizations", {
@@ -144,7 +144,7 @@ export function useOnboardingState() {
         if (cancelled) return;
         try {
           // @ts-expect-error window.Clerk is injected globally by ClerkProvider
-          const token = await window.Clerk?.session?.getToken();
+          const token = await window.Clerk?.session?.getToken({ skipCache: true });
           if (token) {
             const res = await fetch("/api/auth/me", {
               headers: { Authorization: `Bearer ${token}` },

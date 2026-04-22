@@ -4,7 +4,12 @@ import { requireAuth } from './lib/auth.mjs';
 import { enforceOrganizationNodeLimit } from './lib/access-controls.mjs';
 import { decryptHostSecrets } from './lib/crypto.mjs';
 import { buildValidatedAgentUrl } from './lib/host-url.mjs';
-import { consumeOrganizationScanQuota } from './lib/scan-usage.mjs';
+import {
+  createScanQuotaExceededResponse,
+  consumeOrganizationScanQuota,
+  getOrganizationScanQuotaSummary,
+  withScanQuotaHeaders,
+} from './lib/scan-usage.mjs';
 
 const headers = {
   'Access-Control-Allow-Origin': '*',
@@ -116,26 +121,13 @@ export default async (req: Request) => {
       return new Response(JSON.stringify([]), { headers });
     }
 
-    const quotaResult = await consumeOrganizationScanQuota({
+    const quotaSummary = await getOrganizationScanQuotaSummary({
       organizationId: orgId,
       isPlatformAdmin: auth.isPlatformAdmin,
     });
 
-    if (!quotaResult.allowed) {
-      return new Response(
-        JSON.stringify({
-          error: 'Monthly scan quota reached',
-          code: 'scan_quota_exceeded',
-          details: quotaResult.monthlyScanLimit
-            ? `Your current plan allows ${quotaResult.monthlyScanLimit} scans per month. You have used ${quotaResult.scansUsed} in ${quotaResult.monthBucket}. Upgrade to continue scanning.`
-            : 'Your current plan cannot run scans right now.',
-          limit: quotaResult.monthlyScanLimit,
-          used: quotaResult.scansUsed,
-          remaining: quotaResult.scansRemaining,
-          month_bucket: quotaResult.monthBucket,
-        }),
-        { status: 402, headers },
-      );
+    if (quotaSummary.scansExceeded) {
+      return createScanQuotaExceededResponse(headers, quotaSummary);
     }
 
     // Get all hosts for the org
@@ -285,7 +277,18 @@ export default async (req: Request) => {
         isPartial: hostCount > 0 && hostCount < hosts.length,
       }];
 
-    return new Response(JSON.stringify(fleetMetrics), { headers });
+    const quotaResult = await consumeOrganizationScanQuota({
+      organizationId: orgId,
+      isPlatformAdmin: auth.isPlatformAdmin,
+    });
+
+    if (!quotaResult.allowed) {
+      return createScanQuotaExceededResponse(headers, quotaResult);
+    }
+
+    return new Response(JSON.stringify(fleetMetrics), {
+      headers: withScanQuotaHeaders(headers, quotaResult, quotaResult.counted),
+    });
 
   } catch (error: any) {
     return new Response(JSON.stringify({ error: 'Failed to fetch fleet metrics', details: error.message }), { status: 500, headers });

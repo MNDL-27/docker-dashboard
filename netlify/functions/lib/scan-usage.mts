@@ -1,17 +1,21 @@
 import { sql } from "./db.mjs";
 import { resolveOrganizationEntitlements } from "./access-controls.mjs";
 import { ensureScanUsageSchema } from "./ensure-scan-usage-schema.mjs";
+import type { PlanId } from "../../../shared/schema/plan-policy.ts";
 
 export interface OrganizationScanQuotaSummary {
+  effectivePlan: PlanId;
   monthBucket: string;
   monthlyScanLimit: number | null;
   scansUsed: number;
   scansRemaining: number | null;
   scansExceeded: boolean;
+  resetAt: string;
 }
 
 export interface ScanQuotaConsumeResult extends OrganizationScanQuotaSummary {
   allowed: boolean;
+  counted: boolean;
 }
 
 function monthBucketToDateString(date = new Date()) {
@@ -22,6 +26,34 @@ function monthBucketToDateString(date = new Date()) {
 
 function dateStringToMonthBucket(dateString: string) {
   return dateString.slice(0, 7);
+}
+
+function getEffectivePlanForScanQuota({
+  plan,
+  isDonorPremium,
+  monthlyScanLimit,
+}: {
+  plan: PlanId;
+  isDonorPremium: boolean;
+  monthlyScanLimit: number | null;
+}): PlanId {
+  if (monthlyScanLimit !== null) {
+    return "free";
+  }
+
+  if (plan === "free" && isDonorPremium) {
+    return "pro";
+  }
+
+  return plan;
+}
+
+export function getCurrentScanMonthBucket(date = new Date()) {
+  return dateStringToMonthBucket(monthBucketToDateString(date));
+}
+
+export function getNextScanResetAt(date = new Date()) {
+  return new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth() + 1, 1, 0, 0, 0, 0)).toISOString();
 }
 
 async function getCurrentUsageCount(organizationId: string, monthBucketDate: string) {
@@ -57,12 +89,71 @@ export async function getOrganizationScanQuotaSummary({
   const scansRemaining = monthlyScanLimit === null ? null : Math.max(monthlyScanLimit - scansUsed, 0);
 
   return {
+    effectivePlan: getEffectivePlanForScanQuota({
+      plan: entitlements.plan,
+      isDonorPremium: entitlements.isDonorPremium,
+      monthlyScanLimit,
+    }),
     monthBucket: dateStringToMonthBucket(monthBucketDate),
     monthlyScanLimit,
     scansUsed,
     scansRemaining,
     scansExceeded: monthlyScanLimit !== null && scansUsed >= monthlyScanLimit,
+    resetAt: getNextScanResetAt(),
   };
+}
+
+export function buildScanQuotaHeaders(
+  quota: OrganizationScanQuotaSummary,
+  counted = false,
+): Record<string, string> {
+  return {
+    "X-Scan-Quota-Plan": quota.effectivePlan,
+    "X-Scan-Quota-Limit": quota.monthlyScanLimit === null ? "unlimited" : String(quota.monthlyScanLimit),
+    "X-Scan-Quota-Used": String(quota.scansUsed),
+    "X-Scan-Quota-Remaining": quota.scansRemaining === null ? "unlimited" : String(quota.scansRemaining),
+    "X-Scan-Quota-Reset-At": quota.resetAt,
+    "X-Scan-Quota-Counted": counted ? "true" : "false",
+  };
+}
+
+export function withScanQuotaHeaders(
+  headers: Record<string, string>,
+  quota: OrganizationScanQuotaSummary,
+  counted = false,
+) {
+  return {
+    ...headers,
+    ...buildScanQuotaHeaders(quota, counted),
+  };
+}
+
+export function createScanQuotaExceededResponse(
+  headers: Record<string, string>,
+  quota: OrganizationScanQuotaSummary,
+) {
+  return new Response(
+    JSON.stringify({
+      error: "Monthly scan quota reached",
+      code: "scan_quota_exceeded",
+      details: quota.monthlyScanLimit
+        ? `Your current plan allows ${quota.monthlyScanLimit} scans per month. You have used ${quota.scansUsed} in ${quota.monthBucket}. Upgrade to continue scanning.`
+        : "Your current plan cannot run scans right now.",
+      effective_plan: quota.effectivePlan,
+      limit: quota.monthlyScanLimit,
+      used: quota.scansUsed,
+      remaining: quota.scansRemaining,
+      month_bucket: quota.monthBucket,
+      reset_at: quota.resetAt,
+    }),
+    {
+      status: 402,
+      headers: {
+        "Content-Type": "application/json",
+        ...withScanQuotaHeaders(headers, quota, false),
+      },
+    },
+  );
 }
 
 export async function consumeOrganizationScanQuota({
@@ -80,7 +171,7 @@ export async function consumeOrganizationScanQuota({
   const { monthlyScanLimit, scansUsed } = summary;
 
   if (monthlyScanLimit === null) {
-    return { ...summary, allowed: true };
+    return { ...summary, allowed: true, counted: false };
   }
 
   const monthBucketDate = `${summary.monthBucket}-01`;
@@ -100,22 +191,22 @@ export async function consumeOrganizationScanQuota({
     const updatedUsed = Number(upsertRows[0].scan_count ?? scansUsed);
     const normalizedUsed = Number.isFinite(updatedUsed) && updatedUsed >= 0 ? updatedUsed : scansUsed;
     return {
-      monthBucket: summary.monthBucket,
-      monthlyScanLimit,
+      ...summary,
       scansUsed: normalizedUsed,
       scansRemaining: Math.max(monthlyScanLimit - normalizedUsed, 0),
       scansExceeded: normalizedUsed >= monthlyScanLimit,
       allowed: true,
+      counted: normalizedUsed > scansUsed,
     };
   }
 
   const currentUsed = await getCurrentUsageCount(organizationId, monthBucketDate);
   return {
-    monthBucket: summary.monthBucket,
-    monthlyScanLimit,
+    ...summary,
     scansUsed: currentUsed,
     scansRemaining: Math.max(monthlyScanLimit - currentUsed, 0),
     scansExceeded: currentUsed >= monthlyScanLimit,
     allowed: false,
+    counted: false,
   };
 }

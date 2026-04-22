@@ -252,7 +252,7 @@ export function getHostMetricsFailure(error: unknown): HostMetricsFailure | null
 
 interface UseHostMetricsOptions {
   enabled?: boolean;
-  refetchInterval?: number;
+  refetchInterval?: number | false;
 }
 
 export function useHostMetrics(hostId?: string | null, options: UseHostMetricsOptions = {}) {
@@ -282,7 +282,7 @@ export function useHostMetrics(hostId?: string | null, options: UseHostMetricsOp
     refetchOnReconnect: false,
     refetchInterval: (query) => {
       if (!enabled || !hostId) return false;
-      return query.state.error ? false : refetchInterval;
+      return query.state.error || refetchInterval === false ? false : refetchInterval;
     },
   });
 

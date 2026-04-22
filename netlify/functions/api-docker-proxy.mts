@@ -10,38 +10,12 @@ import { createProblemResponse } from '../../shared/schema/error.ts';
 import { ProxyRequestParamsSchema } from '../../shared/schema/proxy.ts';
 import { formatDiagnosticDetail, parseDiagnosticPayload } from '../../shared/lib/diagnostics.ts';
 import { buildCorsHeaders, applyRateLimit, RATE_LIMITS, logSecurityEvent, getClientIp } from './lib/security.mjs';
-import { consumeOrganizationScanQuota } from './lib/scan-usage.mjs';
-
-const ORG_WIDE_SCAN_ACTIONS = new Set(['all-containers', 'all-container-stats']);
-const HOST_SCAN_ACTIONS = new Set(['containers', 'container-stats', 'host-metrics']);
-
-function createScanQuotaExceededResponse(
-  corsHeaders: Record<string, string>,
-  quota: {
-    monthBucket: string;
-    monthlyScanLimit: number | null;
-    scansUsed: number;
-    scansRemaining: number | null;
-  },
-) {
-  return new Response(
-    JSON.stringify({
-      error: 'Monthly scan quota reached',
-      code: 'scan_quota_exceeded',
-      details: quota.monthlyScanLimit
-        ? `Your current plan allows ${quota.monthlyScanLimit} scans per month. You have used ${quota.scansUsed} in ${quota.monthBucket}. Upgrade to continue scanning.`
-        : 'Your current plan cannot run scans right now.',
-      limit: quota.monthlyScanLimit,
-      used: quota.scansUsed,
-      remaining: quota.scansRemaining,
-      month_bucket: quota.monthBucket,
-    }),
-    {
-      status: 402,
-      headers: corsHeaders,
-    },
-  );
-}
+import {
+  consumeOrganizationScanQuota,
+  createScanQuotaExceededResponse,
+  getOrganizationScanQuotaSummary,
+  withScanQuotaHeaders,
+} from './lib/scan-usage.mjs';
 
 function sanitizeContainerId(id: string): string {
   const normalized = id.trim();
@@ -384,6 +358,16 @@ function createHostMetricsPoint(data: any) {
   };
 }
 
+function isScanCountedDockerAction(action: string) {
+  return (
+    action === 'all-containers' ||
+    action === 'all-container-stats' ||
+    action === 'containers' ||
+    action === 'container-stats' ||
+    action === 'host-metrics'
+  );
+}
+
 async function fetchAgentVersionReport(
   host: { id: string; host_url: string; connection_mode: string; docker_socket_path: string },
   secrets: { agent_api_key?: string; cf_service_token_id?: string; cf_service_token_secret?: string } | null,
@@ -550,14 +534,12 @@ export default async (req: Request) => {
         return new Response(JSON.stringify([]), { headers: corsHeaders });
       }
 
-      if (ORG_WIDE_SCAN_ACTIONS.has(action)) {
-        const quotaResult = await consumeOrganizationScanQuota({
-          organizationId: orgId,
-          isPlatformAdmin: auth.isPlatformAdmin,
-        });
-        if (!quotaResult.allowed) {
-          return createScanQuotaExceededResponse(corsHeaders, quotaResult);
-        }
+      const quotaSummary = await getOrganizationScanQuotaSummary({
+        organizationId: orgId,
+        isPlatformAdmin: auth.isPlatformAdmin,
+      });
+      if (quotaSummary.scansExceeded) {
+        return createScanQuotaExceededResponse(corsHeaders, quotaSummary);
       }
 
       const hosts = await sql`
@@ -593,7 +575,17 @@ export default async (req: Request) => {
         }
       });
 
-      return new Response(JSON.stringify(allContainers), { headers: corsHeaders });
+      const quotaResult = await consumeOrganizationScanQuota({
+        organizationId: orgId,
+        isPlatformAdmin: auth.isPlatformAdmin,
+      });
+      if (!quotaResult.allowed) {
+        return createScanQuotaExceededResponse(corsHeaders, quotaResult);
+      }
+
+      return new Response(JSON.stringify(allContainers), {
+        headers: withScanQuotaHeaders(corsHeaders, quotaResult, quotaResult.counted),
+      });
     }
 
     // ── Org-wide: fetch stats for all running containers ──
@@ -614,14 +606,12 @@ export default async (req: Request) => {
         return new Response(JSON.stringify([]), { headers: corsHeaders });
       }
 
-      if (ORG_WIDE_SCAN_ACTIONS.has(action)) {
-        const quotaResult = await consumeOrganizationScanQuota({
-          organizationId: orgId,
-          isPlatformAdmin: auth.isPlatformAdmin,
-        });
-        if (!quotaResult.allowed) {
-          return createScanQuotaExceededResponse(corsHeaders, quotaResult);
-        }
+      const quotaSummary = await getOrganizationScanQuotaSummary({
+        organizationId: orgId,
+        isPlatformAdmin: auth.isPlatformAdmin,
+      });
+      if (quotaSummary.scansExceeded) {
+        return createScanQuotaExceededResponse(corsHeaders, quotaSummary);
       }
 
       const hosts = await sql`
@@ -697,7 +687,17 @@ export default async (req: Request) => {
         } catch (_) { /* skip host on error */ }
       });
 
-      return new Response(JSON.stringify(allStats), { headers: corsHeaders });
+      const quotaResult = await consumeOrganizationScanQuota({
+        organizationId: orgId,
+        isPlatformAdmin: auth.isPlatformAdmin,
+      });
+      if (!quotaResult.allowed) {
+        return createScanQuotaExceededResponse(corsHeaders, quotaResult);
+      }
+
+      return new Response(JSON.stringify(allStats), {
+        headers: withScanQuotaHeaders(corsHeaders, quotaResult, quotaResult.counted),
+      });
     }
 
     // ── Host-specific actions ──
@@ -737,12 +737,12 @@ export default async (req: Request) => {
     const secrets = decryptHostSecrets(secretsRecord[0] || null, host.id);
 
     if (action === 'host-metrics') {
-      const quotaResult = await consumeOrganizationScanQuota({
+      const quotaSummary = await getOrganizationScanQuotaSummary({
         organizationId: host.organization_id,
         isPlatformAdmin: auth.isPlatformAdmin,
       });
-      if (!quotaResult.allowed) {
-        return createScanQuotaExceededResponse(corsHeaders, quotaResult);
+      if (quotaSummary.scansExceeded) {
+        return createScanQuotaExceededResponse(corsHeaders, quotaSummary);
       }
 
       const metricsReq = buildAgentRequest(host as any, secrets, '/metrics', 'GET');
@@ -810,7 +810,17 @@ export default async (req: Request) => {
         WHERE id = ${hostId}
       `;
 
-      return new Response(JSON.stringify(normalizedMetrics), { headers: corsHeaders });
+      const quotaResult = await consumeOrganizationScanQuota({
+        organizationId: host.organization_id,
+        isPlatformAdmin: auth.isPlatformAdmin,
+      });
+      if (!quotaResult.allowed) {
+        return createScanQuotaExceededResponse(corsHeaders, quotaResult);
+      }
+
+      return new Response(JSON.stringify(normalizedMetrics), {
+        headers: withScanQuotaHeaders(corsHeaders, quotaResult, quotaResult.counted),
+      });
     }
 
     let dockerPath: string;
@@ -863,13 +873,14 @@ export default async (req: Request) => {
 
     const reqData = buildRequest(host as any, secrets, dockerPath, method);
 
-    if (HOST_SCAN_ACTIONS.has(action)) {
-      const quotaResult = await consumeOrganizationScanQuota({
+    const shouldCountScan = isScanCountedDockerAction(action);
+    if (shouldCountScan) {
+      const quotaSummary = await getOrganizationScanQuotaSummary({
         organizationId: host.organization_id,
         isPlatformAdmin: auth.isPlatformAdmin,
       });
-      if (!quotaResult.allowed) {
-        return createScanQuotaExceededResponse(corsHeaders, quotaResult);
+      if (quotaSummary.scansExceeded) {
+        return createScanQuotaExceededResponse(corsHeaders, quotaSummary);
       }
     }
 
@@ -998,10 +1009,23 @@ export default async (req: Request) => {
     }
 
     const payload = await dockerResponse.json();
-    if (req.method === 'GET') {
-      corsHeaders['Cache-Control'] = 'private, max-age=0, must-revalidate';
+    let responseHeaders = { ...corsHeaders };
+
+    if (shouldCountScan) {
+      const quotaResult = await consumeOrganizationScanQuota({
+        organizationId: host.organization_id,
+        isPlatformAdmin: auth.isPlatformAdmin,
+      });
+      if (!quotaResult.allowed) {
+        return createScanQuotaExceededResponse(corsHeaders, quotaResult);
+      }
+      responseHeaders = withScanQuotaHeaders(responseHeaders, quotaResult, quotaResult.counted);
     }
-    return new Response(JSON.stringify(payload), { headers: corsHeaders });
+
+    if (req.method === 'GET') {
+      responseHeaders['Cache-Control'] = 'private, max-age=0, must-revalidate';
+    }
+    return new Response(JSON.stringify(payload), { headers: responseHeaders });
 
   } catch (error: any) {
     if (error instanceof SecretCryptoError) {

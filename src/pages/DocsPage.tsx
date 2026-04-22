@@ -21,6 +21,7 @@ import {
   Cable,
 } from "lucide-react";
 import { useState, useEffect } from "react";
+import { isPreviewAuthBypassEnabled } from "@/lib/hostname";
 
 /*
  * ────────────────────────────────────────────────────────────
@@ -165,6 +166,7 @@ function TroubleshootRow({
 
 export default function DocsPage() {
   const [activeSection, setActiveSection] = useState("start-here");
+  const authHref = isPreviewAuthBypassEnabled() ? "/app" : "/login";
 
   /* Intersection observer for TOC highlighting */
   useEffect(() => {
@@ -205,8 +207,8 @@ export default function DocsPage() {
             <Link to="/docs" className="text-foreground font-medium">Docs</Link>
           </div>
           <div className="flex items-center gap-2">
-            <Link to="/login"><Button variant="ghost" size="sm">Log in</Button></Link>
-            <Link to="/login"><Button size="sm">Start Free</Button></Link>
+            <Link to={authHref}><Button variant="ghost" size="sm">Log in</Button></Link>
+            <Link to={authHref}><Button size="sm">Start Free</Button></Link>
           </div>
         </div>
       </nav>

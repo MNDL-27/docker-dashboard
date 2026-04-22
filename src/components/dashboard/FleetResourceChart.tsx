@@ -8,6 +8,7 @@ interface FleetResourceChartProps {
   orgId: string | null;
   className?: string;
   maxDataPoints?: number;
+  refetchInterval?: number | false;
 }
 
 const MAX_DATA_POINTS = 20;
@@ -136,9 +137,14 @@ function CompactMetric({ label, value }: CompactMetricProps) {
   );
 }
 
-export function FleetResourceChart({ orgId, className, maxDataPoints = MAX_DATA_POINTS }: FleetResourceChartProps) {
+export function FleetResourceChart({
+  orgId,
+  className,
+  maxDataPoints = MAX_DATA_POINTS,
+  refetchInterval = 10000,
+}: FleetResourceChartProps) {
   const [chartData, setChartData] = useState<FleetMetrics[]>([]);
-  const { data: newData, isLoading } = useFleetMetrics(orgId);
+  const { data: newData, isLoading, error } = useFleetMetrics(orgId, refetchInterval);
 
        // Initialize with some data points if empty (only once)
    useEffect(() => {
@@ -205,6 +211,9 @@ export function FleetResourceChart({ orgId, className, maxDataPoints = MAX_DATA_
             <span className="text-[10px] text-muted-foreground">Updating...</span>
           </div>
         )}
+        {!isLoading && error instanceof Error ? (
+          <span className="text-[10px] text-destructive">{error.message}</span>
+        ) : null}
          <div className="flex items-center gap-3">
            <div className="flex items-center gap-1.5">
              <div className="w-2 h-2 rounded-full bg-primary" />

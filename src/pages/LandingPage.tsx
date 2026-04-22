@@ -3,8 +3,11 @@ import { PublicFooter } from "@/components/layout/PublicFooter";
 import { Button } from "@/components/ui/button";
 import { Box, Server, Bell, FileText, Activity, Shield, Users, ArrowRight, Check, ChevronDown } from "lucide-react";
 import { Link } from "react-router-dom";
+import { isPreviewAuthBypassEnabled } from "@/lib/hostname";
 
 export default function LandingPage() {
+  const primaryHref = isPreviewAuthBypassEnabled() ? "/app" : "/sign-up";
+
   return (
     <div className="min-h-screen bg-background flex flex-col">
       <PublicNavbar />
@@ -29,7 +32,7 @@ export default function LandingPage() {
                 Lightweight agents. Real-time control. One dashboard.
               </p>
               <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-4">
-                <Link to="/sign-up">
+                <Link to={primaryHref}>
                   <Button size="lg" className="h-14 px-8 text-lg font-semibold gap-2">
                     Get Started for Free <ArrowRight className="h-5 w-5" />
                   </Button>

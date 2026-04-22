@@ -155,7 +155,7 @@ function normalizeFleetMetricPoint(point: FleetMetricsApiPoint): FleetMetrics | 
   };
 }
 
-export function useFleetMetrics(orgId: string | null | undefined, refetchInterval = 10000) {
+export function useFleetMetrics(orgId: string | null | undefined, refetchInterval: number | false = 10000) {
   return useQuery({
     queryKey: ['fleet-metrics', orgId],
     queryFn: async (): Promise<FleetMetrics[]> => {
@@ -178,13 +178,13 @@ export function useFleetMetrics(orgId: string | null | undefined, refetchInterva
 
       return normalized;
     },
-    retry: false,
-    refetchOnWindowFocus: false,
-    refetchOnReconnect: false,
     refetchInterval: (query) => {
-      if (!orgId) return false;
+      if (!orgId || refetchInterval === false) return false;
       return query.state.error ? false : refetchInterval;
     },
     enabled: !!orgId,
+    retry: false,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
   });
 }

@@ -49,5 +49,19 @@ export async function ensureDockerHostSchema() {
     ADD COLUMN IF NOT EXISTS last_error text
   `;
 
+  await sql`
+    CREATE TABLE IF NOT EXISTS public.host_network_usage (
+      host_id uuid NOT NULL REFERENCES public.docker_hosts(id) ON DELETE CASCADE,
+      month_bucket text NOT NULL,
+      last_raw_rx double precision NOT NULL DEFAULT 0,
+      last_raw_tx double precision NOT NULL DEFAULT 0,
+      accumulated_rx double precision NOT NULL DEFAULT 0,
+      accumulated_tx double precision NOT NULL DEFAULT 0,
+      created_at timestamptz NOT NULL DEFAULT now(),
+      updated_at timestamptz NOT NULL DEFAULT now(),
+      PRIMARY KEY (host_id, month_bucket)
+    )
+  `;
+
   schemaEnsured = true;
 }

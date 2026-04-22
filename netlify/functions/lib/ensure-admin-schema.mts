@@ -3,7 +3,7 @@ import { sql } from "./db.mjs";
 let schemaEnsured = false;
 let schemaEnsurePromise: Promise<void> | null = null;
 
-const ADMIN_SCHEMA_MARKER_KEY = "admin_schema_v1";
+const ADMIN_SCHEMA_MARKER_KEY = "admin_schema_v2";
 
 async function ensureSchemaMarkersTable() {
   await sql`

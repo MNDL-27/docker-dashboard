@@ -1,7 +1,8 @@
 import { Navigate } from "react-router-dom";
-import { useAuth } from "@clerk/clerk-react";
+import { useAuth, useClerk } from "@clerk/clerk-react";
 import { useState, useEffect } from "react";
 import { deriveNeedsOnboarding, normalizeOnboardingStatus, type OnboardingStatus } from "@/lib/onboarding-gate";
+import { isPreviewAuthBypassEnabled } from "@/lib/hostname";
 
 export function ProtectedRoute({
   children,
@@ -15,6 +16,8 @@ export function ProtectedRoute({
   skipResolvedRedirect?: boolean;
 }) {
   const { isLoaded, isSignedIn, getToken } = useAuth();
+  const { signOut } = useClerk();
+  const previewBypass = isPreviewAuthBypassEnabled();
   const [authState, setAuthState] = useState<{
     status: "loading" | "resolved" | "error" | "unauthenticated";
     hasOrgs: boolean;
@@ -31,18 +34,22 @@ export function ProtectedRoute({
     dedicatedDeploymentStatus: null,
   });
 
+  const unauthenticatedState = {
+    status: "unauthenticated" as const,
+    hasOrgs: false,
+    onboardingStatus: null,
+    needsOnboarding: true,
+    activeOrgPlan: null,
+    dedicatedDeploymentStatus: null,
+  };
+
   useEffect(() => {
+    if (previewBypass) return;
+
     if (!isLoaded) return;
 
     if (!isSignedIn) {
-      setAuthState({
-        status: "unauthenticated",
-        hasOrgs: false,
-        onboardingStatus: null,
-        needsOnboarding: true,
-        activeOrgPlan: null,
-        dedicatedDeploymentStatus: null,
-      });
+      setAuthState(unauthenticatedState);
       return;
     }
 
@@ -53,18 +60,11 @@ export function ProtectedRoute({
 
       for (let attempt = 1; attempt <= maxAttempts; attempt++) {
         try {
-          const token = await getToken();
+          const token = await getToken({ skipCache: attempt > 1 });
 
           if (!token) {
             if (!cancelled) {
-              setAuthState({
-                status: "unauthenticated",
-                hasOrgs: false,
-                onboardingStatus: null,
-                needsOnboarding: true,
-                activeOrgPlan: null,
-                dedicatedDeploymentStatus: null,
-              });
+              setAuthState(unauthenticatedState);
             }
             return;
           }
@@ -88,11 +88,11 @@ export function ProtectedRoute({
             }
 
             if (!cancelled) {
-              setAuthState((prev) => ({
-                ...prev,
-                status: "error",
-              }));
+              setAuthState(unauthenticatedState);
             }
+            await signOut({ redirectUrl: "/login?reauth=1" }).catch(() => {
+              window.location.assign("/login?reauth=1");
+            });
             return;
           }
 
@@ -135,7 +135,11 @@ export function ProtectedRoute({
     return () => {
       cancelled = true;
     };
-  }, [isLoaded, isSignedIn, getToken]);
+  }, [getToken, isLoaded, isSignedIn, previewBypass, signOut]);
+
+  if (previewBypass) {
+    return <>{children}</>;
+  }
 
   if (!isLoaded) {
     return (

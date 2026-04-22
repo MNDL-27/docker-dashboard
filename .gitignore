@@ -72,3 +72,10 @@ Thumbs.db
 *.tar.xz
 *.tar.zst
 ```
+# Local Netlify folder
+.netlify
+.netlify-appdata/
+
+# Local MCP / tooling state
+.mcp-npm-cache/
+.obsidian-mcp-local/

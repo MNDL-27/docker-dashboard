@@ -6,7 +6,7 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AppShell } from "@/components/layout/AppShell";
 import { ProtectedRoute } from "@/components/ProtectedRoute";
 import AppRootRedirect from "@/components/AppRootRedirect";
-import { isAppSubdomain, isDocsSubdomain } from "@/lib/hostname";
+import { isAppSubdomain, isDocsSubdomain, isPreviewAuthBypassEnabled } from "@/lib/hostname";
 import { RequireAppSubdomain } from "@/components/RequireAppSubdomain";
 import { ClerkProvider } from "@clerk/clerk-react";
 import { RequirePlatformAdmin } from "@/components/RequirePlatformAdmin";
@@ -93,7 +93,10 @@ const RouteFallback = () => (
   </div>
 );
 
-const App = () => (
+const App = () => {
+  const previewBypass = isPreviewAuthBypassEnabled();
+
+  return (
   <ClerkProvider
     publishableKey={import.meta.env.VITE_CLERK_PUBLISHABLE_KEY}
     signInUrl="/login"
@@ -123,9 +126,9 @@ const App = () => (
                   <Route path="/privacy" element={<PrivacyPage />} />
                   <Route path="/refunds" element={<RefundsPage />} />
                   {/* Auth */}
-                  <Route path="/login/*" element={<RequireAppSubdomain><LoginPage /></RequireAppSubdomain>} />
-                  <Route path="/sign-up/*" element={<RequireAppSubdomain><SignupPage /></RequireAppSubdomain>} />
-                  <Route path="/signup" element={<RequireAppSubdomain><Navigate to="/sign-up" replace /></RequireAppSubdomain>} />
+                  <Route path="/login/*" element={previewBypass ? <Navigate to="/app" replace /> : <RequireAppSubdomain><LoginPage /></RequireAppSubdomain>} />
+                  <Route path="/sign-up/*" element={previewBypass ? <Navigate to="/app" replace /> : <RequireAppSubdomain><SignupPage /></RequireAppSubdomain>} />
+                  <Route path="/signup" element={previewBypass ? <Navigate to="/app" replace /> : <RequireAppSubdomain><Navigate to="/sign-up" replace /></RequireAppSubdomain>} />
                   <Route path="/create-org" element={<RequireAppSubdomain><CreateOrgPage /></RequireAppSubdomain>} />
                   <Route path="/onboarding" element={<RequireAppSubdomain key="onboarding"><ProtectedRoute requireOnboarded={false}><OnboardingPage /></ProtectedRoute></RequireAppSubdomain>} />
                   <Route
@@ -176,6 +179,7 @@ const App = () => (
       </TooltipProvider>
     </QueryClientProvider>
   </ClerkProvider>
-);
+  );
+};
 
 export default App;
