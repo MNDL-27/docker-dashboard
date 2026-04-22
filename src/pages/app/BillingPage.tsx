@@ -204,8 +204,9 @@ export default function BillingPage() {
   }
 
   // Active or Pending Subscription View
-  if (orgDetails && orgDetails.plan !== 'free') {
-    const activePlan = getPricingPlan(orgDetails.plan as "free" | "pro" | "team" | "enterprise");
+  const hasPremiumAccess = effectivePlan && effectivePlan !== 'free';
+  if (orgDetails && hasPremiumAccess) {
+    const activePlan = getPricingPlan(effectivePlan as "pro" | "team" | "enterprise");
     return (
       <div className="space-y-6 animate-fade-in">
         <PageHeader

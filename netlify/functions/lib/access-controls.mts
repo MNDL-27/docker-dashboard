@@ -40,6 +40,7 @@ export interface DockerHostAdminControl {
 
 export interface OrganizationEntitlements {
   plan: PlanId;
+  effectivePlan: PlanId;
   subscriptionStatus: SubscriptionStatus;
   isPaidSubscriptionActive: boolean;
   isDonorPremium: boolean;
@@ -78,6 +79,7 @@ export function computeOrganizationEntitlements({
   if (isPlatformAdmin) {
     return {
       plan: normalizedPlan,
+      effectivePlan: normalizedPlan,
       subscriptionStatus: normalizedStatus,
       isPaidSubscriptionActive: true,
       isDonorPremium,
@@ -93,14 +95,16 @@ export function computeOrganizationEntitlements({
 
   const isPaidPlan = normalizedPlan !== "free";
   const isPaidSubscriptionActive = isPaidPlan && isPaidSubscriptionStatus(normalizedStatus);
-  const paidTier = getEffectivePlanForEnforcement({
+  const effectivePlan = getEffectivePlanForEnforcement({
     plan: normalizedPlan,
     subscriptionStatus: normalizedStatus,
+    isDonorPremium,
   });
-  const paidTierPolicy = PLAN_POLICY_BY_PLAN[paidTier];
+  const paidTierPolicy = PLAN_POLICY_BY_PLAN[effectivePlan];
 
   return {
     plan: normalizedPlan,
+    effectivePlan,
     subscriptionStatus: normalizedStatus,
     isPaidSubscriptionActive,
     isDonorPremium,

@@ -74,13 +74,24 @@ export function isPaidSubscriptionStatus(status: SubscriptionStatus) {
 export function getEffectivePlanForEnforcement({
   plan,
   subscriptionStatus,
+  isDonorPremium,
 }: {
   plan: string | null | undefined;
   subscriptionStatus: string | null | undefined;
+  isDonorPremium?: boolean;
 }): PlanId {
   const normalizedPlan = normalizePlan(plan);
   const normalizedStatus = normalizeSubscriptionStatus(subscriptionStatus);
   const isPaidPlan = normalizedPlan !== "free";
   const isPaidSubscriptionActive = isPaidPlan && isPaidSubscriptionStatus(normalizedStatus);
-  return isPaidSubscriptionActive ? normalizedPlan : "free";
+
+  if (isPaidSubscriptionActive) {
+    return normalizedPlan;
+  }
+
+  if (isDonorPremium) {
+    return "pro";
+  }
+
+  return "free";
 }

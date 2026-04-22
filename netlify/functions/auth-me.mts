@@ -101,9 +101,7 @@ export default async (req: Request) => {
           isPlatformAdmin,
         })
       : null;
-    const effectivePlan =
-      scanQuota?.effectivePlan ??
-      (scanQuota?.monthlyScanLimit === null ? effectiveOrg?.plan ?? null : 'free');
+    const effectivePlan = entitlements?.effectivePlan ?? 'free';
 
     return new Response(JSON.stringify({
       user: {
