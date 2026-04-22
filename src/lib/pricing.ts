@@ -134,6 +134,15 @@ export const pricingComparisonRows = [
     },
   },
   {
+    label: "Log viewer depth",
+    values: {
+      free: `${PLAN_POLICY_BY_PLAN.free.logTailLines} lines per request`,
+      pro: `${PLAN_POLICY_BY_PLAN.pro.logTailLines.toLocaleString()} lines per request`,
+      team: `${PLAN_POLICY_BY_PLAN.team.logTailLines.toLocaleString()} lines per request`,
+      enterprise: "Custom",
+    },
+  },
+  {
     label: "Retention",
     values: {
       free: "7 days",

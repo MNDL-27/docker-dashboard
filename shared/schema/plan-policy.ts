@@ -6,6 +6,8 @@ export interface PlanPolicy {
   seatLimit: number | null;
   nodeLimit: number | null;
   monthlyScanLimit: number | null;
+  logTailLines: number;
+  maxPayloadBytes: number;
   canUseWebhookDestinations: boolean;
   canUseSlackDestinations: boolean;
   canUseAdvancedAlerts: boolean;
@@ -17,6 +19,8 @@ export const PLAN_POLICY_BY_PLAN: Record<PlanId, PlanPolicy> = {
     seatLimit: 1,
     nodeLimit: 1,
     monthlyScanLimit: 100,
+    logTailLines: 100,
+    maxPayloadBytes: 4 * 1024 * 1024, // 4 MB
     canUseWebhookDestinations: false,
     canUseSlackDestinations: false,
     canUseAdvancedAlerts: false,
@@ -26,6 +30,8 @@ export const PLAN_POLICY_BY_PLAN: Record<PlanId, PlanPolicy> = {
     seatLimit: 1,
     nodeLimit: 5,
     monthlyScanLimit: null,
+    logTailLines: 1_000,
+    maxPayloadBytes: 6 * 1024 * 1024, // 6 MB
     canUseWebhookDestinations: true,
     canUseSlackDestinations: false,
     canUseAdvancedAlerts: true,
@@ -35,6 +41,8 @@ export const PLAN_POLICY_BY_PLAN: Record<PlanId, PlanPolicy> = {
     seatLimit: 10,
     nodeLimit: 25,
     monthlyScanLimit: null,
+    logTailLines: 5_000,
+    maxPayloadBytes: 10 * 1024 * 1024, // 10 MB
     canUseWebhookDestinations: true,
     canUseSlackDestinations: true,
     canUseAdvancedAlerts: true,
@@ -44,6 +52,8 @@ export const PLAN_POLICY_BY_PLAN: Record<PlanId, PlanPolicy> = {
     seatLimit: null,
     nodeLimit: null,
     monthlyScanLimit: null,
+    logTailLines: 5_000,
+    maxPayloadBytes: 10 * 1024 * 1024, // 10 MB
     canUseWebhookDestinations: true,
     canUseSlackDestinations: true,
     canUseAdvancedAlerts: true,
