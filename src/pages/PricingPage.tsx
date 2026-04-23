@@ -111,7 +111,10 @@ export default function PricingPage() {
                         {pricingPlans.map((plan) => (
                           <td key={plan.id} className="px-6 py-4 text-muted-foreground">
                             {row.values[plan.id] === false ? (
-                              <X className="h-4 w-4 text-destructive" />
+                              <span className="inline-flex items-center">
+                                <span className="sr-only">Not included</span>
+                                <X aria-hidden="true" className="h-4 w-4 text-destructive" />
+                              </span>
                             ) : (
                               row.values[plan.id]
                             )}

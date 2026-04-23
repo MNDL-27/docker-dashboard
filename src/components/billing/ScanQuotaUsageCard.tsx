@@ -81,7 +81,7 @@ export function ScanQuotaUsageCard({
         <UsageMetric label="Effective plan" value={formatPlanName(plan)} icon={Layers3} />
         <UsageMetric
           label="Current cycle"
-          value={manualPlan ? `${safeUsed} / ${limit ?? PLAN_POLICY_BY_PLAN.free.monthlyScanLimit} used` : "Unlimited live refresh"}
+          value={manualPlan ? `${safeUsed} / ${limit ?? PLAN_POLICY_BY_PLAN.free.monthlyScanLimit ?? "?"} used` : "Unlimited live refresh"}
           icon={Gauge}
         />
         <UsageMetric

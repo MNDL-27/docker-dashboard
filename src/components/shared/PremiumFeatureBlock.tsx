@@ -5,9 +5,16 @@ import { Link } from "react-router-dom";
 interface PremiumFeatureBlockProps {
   title: string;
   description: string;
+  /** When true the children are rendered; when false or omitted the upgrade prompt is shown. */
+  hasAccess?: boolean;
+  children?: React.ReactNode;
 }
 
-export function PremiumFeatureBlock({ title, description }: PremiumFeatureBlockProps) {
+export function PremiumFeatureBlock({ title, description, hasAccess, children }: PremiumFeatureBlockProps) {
+  if (hasAccess && children) {
+    return <>{children}</>;
+  }
+
   return (
     <div className="flex flex-col items-center justify-center p-12 text-center border rounded-lg bg-secondary/20">
       <div className="w-16 h-16 bg-primary/10 text-primary rounded-full flex items-center justify-center mb-6">
