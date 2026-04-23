@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { formatDistanceToNowStrict } from "date-fns";
 import { useOrganization } from "@clerk/clerk-react";
 import { useQueryClient } from "@tanstack/react-query";
-import { useNavigate, useParams } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import {
   Activity,
   Box,
@@ -11,6 +11,7 @@ import {
   Copy,
   ExternalLink,
   Loader2,
+  Lock,
   Pencil,
   PanelLeftClose,
   PanelLeftOpen,
@@ -153,11 +154,13 @@ function HostCard({
   selected,
   previewMetrics,
   onSelect,
+  isLocked,
 }: {
   host: DockerHost;
   selected: boolean;
   previewMetrics?: Pick<HostMetricsPoint, "cpu" | "memory"> | null;
   onSelect: () => void;
+  isLocked?: boolean;
 }) {
   const statusAppearance = getHostStatusAppearance(host.status);
 
@@ -167,9 +170,11 @@ function HostCard({
       onClick={onSelect}
       className={cn(
         "w-full rounded-2xl border p-4 text-left transition-all",
-        selected
-          ? "border-primary/40 bg-primary/10 shadow-[0_0_0_1px_rgba(34,197,94,0.15)]"
-          : "border-white/5 bg-background/40 hover:border-primary/20 hover:bg-background/60",
+        isLocked
+          ? "border-white/5 bg-background/20 opacity-60 hover:opacity-80 hover:border-warning/30"
+          : selected
+            ? "border-primary/40 bg-primary/10 shadow-[0_0_0_1px_rgba(34,197,94,0.15)]"
+            : "border-white/5 bg-background/40 hover:border-primary/20 hover:bg-background/60",
       )}
     >
       <div className="flex items-start justify-between gap-3">
@@ -179,11 +184,21 @@ function HostCard({
             {host.connection_mode === "cloudflare_tunnel" ? "Cloudflare tunnel" : "Agent"}
           </p>
         </div>
-        <span className={cn("mt-1 h-3 w-3 shrink-0 rounded-full", statusAppearance.dotClassName)} />
+        {isLocked ? (
+          <Lock className="mt-1 h-4 w-4 shrink-0 text-warning" />
+        ) : (
+          <span className={cn("mt-1 h-3 w-3 shrink-0 rounded-full", statusAppearance.dotClassName)} />
+        )}
       </div>
       <div className="mt-4 flex items-center justify-between text-sm text-muted-foreground">
-        <span>CPU: {previewMetrics ? `${previewMetrics.cpu.toFixed(0)}%` : "--"}</span>
-        <span>RAM: {previewMetrics ? `${previewMetrics.memory.toFixed(0)}%` : "--"}</span>
+        {isLocked ? (
+          <span className="text-xs text-warning">Upgrade to access</span>
+        ) : (
+          <>
+            <span>CPU: {previewMetrics ? `${previewMetrics.cpu.toFixed(0)}%` : "--"}</span>
+            <span>RAM: {previewMetrics ? `${previewMetrics.memory.toFixed(0)}%` : "--"}</span>
+          </>
+        )}
       </div>
     </button>
   );
@@ -665,9 +680,35 @@ export function HostWorkspace() {
   const [search, setSearch] = useState("");
   const [testing, setTesting] = useState(false);
   const [isInfrastructureVisible, setIsInfrastructureVisible] = useState(true);
+  const [upgradeDialogOpen, setUpgradeDialogOpen] = useState(false);
   const effectivePlan = viewer?.active_org_effective_plan ?? viewer?.active_org_plan;
   const manualScanMode = isManualScanPlan(effectivePlan, viewer?.active_org_scan_limit);
   const scanQuotaExhausted = isScanQuotaExhausted(viewer?.active_org_scan_limit, viewer?.active_org_scan_remaining);
+  const nodeLimit = viewer?.entitlements?.nodeLimit ?? null;
+
+  // Hosts sorted by creation date (oldest first) — matches backend enforcement order
+  const hostsSortedByCreation = useMemo(() => {
+    return [...hosts].sort((a, b) => {
+      const dateA = a.created_at ? new Date(a.created_at).getTime() : 0;
+      const dateB = b.created_at ? new Date(b.created_at).getTime() : 0;
+      return dateA - dateB || a.id.localeCompare(b.id);
+    });
+  }, [hosts]);
+
+  // Set of host IDs that are allowed by the current plan's node limit
+  const allowedHostIds = useMemo(() => {
+    if (nodeLimit === null) return null; // unlimited
+    const allowed = new Set<string>();
+    for (let i = 0; i < Math.min(nodeLimit, hostsSortedByCreation.length); i++) {
+      allowed.add(hostsSortedByCreation[i].id);
+    }
+    return allowed;
+  }, [hostsSortedByCreation, nodeLimit]);
+
+  const isHostLocked = (hostId: string) => {
+    if (allowedHostIds === null) return false; // unlimited plan
+    return !allowedHostIds.has(hostId);
+  };
 
   const filteredHosts = useMemo(() => {
     const query = search.trim().toLowerCase();
@@ -749,7 +790,13 @@ export function HostWorkspace() {
     />
   ) : null;
 
-  const handleSelectHost = (hostId: string) => navigate(`/app/hosts/${hostId}`);
+  const handleSelectHost = (hostId: string) => {
+    if (isHostLocked(hostId)) {
+      setUpgradeDialogOpen(true);
+      return;
+    }
+    navigate(`/app/hosts/${hostId}`);
+  };
 
   const handleRefreshLiveData = async () => {
     await Promise.allSettled([containersQuery.refetch(), metricsQuery.refetch()]);
@@ -862,6 +909,7 @@ export function HostWorkspace() {
                         selected={host.id === selectedHost?.id}
                         previewMetrics={host.id === selectedHost?.id ? selectedPreviewMetrics : null}
                         onSelect={() => handleSelectHost(host.id)}
+                        isLocked={isHostLocked(host.id)}
                       />
                     ))
                   )}
@@ -1193,6 +1241,41 @@ export function HostWorkspace() {
           )}
         </div>
       )}
+    </div>
+
+      {/* Host limit upgrade dialog */}
+      <Dialog open={upgradeDialogOpen} onOpenChange={setUpgradeDialogOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-3">
+              <div className="rounded-full bg-warning/10 p-2.5">
+                <Lock className="h-5 w-5 text-warning" />
+              </div>
+              Host Limit Reached
+            </DialogTitle>
+            <DialogDescription>
+              Your current plan allows monitoring up to{" "}
+              <strong className="text-foreground">{nodeLimit ?? 1} host{(nodeLimit ?? 1) === 1 ? "" : "s"}</strong>.
+              Upgrade your plan to connect and monitor additional hosts.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex flex-col gap-3 pt-2">
+            <Button asChild size="lg" className="w-full">
+              <Link to="/app/billing" onClick={() => setUpgradeDialogOpen(false)}>
+                Upgrade Plan
+              </Link>
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="text-muted-foreground"
+              onClick={() => setUpgradeDialogOpen(false)}
+            >
+              Not now
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
