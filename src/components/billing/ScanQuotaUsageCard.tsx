@@ -1,6 +1,6 @@
 import { Activity, CalendarClock, Gauge, Layers3 } from "lucide-react";
 
-import { PLAN_POLICY_BY_PLAN } from "@shared/schema/plan-policy";
+import { PLAN_POLICY_BY_PLAN } from "../../../shared/schema/plan-policy";
 
 import {
   formatScanQuotaResetDate,

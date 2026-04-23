@@ -10,8 +10,10 @@ import { AlertHistoryFeed } from "@/components/alerts/AlertHistoryFeed";
 import { AlertRulesPanel } from "@/components/alerts/AlertRulesPanel";
 import { PageHeader } from "@/components/shared/PageHeader";
 import { EmptyState } from "@/components/shared/EmptyState";
+import { PremiumFeatureBlock } from "@/components/shared/PremiumFeatureBlock";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useViewerState } from "@/hooks/useViewerState";
 import { useDockerHosts } from "@/hooks/useDocker";
 import { useAcknowledgeAlert, useAlertRules, useAlertsWorkspace, useCreateAlertRule, useCreateIncident, useIncidentsFeed, useResolveAlert, useUpdateAlertRule } from "@/hooks/useAlerts";
 import { useSlackDestinations } from "@/hooks/useSlackDestinations";
@@ -22,6 +24,7 @@ import type { AlertRuleFormValues } from "@/types/alerts";
 
 export default function AlertsPage() {
   const { organization: currentOrg } = useOrganization();
+  const { data: viewer } = useViewerState();
   const { toast } = useToast();
   const [severityFilter, setSeverityFilter] = useState<string>("all");
   const [statusFilter, setStatusFilter] = useState<string>("open");
@@ -259,15 +262,21 @@ export default function AlertsPage() {
           ) : null}
 
           <div id="alert-rules-section">
-            <AlertRulesPanel
-              rules={rules}
-              canManage={canManage}
-              saving={createRuleMutation.isPending || updateRuleMutation.isPending}
-              slackDestinationsCount={enabledSlackDestinationsCount}
-              webhookDestinationsCount={enabledWebhookDestinationsCount}
-              onCreate={handleCreateRule}
-              onUpdate={handleUpdateRule}
-            />
+            <PremiumFeatureBlock
+              title="Advanced Alert Rules"
+              description="Upgrade your plan to create and manage custom alert rules for your infrastructure."
+              hasAccess={viewer?.entitlements?.canUseAdvancedAlerts ?? false}
+            >
+              <AlertRulesPanel
+                rules={rules}
+                canManage={canManage}
+                saving={createRuleMutation.isPending || updateRuleMutation.isPending}
+                slackDestinationsCount={enabledSlackDestinationsCount}
+                webhookDestinationsCount={enabledWebhookDestinationsCount}
+                onCreate={handleCreateRule}
+                onUpdate={handleUpdateRule}
+              />
+            </PremiumFeatureBlock>
           </div>
 
           <AlertHistoryFeed incidents={incidents} history={history} />

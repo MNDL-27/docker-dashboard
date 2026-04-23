@@ -1,4 +1,5 @@
 import { PageHeader } from "@/components/shared/PageHeader";
+import { PremiumFeatureBlock } from "@/components/shared/PremiumFeatureBlock";
 import { OrganizationMembersWorkspaceContainer } from "@/components/settings/OrganizationMembersWorkspace";
 import { useEffect, useState } from "react";
 import { ProfileSettings } from "@/components/settings/ProfileSettings";
@@ -23,12 +24,7 @@ export default function SettingsPage() {
   const canUseWebhookDestinations = entitlements?.canUseWebhookDestinations ?? false;
   const canUseSlackDestinations = entitlements?.canUseSlackDestinations ?? false;
 
-  const tabs = allTabs.filter((value) => {
-    if (value === "Members") return canUseTeamCollaboration;
-    if (value === "Webhooks") return canUseWebhookDestinations;
-    if (value === "Notifications") return canUseSlackDestinations;
-    return true;
-  });
+  const tabs = allTabs;
 
   const { toast } = useToast();
   const [searchParams, setSearchParams] = useSearchParams();
@@ -176,33 +172,54 @@ export default function SettingsPage() {
         </TabsContent>
 
         <TabsContent value="Members">
-          <OrganizationMembersWorkspaceContainer />
+          {canUseTeamCollaboration ? (
+            <OrganizationMembersWorkspaceContainer />
+          ) : (
+            <PremiumFeatureBlock
+              title="Team Collaboration"
+              description="Upgrade your plan to invite team members to your organization and manage access together."
+            />
+          )}
         </TabsContent>
 
         <TabsContent value="Webhooks">
-          <WebhookDestinationsPanel
-            destinations={webhookDestinations}
-            canManage={canManage}
-            saving={webhookSaving}
-            testingId={testWebhookMutation.isPending ? testWebhookMutation.variables : null}
-            latestSecret={latestSecret}
-            onCreate={handleCreateWebhook}
-            onUpdate={handleUpdateWebhook}
-            onTest={handleTestWebhook}
-            onDismissSecret={() => setLatestSecret(null)}
-          />
+          {canUseWebhookDestinations ? (
+            <WebhookDestinationsPanel
+              destinations={webhookDestinations}
+              canManage={canManage}
+              saving={webhookSaving}
+              testingId={testWebhookMutation.isPending ? testWebhookMutation.variables : null}
+              latestSecret={latestSecret}
+              onCreate={handleCreateWebhook}
+              onUpdate={handleUpdateWebhook}
+              onTest={handleTestWebhook}
+              onDismissSecret={() => setLatestSecret(null)}
+            />
+          ) : (
+            <PremiumFeatureBlock
+              title="Webhook Destinations"
+              description="Upgrade your plan to configure custom webhook destinations for real-time alerts."
+            />
+          )}
         </TabsContent>
 
         <TabsContent value="Notifications">
-          <SlackDestinationsPanel
-            destinations={slackDestinations}
-            canManage={slackCanManage}
-            saving={slackSaving}
-            testingId={testSlackMutation.isPending ? testSlackMutation.variables : null}
-            onCreate={handleCreateSlack}
-            onUpdate={handleUpdateSlack}
-            onTest={handleTestSlack}
-          />
+          {canUseSlackDestinations ? (
+            <SlackDestinationsPanel
+              destinations={slackDestinations}
+              canManage={slackCanManage}
+              saving={slackSaving}
+              testingId={testSlackMutation.isPending ? testSlackMutation.variables : null}
+              onCreate={handleCreateSlack}
+              onUpdate={handleUpdateSlack}
+              onTest={handleTestSlack}
+            />
+          ) : (
+            <PremiumFeatureBlock
+              title="Slack & Discord Notifications"
+              description="Upgrade your plan to integrate with Slack and Discord and receive alerts directly in your channels."
+            />
+          )}
         </TabsContent>
       </Tabs>
     </div>
