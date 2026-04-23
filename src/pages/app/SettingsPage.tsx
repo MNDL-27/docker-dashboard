@@ -1,158 +1,67 @@
 import { PageHeader } from "@/components/shared/PageHeader";
+import { PremiumFeatureBlock } from "@/components/shared/PremiumFeatureBlock";
 import { OrganizationMembersWorkspaceContainer } from "@/components/settings/OrganizationMembersWorkspace";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { ProfileSettings } from "@/components/settings/ProfileSettings";
 import { useSearchParams } from "react-router-dom";
 import { SlackDestinationsPanel } from "@/components/settings/SlackDestinationsPanel";
 import { WebhookDestinationsPanel } from "@/components/settings/WebhookDestinationsPanel";
-import { useCreateSlackDestination, useSlackDestinations, useTestSlackDestination, useUpdateSlackDestination } from "@/hooks/useSlackDestinations";
-import { useToast } from "@/hooks/use-toast";
 import { useOrganization } from "@clerk/clerk-react";
-import { useCreateWebhookDestination, useTestWebhookDestination, useUpdateWebhookDestination, useWebhookDestinations } from "@/hooks/useWebhookDestinations";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import type { SlackDestinationFormValues, WebhookDestinationFormValues } from "@/types/alerts";
 import { useViewerState } from "@/hooks/useViewerState";
+import { useDestinationSettings } from "@/hooks/useDestinationSettings";
 
-const allTabs = ["Members", "Profile", "Webhooks", "Notifications"];
+// ── Constants ───────────────────────────────────────────────────────
+
+const ALL_TABS = ["Members", "Profile", "Webhooks", "Notifications"] as const;
+const DEFAULT_TAB = "Profile";
+
+// ── URL-synced tab hook ─────────────────────────────────────────────
+
+function useTabSync(validTabs: readonly string[], defaultTab: string) {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const requestedTab = searchParams.get("tab");
+  const [tab, setTab] = useState(requestedTab && validTabs.includes(requestedTab) ? requestedTab : defaultTab);
+
+  useEffect(() => {
+    if (!validTabs.includes(tab)) {
+      setTab(defaultTab);
+      const next = new URLSearchParams(searchParams);
+      next.delete("tab");
+      setSearchParams(next, { replace: true });
+    }
+  }, [tab, validTabs, searchParams, setSearchParams, defaultTab]);
+
+  const onChange = useCallback(
+    (nextTab: string) => {
+      setTab(nextTab);
+      const next = new URLSearchParams(searchParams);
+      if (nextTab === defaultTab) {
+        next.delete("tab");
+      } else {
+        next.set("tab", nextTab);
+      }
+      setSearchParams(next, { replace: true });
+    },
+    [searchParams, setSearchParams, defaultTab],
+  );
+
+  return { tab, onChange };
+}
+
+// ── Page ────────────────────────────────────────────────────────────
 
 export default function SettingsPage() {
   const { organization: currentOrg } = useOrganization();
   const { data: viewer } = useViewerState();
   const entitlements = viewer?.entitlements;
-  const canUseTeamCollaboration = entitlements?.canUseTeamCollaboration ?? false;
-  const canUseWebhookDestinations = entitlements?.canUseWebhookDestinations ?? false;
-  const canUseSlackDestinations = entitlements?.canUseSlackDestinations ?? false;
 
-  const tabs = allTabs.filter((value) => {
-    if (value === "Members") return canUseTeamCollaboration;
-    if (value === "Webhooks") return canUseWebhookDestinations;
-    if (value === "Notifications") return canUseSlackDestinations;
-    return true;
-  });
-
-  const { toast } = useToast();
-  const [searchParams, setSearchParams] = useSearchParams();
-  const requestedTab = searchParams.get("tab");
-  const [tab, setTab] = useState(requestedTab && tabs.includes(requestedTab) ? requestedTab : "Profile");
-  const [latestSecret, setLatestSecret] = useState<{ destinationName: string; value: string } | null>(null);
-
-  const slackDestinationsQuery = useSlackDestinations(currentOrg?.id, canUseSlackDestinations);
-  const createSlackMutation = useCreateSlackDestination();
-  const updateSlackMutation = useUpdateSlackDestination();
-  const testSlackMutation = useTestSlackDestination();
-  const webhookDestinationsQuery = useWebhookDestinations(currentOrg?.id, canUseWebhookDestinations);
-  const createWebhookMutation = useCreateWebhookDestination();
-  const updateWebhookMutation = useUpdateWebhookDestination();
-  const testWebhookMutation = useTestWebhookDestination();
-
-  const slackDestinations = slackDestinationsQuery.data?.destinations ?? [];
-  const slackCanManage = slackDestinationsQuery.data?.can_manage ?? false;
-  const slackSaving = createSlackMutation.isPending || updateSlackMutation.isPending;
-  const webhookDestinations = webhookDestinationsQuery.data?.destinations ?? [];
-  const canManage = webhookDestinationsQuery.data?.can_manage ?? false;
-  const webhookSaving = createWebhookMutation.isPending || updateWebhookMutation.isPending;
-
-  const handleTabChange = (nextTab: string) => {
-    setTab(nextTab);
-    const nextParams = new URLSearchParams(searchParams);
-    if (nextTab === "Profile") {
-      nextParams.delete("tab");
-    } else {
-      nextParams.set("tab", nextTab);
-    }
-    setSearchParams(nextParams, { replace: true });
-  };
-
-  useEffect(() => {
-    if (!tabs.includes(tab)) {
-      setTab("Profile");
-      const nextParams = new URLSearchParams(searchParams);
-      nextParams.delete("tab");
-      setSearchParams(nextParams, { replace: true });
-    }
-  }, [tab, tabs, searchParams, setSearchParams]);
-
-  const handleWebhookError = (title: string, error: unknown) => {
-    toast({
-      title,
-      description: error instanceof Error ? error.message : "Unknown error",
-      variant: "destructive",
-    });
-  };
-
-  const handleCreateSlack = async (values: SlackDestinationFormValues) => {
-    try {
-      await createSlackMutation.mutateAsync(values);
-      toast({ title: "Slack destination created" });
-    } catch (error) {
-      handleWebhookError("Failed to create Slack destination", error);
-    }
-  };
-
-  const handleUpdateSlack = async (id: string, values: Partial<SlackDestinationFormValues>) => {
-    try {
-      await updateSlackMutation.mutateAsync({ id, values });
-      toast({ title: "Slack destination updated" });
-    } catch (error) {
-      handleWebhookError("Failed to update Slack destination", error);
-    }
-  };
-
-  const handleTestSlack = async (id: string) => {
-    try {
-      const attempt = await testSlackMutation.mutateAsync(id);
-      toast({
-        title: attempt.succeeded ? "Slack test delivered" : "Slack test failed",
-        description: attempt.succeeded
-          ? attempt.http_status ? `Slack responded with ${attempt.http_status}.` : "Slack accepted the test message."
-          : attempt.error_summary ?? "Slack did not accept the test message.",
-        variant: attempt.succeeded ? "default" : "destructive",
-      });
-    } catch (error) {
-      handleWebhookError("Failed to send Slack test", error);
-    }
-  };
-
-  const handleCreateWebhook = async (values: WebhookDestinationFormValues) => {
-    try {
-      const result = await createWebhookMutation.mutateAsync(values);
-      if (result.signing_secret) {
-        setLatestSecret({ destinationName: result.destination.name, value: result.signing_secret });
-      }
-      toast({ title: "Webhook destination created" });
-    } catch (error) {
-      handleWebhookError("Failed to create webhook destination", error);
-    }
-  };
-
-  const handleUpdateWebhook = async (id: string, values: Partial<WebhookDestinationFormValues> & { regenerate_secret?: boolean }) => {
-    try {
-      const result = await updateWebhookMutation.mutateAsync({ id, values });
-      if (result.signing_secret) {
-        setLatestSecret({ destinationName: result.destination.name, value: result.signing_secret });
-        toast({ title: "Signing secret regenerated" });
-        return;
-      }
-      toast({ title: "Webhook destination updated" });
-    } catch (error) {
-      handleWebhookError("Failed to update webhook destination", error);
-    }
-  };
-
-  const handleTestWebhook = async (id: string) => {
-    try {
-      const attempt = await testWebhookMutation.mutateAsync(id);
-      toast({
-        title: attempt.succeeded ? "Webhook test delivered" : "Webhook test failed",
-        description: attempt.succeeded
-          ? attempt.http_status ? `Endpoint responded with ${attempt.http_status}.` : "The endpoint accepted the test request."
-          : attempt.error_summary ?? "The endpoint did not accept the signed test request.",
-        variant: attempt.succeeded ? "default" : "destructive",
-      });
-    } catch (error) {
-      handleWebhookError("Failed to send webhook test", error);
-    }
-  };
+  const { tab, onChange } = useTabSync(ALL_TABS, DEFAULT_TAB);
+  const { slack, webhook } = useDestinationSettings(
+    currentOrg?.id,
+    entitlements?.canUseSlackDestinations ?? false,
+    entitlements?.canUseWebhookDestinations ?? false,
+  );
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -162,11 +71,11 @@ export default function SettingsPage() {
         breadcrumbs={[{ label: "Management" }, { label: "Settings" }]}
       />
 
-      <Tabs value={tab} onValueChange={handleTabChange} className="space-y-4">
+      <Tabs value={tab} onValueChange={onChange} className="space-y-4">
         <TabsList className="h-auto w-full justify-start overflow-x-auto bg-secondary p-1">
-          {tabs.map((currentTab) => (
-            <TabsTrigger key={currentTab} value={currentTab} className="text-xs">
-              {currentTab}
+          {ALL_TABS.map((t) => (
+            <TabsTrigger key={t} value={t} className="text-xs">
+              {t}
             </TabsTrigger>
           ))}
         </TabsList>
@@ -176,33 +85,51 @@ export default function SettingsPage() {
         </TabsContent>
 
         <TabsContent value="Members">
-          <OrganizationMembersWorkspaceContainer />
+          <PremiumFeatureBlock
+            title="Team Collaboration"
+            description="Upgrade your plan to invite team members to your organization and manage access together."
+            hasAccess={entitlements?.canUseTeamCollaboration ?? false}
+          >
+            <OrganizationMembersWorkspaceContainer />
+          </PremiumFeatureBlock>
         </TabsContent>
 
         <TabsContent value="Webhooks">
-          <WebhookDestinationsPanel
-            destinations={webhookDestinations}
-            canManage={canManage}
-            saving={webhookSaving}
-            testingId={testWebhookMutation.isPending ? testWebhookMutation.variables : null}
-            latestSecret={latestSecret}
-            onCreate={handleCreateWebhook}
-            onUpdate={handleUpdateWebhook}
-            onTest={handleTestWebhook}
-            onDismissSecret={() => setLatestSecret(null)}
-          />
+          <PremiumFeatureBlock
+            title="Webhook Destinations"
+            description="Upgrade your plan to configure custom webhook destinations for real-time alerts."
+            hasAccess={entitlements?.canUseWebhookDestinations ?? false}
+          >
+            <WebhookDestinationsPanel
+              destinations={webhook.destinations}
+              canManage={webhook.canManage}
+              saving={webhook.saving}
+              testingId={webhook.testingId}
+              latestSecret={webhook.latestSecret}
+              onCreate={webhook.onCreate}
+              onUpdate={webhook.onUpdate}
+              onTest={webhook.onTest}
+              onDismissSecret={webhook.onDismissSecret}
+            />
+          </PremiumFeatureBlock>
         </TabsContent>
 
         <TabsContent value="Notifications">
-          <SlackDestinationsPanel
-            destinations={slackDestinations}
-            canManage={slackCanManage}
-            saving={slackSaving}
-            testingId={testSlackMutation.isPending ? testSlackMutation.variables : null}
-            onCreate={handleCreateSlack}
-            onUpdate={handleUpdateSlack}
-            onTest={handleTestSlack}
-          />
+          <PremiumFeatureBlock
+            title="Slack & Discord Notifications"
+            description="Upgrade your plan to integrate with Slack and Discord and receive alerts directly in your channels."
+            hasAccess={entitlements?.canUseSlackDestinations ?? false}
+          >
+            <SlackDestinationsPanel
+              destinations={slack.destinations}
+              canManage={slack.canManage}
+              saving={slack.saving}
+              testingId={slack.testingId}
+              onCreate={slack.onCreate}
+              onUpdate={slack.onUpdate}
+              onTest={slack.onTest}
+            />
+          </PremiumFeatureBlock>
         </TabsContent>
       </Tabs>
     </div>

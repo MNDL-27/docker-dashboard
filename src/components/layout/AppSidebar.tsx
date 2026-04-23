@@ -32,18 +32,11 @@ const navGroups = [
     ],
   },
   {
-    label: "Operations",
-    items: [
-      { label: "Members", icon: Users, href: "/app/members" },
-    ],
-  },
-  {
     label: "Management",
     items: [
       { label: "Billing", icon: CreditCard, href: "/app/billing" },
       { label: "Settings", icon: Settings, href: "/app/settings" },
       { label: "Admin", icon: Shield, href: "/app/admin" },
-      { label: "Setup Guide", icon: BookOpen, href: "/app/setup-guide" },
       { label: "Help", icon: HelpCircle, href: "/app/help" },
     ],
   },
@@ -58,7 +51,6 @@ export function AppSidebar() {
     ...group,
     items: group.items.filter((item) => {
       if (item.href === "/app/admin" && !viewer?.is_platform_admin) return false;
-      if (item.href === "/app/members" && !viewer?.entitlements?.canUseTeamCollaboration) return false;
       return true;
     }),
   }));

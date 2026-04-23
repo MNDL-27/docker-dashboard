@@ -10,7 +10,6 @@ import { isAppSubdomain, isDocsSubdomain, isPreviewAuthBypassEnabled } from "@/l
 import { RequireAppSubdomain } from "@/components/RequireAppSubdomain";
 import { ClerkProvider } from "@clerk/clerk-react";
 import { RequirePlatformAdmin } from "@/components/RequirePlatformAdmin";
-import { RequireFeatureEntitlement } from "@/components/RequireFeatureEntitlement";
 import { Loader2 } from "lucide-react";
 import { lazy, Suspense, useEffect } from "react";
 
@@ -36,7 +35,7 @@ const ContainersPage = lazy(() => import("./pages/app/ContainersPage"));
 const ContainerDetailPage = lazy(() => import("./pages/app/ContainerDetailPage"));
 const LogsPage = lazy(() => import("./pages/app/LogsPage"));
 const AlertsPage = lazy(() => import("./pages/app/AlertsPage"));
-const MembersPage = lazy(() => import("./pages/app/MembersPage"));
+// MembersPage removed — functionality moved to Settings > Members tab
 const BillingPage = lazy(() => import("./pages/app/BillingPage"));
 const SettingsPage = lazy(() => import("./pages/app/SettingsPage"));
 const OrganizationsPage = lazy(() => import("./pages/app/OrganizationsPage"));
@@ -155,15 +154,8 @@ const App = () => {
                     <Route path="incidents" element={<Navigate to="/app/alerts" replace />} />
                     <Route path="incidents/:id" element={<Navigate to="/app/alerts" replace />} />
                     <Route path="deployments" element={<Navigate to="/app/hosts" replace />} />
-                    <Route
-                      path="members"
-                      element={
-                        <RequireFeatureEntitlement feature="canUseTeamCollaboration">
-                          <MembersPage />
-                        </RequireFeatureEntitlement>
-                      }
-                    />
                     <Route path="billing" element={<BillingPage />} />
+                    <Route path="members" element={<Navigate to="/app/settings?tab=Members" replace />} />
                     <Route path="dedicated-deployment" element={<DedicatedDeploymentPage />} />
                     <Route path="settings" element={<SettingsPage />} />
                     <Route path="admin" element={<RequirePlatformAdmin><AdminPage /></RequirePlatformAdmin>} />
