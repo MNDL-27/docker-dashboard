@@ -1,7 +1,7 @@
 import { PageHeader } from "@/components/shared/PageHeader";
 import { PremiumFeatureBlock } from "@/components/shared/PremiumFeatureBlock";
 import { OrganizationMembersWorkspaceContainer } from "@/components/settings/OrganizationMembersWorkspace";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { ProfileSettings } from "@/components/settings/ProfileSettings";
 import { useSearchParams } from "react-router-dom";
 import { SlackDestinationsPanel } from "@/components/settings/SlackDestinationsPanel";
@@ -11,43 +11,57 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useViewerState } from "@/hooks/useViewerState";
 import { useDestinationSettings } from "@/hooks/useDestinationSettings";
 
-const allTabs = ["Members", "Profile", "Webhooks", "Notifications"];
+// ── Constants ───────────────────────────────────────────────────────
+
+const ALL_TABS = ["Members", "Profile", "Webhooks", "Notifications"] as const;
+const DEFAULT_TAB = "Profile";
+
+// ── URL-synced tab hook ─────────────────────────────────────────────
+
+function useTabSync(validTabs: readonly string[], defaultTab: string) {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const requestedTab = searchParams.get("tab");
+  const [tab, setTab] = useState(requestedTab && validTabs.includes(requestedTab) ? requestedTab : defaultTab);
+
+  useEffect(() => {
+    if (!validTabs.includes(tab)) {
+      setTab(defaultTab);
+      const next = new URLSearchParams(searchParams);
+      next.delete("tab");
+      setSearchParams(next, { replace: true });
+    }
+  }, [tab, validTabs, searchParams, setSearchParams, defaultTab]);
+
+  const onChange = useCallback(
+    (nextTab: string) => {
+      setTab(nextTab);
+      const next = new URLSearchParams(searchParams);
+      if (nextTab === defaultTab) {
+        next.delete("tab");
+      } else {
+        next.set("tab", nextTab);
+      }
+      setSearchParams(next, { replace: true });
+    },
+    [searchParams, setSearchParams, defaultTab],
+  );
+
+  return { tab, onChange };
+}
+
+// ── Page ────────────────────────────────────────────────────────────
 
 export default function SettingsPage() {
   const { organization: currentOrg } = useOrganization();
   const { data: viewer } = useViewerState();
   const entitlements = viewer?.entitlements;
-  const canUseTeamCollaboration = entitlements?.canUseTeamCollaboration ?? false;
-  const canUseWebhookDestinations = entitlements?.canUseWebhookDestinations ?? false;
-  const canUseSlackDestinations = entitlements?.canUseSlackDestinations ?? false;
 
-  const tabs = allTabs;
-
-  const [searchParams, setSearchParams] = useSearchParams();
-  const requestedTab = searchParams.get("tab");
-  const [tab, setTab] = useState(requestedTab && tabs.includes(requestedTab) ? requestedTab : "Profile");
-
-  const { slack, webhook } = useDestinationSettings(currentOrg?.id, canUseSlackDestinations, canUseWebhookDestinations);
-
-  const handleTabChange = (nextTab: string) => {
-    setTab(nextTab);
-    const nextParams = new URLSearchParams(searchParams);
-    if (nextTab === "Profile") {
-      nextParams.delete("tab");
-    } else {
-      nextParams.set("tab", nextTab);
-    }
-    setSearchParams(nextParams, { replace: true });
-  };
-
-  useEffect(() => {
-    if (!tabs.includes(tab)) {
-      setTab("Profile");
-      const nextParams = new URLSearchParams(searchParams);
-      nextParams.delete("tab");
-      setSearchParams(nextParams, { replace: true });
-    }
-  }, [tab, tabs, searchParams, setSearchParams]);
+  const { tab, onChange } = useTabSync(ALL_TABS, DEFAULT_TAB);
+  const { slack, webhook } = useDestinationSettings(
+    currentOrg?.id,
+    entitlements?.canUseSlackDestinations ?? false,
+    entitlements?.canUseWebhookDestinations ?? false,
+  );
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -57,11 +71,11 @@ export default function SettingsPage() {
         breadcrumbs={[{ label: "Management" }, { label: "Settings" }]}
       />
 
-      <Tabs value={tab} onValueChange={handleTabChange} className="space-y-4">
+      <Tabs value={tab} onValueChange={onChange} className="space-y-4">
         <TabsList className="h-auto w-full justify-start overflow-x-auto bg-secondary p-1">
-          {tabs.map((currentTab) => (
-            <TabsTrigger key={currentTab} value={currentTab} className="text-xs">
-              {currentTab}
+          {ALL_TABS.map((t) => (
+            <TabsTrigger key={t} value={t} className="text-xs">
+              {t}
             </TabsTrigger>
           ))}
         </TabsList>
@@ -71,18 +85,21 @@ export default function SettingsPage() {
         </TabsContent>
 
         <TabsContent value="Members">
-          {canUseTeamCollaboration ? (
+          <PremiumFeatureBlock
+            title="Team Collaboration"
+            description="Upgrade your plan to invite team members to your organization and manage access together."
+            hasAccess={entitlements?.canUseTeamCollaboration ?? false}
+          >
             <OrganizationMembersWorkspaceContainer />
-          ) : (
-            <PremiumFeatureBlock
-              title="Team Collaboration"
-              description="Upgrade your plan to invite team members to your organization and manage access together."
-            />
-          )}
+          </PremiumFeatureBlock>
         </TabsContent>
 
         <TabsContent value="Webhooks">
-          {canUseWebhookDestinations ? (
+          <PremiumFeatureBlock
+            title="Webhook Destinations"
+            description="Upgrade your plan to configure custom webhook destinations for real-time alerts."
+            hasAccess={entitlements?.canUseWebhookDestinations ?? false}
+          >
             <WebhookDestinationsPanel
               destinations={webhook.destinations}
               canManage={webhook.canManage}
@@ -94,16 +111,15 @@ export default function SettingsPage() {
               onTest={webhook.onTest}
               onDismissSecret={webhook.onDismissSecret}
             />
-          ) : (
-            <PremiumFeatureBlock
-              title="Webhook Destinations"
-              description="Upgrade your plan to configure custom webhook destinations for real-time alerts."
-            />
-          )}
+          </PremiumFeatureBlock>
         </TabsContent>
 
         <TabsContent value="Notifications">
-          {canUseSlackDestinations ? (
+          <PremiumFeatureBlock
+            title="Slack & Discord Notifications"
+            description="Upgrade your plan to integrate with Slack and Discord and receive alerts directly in your channels."
+            hasAccess={entitlements?.canUseSlackDestinations ?? false}
+          >
             <SlackDestinationsPanel
               destinations={slack.destinations}
               canManage={slack.canManage}
@@ -113,12 +129,7 @@ export default function SettingsPage() {
               onUpdate={slack.onUpdate}
               onTest={slack.onTest}
             />
-          ) : (
-            <PremiumFeatureBlock
-              title="Slack & Discord Notifications"
-              description="Upgrade your plan to integrate with Slack and Discord and receive alerts directly in your channels."
-            />
-          )}
+          </PremiumFeatureBlock>
         </TabsContent>
       </Tabs>
     </div>
