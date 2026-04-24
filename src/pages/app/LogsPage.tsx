@@ -10,7 +10,7 @@ import { Link } from "react-router-dom";
 
 export default function LogsPage() {
   const { organization: currentOrg } = useOrganization();
-  const { data: hosts = [] } = useDockerHosts(currentOrg?.id);
+  const { data: hosts = [] } = useDockerHosts(currentOrg?.id, { filterByPlan: true });
   const [selectedHost, setSelectedHost] = useState<string>("");
   const [selectedContainer, setSelectedContainer] = useState<string>("");
   const [containers, setContainers] = useState<any[]>([]);

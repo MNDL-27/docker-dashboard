@@ -180,7 +180,7 @@ export default function ContainersPage() {
   const queryClient = useQueryClient();
   const { organization: currentOrg } = useOrganization();
   const { data: viewer } = useViewerState();
-  const { data: hosts = [], isLoading: hostsLoading } = useDockerHosts(currentOrg?.id);
+  const { data: hosts = [], isLoading: hostsLoading } = useDockerHosts(currentOrg?.id, { filterByPlan: true });
   const effectivePlan = viewer?.active_org_effective_plan ?? viewer?.active_org_plan;
   const manualScanMode = isManualScanPlan(effectivePlan, viewer?.active_org_scan_limit);
   const scanQuotaExhausted = isScanQuotaExhausted(viewer?.active_org_scan_limit, viewer?.active_org_scan_remaining);
@@ -211,28 +211,7 @@ export default function ContainersPage() {
   const [imageFilter, setImageFilter] = useState("");
   const [actionLoading, setActionLoading] = useState<string | null>(null);
 
-  const allContainers: any[] = useMemo(() => (Array.isArray(rawContainers) ? rawContainers : []), [rawContainers]);
-
-  const normalizedPlan = normalizePlan(effectivePlan);
-  const fallbackNodeLimit = PLAN_POLICY_BY_PLAN[normalizedPlan].nodeLimit;
-  const nodeLimit = viewer?.entitlements?.nodeLimit ?? fallbackNodeLimit;
-
-  const allowedHostIds = useMemo(() => {
-    if (nodeLimit === null) return null; // unlimited
-    const allowed = new Set<string>();
-    const hostsSortedByCreation = [...hosts].sort(
-      (a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
-    );
-    for (let i = 0; i < Math.min(nodeLimit, hostsSortedByCreation.length); i++) {
-      allowed.add(hostsSortedByCreation[i].id);
-    }
-    return allowed;
-  }, [hosts, nodeLimit]);
-
-  const containers = useMemo(() => {
-    if (allowedHostIds === null) return allContainers;
-    return allContainers.filter((c: any) => c._hostId && allowedHostIds.has(c._hostId));
-  }, [allContainers, allowedHostIds]);
+  const containers: any[] = useMemo(() => (Array.isArray(rawContainers) ? rawContainers : []), [rawContainers]);
 
   const uniqueHosts = useMemo(() => {
     const map = new Map<string, string>();

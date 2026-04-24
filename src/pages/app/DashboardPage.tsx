@@ -27,7 +27,7 @@ export default function DashboardPage() {
   const manualScanMode = isManualScanPlan(effectivePlan, viewer?.active_org_scan_limit);
   const scanQuotaExhausted = isScanQuotaExhausted(viewer?.active_org_scan_limit, viewer?.active_org_scan_remaining);
 
-  const { data: hosts = [], isLoading: hostsLoading } = useDockerHosts(currentOrg?.id);
+  const { data: hosts = [], isLoading: hostsLoading } = useDockerHosts(currentOrg?.id, { filterByPlan: true });
   const {
     data: containers = [],
     isLoading: containersLoading,

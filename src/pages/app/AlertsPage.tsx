@@ -30,7 +30,7 @@ export default function AlertsPage() {
   const [statusFilter, setStatusFilter] = useState<string>("open");
   const [pendingAlertId, setPendingAlertId] = useState<string | null>(null);
 
-  const hostsQuery = useDockerHosts(currentOrg?.id);
+  const hostsQuery = useDockerHosts(currentOrg?.id, { filterByPlan: true });
   const alertsQuery = useAlertsWorkspace(currentOrg?.id, {
     severity: severityFilter === "all" ? undefined : severityFilter,
     status: statusFilter === "all" ? undefined : statusFilter,
