@@ -30,6 +30,7 @@ import { useViewerState } from "@/hooks/useViewerState";
 import { isManualScanPlan, isScanQuotaExhausted, SCAN_REFRESH_COSTS } from "@/lib/scan-quota";
 import { dockerApi } from "@/services/docker-api";
 import { cn } from "@/lib/utils";
+import { PLAN_POLICY_BY_PLAN, normalizePlan } from "../../../shared/schema/plan-policy";
 
 type BadgeStatus = "running" | "unhealthy" | "exited" | "restarting" | "paused" | "critical" | "warning";
 
@@ -210,7 +211,28 @@ export default function ContainersPage() {
   const [imageFilter, setImageFilter] = useState("");
   const [actionLoading, setActionLoading] = useState<string | null>(null);
 
-  const containers: any[] = useMemo(() => (Array.isArray(rawContainers) ? rawContainers : []), [rawContainers]);
+  const allContainers: any[] = useMemo(() => (Array.isArray(rawContainers) ? rawContainers : []), [rawContainers]);
+
+  const normalizedPlan = normalizePlan(effectivePlan);
+  const fallbackNodeLimit = PLAN_POLICY_BY_PLAN[normalizedPlan].nodeLimit;
+  const nodeLimit = viewer?.entitlements?.nodeLimit ?? fallbackNodeLimit;
+
+  const allowedHostIds = useMemo(() => {
+    if (nodeLimit === null) return null; // unlimited
+    const allowed = new Set<string>();
+    const hostsSortedByCreation = [...hosts].sort(
+      (a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+    );
+    for (let i = 0; i < Math.min(nodeLimit, hostsSortedByCreation.length); i++) {
+      allowed.add(hostsSortedByCreation[i].id);
+    }
+    return allowed;
+  }, [hosts, nodeLimit]);
+
+  const containers = useMemo(() => {
+    if (allowedHostIds === null) return allContainers;
+    return allContainers.filter((c: any) => c._hostId && allowedHostIds.has(c._hostId));
+  }, [allContainers, allowedHostIds]);
 
   const uniqueHosts = useMemo(() => {
     const map = new Map<string, string>();
