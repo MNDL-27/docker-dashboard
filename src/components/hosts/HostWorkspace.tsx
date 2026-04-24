@@ -35,6 +35,7 @@ import {
   getWatchtowerAgentUpdateStatus,
   getWatchtowerAgentUpdateStatusCopy,
 } from "@/lib/agent-release";
+import { PLAN_POLICY_BY_PLAN, normalizePlan } from "../../../shared/schema/plan-policy";
 
 function agentVerificationReason(
   failure: HostMetricsFailure | null | undefined,
@@ -122,7 +123,10 @@ export function HostWorkspace() {
   const effectivePlan = viewer?.active_org_effective_plan ?? viewer?.active_org_plan;
   const manualScanMode = isManualScanPlan(effectivePlan, viewer?.active_org_scan_limit);
   const scanQuotaExhausted = isScanQuotaExhausted(viewer?.active_org_scan_limit, viewer?.active_org_scan_remaining);
-  const nodeLimit = viewer?.entitlements?.nodeLimit ?? null;
+  
+  const normalizedPlan = normalizePlan(effectivePlan);
+  const fallbackNodeLimit = PLAN_POLICY_BY_PLAN[normalizedPlan].nodeLimit;
+  const nodeLimit = viewer?.entitlements?.nodeLimit ?? fallbackNodeLimit;
 
   // Hosts sorted by creation date (oldest first) — matches backend enforcement order
   const hostsSortedByCreation = useMemo(() => {
