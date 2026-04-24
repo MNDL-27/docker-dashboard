@@ -1,40 +1,29 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { formatDistanceToNowStrict } from "date-fns";
 import { useOrganization } from "@clerk/clerk-react";
 import { useQueryClient } from "@tanstack/react-query";
-import { Link, useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import {
-  Activity,
-  Box,
-  Clock3,
-  CloudCog,
   Loader2,
-  Lock,
-  Pencil,
   PanelLeftClose,
   PanelLeftOpen,
-  Plus,
-  RefreshCw,
   Search,
-  Server,
   Terminal,
-  Trash2,
-  Wifi,
-  WifiOff,
 } from "lucide-react";
 
 import { AddHostDialog } from "@/components/docker/AddHostDialog";
-import { AgentUpdateDialog } from "@/components/hosts/AgentUpdateDialog";
+import { HostCard } from "@/components/hosts/HostCard";
+import { HostDetailHeader } from "@/components/hosts/HostDetailHeader";
+import { HostMetricsGrid } from "@/components/hosts/HostMetricsGrid";
+import { HostUpgradeDialog } from "@/components/hosts/HostUpgradeDialog";
 import { PageHeader } from "@/components/shared/PageHeader";
 import { ScanQuotaStatusStrip } from "@/components/shared/ScanQuotaStatusStrip";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
-import { getHostStatusAppearance, isReadableHostStatus, normalizeHostStatus } from "@/lib/host-health-state";
+import { isReadableHostStatus, normalizeHostStatus } from "@/lib/host-health-state";
 import { useDeleteDockerHost, useDockerHosts, useHostContainers } from "@/hooks/useDocker";
-import { HostMetricsDisk, HostMetricsFailure, HostMetricsPoint, useHostMetricsHistory } from "@/hooks/useHostMetrics";
+import { HostMetricsFailure, useHostMetricsHistory } from "@/hooks/useHostMetrics";
 import { useViewerState } from "@/hooks/useViewerState";
 import { useToast } from "@/hooks/use-toast";
 import { dockerApi } from "@/services/docker-api";
@@ -46,43 +35,6 @@ import {
   getWatchtowerAgentUpdateStatus,
   getWatchtowerAgentUpdateStatusCopy,
 } from "@/lib/agent-release";
-
-function formatBytes(bytes: number): string {
-  if (!Number.isFinite(bytes) || bytes <= 0) return "0 B";
-  const units = ["B", "KB", "MB", "GB", "TB"];
-  const exponent = Math.min(Math.floor(Math.log(bytes) / Math.log(1024)), units.length - 1);
-  const value = bytes / 1024 ** exponent;
-  return `${value.toFixed(value >= 10 || exponent === 0 ? 0 : 1)} ${units[exponent]}`;
-}
-
-function formatSpeed(bytesPerSecond: number | null | undefined): string {
-  if (!Number.isFinite(bytesPerSecond) || bytesPerSecond === null || bytesPerSecond === undefined || bytesPerSecond < 0) {
-    return "Unavailable";
-  }
-  if (bytesPerSecond === 0) return "0 B/s";
-  return `${formatBytes(bytesPerSecond)}/s`;
-}
-
-function formatLastSeen(lastSeenAt: string | null): string {
-  if (!lastSeenAt) return "Never";
-  return formatDistanceToNowStrict(new Date(lastSeenAt), { addSuffix: true });
-}
-
-function formatUptime(seconds: number | null | undefined): string {
-  if (!Number.isFinite(seconds) || seconds === null || seconds === undefined || seconds < 0) {
-    return "Unavailable";
-  }
-
-  const totalSeconds = Math.floor(seconds);
-  const days = Math.floor(totalSeconds / 86400);
-  const hours = Math.floor((totalSeconds % 86400) / 3600);
-  const minutes = Math.floor((totalSeconds % 3600) / 60);
-
-  if (days > 0) return `${days}d ${hours}h ${minutes}m`;
-  if (hours > 0) return `${hours}h ${minutes}m`;
-  if (minutes > 0) return `${minutes}m`;
-  return `${totalSeconds}s`;
-}
 
 function agentVerificationReason(
   failure: HostMetricsFailure | null | undefined,
@@ -109,311 +61,6 @@ function agentVerificationReason(
   }
 
   return null;
-}
-
-function isDisconnectedHostStatus(status: string | null | undefined) {
-  return !isReadableHostStatus(status);
-}
-
-function HostCard({
-  host,
-  selected,
-  previewMetrics,
-  onSelect,
-  isLocked,
-}: {
-  host: DockerHost;
-  selected: boolean;
-  previewMetrics?: Pick<HostMetricsPoint, "cpu" | "memory"> | null;
-  onSelect: () => void;
-  isLocked?: boolean;
-}) {
-  const statusAppearance = getHostStatusAppearance(host.status);
-
-  return (
-    <button
-      type="button"
-      onClick={onSelect}
-      className={cn(
-        "w-full rounded-2xl border p-4 text-left transition-all",
-        isLocked
-          ? "border-white/5 bg-background/20 opacity-60 hover:opacity-80 hover:border-warning/30"
-          : selected
-            ? "border-primary/40 bg-primary/10 shadow-[0_0_0_1px_rgba(34,197,94,0.15)]"
-            : "border-white/5 bg-background/40 hover:border-primary/20 hover:bg-background/60",
-      )}
-    >
-      <div className="flex items-start justify-between gap-3">
-        <div className="min-w-0">
-          <p className="truncate text-lg font-semibold tracking-tight">{host.name}</p>
-          <p className="mt-1 text-xs uppercase tracking-[0.22em] text-muted-foreground">
-            {host.connection_mode === "cloudflare_tunnel" ? "Cloudflare tunnel" : "Agent"}
-          </p>
-        </div>
-        {isLocked ? (
-          <Lock className="mt-1 h-4 w-4 shrink-0 text-warning" />
-        ) : (
-          <span className={cn("mt-1 h-3 w-3 shrink-0 rounded-full", statusAppearance.dotClassName)} />
-        )}
-      </div>
-      <div className="mt-4 flex items-center justify-between text-sm text-muted-foreground">
-        {isLocked ? (
-          <span className="text-xs text-warning">Upgrade to access</span>
-        ) : (
-          <>
-            <span>CPU: {previewMetrics ? `${previewMetrics.cpu.toFixed(0)}%` : "--"}</span>
-            <span>RAM: {previewMetrics ? `${previewMetrics.memory.toFixed(0)}%` : "--"}</span>
-          </>
-        )}
-      </div>
-    </button>
-  );
-}
-
-function SummaryCard({ label, value, helper, icon: Icon }: { label: string; value: string; helper?: string; icon: typeof Server }) {
-  return (
-    <div className="glass-card p-4">
-      <div className="flex items-center justify-between gap-3">
-        <span className="text-xs uppercase tracking-[0.22em] text-muted-foreground">{label}</span>
-        <Icon className="h-4 w-4 text-muted-foreground" />
-      </div>
-      <p className="mt-4 text-2xl font-semibold tracking-tight">{value}</p>
-      {helper && <p className="mt-1 text-sm text-muted-foreground">{helper}</p>}
-    </div>
-  );
-}
-
-function RingCard({ point }: { point: HostMetricsPoint }) {
-  const value = Math.max(0, Math.min(100, point.cpu));
-  const colorVar = value >= 90 ? "var(--destructive)" : value >= 70 ? "var(--warning)" : "var(--primary)";
-  
-  return (
-    <div className="glass-card min-h-[260px] p-5 flex flex-col items-center justify-center gap-4">
-      <div className="text-center">
-        <p className="text-xs uppercase tracking-[0.24em] text-muted-foreground">CPU usage</p>
-      </div>
-      <div
-        className="relative flex h-44 w-44 items-center justify-center rounded-full transition-all duration-500"
-        style={{ background: `conic-gradient(hsl(${colorVar}) ${value}%, rgba(255,255,255,0.06) ${value}% 100%)` }}
-      >
-        <div className="flex h-32 w-32 items-center justify-center rounded-full bg-background/95">
-          <span className="text-4xl font-semibold tracking-tight">{value.toFixed(0)}%</span>
-        </div>
-      </div>
-      <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
-        {point.usedCores.toFixed(2)} / {point.totalCores.toFixed(2)} cores
-      </p>
-    </div>
-  );
-}
-
-function ContainerSummaryCard({
-  total,
-  running,
-  loading,
-  disconnected,
-  paused,
-}: {
-  total: number;
-  running: number;
-  loading: boolean;
-  disconnected: boolean;
-  paused?: boolean;
-}) {
-  const stopped = Math.max(0, total - running);
-
-  return (
-    <div className="glass-card min-h-[220px] p-5 flex flex-col justify-between">
-      <div className="flex items-center justify-between gap-3">
-        <div>
-          <p className="text-xs uppercase tracking-[0.22em] text-muted-foreground">Containers</p>
-          <h3 className="mt-1 text-lg font-semibold tracking-tight">Host workload</h3>
-        </div>
-        <Box className="h-5 w-5 text-muted-foreground" />
-      </div>
-
-      {disconnected ? (
-        <p className="text-sm text-muted-foreground">Reconnect the host to load container counts.</p>
-      ) : paused && total === 0 ? (
-        <p className="text-sm text-muted-foreground">Container counts are paused while the host heartbeat is stale.</p>
-      ) : loading ? (
-        <div className="flex flex-1 items-center justify-center">
-          <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-        </div>
-      ) : (
-        <div className="grid gap-3 sm:grid-cols-2">
-          <div className="rounded-2xl border border-white/10 bg-background/40 p-4">
-            <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">Total</p>
-            <p className="mt-2 text-3xl font-semibold tracking-tight">{total}</p>
-          </div>
-          <div className="rounded-2xl border border-white/10 bg-background/40 p-4">
-            <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">Running</p>
-            <p className="mt-2 text-3xl font-semibold tracking-tight">{running}</p>
-          </div>
-        </div>
-      )}
-
-      {!disconnected && !paused && !loading ? (
-        <p className="text-sm text-muted-foreground">{stopped} stopped containers on this host.</p>
-      ) : null}
-    </div>
-  );
-}
-
-function MeterCard({
-  title,
-  value,
-  helper,
-  progress,
-  footer,
-}: {
-  title: string;
-  value: string;
-  helper?: string;
-  progress?: number;
-  footer?: string;
-}) {
-  const width = progress === undefined ? undefined : `${Math.max(0, Math.min(100, progress))}%`;
-  return (
-    <div className="glass-card p-5 space-y-4">
-      <div className="flex items-start justify-between gap-4">
-        <div>
-          <p className="text-xs uppercase tracking-[0.22em] text-muted-foreground">{title}</p>
-          <p className="mt-3 text-3xl font-semibold tracking-tight">{value}</p>
-        </div>
-        {helper && <span className="text-xs text-right text-muted-foreground">{helper}</span>}
-      </div>
-      {width && (
-        <div className="space-y-2">
-          <div className="h-3 rounded-full bg-white/5 overflow-hidden">
-            <div className="h-full rounded-full bg-primary" style={{ width }} />
-          </div>
-          {footer && <p className="text-xs text-muted-foreground">{footer}</p>}
-        </div>
-      )}
-      {!width && footer && <p className="text-xs text-muted-foreground">{footer}</p>}
-    </div>
-  );
-}
-
-function DiskUsageCard({ disk }: { disk: HostMetricsDisk }) {
-  const progress = disk.totalBytes > 0 ? Math.max(0, Math.min(100, (disk.usedBytes / disk.totalBytes) * 100)) : 0;
-
-  return (
-    <div className="glass-card p-5 space-y-4">
-      <div className="flex items-start justify-between gap-4">
-        <div>
-          <p className="text-xs uppercase tracking-[0.22em] text-muted-foreground">Disk usage ({disk.device})</p>
-          <p className="mt-3 text-3xl font-semibold tracking-tight">
-            {formatBytes(disk.usedBytes)} <span className="text-muted-foreground">/ {formatBytes(disk.totalBytes)}</span>
-          </p>
-        </div>
-        <p className="text-right text-xs text-muted-foreground">{disk.mount}</p>
-      </div>
-      <div className="space-y-2">
-        <div className="h-3 overflow-hidden rounded-full bg-white/5">
-          <div className="h-full rounded-full bg-primary" style={{ width: `${progress}%` }} />
-        </div>
-        <p className="text-xs text-muted-foreground">{progress.toFixed(0)}% utilized</p>
-      </div>
-      <div className="flex items-center justify-between gap-4 text-xs uppercase tracking-[0.18em] text-muted-foreground">
-        <span>Read: <span className="text-foreground">{formatSpeed(disk.readBytesPerSec)}</span></span>
-        <span>Write: <span className="text-foreground">{formatSpeed(disk.writeBytesPerSec)}</span></span>
-      </div>
-    </div>
-  );
-}
-
-function TrendBars({ 
-  history, 
-  accessor, 
-  secondaryAccessor,
-  maxBars = 24 
-}: { 
-  history: HostMetricsPoint[]; 
-  accessor: (point: HostMetricsPoint) => number | null; 
-  secondaryAccessor?: (point: HostMetricsPoint) => number | null;
-  maxBars?: number 
-}) {
-  const totals = history.map(p => (accessor(p) ?? 0) + (secondaryAccessor?.(p) ?? 0));
-  const maxValue = totals.length > 0 ? Math.max(...totals, 1) : 1;
-  const hasData = history.length > 0;
-
-  if (!hasData) {
-    return (
-      <div className="flex h-36 items-end gap-2">
-        {Array.from({ length: maxBars }).map((_, index) => {
-          const height = 18 + (index % 5) * 10;
-          return (
-            <div 
-              key={`placeholder-${index}`} 
-              className="flex-1 rounded-t-full bg-primary/20 transition-all" 
-              style={{ height: `${height}%` }} 
-            />
-          );
-        })}
-      </div>
-    );
-  }
-
-  const emptySlots = Math.max(0, maxBars - history.length);
-  const dataBars = history.slice(-maxBars);
-
-  return (
-    <div className="flex h-36 items-end gap-2">
-      {Array.from({ length: emptySlots }).map((_, index) => (
-        <div key={`empty-${index}`} className="flex-1 rounded-t-full bg-white/5 transition-all" style={{ height: '4px' }} />
-      ))}
-      {dataBars.map((point) => {
-        const valPrimary = accessor(point) ?? 0;
-        const valSecondary = secondaryAccessor?.(point) ?? 0;
-        const total = valPrimary + valSecondary;
-        
-        const primaryHeight = total === 0 ? 2 : Math.max(2, Math.round((valPrimary / maxValue) * 100));
-        const secondaryHeight = total === 0 ? 0 : Math.round((valSecondary / maxValue) * 100);
-        
-        return (
-          <div 
-            key={point.timestamp} 
-            className="flex-1 flex flex-col justify-end gap-[1px]"
-            style={{ height: `${Math.max(4, primaryHeight + secondaryHeight)}%` }}
-          >
-            {valSecondary > 0 && (
-              <div 
-                className="w-full rounded-t-full bg-muted-foreground/40 transition-all duration-500" 
-                style={{ height: `${(secondaryHeight / (primaryHeight + secondaryHeight)) * 100}%` }} 
-              />
-            )}
-            <div 
-              className={cn(
-                "w-full transition-all duration-500",
-                valSecondary > 0 ? "rounded-b-sm" : "rounded-t-full",
-                "bg-primary/60"
-              )} 
-              style={{ height: `${(primaryHeight / (primaryHeight + secondaryHeight)) * 100}%` }} 
-            />
-          </div>
-        );
-      })}
-    </div>
-  );
-}
-
-function EmptyState({ title, description }: { title: string; description: string }) {
-  return (
-    <div className="glass-card min-h-[220px] p-6 flex flex-col justify-center text-center">
-      <p className="text-sm font-medium">{title}</p>
-      <p className="mt-2 text-sm text-muted-foreground">{description}</p>
-    </div>
-  );
-}
-
-function LoadingState() {
-  return (
-    <div className="glass-card min-h-[220px] p-6 flex items-center justify-center">
-      <Loader2 className="h-7 w-7 animate-spin text-muted-foreground" />
-    </div>
-  );
 }
 
 function formatHostMetricsFailure(
@@ -544,7 +191,7 @@ export function HostWorkspace() {
   }, [filteredHosts, hosts, hostsSortedByCreation, isHostLocked, isLoading, navigate, routeHostId, selectedHost]);
 
   const selectedHostReadable = isReadableHostStatus(selectedHost?.status);
-  const selectedHostDisconnected = isDisconnectedHostStatus(selectedHost?.status);
+  const selectedHostDisconnected = !isReadableHostStatus(selectedHost?.status);
   const selectedHostAutoProbe = normalizeHostStatus(selectedHost?.status) === "connected";
   const selectedHostStale = normalizeHostStatus(selectedHost?.status) === "stale";
 
@@ -570,7 +217,6 @@ export function HostWorkspace() {
         .filter(Boolean)
         .join(" ")
     : null;
-  const containersErrorMessage = containersQuery.error instanceof Error ? containersQuery.error.message : null;
   const liveRefreshPending = containersQuery.isFetching || metricsQuery.isFetching;
 
   const containers = Array.isArray(containersQuery.data) ? containersQuery.data : [];
@@ -584,17 +230,6 @@ export function HostWorkspace() {
     ?? getWatchtowerAgentUpdateStatusCopy("pending", CURRENT_WATCHTOWER_AGENT_RELEASE);
   const verificationReason = agentVerificationReason(metricsQuery.failure, missingExtendedMetrics);
   const showAgentUpdateCta = !!selectedHost && agentUpdateStatus !== "current";
-  const addHostAction = currentOrg ? (
-    <AddHostDialog
-      orgId={currentOrg.id}
-      trigger={
-        <Button className="gap-2">
-          <Plus className="h-4 w-4" />
-          Add Host
-        </Button>
-      }
-    />
-  ) : null;
 
   const handleSelectHost = (hostId: string) => {
     if (isHostLocked(hostId)) {
@@ -680,407 +315,269 @@ export function HostWorkspace() {
       ) : (
         <div className={cn("grid gap-6", isInfrastructureVisible ? "xl:grid-cols-[320px,minmax(0,1fr)]" : "xl:grid-cols-[minmax(0,1fr)]")}>
           {isInfrastructureVisible ? (
-            <div className="glass-card overflow-hidden">
-              <div className="border-b border-white/5 px-5 py-4 space-y-4">
-                <div className="flex items-start justify-between gap-4">
-                  <div>
-                    <p className="text-xs uppercase tracking-[0.22em] text-muted-foreground">Host infrastructure</p>
-                    <h2 className="mt-1 text-lg font-semibold tracking-tight">Browse hosts</h2>
-                  </div>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon"
-                    className="shrink-0"
-                    onClick={() => setIsInfrastructureVisible(false)}
-                    aria-label="Hide host infrastructure panel"
-                  >
-                    <PanelLeftClose className="h-4 w-4" />
-                  </Button>
-                </div>
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground pointer-events-none" />
-                  <Input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search hosts..." className="pl-9" />
-                </div>
-              </div>
-              <ScrollArea className="h-[calc(100vh-18rem)]">
-                <div className="space-y-3 p-4">
-                  {filteredHosts.length === 0 ? (
-                    <div className="rounded-2xl border border-dashed border-white/10 p-6 text-center text-sm text-muted-foreground">No hosts match your search.</div>
-                  ) : (
-                    filteredHosts.map((host) => (
-                      <HostCard
-                        key={host.id}
-                        host={host}
-                        selected={host.id === selectedHost?.id}
-                        previewMetrics={host.id === selectedHost?.id ? selectedPreviewMetrics : null}
-                        onSelect={() => handleSelectHost(host.id)}
-                        isLocked={isHostLocked(host.id)}
-                      />
-                    ))
-                  )}
-                </div>
-              </ScrollArea>
-            </div>
+            <HostSidebar
+              filteredHosts={filteredHosts}
+              selectedHost={selectedHost}
+              selectedPreviewMetrics={selectedPreviewMetrics}
+              search={search}
+              onSearchChange={setSearch}
+              onSelectHost={handleSelectHost}
+              onHideSidebar={() => setIsInfrastructureVisible(false)}
+              isHostLocked={isHostLocked}
+            />
           ) : null}
 
           {selectedHost ? (
-            <div className="space-y-6">
-              {!isInfrastructureVisible ? (
-                <div className="flex justify-start">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    className="gap-2"
-                    onClick={() => setIsInfrastructureVisible(true)}
-                  >
-                    <PanelLeftOpen className="h-4 w-4" />
-                    Show Host Infrastructure
-                  </Button>
-                </div>
-              ) : null}
-              <div className="glass-card p-6 space-y-5">
-                {(() => {
-                  const selectedHostAppearance = getHostStatusAppearance(selectedHost.status);
-
-                  return (
-                <>
-                <div className="flex flex-col gap-5 xl:flex-row xl:items-start xl:justify-between">
-                  <div className="flex items-start gap-4">
-                    <div className="rounded-2xl bg-primary/10 p-4">
-                      <Server className="h-7 w-7 text-primary" />
-                    </div>
-                    <div>
-                      <div className="flex flex-wrap items-center gap-3">
-                        <h2 className="text-4xl font-semibold tracking-tight">{selectedHost.name}</h2>
-                        <span className={cn("inline-flex items-center gap-1 rounded-full border px-3 py-1 text-xs font-medium uppercase tracking-[0.18em]", selectedHostAppearance.pillClassName)}>
-                          {selectedHostAppearance.isOnlineIcon ? <Wifi className="h-3.5 w-3.5" /> : <WifiOff className="h-3.5 w-3.5" />}
-                          {selectedHost.status}
-                        </span>
-                      </div>
-                      <p className="mt-2 text-sm text-muted-foreground">Endpoint: {selectedHost.host_url}</p>
-                      <div className="mt-3 flex flex-wrap gap-2 text-xs text-muted-foreground">
-                        <span className="inline-flex items-center gap-1 rounded-full border border-white/10 px-2.5 py-1">
-                          {selectedHost.connection_mode === "cloudflare_tunnel" ? <CloudCog className="h-3.5 w-3.5" /> : <Terminal className="h-3.5 w-3.5" />}
-                          {selectedHost.connection_mode === "cloudflare_tunnel" ? "Cloudflare tunnel" : "Agent connection"}
-                        </span>
-                        <span className="inline-flex items-center gap-1 rounded-full border border-white/10 px-2.5 py-1">
-                          <Activity className="h-3.5 w-3.5" />
-                          Last seen {formatLastSeen(selectedHost.last_seen_at)}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="flex flex-wrap items-center gap-3">
-                    <Button variant="outline" className="gap-2" onClick={handleTest} disabled={testing}>
-                      {testing ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
-                      Test Connection
-                    </Button>
-                    {manualScanMode ? (
-                      <Button variant="outline" className="gap-2" onClick={() => void handleRefreshLiveData()} disabled={liveRefreshPending || !selectedHostAutoProbe || scanQuotaExhausted}>
-                        {liveRefreshPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
-                        Refresh Live Data
-                      </Button>
-                    ) : null}
-                    {showAgentUpdateCta ? (
-                      <AgentUpdateDialog
-                        host={selectedHost}
-                        status={agentUpdateStatus}
-                        statusCopy={agentUpdateStatusCopy}
-                        verificationReason={verificationReason}
-                        trigger={
-                          <Button variant="outline" className="gap-2">
-                            <Terminal className="h-4 w-4" />
-                            Update Agent
-                          </Button>
-                        }
-                      />
-                    ) : null}
-                    {currentOrg && selectedHost ? (
-                      <AddHostDialog
-                        orgId={currentOrg.id}
-                        host={selectedHost}
-                        trigger={
-                          <Button variant="outline" className="gap-2">
-                            <Pencil className="h-4 w-4" />
-                            Edit Host
-                          </Button>
-                        }
-                      />
-                    ) : null}
-                    <Button variant="destructive" className="gap-2" onClick={handleDelete}>
-                      <Trash2 className="h-4 w-4" />
-                      Remove Host
-                    </Button>
-                    {addHostAction}
-                  </div>
-                </div>
-
-                <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-                    <SummaryCard label="Running containers" value={`${runningCount}`} helper={`${containers.length} total`} icon={Box} />
-                  <SummaryCard
-                    label="Uptime"
-                    value={formatUptime(metricsQuery.latestPoint?.uptimeSeconds)}
-                    helper={
-                      metricsQuery.latestPoint?.uptimeSeconds !== null && metricsQuery.latestPoint?.uptimeSeconds !== undefined
-                        ? "From current host metrics sample"
-                        : missingExtendedMetrics
-                          ? `Update or reinstall the host agent to ${CURRENT_WATCHTOWER_AGENT_VERSION}`
-                        : normalizeHostStatus(selectedHost.status) === "connected"
-                          ? "Waiting for uptime sample"
-                          : normalizeHostStatus(selectedHost.status) === "stale"
-                          ? "Heartbeat is stale"
-                          : "Waiting for a successful probe"
-                    }
-                    icon={Clock3}
-                  />
-                  <SummaryCard label="Operating system" value={selectedHost.os_info || "Unknown"} helper={`Docker ${selectedHost.docker_version || "pending"}`} icon={Server} />
-                  <SummaryCard
-                    label="Agent version"
-                    value={selectedHost.agent_version || "Pending"}
-                    helper={agentUpdateStatusCopy.description}
-                    icon={Terminal}
-                  />
-                </div>
-                </>
-                  );
-                })()}
-              </div>
-
-              {normalizeHostStatus(selectedHost.status) === "stale" && (
-                <div className="rounded-xl border border-warning/20 bg-warning/10 px-4 py-3 text-sm text-warning">
-                  This host heartbeat is stale. Automatic metrics and container reads are paused until the next successful health check or a manual connection test.
-                </div>
-              )}
-
-              {manualScanMode ? (
-                <ScanQuotaStatusStrip
-                  plan={effectivePlan}
-                  limit={viewer?.active_org_scan_limit}
-                  used={viewer?.active_org_scan_used}
-                  remaining={viewer?.active_org_scan_remaining}
-                  resetAt={viewer?.active_org_scan_reset_at}
-                  scanCost={SCAN_REFRESH_COSTS.host}
-                  className="rounded-xl"
-                />
-              ) : null}
-
-              {containersErrorMessage ? (
-                <div className="rounded-xl border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
-                  {containersErrorMessage}
-                </div>
-              ) : null}
-
-              {showAgentUpdateCta && (
-                <div className="flex flex-col gap-3 rounded-xl border border-primary/20 bg-primary/5 px-4 py-4 text-sm text-muted-foreground md:flex-row md:items-center md:justify-between">
-                  <div>
-                    <p className="font-medium text-foreground">
-                      {agentUpdateStatusCopy.title}
-                    </p>
-                    <p className="mt-1">
-                      {agentUpdateStatusCopy.description}
-                    </p>
-                  </div>
-                  <AgentUpdateDialog
-                    host={selectedHost}
-                    status={agentUpdateStatus}
-                    statusCopy={agentUpdateStatusCopy}
-                    verificationReason={verificationReason}
-                    trigger={<Button className="gap-2"><Terminal className="h-4 w-4" />{agentUpdateStatus === "verification_required" ? "Open Verification Steps" : "Open Update Steps"}</Button>}
-                  />
-                </div>
-              )}
-
-              <div className="grid gap-6 xl:grid-cols-[minmax(280px,340px),1fr]">
-                <div className="grid gap-6">
-                  {selectedHostDisconnected ? (
-                    <EmptyState title="Host is disconnected" description="Reconnect the host or run a successful connection test to start collecting host metrics." />
-                  ) : metricsQuery.isLoading && metricsQuery.history.length === 0 ? (
-                    <div className="glass-card min-h-[260px] flex items-center justify-center"><Loader2 className="h-8 w-8 animate-spin text-muted-foreground" /></div>
-                  ) : metricsQuery.failure && !metricsQuery.latestPoint ? (
-                    <EmptyState
-                      title={metricsFailureDisplay?.title || "Host metrics unavailable"}
-                      description={metricsFailureDisplay?.description || "The host metrics probe failed before a usable sample was returned."}
-                    />
-                  ) : metricsQuery.latestPoint ? (
-                    <RingCard point={metricsQuery.latestPoint} />
-                  ) : selectedHostStale ? (
-                    <EmptyState title="Metrics paused" description="Automatic metrics collection is paused while the host heartbeat is stale. Data will resume after a successful health check or connection test." />
-                  ) : (
-                    <EmptyState title="No CPU metrics yet" description="The host is connected, but the agent has not returned a usable metrics sample yet." />
-                  )}
-
-                  <ContainerSummaryCard
-                    total={containers.length}
-                    running={runningCount}
-                    loading={containersQuery.isLoading}
-                    disconnected={selectedHostDisconnected}
-                    paused={selectedHostStale}
-                  />
-                </div>
-
-                <div className="grid gap-6">
-                  <div className="grid gap-6 lg:grid-cols-2">
-                    {selectedHostDisconnected ? (
-                      <EmptyState title="Memory metrics unavailable" description="Memory panels appear after a connected host returns a metrics sample." />
-                    ) : metricsQuery.isLoading && !metricsQuery.latestPoint ? (
-                      <LoadingState />
-                    ) : metricsQuery.failure && !metricsQuery.latestPoint ? (
-                      <EmptyState
-                        title={metricsFailureDisplay?.title || "Memory metrics unavailable"}
-                        description={metricsFailureDisplay?.description || "The host metrics probe failed before memory data was returned."}
-                      />
-                    ) : metricsQuery.latestPoint ? (
-                      <MeterCard
-                        title="Memory usage"
-                        value={formatBytes(metricsQuery.latestPoint.memoryUsed)}
-                        helper={formatBytes(metricsQuery.latestPoint.memoryLimit)}
-                        progress={metricsQuery.latestPoint.memory}
-                        footer={`${metricsQuery.latestPoint.memory.toFixed(0)}% utilized`}
-                      />
-                    ) : selectedHostStale ? (
-                      <EmptyState title="Memory metrics paused" description="Automatic metrics collection is paused while the host heartbeat is stale." />
-                    ) : (
-                      <EmptyState
-                        title="Memory metrics unavailable"
-                        description={
-                          missingExtendedMetrics
-                            ? `Update or repair the host agent to restore the full metrics sample.`
-                            : "Waiting for a usable metrics sample from the host agent."
-                        }
-                      />
-                    )}
-
-                    {selectedHostDisconnected ? (
-                      <EmptyState title="Disk usage unavailable" description="Disk usage is shown only for connected hosts with live metrics." />
-                    ) : metricsQuery.isLoading && !metricsQuery.latestPoint ? (
-                      <LoadingState />
-                    ) : metricsQuery.failure && !metricsQuery.latestPoint ? (
-                      <EmptyState
-                        title={metricsFailureDisplay?.title || "Disk usage unavailable"}
-                        description={metricsFailureDisplay?.description || "The host metrics probe failed before disk usage data was returned."}
-                      />
-                    ) : metricsQuery.latestPoint?.disks.length ? (
-                      metricsQuery.latestPoint.disks.map((disk) => (
-                        <DiskUsageCard key={`${disk.device}-${disk.mount}`} disk={disk} />
-                      ))
-                    ) : selectedHostStale && !metricsQuery.latestPoint ? (
-                      <EmptyState title="Disk metrics paused" description="Automatic metrics collection is paused while the host heartbeat is stale." />
-                    ) : (
-                      <EmptyState
-                        title="Disk usage unavailable"
-                        description={
-                          missingExtendedMetrics
-                            ? `This host agent is not reporting per-disk usage yet. Update or repair the agent to ${CURRENT_WATCHTOWER_AGENT_VERSION}, then Verify.`
-                            : "Waiting for a usable per-disk metrics sample from the host agent."
-                        }
-                      />
-                    )}
-                  </div>
-
-                  <div className="glass-card p-5 space-y-4">
-                    <div className="flex items-start justify-between gap-4">
-                      <div>
-                        <p className="text-xs uppercase tracking-[0.22em] text-muted-foreground">Network activity</p>
-                        <div className="mt-3 flex flex-wrap items-center gap-x-6 gap-y-2">
-                          <div>
-                            <p className="text-xs font-medium text-primary uppercase tracking-wider">Inbound</p>
-                            <p className="text-3xl font-semibold tracking-tight">
-                              {metricsQuery.latestPoint ? formatSpeed(metricsQuery.latestPoint.networkInBytesPerSec) : "Unavailable"}
-                            </p>
-                          </div>
-                          <div>
-                            <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">Outbound</p>
-                            <p className="text-3xl font-semibold tracking-tight">
-                              {metricsQuery.latestPoint ? formatSpeed(metricsQuery.latestPoint.networkOutBytesPerSec) : "Unavailable"}
-                            </p>
-                          </div>
-                        </div>
-                      </div>
-                      <div className="flex flex-col items-end gap-2">
-                        <div className="flex items-center gap-4 text-xs text-muted-foreground">
-                          <span className="inline-flex items-center gap-2"><span className="h-3 w-3 rounded-full bg-primary" />Inbound</span>
-                          <span className="inline-flex items-center gap-2"><span className="h-3 w-3 rounded-full bg-muted-foreground/60" />Outbound</span>
-                        </div>
-                        {metricsQuery.latestPoint?.networkMonthlyTotal !== undefined ? (
-                          <p className="text-sm font-medium text-muted-foreground">
-                            Monthly usage: <span className="text-foreground">{formatBytes(metricsQuery.latestPoint.networkMonthlyTotal)}</span>
-                          </p>
-                        ) : metricsQuery.latestPoint ? (
-                          <p className="text-sm font-medium text-muted-foreground">
-                            Total: <span className="text-foreground">{formatSpeed((metricsQuery.latestPoint.networkInBytesPerSec || 0) + (metricsQuery.latestPoint.networkOutBytesPerSec || 0))}</span>
-                          </p>
-                        ) : null}
-                      </div>
-                    </div>
-                    {selectedHostDisconnected ? (
-                      <p className="text-sm text-muted-foreground">Connect this host to start rendering throughput history.</p>
-                    ) : metricsQuery.isLoading && !metricsQuery.latestPoint ? (
-                      <div className="flex h-36 items-center justify-center">
-                        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-                      </div>
-                    ) : metricsQuery.failure && !metricsQuery.latestPoint ? (
-                      <p className="text-sm text-muted-foreground">
-                        {metricsFailureDisplay?.description || "The host metrics probe failed before network history could be rendered."}
-                      </p>
-                    ) : selectedHostStale && !metricsQuery.history.length ? (
-                      <p className="text-sm text-muted-foreground">Network throughput history is paused while the host heartbeat is stale.</p>
-                    ) : (
-                      <TrendBars 
-                        history={metricsQuery.history} 
-                        accessor={(point) => point.networkInBytesPerSec} 
-                        secondaryAccessor={(point) => point.networkOutBytesPerSec}
-                      />
-                    )}
-                  </div>
-                </div>
-              </div>
-
-              {metricsErrorMessage && selectedHostReadable && (
-                <div className="rounded-xl border border-warning/20 bg-warning/10 px-4 py-3 text-sm text-warning">
-                  {metricsErrorMessage}
-                </div>
-              )}
-            </div>
+            <SelectedHostView
+              selectedHost={selectedHost}
+              containers={containers}
+              runningCount={runningCount}
+              orgId={currentOrg?.id}
+              testing={testing}
+              liveRefreshPending={liveRefreshPending}
+              manualScanMode={manualScanMode}
+              scanQuotaExhausted={scanQuotaExhausted}
+              selectedHostAutoProbe={selectedHostAutoProbe}
+              selectedHostDisconnected={selectedHostDisconnected}
+              selectedHostStale={selectedHostStale}
+              selectedHostReadable={selectedHostReadable}
+              missingExtendedMetrics={missingExtendedMetrics}
+              metricsQuery={metricsQuery}
+              containersQuery={containersQuery}
+              metricsFailureDisplay={metricsFailureDisplay}
+              metricsErrorMessage={metricsErrorMessage}
+              agentUpdateStatus={agentUpdateStatus}
+              agentUpdateStatusCopy={agentUpdateStatusCopy}
+              verificationReason={verificationReason}
+              showAgentUpdateCta={showAgentUpdateCta}
+              effectivePlan={effectivePlan}
+              viewer={viewer}
+              isInfrastructureVisible={isInfrastructureVisible}
+              onShowSidebar={() => setIsInfrastructureVisible(true)}
+              onTest={handleTest}
+              onRefreshLiveData={() => void handleRefreshLiveData()}
+              onDelete={handleDelete}
+            />
           ) : (
             <div className="glass-card p-10 text-center text-muted-foreground">Select a host to view its details.</div>
           )}
         </div>
       )}
 
-      {/* Host limit upgrade dialog */}
-      <Dialog open={upgradeDialogOpen} onOpenChange={setUpgradeDialogOpen}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-3">
-              <div className="rounded-full bg-warning/10 p-2.5">
-                <Lock className="h-5 w-5 text-warning" />
-              </div>
-              Host Limit Reached
-            </DialogTitle>
-            <DialogDescription>
-              Your current plan allows monitoring up to{" "}
-              <strong className="text-foreground">{nodeLimit ?? 1} host{(nodeLimit ?? 1) === 1 ? "" : "s"}</strong>.
-              Upgrade your plan to connect and monitor additional hosts.
-            </DialogDescription>
-          </DialogHeader>
-          <div className="flex flex-col gap-3 pt-2">
-            <Button asChild size="lg" className="w-full">
-              <Link to="/app/billing" onClick={() => setUpgradeDialogOpen(false)}>
-                Upgrade Plan
-              </Link>
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              className="text-muted-foreground"
-              onClick={() => setUpgradeDialogOpen(false)}
-            >
-              Not now
-            </Button>
+      <HostUpgradeDialog open={upgradeDialogOpen} onOpenChange={setUpgradeDialogOpen} nodeLimit={nodeLimit} />
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Host sidebar
+// ---------------------------------------------------------------------------
+
+function HostSidebar({
+  filteredHosts,
+  selectedHost,
+  selectedPreviewMetrics,
+  search,
+  onSearchChange,
+  onSelectHost,
+  onHideSidebar,
+  isHostLocked,
+}: {
+  filteredHosts: DockerHost[];
+  selectedHost: DockerHost | null;
+  selectedPreviewMetrics: Pick<import("@/hooks/useHostMetrics").HostMetricsPoint, "cpu" | "memory"> | null;
+  search: string;
+  onSearchChange: (value: string) => void;
+  onSelectHost: (hostId: string) => void;
+  onHideSidebar: () => void;
+  isHostLocked: (hostId: string) => boolean;
+}) {
+  return (
+    <div className="glass-card overflow-hidden">
+      <div className="border-b border-white/5 px-5 py-4 space-y-4">
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <p className="text-xs uppercase tracking-[0.22em] text-muted-foreground">Host infrastructure</p>
+            <h2 className="mt-1 text-lg font-semibold tracking-tight">Browse hosts</h2>
           </div>
-        </DialogContent>
-      </Dialog>
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            className="shrink-0"
+            onClick={onHideSidebar}
+            aria-label="Hide host infrastructure panel"
+          >
+            <PanelLeftClose className="h-4 w-4" />
+          </Button>
+        </div>
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground pointer-events-none" />
+          <Input value={search} onChange={(event) => onSearchChange(event.target.value)} placeholder="Search hosts..." className="pl-9" />
+        </div>
+      </div>
+      <ScrollArea className="h-[calc(100vh-18rem)]">
+        <div className="space-y-3 p-4">
+          {filteredHosts.length === 0 ? (
+            <div className="rounded-2xl border border-dashed border-white/10 p-6 text-center text-sm text-muted-foreground">No hosts match your search.</div>
+          ) : (
+            filteredHosts.map((host) => (
+              <HostCard
+                key={host.id}
+                host={host}
+                selected={host.id === selectedHost?.id}
+                previewMetrics={host.id === selectedHost?.id ? selectedPreviewMetrics : null}
+                onSelect={() => onSelectHost(host.id)}
+                isLocked={isHostLocked(host.id)}
+              />
+            ))
+          )}
+        </div>
+      </ScrollArea>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Selected host view
+// ---------------------------------------------------------------------------
+
+function SelectedHostView({
+  selectedHost,
+  containers,
+  runningCount,
+  orgId,
+  testing,
+  liveRefreshPending,
+  manualScanMode,
+  scanQuotaExhausted,
+  selectedHostAutoProbe,
+  selectedHostDisconnected,
+  selectedHostStale,
+  selectedHostReadable,
+  missingExtendedMetrics,
+  metricsQuery,
+  containersQuery,
+  metricsFailureDisplay,
+  metricsErrorMessage,
+  agentUpdateStatus,
+  agentUpdateStatusCopy,
+  verificationReason,
+  showAgentUpdateCta,
+  effectivePlan,
+  viewer,
+  isInfrastructureVisible,
+  onShowSidebar,
+  onTest,
+  onRefreshLiveData,
+  onDelete,
+}: {
+  selectedHost: DockerHost;
+  containers: any[];
+  runningCount: number;
+  orgId: string | undefined;
+  testing: boolean;
+  liveRefreshPending: boolean;
+  manualScanMode: boolean;
+  scanQuotaExhausted: boolean;
+  selectedHostAutoProbe: boolean;
+  selectedHostDisconnected: boolean;
+  selectedHostStale: boolean;
+  selectedHostReadable: boolean;
+  missingExtendedMetrics: boolean;
+  metricsQuery: any;
+  containersQuery: any;
+  metricsFailureDisplay: { title: string; description: string } | null;
+  metricsErrorMessage: string | null;
+  agentUpdateStatus: string;
+  agentUpdateStatusCopy: { title: string; description: string };
+  verificationReason: string | null;
+  showAgentUpdateCta: boolean;
+  effectivePlan: string | undefined;
+  viewer: any;
+  isInfrastructureVisible: boolean;
+  onShowSidebar: () => void;
+  onTest: () => void;
+  onRefreshLiveData: () => void;
+  onDelete: () => void;
+}) {
+  return (
+    <div className="space-y-6">
+      {!isInfrastructureVisible ? (
+        <div className="flex justify-start">
+          <Button type="button" variant="outline" className="gap-2" onClick={onShowSidebar}>
+            <PanelLeftOpen className="h-4 w-4" />
+            Show Host Infrastructure
+          </Button>
+        </div>
+      ) : null}
+
+      <HostDetailHeader
+        selectedHost={selectedHost}
+        containers={containers}
+        runningCount={runningCount}
+        orgId={orgId}
+        testing={testing}
+        liveRefreshPending={liveRefreshPending}
+        manualScanMode={manualScanMode}
+        scanQuotaExhausted={scanQuotaExhausted}
+        selectedHostAutoProbe={selectedHostAutoProbe}
+        missingExtendedMetrics={missingExtendedMetrics}
+        uptimeSeconds={metricsQuery.latestPoint?.uptimeSeconds}
+        agentUpdateStatus={agentUpdateStatus}
+        agentUpdateStatusCopy={agentUpdateStatusCopy}
+        verificationReason={verificationReason}
+        showAgentUpdateCta={showAgentUpdateCta}
+        onTest={onTest}
+        onRefreshLiveData={onRefreshLiveData}
+        onDelete={onDelete}
+      />
+
+      {normalizeHostStatus(selectedHost.status) === "stale" && (
+        <div className="rounded-xl border border-warning/20 bg-warning/10 px-4 py-3 text-sm text-warning">
+          This host heartbeat is stale. Automatic metrics and container reads are paused until the next successful health check or a manual connection test.
+        </div>
+      )}
+
+      {manualScanMode ? (
+        <ScanQuotaStatusStrip
+          plan={effectivePlan}
+          limit={viewer?.active_org_scan_limit}
+          used={viewer?.active_org_scan_used}
+          remaining={viewer?.active_org_scan_remaining}
+          resetAt={viewer?.active_org_scan_reset_at}
+          scanCost={SCAN_REFRESH_COSTS.host}
+          className="rounded-xl"
+        />
+      ) : null}
+
+      {containersQuery.error instanceof Error ? (
+        <div className="rounded-xl border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
+          {containersQuery.error.message}
+        </div>
+      ) : null}
+
+      <HostMetricsGrid
+        selectedHost={selectedHost}
+        metricsQuery={metricsQuery}
+        containersQuery={containersQuery}
+        containers={containers}
+        runningCount={runningCount}
+        metricsFailureDisplay={metricsFailureDisplay}
+        missingExtendedMetrics={missingExtendedMetrics}
+        selectedHostDisconnected={selectedHostDisconnected}
+        selectedHostStale={selectedHostStale}
+        agentUpdateStatus={agentUpdateStatus}
+        agentUpdateStatusCopy={agentUpdateStatusCopy}
+        verificationReason={verificationReason}
+        showAgentUpdateCta={showAgentUpdateCta}
+      />
+
+      {metricsErrorMessage && selectedHostReadable && (
+        <div className="rounded-xl border border-warning/20 bg-warning/10 px-4 py-3 text-sm text-warning">
+          {metricsErrorMessage}
+        </div>
+      )}
     </div>
   );
 }
