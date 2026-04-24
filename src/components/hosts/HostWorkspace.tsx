@@ -1241,7 +1241,6 @@ export function HostWorkspace() {
           )}
         </div>
       )}
-    </div>
 
       {/* Host limit upgrade dialog */}
       <Dialog open={upgradeDialogOpen} onOpenChange={setUpgradeDialogOpen}>
