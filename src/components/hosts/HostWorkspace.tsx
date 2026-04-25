@@ -28,6 +28,7 @@ import { useToast } from "@/hooks/use-toast";
 import { dockerApi } from "@/services/docker-api";
 import type { DockerHost } from "@/types/database";
 import { CURRENT_WATCHTOWER_AGENT_VERSION } from "@/lib/agent-version";
+import { sanitizeConnectionError } from "@/lib/error-sanitizer";
 import {
   CURRENT_WATCHTOWER_AGENT_RELEASE,
   getWatchtowerAgentUpdateStatus,
@@ -269,7 +270,8 @@ export function HostWorkspace() {
       });
       await refetch();
     } catch (error: any) {
-      toast({ title: "Connection failed", description: error.message, variant: "destructive" });
+      const sanitized = sanitizeConnectionError(error);
+      toast({ title: sanitized.title, description: sanitized.description, variant: "destructive" });
     } finally {
       setTesting(false);
     }
@@ -527,11 +529,15 @@ function SelectedHostView({
 
 
 
-      {containersQuery.error instanceof Error ? (
-        <div className="rounded-xl border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
-          {containersQuery.error.message}
-        </div>
-      ) : null}
+      {containersQuery.error instanceof Error ? (() => {
+        const sanitized = sanitizeConnectionError(containersQuery.error);
+        return (
+          <div className="rounded-xl border border-destructive/20 bg-destructive/5 px-5 py-4 space-y-1">
+            <p className="text-sm font-medium text-destructive">{sanitized.title}</p>
+            <p className="text-sm text-muted-foreground">{sanitized.description}</p>
+          </div>
+        );
+      })() : null}
 
       <HostMetricsGrid
         selectedHost={selectedHost}

@@ -621,7 +621,13 @@ function NetworkTrendSection({
     );
   }
   if (hasFailure && !hasLatestPoint) {
-    return <p className="text-sm text-muted-foreground">{failureDescription || "The host metrics probe failed before network history could be rendered."}</p>;
+    return (
+      <div className="flex h-36 items-center justify-center">
+        <p className="text-sm text-muted-foreground text-center max-w-md">
+          {failureDescription || "Network throughput is unavailable while the metrics probe cannot reach this host."}
+        </p>
+      </div>
+    );
   }
   if (selectedHostStale && !hasHistory) {
     return <p className="text-sm text-muted-foreground">Network throughput history is paused while the host heartbeat is stale.</p>;
