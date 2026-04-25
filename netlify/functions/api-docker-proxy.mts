@@ -800,6 +800,14 @@ export default async (req: Request) => {
             organizationId: host.organization_id,
             isPlatformAdmin: auth.isPlatformAdmin,
           });
+          if (!entitlements.canUseLogs) {
+            return createProblemResponse(
+              403,
+              "Logs require a paid subscription",
+              "Container logs require an Individual, Business, or Dedicated subscription.",
+              "feature_not_allowed",
+            );
+          }
           const requestedTail = Number((params as any)?.tail) || 100;
           const tail = Math.min(Math.max(1, requestedTail), entitlements.logTailLines);
           const since = (params as any)?.since ? `&since=${(params as any).since}` : '';

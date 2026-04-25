@@ -11,6 +11,7 @@ export interface PlanPolicy {
   canUseSlackDestinations: boolean;
   canUseAdvancedAlerts: boolean;
   canUseTeamCollaboration: boolean;
+  canUseLogs: boolean;
 }
 
 export const PLAN_POLICY_BY_PLAN: Record<PlanId, PlanPolicy> = {
@@ -23,6 +24,7 @@ export const PLAN_POLICY_BY_PLAN: Record<PlanId, PlanPolicy> = {
     canUseSlackDestinations: false,
     canUseAdvancedAlerts: false,
     canUseTeamCollaboration: false,
+    canUseLogs: false,
   },
   pro: {
     seatLimit: 1,
@@ -33,6 +35,7 @@ export const PLAN_POLICY_BY_PLAN: Record<PlanId, PlanPolicy> = {
     canUseSlackDestinations: false,
     canUseAdvancedAlerts: true,
     canUseTeamCollaboration: false,
+    canUseLogs: true,
   },
   team: {
     seatLimit: 10,
@@ -43,6 +46,7 @@ export const PLAN_POLICY_BY_PLAN: Record<PlanId, PlanPolicy> = {
     canUseSlackDestinations: true,
     canUseAdvancedAlerts: true,
     canUseTeamCollaboration: true,
+    canUseLogs: true,
   },
   enterprise: {
     seatLimit: null,
@@ -53,6 +57,7 @@ export const PLAN_POLICY_BY_PLAN: Record<PlanId, PlanPolicy> = {
     canUseSlackDestinations: true,
     canUseAdvancedAlerts: true,
     canUseTeamCollaboration: true,
+    canUseLogs: true,
   },
 };
 

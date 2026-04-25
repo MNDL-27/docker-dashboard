@@ -52,13 +52,15 @@ export interface OrganizationEntitlements {
   canUseSlackDestinations: boolean;
   canUseAdvancedAlerts: boolean;
   canUseTeamCollaboration: boolean;
+  canUseLogs: boolean;
 }
 
 type OrganizationFeature =
   | "webhook_destinations"
   | "slack_destinations"
   | "advanced_alerts"
-  | "team_collaboration";
+  | "team_collaboration"
+  | "logs";
 
 const HOST_LIMIT_EXCEEDED_ERROR =
   "Host is inactive because your current plan limit has been exceeded. Remove extra hosts or upgrade to re-enable this host.";
@@ -92,6 +94,7 @@ export function computeOrganizationEntitlements({
       canUseSlackDestinations: true,
       canUseAdvancedAlerts: true,
       canUseTeamCollaboration: true,
+      canUseLogs: true,
     };
   }
 
@@ -118,6 +121,7 @@ export function computeOrganizationEntitlements({
     canUseSlackDestinations: paidTierPolicy.canUseSlackDestinations,
     canUseAdvancedAlerts: paidTierPolicy.canUseAdvancedAlerts || isDonorPremium,
     canUseTeamCollaboration: paidTierPolicy.canUseTeamCollaboration,
+    canUseLogs: paidTierPolicy.canUseLogs || isDonorPremium,
   };
 }
 
@@ -174,6 +178,7 @@ export async function assertOrganizationFeatureAllowed({
     slack_destinations: entitlements.canUseSlackDestinations,
     advanced_alerts: entitlements.canUseAdvancedAlerts,
     team_collaboration: entitlements.canUseTeamCollaboration,
+    logs: entitlements.canUseLogs,
   };
 
   if (allowedByFeature[feature]) {
@@ -185,6 +190,7 @@ export async function assertOrganizationFeatureAllowed({
     slack_destinations: "Slack destinations require a Business or Dedicated subscription.",
     advanced_alerts: "Advanced Alert Rules require an Individual, Business, or Dedicated subscription.",
     team_collaboration: "Team collaboration requires a Business or Dedicated subscription.",
+    logs: "Container logs require an Individual, Business, or Dedicated subscription.",
   };
 
   throw new Error(messages[feature]);
