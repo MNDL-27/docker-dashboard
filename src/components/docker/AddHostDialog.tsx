@@ -11,7 +11,7 @@ import { useToast } from "@/hooks/use-toast";
 import { apiFetch } from "@/lib/api";
 import type { ConnectionMode, DockerHost } from "@/types/database";
 import { CURRENT_WATCHTOWER_AGENT_VERSION, isAgentVersionOutdated } from "@/lib/agent-version";
-
+import { sanitizeConnectionError } from "@/lib/error-sanitizer";
 interface AddHostDialogProps {
   orgId: string;
   trigger?: React.ReactNode;
@@ -135,9 +135,10 @@ export function AddHostDialog({ orgId, trigger, host }: AddHostDialogProps) {
       })
       .catch((error: any) => {
         if (!active) return;
+        const sanitized = sanitizeConnectionError(error);
         toast({
           title: "Failed to load host secrets",
-          description: error.message,
+          description: sanitized.description,
           variant: "destructive",
         });
       })
@@ -210,8 +211,9 @@ export function AddHostDialog({ orgId, trigger, host }: AddHostDialogProps) {
         }
       } catch (e: any) {
         setTestStatus("error");
-        setTestError(e.message);
-        toast({ title: "Host updated but connection failed", description: e.message, variant: "destructive" });
+        const sanitized = sanitizeConnectionError(e);
+        setTestError(sanitized.description);
+        toast({ title: sanitized.title, description: sanitized.description, variant: "destructive" });
       }
 
       setTimeout(() => {
@@ -219,7 +221,8 @@ export function AddHostDialog({ orgId, trigger, host }: AddHostDialogProps) {
         resetForm();
       }, 1500);
     } catch (error: any) {
-      toast({ title: "Failed to update host", description: error.message, variant: "destructive" });
+      const sanitized = sanitizeConnectionError(error);
+      toast({ title: "Failed to update host", description: sanitized.description, variant: "destructive" });
     }
   };
 
@@ -252,7 +255,8 @@ export function AddHostDialog({ orgId, trigger, host }: AddHostDialogProps) {
       setGuidedError("");
       setStage("guided");
     } catch (error: any) {
-      setGuidedError(error.message || "Failed to prepare the guided setup command.");
+      const sanitized = sanitizeConnectionError(error);
+      setGuidedError(sanitized.description || "Failed to prepare the guided setup command.");
       setStage("form");
     }
   };
@@ -293,7 +297,8 @@ export function AddHostDialog({ orgId, trigger, host }: AddHostDialogProps) {
       }
     } catch (error: any) {
       setTestStatus("error");
-      setTestError(error.message || "Connection test failed.");
+      const sanitized = sanitizeConnectionError(error);
+      setTestError(sanitized.description || "Connection test failed.");
       setStage("guided");
     }
   };

@@ -128,12 +128,19 @@ function summarizeAgentConnectionFailure(
     return 'The Watchtower agent did not respond in time. Verify the agent service is running and reachable from Dockerdash.';
   }
 
-  if (status === 502 && isCloudflareHtml) {
+  if ((status === 502 || status === 530) && isCloudflareHtml) {
     if (connectionMode === 'cloudflare_tunnel') {
-      return 'Cloudflare Tunnel could not reach your Watchtower agent. Verify the tunnel is healthy, the route points to the agent, and any CF Access service token is correct.';
+      return 'Cloudflare Tunnel could not reach your Watchtower agent. Verify the tunnel is running, the route points to the agent, and any CF Access service token is correct.';
     }
 
-    return 'A gateway in front of your Watchtower agent returned 502. Verify the saved host URL, reverse proxy, and agent service.';
+    return 'A Cloudflare gateway in front of your Watchtower agent returned an error. Verify the saved host URL, reverse proxy, and agent service.';
+  }
+
+  if (isCloudflareHtml) {
+    if (connectionMode === 'cloudflare_tunnel') {
+      return `Cloudflare returned HTTP ${status}. The tunnel may be misconfigured or the agent service is unreachable. Check the tunnel health and agent process.`;
+    }
+    return `Cloudflare returned HTTP ${status}. Verify the saved host URL, reverse proxy, and agent service.`;
   }
 
   if (status === 502) {
