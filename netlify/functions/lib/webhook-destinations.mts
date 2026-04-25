@@ -161,6 +161,55 @@ async function recordAttempt(params: {
   return attempt as DeliveryAttemptRow;
 }
 
+const DISCORD_URL_RE = /^https:\/\/(?:discord\.com|discordapp\.com)\/api\/webhooks\//;
+
+function isDiscordUrl(url: string) {
+  return DISCORD_URL_RE.test(url);
+}
+
+const SEVERITY_COLORS: Record<string, number> = {
+  critical: 0xef4444, // red
+  warning:  0xf59e0b, // amber
+  info:     0x3b82f6, // blue
+  ok:       0x22c55e, // green
+};
+
+function buildDiscordBody(payload: Record<string, unknown>, eventType: DeliveryEventType) {
+  const alert = (payload.alert ?? payload.sample ?? {}) as Record<string, unknown>;
+  const severity = String(alert.severity ?? 'info').toLowerCase();
+  const status   = String(alert.status ?? eventType);
+  const title    = String(alert.title ?? 'Docker Dashboard Alert');
+  const message  = String(alert.message ?? '');
+  const href     = typeof alert.href === 'string' ? alert.href : null;
+
+  const color = SEVERITY_COLORS[severity] ?? 0x6366f1; // indigo fallback
+
+  const fields: Array<{ name: string; value: string; inline: boolean }> = [
+    { name: 'Event',    value: `\`${eventType}\``, inline: true },
+    { name: 'Severity', value: severity,           inline: true },
+    { name: 'Status',   value: status,             inline: true },
+  ];
+
+  if (alert.source_type)  fields.push({ name: 'Source', value: String(alert.source_type), inline: true });
+  if (alert.source_ref)   fields.push({ name: 'Ref',    value: `\`${String(alert.source_ref)}\``, inline: true });
+
+  const embed: Record<string, unknown> = {
+    title,
+    description: message || undefined,
+    color,
+    fields,
+    timestamp: new Date().toISOString(),
+    footer: { text: 'Docker Dashboard' },
+  };
+
+  if (href) {
+    const base = process.env.URL || 'https://app.dockerdash.app';
+    embed.url = href.startsWith('http') ? href : `${base}${href}`;
+  }
+
+  return JSON.stringify({ embeds: [embed] });
+}
+
 async function dispatchWebhook(
   destination: WebhookDestinationRow,
   payload: Record<string, unknown>,
@@ -168,18 +217,34 @@ async function dispatchWebhook(
   deliveryKind: 'alert' | 'test',
   alertEventId?: string | null,
 ) {
-  const { body, timestamp, signature } = buildSignedRequestBody(destination, payload);
+  const discord = isDiscordUrl(destination.url);
+
+  // Build request body — Discord gets embeds, everything else gets signed payload
+  let body: string;
+  let headers: Record<string, string>;
+
+  if (discord) {
+    body = buildDiscordBody(payload, eventType);
+    headers = {
+      'Content-Type': 'application/json',
+      'User-Agent': 'DockerDash-Webhooks/1.0',
+    };
+  } else {
+    const signed = buildSignedRequestBody(destination, payload);
+    body = signed.body;
+    headers = {
+      'Content-Type': 'application/json',
+      'User-Agent': 'DockerDash-Webhooks/1.0',
+      'X-DockerDash-Event': eventType,
+      'X-DockerDash-Timestamp': signed.timestamp,
+      'X-DockerDash-Signature': signed.signature,
+    };
+  }
 
   try {
     const response = await fetch(destination.url, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'User-Agent': 'DockerDash-Webhooks/1.0',
-        'X-DockerDash-Event': eventType,
-        'X-DockerDash-Timestamp': timestamp,
-        'X-DockerDash-Signature': signature,
-      },
+      headers,
       body,
       signal: AbortSignal.timeout(8000),
     });
