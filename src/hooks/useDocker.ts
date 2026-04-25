@@ -5,6 +5,60 @@ import type { DockerHost, ConnectionMode } from "@/types/database";
 import { useViewerState } from "@/hooks/useViewerState";
 import { normalizePlan, PLAN_POLICY_BY_PLAN } from "../../shared/schema/plan-policy";
 
+// ── Shared types & helpers ──────────────────────────────────────────
+
+/** Shared secrets shape for host mutations */
+interface HostSecrets {
+  agentApiKey?: string;
+  cfServiceTokenId?: string;
+  cfServiceTokenSecret?: string;
+}
+
+/** Shared fields for host create/update (WR-02) */
+interface HostMutationBase {
+  name: string;
+  hostUrl: string;
+  connectionMode: ConnectionMode;
+  dockerSocketPath?: string;
+  secrets: HostSecrets;
+}
+
+/** Build the API body from host mutation fields */
+function buildHostBody(fields: HostMutationBase) {
+  return {
+    name: fields.name,
+    host_url: fields.hostUrl,
+    connection_mode: fields.connectionMode,
+    docker_socket_path: fields.dockerSocketPath || '/var/run/docker.sock',
+    secrets: fields.secrets,
+  };
+}
+
+/** Resolve effective node limit from viewer entitlements + plan policy (WR-01) */
+function resolveNodeLimit(viewer: any): number | null {
+  const entitlements = viewer?.entitlements;
+  const activePlan = normalizePlan(entitlements?.effectivePlan ?? viewer?.active_org_effective_plan);
+  return entitlements?.nodeLimit ?? PLAN_POLICY_BY_PLAN[activePlan].nodeLimit;
+}
+
+/** Sort hosts by creation date (oldest first), breaking ties by ID (WR-01) */
+function sortHostsByCreation(hosts: DockerHost[]): DockerHost[] {
+  return [...hosts].sort((a, b) => {
+    const dateA = new Date(a.created_at).getTime() || 0;
+    const dateB = new Date(b.created_at).getTime() || 0;
+    return dateA - dateB || a.id.localeCompare(b.id);
+  });
+}
+
+/** Log query options parameter object (WR-03) */
+interface ContainerLogOptions {
+  tail?: number | string;
+  since?: number;
+  until?: number;
+}
+
+// ── Hooks ───────────────────────────────────────────────────────────
+
 export function useDockerHosts(orgId?: string | null, options: { filterByPlan?: boolean } = {}) {
   const { data: viewer } = useViewerState();
 
@@ -15,22 +69,12 @@ export function useDockerHosts(orgId?: string | null, options: { filterByPlan?: 
     },
     select: (hosts) => {
       if (!options.filterByPlan) return hosts;
-      
-      const entitlements = viewer?.entitlements;
-      const activePlan = normalizePlan(entitlements?.effectivePlan ?? viewer?.active_org_effective_plan);
-      const nodeLimit = entitlements?.nodeLimit ?? PLAN_POLICY_BY_PLAN[activePlan].nodeLimit;
-      
+      const nodeLimit = resolveNodeLimit(viewer);
       if (nodeLimit === null) return hosts;
-      
-      const sorted = [...hosts].sort((a, b) => {
-        const dateA = a.created_at || (a as any).createdAt ? new Date(a.created_at || (a as any).createdAt).getTime() : 0;
-        const dateB = b.created_at || (b as any).createdAt ? new Date(b.created_at || (b as any).createdAt).getTime() : 0;
-        return dateA - dateB || a.id.localeCompare(b.id);
-      });
-      return sorted.slice(0, nodeLimit);
+      return sortHostsByCreation(hosts).slice(0, nodeLimit);
     },
     enabled: !!orgId,
-    refetchInterval: 15000,
+    refetchInterval: (query) => (query.state.error ? false : 15000),
   });
 }
 
@@ -38,26 +82,10 @@ export function useAddDockerHost() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ orgId, name, hostUrl, connectionMode, dockerSocketPath, secrets }: {
-      orgId: string; name: string; hostUrl: string;
-      connectionMode: ConnectionMode;
-      dockerSocketPath?: string;
-      secrets: {
-        agentApiKey?: string;
-        cfServiceTokenId?: string;
-        cfServiceTokenSecret?: string;
-      };
-    }) => {
+    mutationFn: async ({ orgId, ...fields }: { orgId: string } & HostMutationBase) => {
       const data = await apiFetch('/docker-hosts', {
         method: 'POST',
-        body: JSON.stringify({
-          organization_id: orgId,
-          name,
-          host_url: hostUrl,
-          connection_mode: connectionMode,
-          docker_socket_path: dockerSocketPath || '/var/run/docker.sock',
-          secrets,
-        }),
+        body: JSON.stringify({ organization_id: orgId, ...buildHostBody(fields) }),
       });
       return data as DockerHost;
     },
@@ -85,27 +113,10 @@ export function useUpdateDockerHost() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ hostId, name, hostUrl, connectionMode, dockerSocketPath, secrets }: {
-      hostId: string;
-      name: string;
-      hostUrl: string;
-      connectionMode: ConnectionMode;
-      dockerSocketPath?: string;
-      secrets: {
-        agentApiKey?: string;
-        cfServiceTokenId?: string;
-        cfServiceTokenSecret?: string;
-      };
-    }) => {
+    mutationFn: async ({ hostId, ...fields }: { hostId: string } & HostMutationBase) => {
       const data = await apiFetch(`/docker-hosts?hostId=${hostId}`, {
         method: 'PATCH',
-        body: JSON.stringify({
-          name,
-          host_url: hostUrl,
-          connection_mode: connectionMode,
-          docker_socket_path: dockerSocketPath || '/var/run/docker.sock',
-          secrets,
-        }),
+        body: JSON.stringify(buildHostBody(fields)),
       });
       return data as DockerHost;
     },
@@ -162,20 +173,9 @@ export function useContainers(orgId?: string | null, hasHosts = true, refetchInt
 }
 
 export function useAllContainerStats(orgId?: string | null, hasHosts = true, refetchInterval: number | false = 15000) {
-  const { data: allowedHosts } = useDockerHosts(orgId, { filterByPlan: true });
-
   return useQuery({
     queryKey: ['all-container-stats', orgId],
     queryFn: () => dockerApi.allContainerStats(orgId!),
-    select: (stats) => {
-      if (!allowedHosts) return stats;
-      const allowedIds = new Set(allowedHosts.map(h => h.id));
-      // Object.entries filter for stats object where keys are container IDs
-      // Wait, allContainerStats returns an object keyed by container ID, and the values have hostId?
-      // Let's assume the values have `hostId` or we can filter it. If it doesn't have hostId, we can't filter here.
-      // We will check if the stats object can be filtered. But Dashboard relies on it being complete.
-      return stats;
-    },
     enabled: !!orgId && hasHosts,
     retry: false,
     refetchOnWindowFocus: false,
@@ -220,7 +220,12 @@ export function useContainerStats(
   });
 }
 
-export function useContainerLogs(hostId?: string | null, containerId?: string | null, tail: number | string = 200, since?: number, until?: number) {
+export function useContainerLogs(
+  hostId?: string | null,
+  containerId?: string | null,
+  options: ContainerLogOptions = {},
+) {
+  const { tail = 200, since, until } = options;
   return useQuery({
     queryKey: ['container-logs', hostId, containerId, tail, since, until],
     queryFn: () => dockerApi.containerLogs(hostId!, containerId!, tail, since, until),
