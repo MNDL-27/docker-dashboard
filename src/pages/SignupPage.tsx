@@ -5,6 +5,7 @@ import { LogoLink } from "@/components/shared/LogoLink";
 import { Box, Server, Shield, Activity } from "lucide-react";
 import { LoginBackground } from "@/components/ui/LoginBackground";
 import { getSafeNextPath } from "@/lib/auth-redirect";
+import { SEO } from "@/components/shared/SEO";
 
 const features = [
   { icon: Server, title: "Multi-Host Monitoring", desc: "Monitor all your Docker hosts from a single pane of glass." },
@@ -18,6 +19,7 @@ export default function SignupPage() {
 
   return (
     <div className="min-h-screen flex flex-col md:flex-row bg-background relative overflow-hidden">
+      <SEO title="Sign Up" description="Create your Docker Dashboard account and start monitoring your Docker fleet for free." />
       <LoginBackground />
 
       {/* Left Column: Marketing / Brand (Hidden on mobile) */}

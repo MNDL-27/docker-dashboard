@@ -1,6 +1,7 @@
 import { Shield, Lock, Eye, Server, KeyRound } from "lucide-react";
 import { PublicNavbar } from "@/components/layout/PublicNavbar";
 import { PublicFooter } from "@/components/layout/PublicFooter";
+import { SEO } from "@/components/shared/SEO";
 
 const items = [
   { icon: Lock, title: "Encrypted Secret Storage", desc: "Stored host credentials are encrypted before they are written to the application database, with support for key rotation." },
@@ -13,6 +14,10 @@ const items = [
 export default function SecurityPage() {
   return (
     <div className="min-h-screen flex flex-col bg-background">
+      <SEO 
+        title="Security" 
+        description="Our multi-layered security model ensures your Docker infrastructure stays private. AES-256 encryption, per-host API keys, and zero-trust Cloudflare Tunnels."
+      />
       <PublicNavbar />
 
       <main className="flex-1">

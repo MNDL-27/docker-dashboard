@@ -3,10 +3,15 @@ import { Button } from "@/components/ui/button";
 import { Box, LifeBuoy, Mail, Wrench } from "lucide-react";
 import { PublicNavbar } from "@/components/layout/PublicNavbar";
 import { PublicFooter } from "@/components/layout/PublicFooter";
+import { SEO } from "@/components/shared/SEO";
 
 export default function ContactPage() {
   return (
     <div className="min-h-screen flex flex-col bg-background">
+      <SEO 
+        title="Contact" 
+        description="Need help with your Docker fleet? Reach out to our support team for technical assistance, billing questions, or enterprise inquiries."
+      />
       <PublicNavbar />
 
       <main className="flex-1 py-20">

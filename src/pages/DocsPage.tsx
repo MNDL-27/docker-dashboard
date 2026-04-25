@@ -22,6 +22,7 @@ import {
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { isPreviewAuthBypassEnabled } from "@/lib/hostname";
+import { SEO } from "@/components/shared/SEO";
 
 /*
  * ────────────────────────────────────────────────────────────
@@ -190,7 +191,11 @@ export default function DocsPage() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background flex flex-col">
+      <SEO 
+        title="Documentation" 
+        description="Learn how to connect your Docker hosts, monitor containers, manage logs, and configure alerts with Docker Dashboard."
+      />
       {/* Nav */}
       <nav className="border-b border-border bg-card/50 backdrop-blur-sm sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 h-14 flex items-center justify-between">

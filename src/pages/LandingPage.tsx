@@ -4,12 +4,17 @@ import { Button } from "@/components/ui/button";
 import { Box, Server, Bell, FileText, Activity, Shield, Users, ArrowRight, Check, ChevronDown } from "lucide-react";
 import { Link } from "react-router-dom";
 import { isPreviewAuthBypassEnabled } from "@/lib/hostname";
+import { SEO } from "@/components/shared/SEO";
 
 export default function LandingPage() {
   const primaryHref = isPreviewAuthBypassEnabled() ? "/app" : "/sign-up";
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
+      <SEO 
+        title="Monitor Your Docker Fleet" 
+        description="Monitor self-hosted Docker infrastructure from one shared control plane. Real-time metrics, centralized logs, smart alerts."
+      />
       <PublicNavbar />
 
       <main className="flex-1">

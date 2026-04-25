@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { LogoLink } from "@/components/shared/LogoLink";
 import { Box, Server, Shield, Activity } from "lucide-react";
 import { LoginBackground } from "@/components/ui/LoginBackground";
+import { SEO } from "@/components/shared/SEO";
 
 const features = [
   { icon: Server, title: "Multi-Host Monitoring", desc: "Monitor all your Docker hosts from a single pane of glass." },
@@ -17,10 +18,12 @@ import { getSafeNextPath } from "@/lib/auth-redirect";
 export default function LoginPage() {
   const [searchParams] = useSearchParams();
   const nextPath = getSafeNextPath(searchParams.get("next"), "/app");
-  
-  // Capture and persist plan intent
-  useEffect(() => {
-    const plan = searchParams.get("plan");
+
+  return (
+    <div className="min-h-screen flex flex-col md:flex-row bg-background relative overflow-hidden">
+      <SEO title="Log In" description="Access your Docker fleet dashboard. Monitor containers, logs, and alerts in one place." />
+      <LoginBackground />
+
     if (plan && plan !== "free" && plan !== "enterprise") {
       sessionStorage.setItem("dockerdash_pending_plan", plan);
     }

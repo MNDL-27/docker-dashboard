@@ -1,9 +1,11 @@
 import { PublicNavbar } from "@/components/layout/PublicNavbar";
 import { PublicFooter } from "@/components/layout/PublicFooter";
+import { SEO } from "@/components/shared/SEO";
 
 export default function RefundsPage() {
   return (
     <div className="min-h-screen flex flex-col bg-background">
+      <SEO title="Refund Policy" description="Our policy regarding refunds for Docker Dashboard subscriptions." />
       <PublicNavbar />
       <main className="flex-1 py-20 px-4">
         <div className="max-w-3xl mx-auto prose prose-invert">

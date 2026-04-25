@@ -1,9 +1,11 @@
 import { PublicNavbar } from "@/components/layout/PublicNavbar";
 import { PublicFooter } from "@/components/layout/PublicFooter";
+import { SEO } from "@/components/shared/SEO";
 
 export default function PrivacyPage() {
   return (
     <div className="min-h-screen flex flex-col bg-background">
+      <SEO title="Privacy Policy" description="Learn how we handle your data and ensure your privacy at Docker Dashboard." />
       <PublicNavbar />
       <main className="flex-1 py-20 px-4">
         <div className="max-w-3xl mx-auto prose prose-invert">
