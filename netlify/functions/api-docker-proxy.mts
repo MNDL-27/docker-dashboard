@@ -553,7 +553,7 @@ export default async (req: Request) => {
           if (resp.ok && resp.status !== 413) {
             const containers = await resp.json();
             allContainers.push(...containers.map((c: any) => ({ ...c, _hostId: host.id, _hostName: host.name })));
-            await sql`UPDATE docker_hosts SET status = 'connected', last_seen_at = now() WHERE id = ${host.id}`;
+            await sql`UPDATE docker_hosts SET status = 'connected', last_seen_at = now(), consecutive_failures = 0, last_error = null WHERE id = ${host.id}`;
           } else {
             await sql`UPDATE docker_hosts SET status = 'error' WHERE id = ${host.id}`;
           }

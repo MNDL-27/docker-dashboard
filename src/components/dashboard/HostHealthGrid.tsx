@@ -1,7 +1,30 @@
 import { DockerHost } from "@/types/database";
 import { cn } from "@/lib/utils";
-import { Server, Activity, AlertCircle, CheckCircle2, ChevronRight } from "lucide-react";
+import { Server, Activity, AlertCircle, CheckCircle2, ChevronRight, AlertTriangle } from "lucide-react";
 import { Link } from "react-router-dom";
+import { normalizeHostStatus } from "@/lib/host-health-state";
+
+const STATUS_LABEL: Record<string, string> = {
+  connected: "Healthy",
+  stale: "Stale",
+  error: "Error",
+  unhealthy: "Unhealthy",
+  down: "Down",
+  disconnected: "Offline",
+  unknown: "Unknown",
+};
+
+function statusColor(status: string) {
+  switch (status) {
+    case "connected":
+      return { bg: "bg-success/10", text: "text-success" };
+    case "stale":
+    case "error":
+      return { bg: "bg-warning/10", text: "text-warning" };
+    default:
+      return { bg: "bg-destructive/10", text: "text-destructive" };
+  }
+}
 
 interface HostHealthGridProps {
   hosts: DockerHost[];
@@ -29,49 +52,55 @@ export function HostHealthGrid({ hosts, className }: HostHealthGridProps) {
           </div>
         ) : (
           <div className="divide-y divide-white/5">
-            {hosts.map((host) => (
-              <Link 
-                key={host.id} 
-                to={`/app/hosts/${host.id}`}
-                className="flex items-center justify-between p-3 hover:bg-white/5 transition-colors group"
-              >
-                <div className="flex items-center gap-3">
-                  <div className={cn("p-1.5 rounded-lg", 
-                    host.status === "connected" ? "bg-success/10" : "bg-destructive/10"
-                  )}>
-                    {host.status === "connected" ? (
-                      <CheckCircle2 className="h-4 w-4 text-success" />
-                    ) : (
-                      <AlertCircle className="h-4 w-4 text-destructive" />
-                    )}
-                  </div>
-                  <div className="flex flex-col">
-                    <span className="text-sm font-semibold group-hover:text-primary transition-colors">{host.name}</span>
-                    <span className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider">
-                      {host.os_info || "Linux"} • {host.connection_mode.replace('_', ' ')}
-                    </span>
-                  </div>
-                </div>
-                
-                <div className="flex items-center gap-4 text-right">
-                  <div className="flex flex-col items-end">
-                    <div className="flex items-center gap-1">
-                      <Activity className={cn("h-3 w-3", host.status === "connected" ? "text-success" : "text-muted-foreground")} />
-                      <span className={cn("text-[10px] font-bold uppercase tracking-tighter", 
-                        host.status === "connected" ? "text-success" : "text-destructive"
-                      )}>
-                        {host.status === "connected" ? "Healthy" : "Down"}
+            {hosts.map((host) => {
+              const normalized = normalizeHostStatus(host.status);
+              const isHealthy = normalized === "connected";
+              const isWarning = normalized === "stale" || normalized === "error";
+              const colors = statusColor(normalized);
+              const label = STATUS_LABEL[normalized] || "Unknown";
+
+              return (
+                <Link 
+                  key={host.id} 
+                  to={`/app/hosts/${host.id}`}
+                  className="flex items-center justify-between p-3 hover:bg-white/5 transition-colors group"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className={cn("p-1.5 rounded-lg", colors.bg)}>
+                      {isHealthy ? (
+                        <CheckCircle2 className={cn("h-4 w-4", colors.text)} />
+                      ) : isWarning ? (
+                        <AlertTriangle className={cn("h-4 w-4", colors.text)} />
+                      ) : (
+                        <AlertCircle className={cn("h-4 w-4", colors.text)} />
+                      )}
+                    </div>
+                    <div className="flex flex-col">
+                      <span className="text-sm font-semibold group-hover:text-primary transition-colors">{host.name}</span>
+                      <span className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider">
+                        {host.os_info || "Linux"} • {host.connection_mode.replace('_', ' ')}
                       </span>
                     </div>
-                    {host.last_seen_at && (
-                      <span className="text-[10px] text-muted-foreground font-medium">
-                        Seen {new Date(host.last_seen_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                      </span>
-                    )}
                   </div>
-                </div>
-              </Link>
-            ))}
+                  
+                  <div className="flex items-center gap-4 text-right">
+                    <div className="flex flex-col items-end">
+                      <div className="flex items-center gap-1">
+                        <Activity className={cn("h-3 w-3", isHealthy ? "text-success" : "text-muted-foreground")} />
+                        <span className={cn("text-[10px] font-bold uppercase tracking-tighter", colors.text)}>
+                          {label}
+                        </span>
+                      </div>
+                      {host.last_seen_at && (
+                        <span className="text-[10px] text-muted-foreground font-medium">
+                          Seen {new Date(host.last_seen_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </Link>
+              );
+            })}
           </div>
         )}
       </div>

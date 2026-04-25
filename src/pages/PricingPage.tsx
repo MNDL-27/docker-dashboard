@@ -6,12 +6,17 @@ import { PublicFooter } from "@/components/layout/PublicFooter";
 import { pricingComparisonRows, pricingPlans } from "@/lib/pricing";
 import { cn } from "@/lib/utils";
 import { isPreviewAuthBypassEnabled } from "@/lib/hostname";
+import { SEO } from "@/components/shared/SEO";
 
 export default function PricingPage() {
   const previewBypass = isPreviewAuthBypassEnabled();
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
+      <SEO 
+        title="Pricing" 
+        description="Choose the operating tier that fits your team. Start small, upgrade when you need more hosts, more operators, and a tighter support path."
+      />
       <PublicNavbar />
 
       <main className="flex-1">

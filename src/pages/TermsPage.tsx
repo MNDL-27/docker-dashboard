@@ -1,9 +1,11 @@
 import { PublicNavbar } from "@/components/layout/PublicNavbar";
 import { PublicFooter } from "@/components/layout/PublicFooter";
+import { SEO } from "@/components/shared/SEO";
 
 export default function TermsPage() {
   return (
     <div className="min-h-screen flex flex-col bg-background">
+      <SEO title="Terms of Service" description="Read the terms and conditions for using Docker Dashboard's services." />
       <PublicNavbar />
       <main className="flex-1 py-20 px-4">
         <div className="max-w-3xl mx-auto prose prose-invert">

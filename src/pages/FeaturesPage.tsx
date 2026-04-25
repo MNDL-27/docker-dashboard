@@ -4,6 +4,7 @@ import { Box, Server, Bell, FileText, Shield, Check, ArrowRight, Boxes, Users } 
 import { PublicNavbar } from "@/components/layout/PublicNavbar";
 import { PublicFooter } from "@/components/layout/PublicFooter";
 import { isPreviewAuthBypassEnabled } from "@/lib/hostname";
+import { SEO } from "@/components/shared/SEO";
 
 const features = [
   { icon: Server, title: "Host Inventory", desc: "Register Docker hosts through the guided setup flow and keep connectivity status visible in one workspace.", details: ["Agent connectivity checks", "Host health status", "Stored agent version", "Cloudflare Tunnel support"] },
@@ -19,6 +20,10 @@ export default function FeaturesPage() {
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
+      <SEO 
+        title="Features" 
+        description="Explore the tools built for modern Docker fleet management. Centralized monitoring, logs, alerts, and enterprise-grade security."
+      />
       <PublicNavbar />
 
       <main className="flex-1">

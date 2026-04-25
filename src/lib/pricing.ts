@@ -21,13 +21,13 @@ export const pricingPlans: PricingPlan[] = [
     priceLabel: "$0",
     monthlyPrice: 0,
     audience: "Proof-of-value for a single small environment.",
-    summary: "Validate the platform on one connected host with strict limits on storage, scans, and integrations so infrastructure growth creates a clear upgrade point.",
+    summary: "Validate the platform on one connected host with strict limits on storage and integrations so infrastructure growth creates a clear upgrade point.",
     supportLabel: "Community support",
     sloLabel: "Best effort",
     highlights: [
       `${PLAN_POLICY_BY_PLAN.free.nodeLimit} connected host`,
       `${PLAN_POLICY_BY_PLAN.free.seatLimit} operator seat`,
-      "100 scans per month",
+      "Live data monitoring",
     ],
     restrictions: [
       "In-app notifications only",
@@ -47,7 +47,7 @@ export const pricingPlans: PricingPlan[] = [
     sloLabel: "1 business day response target",
     highlights: [
       `Up to ${PLAN_POLICY_BY_PLAN.pro.nodeLimit} hosts`,
-      "Unlimited manual scans",
+      "Live data monitoring",
       "Automated hourly checks",
       "30 days of history",
     ],
@@ -69,7 +69,7 @@ export const pricingPlans: PricingPlan[] = [
     sloLabel: "4 business hour response target",
     highlights: [
       `Up to ${PLAN_POLICY_BY_PLAN.team.nodeLimit} hosts`,
-      "Continuous scanning and real-time alerting",
+      "Continuous metrics and real-time alerting",
       "1 year of retention",
       `Up to ${PLAN_POLICY_BY_PLAN.team.seatLimit} seats with RBAC`,
     ],
@@ -90,7 +90,7 @@ export const pricingPlans: PricingPlan[] = [
     supportLabel: "Named support path",
     sloLabel: "Custom SLA/SLO",
     highlights: [
-      "Custom hosts and scan allocations",
+      "Custom host allocations",
       "Isolated database and dedicated compute",
       "Unlimited organization seats",
       "SSO integration",
@@ -124,11 +124,11 @@ export const pricingComparisonRows = [
     },
   },
   {
-    label: "Scan frequency",
+    label: "Monitoring frequency",
     values: {
-      free: "100 scans per month",
-      pro: "Unlimited manual plus automated hourly checks",
-      team: "Continuous scanning with real-time alerting",
+      free: "Live dashboard metrics",
+      pro: "Live dashboard plus automated checks",
+      team: "Continuous metrics with real-time alerting",
       enterprise: "Contract-defined",
     },
   },
