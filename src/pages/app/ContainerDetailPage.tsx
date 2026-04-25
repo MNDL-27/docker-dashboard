@@ -211,7 +211,7 @@ export default function ContainerDetailPage() {
     isFetching: statsFetching,
     refetch: refetchStats,
   } = useContainerStats(hostId, containerId, 10000);
-  const { data: logsData, isLoading: logsLoading, refetch: refetchLogs } = useContainerLogs(hostId, containerId, 200);
+  const { data: logsData, isLoading: logsLoading, refetch: refetchLogs } = useContainerLogs(hostId, containerId, { tail: 200 });
 
   const handleAction = async (action: "container-start" | "container-stop" | "container-restart") => {
     if (!hostId || !containerId) return;
