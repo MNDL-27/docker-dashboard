@@ -1,9 +1,11 @@
 import { SignIn } from "@clerk/clerk-react";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { LogoLink } from "@/components/shared/LogoLink";
 import { Box, Server, Shield, Activity } from "lucide-react";
 import { LoginBackground } from "@/components/ui/LoginBackground";
 import { SEO } from "@/components/shared/SEO";
+import { useEffect } from "react";
+import { getSafeNextPath } from "@/lib/auth-redirect";
 
 const features = [
   { icon: Server, title: "Multi-Host Monitoring", desc: "Monitor all your Docker hosts from a single pane of glass." },
@@ -11,19 +13,12 @@ const features = [
   { icon: Shield, title: "Secure Agent", desc: "Lightweight, TLS-encrypted proxy directly to docker.sock." },
 ];
 
-import { useEffect } from "react";
-import { useSearchParams } from "react-router-dom";
-import { getSafeNextPath } from "@/lib/auth-redirect";
-
 export default function LoginPage() {
   const [searchParams] = useSearchParams();
   const nextPath = getSafeNextPath(searchParams.get("next"), "/app");
 
-  return (
-    <div className="min-h-screen flex flex-col md:flex-row bg-background relative overflow-hidden">
-      <SEO title="Log In" description="Access your Docker fleet dashboard. Monitor containers, logs, and alerts in one place." />
-      <LoginBackground />
-
+  useEffect(() => {
+    const plan = searchParams.get("plan");
     if (plan && plan !== "free" && plan !== "enterprise") {
       sessionStorage.setItem("dockerdash_pending_plan", plan);
     }
@@ -31,6 +26,7 @@ export default function LoginPage() {
 
   return (
     <div className="min-h-screen flex flex-col md:flex-row bg-background relative overflow-hidden">
+      <SEO title="Log In" description="Access your Docker fleet dashboard. Monitor containers, logs, and alerts in one place." />
       <LoginBackground />
 
       {/* Left Column: Marketing / Brand (Hidden on mobile) */}
@@ -38,7 +34,7 @@ export default function LoginPage() {
         {/* Subtle background glow */}
         <div className="absolute top-0 left-0 w-full h-full bg-gradient-radial from-primary/5 via-transparent to-transparent opacity-50 pointer-events-none" />
 
-        <div className="relative z-10 w-full max-w-sm mx-auto flex-1 flex flex-col">
+        <div className="relative z-10 w-full max-sm mx-auto flex-1 flex flex-col">
           {/* Logo Nav */}
           <LogoLink className="flex items-center gap-2 mb-16">
             <div className="w-8 h-8 rounded-md bg-primary flex items-center justify-center">
