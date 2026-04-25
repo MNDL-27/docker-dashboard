@@ -37,7 +37,7 @@ export function AppTopBar() {
   const { organization } = useOrganization();
   const [isDark, setIsDark] = useState(() => document.documentElement.classList.contains("dark"));
   const [searchOpen, setSearchOpen] = useState(false);
-  const { data: hosts = [] } = useDockerHosts(organization?.id);
+  const { data: hosts = [] } = useDockerHosts(organization?.id, { filterByPlan: true });
   const { data: rawContainers } = useContainers(organization?.id, searchOpen && hosts.length > 0);
 
   const containers = useMemo(() => (Array.isArray(rawContainers) ? (rawContainers as SearchableContainer[]) : []), [rawContainers]);

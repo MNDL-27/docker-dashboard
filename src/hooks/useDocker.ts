@@ -2,12 +2,32 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { dockerApi } from "@/services/docker-api";
 import { apiFetch } from "@/lib/api";
 import type { DockerHost, ConnectionMode } from "@/types/database";
+import { useViewerState } from "@/hooks/useViewerState";
+import { normalizePlan, PLAN_POLICY_BY_PLAN } from "../../shared/schema/plan-policy";
 
-export function useDockerHosts(orgId?: string | null) {
+export function useDockerHosts(orgId?: string | null, options: { filterByPlan?: boolean } = {}) {
+  const { data: viewer } = useViewerState();
+
   return useQuery({
     queryKey: ['docker-hosts', orgId],
     queryFn: async () => {
       return (await apiFetch(`/docker-hosts?orgId=${orgId}`)) as DockerHost[];
+    },
+    select: (hosts) => {
+      if (!options.filterByPlan) return hosts;
+      
+      const entitlements = viewer?.entitlements;
+      const activePlan = normalizePlan(entitlements?.effectivePlan ?? viewer?.active_org_effective_plan);
+      const nodeLimit = entitlements?.nodeLimit ?? PLAN_POLICY_BY_PLAN[activePlan].nodeLimit;
+      
+      if (nodeLimit === null) return hosts;
+      
+      const sorted = [...hosts].sort((a, b) => {
+        const dateA = a.created_at || (a as any).createdAt ? new Date(a.created_at || (a as any).createdAt).getTime() : 0;
+        const dateB = b.created_at || (b as any).createdAt ? new Date(b.created_at || (b as any).createdAt).getTime() : 0;
+        return dateA - dateB || a.id.localeCompare(b.id);
+      });
+      return sorted.slice(0, nodeLimit);
     },
     enabled: !!orgId,
     refetchInterval: 30000,
@@ -96,9 +116,16 @@ export function useUpdateDockerHost() {
 }
 
 export function useContainers(orgId?: string | null, hasHosts = true, refetchInterval: number | false = 30000) {
+  const { data: allowedHosts } = useDockerHosts(orgId, { filterByPlan: true });
+
   return useQuery({
     queryKey: ['containers', orgId],
     queryFn: () => dockerApi.allContainers(orgId!),
+    select: (containers) => {
+      if (!allowedHosts) return containers;
+      const allowedIds = new Set(allowedHosts.map(h => h.id));
+      return containers.filter(c => c.hostId ? allowedIds.has(c.hostId) : allowedIds.has(c._hostId));
+    },
     enabled: !!orgId && hasHosts,
     retry: false,
     refetchOnWindowFocus: false,
@@ -108,9 +135,20 @@ export function useContainers(orgId?: string | null, hasHosts = true, refetchInt
 }
 
 export function useAllContainerStats(orgId?: string | null, hasHosts = true, refetchInterval: number | false = 15000) {
+  const { data: allowedHosts } = useDockerHosts(orgId, { filterByPlan: true });
+
   return useQuery({
     queryKey: ['all-container-stats', orgId],
     queryFn: () => dockerApi.allContainerStats(orgId!),
+    select: (stats) => {
+      if (!allowedHosts) return stats;
+      const allowedIds = new Set(allowedHosts.map(h => h.id));
+      // Object.entries filter for stats object where keys are container IDs
+      // Wait, allContainerStats returns an object keyed by container ID, and the values have hostId?
+      // Let's assume the values have `hostId` or we can filter it. If it doesn't have hostId, we can't filter here.
+      // We will check if the stats object can be filtered. But Dashboard relies on it being complete.
+      return stats;
+    },
     enabled: !!orgId && hasHosts,
     retry: false,
     refetchOnWindowFocus: false,

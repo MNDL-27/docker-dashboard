@@ -73,7 +73,7 @@ export default function OrganizationsPage() {
 }
 
 function OrgCard({ org }: { org: { id: string; name: string; slug: string | null } }) {
-  const { data: hosts = [] } = useDockerHosts(org.id);
+  const { data: hosts = [] } = useDockerHosts(org.id, { filterByPlan: true });
 
   return (
     <div className="glass-card p-5">

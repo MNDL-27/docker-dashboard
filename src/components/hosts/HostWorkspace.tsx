@@ -16,7 +16,6 @@ import { HostDetailHeader } from "@/components/hosts/HostDetailHeader";
 import { HostMetricsGrid } from "@/components/hosts/HostMetricsGrid";
 import { HostUpgradeDialog } from "@/components/hosts/HostUpgradeDialog";
 import { PageHeader } from "@/components/shared/PageHeader";
-import { ScanQuotaStatusStrip } from "@/components/shared/ScanQuotaStatusStrip";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -29,7 +28,6 @@ import { useToast } from "@/hooks/use-toast";
 import { dockerApi } from "@/services/docker-api";
 import type { DockerHost } from "@/types/database";
 import { CURRENT_WATCHTOWER_AGENT_VERSION } from "@/lib/agent-version";
-import { isManualScanPlan, isScanQuotaExhausted, SCAN_REFRESH_COSTS } from "@/lib/scan-quota";
 import {
   CURRENT_WATCHTOWER_AGENT_RELEASE,
   getWatchtowerAgentUpdateStatus,
@@ -121,8 +119,6 @@ export function HostWorkspace() {
   const [isInfrastructureVisible, setIsInfrastructureVisible] = useState(true);
   const [upgradeDialogOpen, setUpgradeDialogOpen] = useState(false);
   const effectivePlan = viewer?.active_org_effective_plan ?? viewer?.active_org_plan;
-  const manualScanMode = isManualScanPlan(effectivePlan, viewer?.active_org_scan_limit);
-  const scanQuotaExhausted = isScanQuotaExhausted(viewer?.active_org_scan_limit, viewer?.active_org_scan_remaining);
   
   const normalizedPlan = normalizePlan(effectivePlan);
   const fallbackNodeLimit = PLAN_POLICY_BY_PLAN[normalizedPlan].nodeLimit;
@@ -200,10 +196,10 @@ export function HostWorkspace() {
   const selectedHostStale = normalizeHostStatus(selectedHost?.status) === "stale";
 
   const selectedHostLocked = selectedHost ? isHostLocked(selectedHost.id) : false;
-  const containersQuery = useHostContainers(selectedHostAutoProbe && !selectedHostLocked ? selectedHost?.id : null, manualScanMode ? false : 15000);
+  const containersQuery = useHostContainers(selectedHostAutoProbe && !selectedHostLocked ? selectedHost?.id : null, 15000);
   const metricsQuery = useHostMetricsHistory(selectedHostAutoProbe && !selectedHostLocked ? selectedHost?.id : null, {
     enabled: selectedHostAutoProbe && !selectedHostLocked,
-    refetchInterval: manualScanMode ? false : 10000,
+    refetchInterval: 10000,
     maxDataPoints: 24,
   });
   const metricsFailureDisplay = formatHostMetricsFailure(metricsQuery.failure, selectedHost);
@@ -339,8 +335,6 @@ export function HostWorkspace() {
               orgId={currentOrg?.id}
               testing={testing}
               liveRefreshPending={liveRefreshPending}
-              manualScanMode={manualScanMode}
-              scanQuotaExhausted={scanQuotaExhausted}
               selectedHostAutoProbe={selectedHostAutoProbe}
               selectedHostDisconnected={selectedHostDisconnected}
               selectedHostStale={selectedHostStale}
@@ -354,8 +348,6 @@ export function HostWorkspace() {
               agentUpdateStatusCopy={agentUpdateStatusCopy}
               verificationReason={verificationReason}
               showAgentUpdateCta={showAgentUpdateCta}
-              effectivePlan={effectivePlan}
-              viewer={viewer}
               isInfrastructureVisible={isInfrastructureVisible}
               onShowSidebar={() => setIsInfrastructureVisible(true)}
               onTest={handleTest}
@@ -453,8 +445,6 @@ function SelectedHostView({
   orgId,
   testing,
   liveRefreshPending,
-  manualScanMode,
-  scanQuotaExhausted,
   selectedHostAutoProbe,
   selectedHostDisconnected,
   selectedHostStale,
@@ -468,8 +458,6 @@ function SelectedHostView({
   agentUpdateStatusCopy,
   verificationReason,
   showAgentUpdateCta,
-  effectivePlan,
-  viewer,
   isInfrastructureVisible,
   onShowSidebar,
   onTest,
@@ -482,8 +470,6 @@ function SelectedHostView({
   orgId: string | undefined;
   testing: boolean;
   liveRefreshPending: boolean;
-  manualScanMode: boolean;
-  scanQuotaExhausted: boolean;
   selectedHostAutoProbe: boolean;
   selectedHostDisconnected: boolean;
   selectedHostStale: boolean;
@@ -497,8 +483,6 @@ function SelectedHostView({
   agentUpdateStatusCopy: { title: string; description: string };
   verificationReason: string | null;
   showAgentUpdateCta: boolean;
-  effectivePlan: string | undefined;
-  viewer: any;
   isInfrastructureVisible: boolean;
   onShowSidebar: () => void;
   onTest: () => void;
@@ -523,8 +507,6 @@ function SelectedHostView({
         orgId={orgId}
         testing={testing}
         liveRefreshPending={liveRefreshPending}
-        manualScanMode={manualScanMode}
-        scanQuotaExhausted={scanQuotaExhausted}
         selectedHostAutoProbe={selectedHostAutoProbe}
         missingExtendedMetrics={missingExtendedMetrics}
         uptimeSeconds={metricsQuery.latestPoint?.uptimeSeconds}
@@ -543,17 +525,7 @@ function SelectedHostView({
         </div>
       )}
 
-      {manualScanMode ? (
-        <ScanQuotaStatusStrip
-          plan={effectivePlan}
-          limit={viewer?.active_org_scan_limit}
-          used={viewer?.active_org_scan_used}
-          remaining={viewer?.active_org_scan_remaining}
-          resetAt={viewer?.active_org_scan_reset_at}
-          scanCost={SCAN_REFRESH_COSTS.host}
-          className="rounded-xl"
-        />
-      ) : null}
+
 
       {containersQuery.error instanceof Error ? (
         <div className="rounded-xl border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">

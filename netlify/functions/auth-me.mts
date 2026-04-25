@@ -6,7 +6,6 @@ import { ensureAdminSchema } from './lib/ensure-admin-schema.mjs';
 import { isPlatformAdminEmail } from './lib/platform-admin.mjs';
 import { ensureDedicatedDeploymentSchema } from './lib/ensure-dedicated-deployment-schema.mjs';
 import { resolveOrganizationEntitlements } from './lib/access-controls.mjs';
-import { getOrganizationScanQuotaSummary } from './lib/scan-usage.mjs';
 
 const allowedOrigins = new Set([
   'https://app.dockerdash.app',
@@ -95,12 +94,6 @@ export default async (req: Request) => {
           isPlatformAdmin,
         })
       : null;
-    const scanQuota = effectiveOrg
-      ? await getOrganizationScanQuotaSummary({
-          organizationId: effectiveOrg.id,
-          isPlatformAdmin,
-        })
-      : null;
     const effectivePlan = entitlements?.effectivePlan ?? 'free';
 
     return new Response(JSON.stringify({
@@ -113,27 +106,12 @@ export default async (req: Request) => {
         active_org_clerk_id: effectiveOrg?.clerk_org_id ?? null,
         active_org_plan: effectiveOrg?.plan ?? null,
         active_org_effective_plan: effectivePlan,
-        active_org_scan_limit: scanQuota?.monthlyScanLimit ?? null,
-        active_org_scan_used: scanQuota?.scansUsed ?? 0,
-        active_org_scan_remaining: scanQuota?.scansRemaining ?? null,
-        active_org_scan_reset_at: scanQuota?.resetAt ?? null,
         dedicated_deployment_status: dedicatedDeployment[0]?.status ?? null,
         dedicated_deployment_updated_at: dedicatedDeployment[0]?.updated_at ? new Date(String(dedicatedDeployment[0].updated_at)).toISOString() : null,
         is_platform_admin: isPlatformAdmin,
         is_suspended: Boolean(users[0].is_suspended),
         is_hard_disabled: Boolean(users[0].is_hard_disabled),
         entitlements,
-        scan_quota: scanQuota
-          ? {
-              monthBucket: scanQuota.monthBucket,
-              monthlyScanLimit: scanQuota.monthlyScanLimit,
-              scansUsed: scanQuota.scansUsed,
-              scansRemaining: scanQuota.scansRemaining,
-              scansExceeded: scanQuota.scansExceeded,
-              resetAt: scanQuota.resetAt,
-              effectivePlan: scanQuota.effectivePlan,
-            }
-          : null,
       },
     }), { headers });
 

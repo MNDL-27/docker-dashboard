@@ -4,12 +4,6 @@ import { requireAuth } from './lib/auth.mjs';
 import { enforceOrganizationNodeLimit } from './lib/access-controls.mjs';
 import { decryptHostSecrets } from './lib/crypto.mjs';
 import { buildValidatedAgentUrl } from './lib/host-url.mjs';
-import {
-  createScanQuotaExceededResponse,
-  consumeOrganizationScanQuota,
-  getOrganizationScanQuotaSummary,
-  withScanQuotaHeaders,
-} from './lib/scan-usage.mjs';
 
 const headers = {
   'Access-Control-Allow-Origin': '*',
@@ -119,15 +113,6 @@ export default async (req: Request) => {
 
     if (limitState.allowedHostIds.length === 0) {
       return new Response(JSON.stringify([]), { headers });
-    }
-
-    const quotaSummary = await getOrganizationScanQuotaSummary({
-      organizationId: orgId,
-      isPlatformAdmin: auth.isPlatformAdmin,
-    });
-
-    if (quotaSummary.scansExceeded) {
-      return createScanQuotaExceededResponse(headers, quotaSummary);
     }
 
     // Get all hosts for the org
@@ -277,17 +262,8 @@ export default async (req: Request) => {
         isPartial: hostCount > 0 && hostCount < hosts.length,
       }];
 
-    const quotaResult = await consumeOrganizationScanQuota({
-      organizationId: orgId,
-      isPlatformAdmin: auth.isPlatformAdmin,
-    });
-
-    if (!quotaResult.allowed) {
-      return createScanQuotaExceededResponse(headers, quotaResult);
-    }
-
     return new Response(JSON.stringify(fleetMetrics), {
-      headers: withScanQuotaHeaders(headers, quotaResult, quotaResult.counted),
+      headers,
     });
 
   } catch (error: any) {

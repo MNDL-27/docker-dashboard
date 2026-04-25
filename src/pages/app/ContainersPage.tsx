@@ -19,7 +19,6 @@ import {
 
 import { KPICard } from "@/components/dashboard/KPICard";
 import { PageHeader } from "@/components/shared/PageHeader";
-import { ScanQuotaStatusStrip } from "@/components/shared/ScanQuotaStatusStrip";
 import { StatusBadge } from "@/components/shared/StatusBadge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -27,7 +26,6 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { useAllContainerStats, useContainers, useDockerHosts } from "@/hooks/useDocker";
 import { useFleetMetrics } from "@/hooks/useFleetMetrics";
 import { useViewerState } from "@/hooks/useViewerState";
-import { isManualScanPlan, isScanQuotaExhausted, SCAN_REFRESH_COSTS } from "@/lib/scan-quota";
 import { dockerApi } from "@/services/docker-api";
 import { cn } from "@/lib/utils";
 import { PLAN_POLICY_BY_PLAN, normalizePlan } from "../../../shared/schema/plan-policy";
@@ -180,30 +178,28 @@ export default function ContainersPage() {
   const queryClient = useQueryClient();
   const { organization: currentOrg } = useOrganization();
   const { data: viewer } = useViewerState();
-  const { data: hosts = [], isLoading: hostsLoading } = useDockerHosts(currentOrg?.id);
+  const { data: hosts = [], isLoading: hostsLoading } = useDockerHosts(currentOrg?.id, { filterByPlan: true });
   const effectivePlan = viewer?.active_org_effective_plan ?? viewer?.active_org_plan;
-  const manualScanMode = isManualScanPlan(effectivePlan, viewer?.active_org_scan_limit);
-  const scanQuotaExhausted = isScanQuotaExhausted(viewer?.active_org_scan_limit, viewer?.active_org_scan_remaining);
   const {
     data: rawContainers,
     isLoading: containersLoading,
     isFetching: containersFetching,
     refetch: refetchContainers,
     error,
-  } = useContainers(currentOrg?.id, hosts.length > 0, manualScanMode ? false : 30000);
+  } = useContainers(currentOrg?.id, hosts.length > 0, 30000);
   const {
     data: rawStats,
     isFetching: statsFetching,
     refetch: refetchStats,
     error: statsError,
-  } = useAllContainerStats(currentOrg?.id, hosts.length > 0, manualScanMode ? false : 15000);
+  } = useAllContainerStats(currentOrg?.id, hosts.length > 0, 15000);
   const {
     data: fleetMetrics = [],
     isLoading: fleetMetricsLoading,
     isFetching: fleetMetricsFetching,
     refetch: refetchFleetMetrics,
     error: fleetMetricsError,
-  } = useFleetMetrics(currentOrg?.id, manualScanMode ? false : 15000);
+  } = useFleetMetrics(currentOrg?.id, 15000);
 
   const [search, setSearch] = useState("");
   const [stateTab, setStateTab] = useState("all");
@@ -211,28 +207,7 @@ export default function ContainersPage() {
   const [imageFilter, setImageFilter] = useState("");
   const [actionLoading, setActionLoading] = useState<string | null>(null);
 
-  const allContainers: any[] = useMemo(() => (Array.isArray(rawContainers) ? rawContainers : []), [rawContainers]);
-
-  const normalizedPlan = normalizePlan(effectivePlan);
-  const fallbackNodeLimit = PLAN_POLICY_BY_PLAN[normalizedPlan].nodeLimit;
-  const nodeLimit = viewer?.entitlements?.nodeLimit ?? fallbackNodeLimit;
-
-  const allowedHostIds = useMemo(() => {
-    if (nodeLimit === null) return null; // unlimited
-    const allowed = new Set<string>();
-    const hostsSortedByCreation = [...hosts].sort(
-      (a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
-    );
-    for (let i = 0; i < Math.min(nodeLimit, hostsSortedByCreation.length); i++) {
-      allowed.add(hostsSortedByCreation[i].id);
-    }
-    return allowed;
-  }, [hosts, nodeLimit]);
-
-  const containers = useMemo(() => {
-    if (allowedHostIds === null) return allContainers;
-    return allContainers.filter((c: any) => c._hostId && allowedHostIds.has(c._hostId));
-  }, [allContainers, allowedHostIds]);
+  const containers: any[] = useMemo(() => (Array.isArray(rawContainers) ? rawContainers : []), [rawContainers]);
 
   const uniqueHosts = useMemo(() => {
     const map = new Map<string, string>();
@@ -322,13 +297,9 @@ export default function ContainersPage() {
   const telemetryAvailable = !!latestFleetMetrics;
   const telemetryPartial = latestFleetMetrics?.isPartial === true;
   const liveRefreshPending = containersFetching || statsFetching || fleetMetricsFetching;
-  const scanQuotaWarning = [statsError, fleetMetricsError]
-    .map((queryError) => (queryError instanceof Error ? queryError.message : null))
-    .filter((message): message is string => !!message)
-    .find((message) => /scan quota|monthly scan quota|scan quota reached/i.test(message)) ?? null;
   const auxiliaryErrorMessage = [statsError, fleetMetricsError]
     .map((queryError) => (queryError instanceof Error ? queryError.message : null))
-    .filter((message): message is string => !!message && message !== scanQuotaWarning)
+    .filter((message): message is string => !!message)
     .join(" ");
 
   async function handleRefreshLiveData() {
@@ -394,39 +365,10 @@ export default function ContainersPage() {
         breadcrumbs={[{ label: "Infrastructure" }, { label: "Containers" }]}
         actions={
           <div className="flex flex-wrap items-center gap-2">
-            {manualScanMode ? (
-              <Button variant="outline" className="gap-2" onClick={() => void handleRefreshLiveData()} disabled={liveRefreshPending || scanQuotaExhausted}>
-                {liveRefreshPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <RotateCw className="h-4 w-4" />}
-                Refresh Live Data
-              </Button>
-            ) : null}
-            <TelemetryBadge loading={fleetMetricsLoading} available={telemetryAvailable} partial={telemetryPartial} autoRefresh={!manualScanMode} />
+            <TelemetryBadge loading={fleetMetricsLoading} available={telemetryAvailable} partial={telemetryPartial} autoRefresh={true} />
           </div>
         }
       />
-
-      {manualScanMode ? (
-        <ScanQuotaStatusStrip
-          plan={effectivePlan}
-          limit={viewer?.active_org_scan_limit}
-          used={viewer?.active_org_scan_used}
-          remaining={viewer?.active_org_scan_remaining}
-          resetAt={viewer?.active_org_scan_reset_at}
-          scanCost={SCAN_REFRESH_COSTS.containers}
-        />
-      ) : null}
-
-      {scanQuotaWarning ? (
-        <div className="glass-card rounded-[24px] border border-warning/40 bg-warning/10 px-5 py-4">
-          <div className="flex items-start gap-3">
-            <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-warning" />
-            <div>
-              <p className="text-sm font-semibold text-foreground">Monthly scan limit reached</p>
-              <p className="mt-1 text-sm text-muted-foreground">{scanQuotaWarning}</p>
-            </div>
-          </div>
-        </div>
-      ) : null}
 
       {auxiliaryErrorMessage ? (
         <div className="rounded-2xl border border-white/10 bg-background/35 px-4 py-3 text-sm text-muted-foreground">
@@ -470,9 +412,7 @@ export default function ContainersPage() {
             <div>
               <h3 className="text-lg font-semibold tracking-tight text-foreground">Containers</h3>
               <p className="mt-1 text-sm text-muted-foreground">
-                {manualScanMode
-                  ? "Free plan live stats refresh only when you request them."
-                  : "Live stats update automatically. Use the control rail to narrow the dataset before acting."}
+                Live stats update automatically. Use the control rail to narrow the dataset before acting.
               </p>
             </div>
             <div className="rounded-full border border-white/10 bg-background/35 px-4 py-2 text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">Showing {filtered.length} of {containers.length}</div>
