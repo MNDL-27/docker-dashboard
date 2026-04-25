@@ -5,7 +5,7 @@ import { cn } from "@/lib/utils";
 import {
   LayoutDashboard, Server, Box, FileText, Bell, CreditCard, Settings,
   HelpCircle, ChevronLeft, ChevronRight,
-  Building2, Users, Shield, BookOpen
+  Building2, Users, Shield, BookOpen, Lock
 } from "lucide-react";
 import { useViewerState } from "@/hooks/useViewerState";
 
@@ -27,7 +27,7 @@ const navGroups = [
   {
     label: "Observability",
     items: [
-      { label: "Logs", icon: FileText, href: "/app/logs" },
+      { label: "Logs", icon: FileText, href: "/app/logs", premiumKey: "canUseLogs" as const },
       { label: "Alerts", icon: Bell, href: "/app/alerts" },
     ],
   },
@@ -46,6 +46,7 @@ export function AppSidebar() {
   const [collapsed, setCollapsed] = useState(false);
   const location = useLocation();
   const { data: viewer } = useViewerState();
+  const entitlements = viewer?.entitlements;
 
   const visibleGroups = navGroups.map((group) => ({
     ...group,
@@ -94,7 +95,14 @@ export function AppSidebar() {
                     )}
                   >
                     <item.icon className="h-4 w-4 shrink-0" />
-                    {!collapsed && <span className="truncate">{item.label}</span>}
+                    {!collapsed && (
+                      <>
+                        <span className="truncate">{item.label}</span>
+                        {item.premiumKey && !entitlements?.[item.premiumKey] && (
+                          <Lock className="h-3 w-3 ml-auto text-muted-foreground/50 shrink-0" />
+                        )}
+                      </>
+                    )}
                   </Link>
                 );
               })}

@@ -12,6 +12,7 @@ export interface ViewerEntitlements {
   canUseSlackDestinations: boolean;
   canUseAdvancedAlerts: boolean;
   canUseTeamCollaboration: boolean;
+  canUseLogs: boolean;
 }
 
 export interface ViewerState {
