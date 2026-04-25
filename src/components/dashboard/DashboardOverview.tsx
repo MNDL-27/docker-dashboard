@@ -4,10 +4,7 @@ import { HostHealthGrid } from "@/components/dashboard/HostHealthGrid";
 import { FleetResourceChart } from "@/components/dashboard/FleetResourceChart";
 import { ContainersTable } from "@/components/dashboard/ContainersTable";
 import { DashboardAlerts } from "@/components/dashboard/DashboardAlerts";
-import { ScanQuotaStatusStrip } from "@/components/shared/ScanQuotaStatusStrip";
-import { Button } from "@/components/ui/button";
-import { SCAN_REFRESH_COSTS } from "@/lib/scan-quota";
-import { Activity, AlertCircle, Box, Loader2, RefreshCw, Server } from "lucide-react";
+import { Activity, AlertCircle, Box, Server } from "lucide-react";
 import type { DockerHost } from "@/types/database";
 import type { DashboardStats } from "@/lib/dashboard-summary";
 
@@ -18,16 +15,7 @@ interface DashboardOverviewProps {
   stats: DashboardStats;
   containersLoading: boolean;
   liveDataError?: string | null;
-  scanQuotaPlan?: string | null;
-  scanQuotaLimit?: number | null;
-  scanQuotaUsed?: number | null;
-  scanQuotaRemaining?: number | null;
-  scanQuotaResetAt?: string | null;
-  scanQuotaExhausted?: boolean;
-  manualScanMode?: boolean;
-  isRefreshingLiveData?: boolean;
   fleetMetricsRefetchInterval?: number | false;
-  onRefreshLiveData?: () => void | Promise<void>;
 }
 
 export function DashboardOverview({
@@ -37,16 +25,7 @@ export function DashboardOverview({
   stats,
   containersLoading,
   liveDataError,
-  scanQuotaPlan,
-  scanQuotaLimit,
-  scanQuotaUsed,
-  scanQuotaRemaining,
-  scanQuotaResetAt,
-  scanQuotaExhausted = false,
-  manualScanMode = false,
-  isRefreshingLiveData = false,
   fleetMetricsRefetchInterval = 10000,
-  onRefreshLiveData,
 }: DashboardOverviewProps) {
   return (
     <div className="space-y-6 animate-fade-in pb-10">
@@ -55,29 +34,8 @@ export function DashboardOverview({
           title="Dashboard"
           description={organizationName || "Overview"}
           breadcrumbs={[{ label: "Operations" }, { label: "Fleet Summary" }]}
-          actions={
-            manualScanMode && onRefreshLiveData ? (
-              <Button variant="outline" className="gap-2" onClick={() => void onRefreshLiveData()} disabled={isRefreshingLiveData || scanQuotaExhausted}>
-                {isRefreshingLiveData ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
-                Refresh Live Data
-              </Button>
-            ) : null
-          }
         />
       </div>
-
-      {manualScanMode ? (
-        <div className="px-6">
-          <ScanQuotaStatusStrip
-            plan={scanQuotaPlan}
-            limit={scanQuotaLimit}
-            used={scanQuotaUsed}
-            remaining={scanQuotaRemaining}
-            resetAt={scanQuotaResetAt}
-            scanCost={SCAN_REFRESH_COSTS.dashboard}
-          />
-        </div>
-      ) : null}
 
       {liveDataError ? (
         <div className="px-6">
@@ -116,4 +74,3 @@ export function DashboardOverview({
     </div>
   );
 }
-

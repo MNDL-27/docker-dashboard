@@ -4,7 +4,6 @@ import { useOrganization, useOrganizationList } from "@clerk/clerk-react";
 import { useDockerHosts, useContainers } from "@/hooks/useDocker";
 import { useViewerState } from "@/hooks/useViewerState";
 import { buildDashboardStats } from "@/lib/dashboard-summary";
-import { isManualScanPlan, isScanQuotaExhausted } from "@/lib/scan-quota";
 import { DashboardLoadingState } from "@/components/dashboard/DashboardLoadingState";
 import { DashboardNoOrganizationState } from "@/components/dashboard/DashboardNoOrganizationState";
 import { DashboardEmptyHostsState } from "@/components/dashboard/DashboardEmptyHostsState";
@@ -23,9 +22,6 @@ export default function DashboardPage() {
   const currentOrg = organization;
   const hasOrgs = userMemberships.count ? userMemberships.count > 0 : false;
   const orgLoading = !orgLoaded || !listLoaded;
-  const effectivePlan = viewer?.active_org_effective_plan ?? viewer?.active_org_plan;
-  const manualScanMode = isManualScanPlan(effectivePlan, viewer?.active_org_scan_limit);
-  const scanQuotaExhausted = isScanQuotaExhausted(viewer?.active_org_scan_limit, viewer?.active_org_scan_remaining);
 
   const { data: hosts = [], isLoading: hostsLoading } = useDockerHosts(currentOrg?.id, { filterByPlan: true });
   const {
@@ -34,7 +30,7 @@ export default function DashboardPage() {
     isFetching: containersFetching,
     refetch: refetchContainers,
     error: containersError,
-  } = useContainers(currentOrg?.id, hosts.length > 0, manualScanMode ? false : 30000);
+  } = useContainers(currentOrg?.id, hosts.length > 0, 30000);
 
   const stats = useMemo(() => buildDashboardStats(hosts, containers), [hosts, containers]);
 
@@ -63,23 +59,7 @@ export default function DashboardPage() {
       stats={stats}
       containersLoading={containersLoading}
       liveDataError={containersError instanceof Error ? containersError.message : null}
-      scanQuotaPlan={effectivePlan}
-      scanQuotaLimit={viewer?.active_org_scan_limit}
-      scanQuotaUsed={viewer?.active_org_scan_used}
-      scanQuotaRemaining={viewer?.active_org_scan_remaining}
-      scanQuotaResetAt={viewer?.active_org_scan_reset_at}
-      scanQuotaExhausted={scanQuotaExhausted}
-      manualScanMode={manualScanMode}
-      isRefreshingLiveData={containersFetching}
-      fleetMetricsRefetchInterval={manualScanMode ? false : 10000}
-      onRefreshLiveData={async () => {
-        await Promise.allSettled([
-          refetchContainers(),
-          queryClient.invalidateQueries({ queryKey: ['fleet-metrics', currentOrg?.id] }),
-        ]);
-        await queryClient.invalidateQueries({ queryKey: ['auth-me'] });
-      }}
+      fleetMetricsRefetchInterval={10000}
     />
   );
 }
-

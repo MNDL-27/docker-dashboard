@@ -64,8 +64,6 @@ export interface HostDetailHeaderProps {
   orgId: string | undefined;
   testing: boolean;
   liveRefreshPending: boolean;
-  manualScanMode: boolean;
-  scanQuotaExhausted: boolean;
   selectedHostAutoProbe: boolean;
   missingExtendedMetrics: boolean;
   uptimeSeconds: number | null | undefined;
@@ -85,8 +83,6 @@ export function HostDetailHeader({
   orgId,
   testing,
   liveRefreshPending,
-  manualScanMode,
-  scanQuotaExhausted,
   selectedHostAutoProbe,
   missingExtendedMetrics,
   uptimeSeconds,
@@ -146,12 +142,6 @@ export function HostDetailHeader({
             {testing ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
             Test Connection
           </Button>
-          {manualScanMode ? (
-            <Button variant="outline" className="gap-2" onClick={onRefreshLiveData} disabled={liveRefreshPending || !selectedHostAutoProbe || scanQuotaExhausted}>
-              {liveRefreshPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
-              Refresh Live Data
-            </Button>
-          ) : null}
           {showAgentUpdateCta ? (
             <AgentUpdateDialog
               host={selectedHost}

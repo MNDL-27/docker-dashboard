@@ -17,11 +17,12 @@ import {
   Settings2,
   Square,
   TerminalSquare,
+  Lock,
 } from "lucide-react";
 
 import { LogConsole } from "@/components/docker/LogConsole";
+import { HostUpgradeDialog } from "@/components/hosts/HostUpgradeDialog";
 import { PageHeader } from "@/components/shared/PageHeader";
-import { ScanQuotaStatusStrip } from "@/components/shared/ScanQuotaStatusStrip";
 import { Button } from "@/components/ui/button";
 import {
   Sheet,
@@ -32,10 +33,10 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 import { cn } from "@/lib/utils";
-import { useContainerInspect, useContainerLogs, useContainerStats } from "@/hooks/useDocker";
+import { useContainerInspect, useContainerLogs, useContainerStats, useDockerHosts } from "@/hooks/useDocker";
 import { useViewerState } from "@/hooks/useViewerState";
-import { isManualScanPlan, isScanQuotaExhausted, SCAN_REFRESH_COSTS } from "@/lib/scan-quota";
 import { dockerApi } from "@/services/docker-api";
+import { PLAN_POLICY_BY_PLAN, normalizePlan } from "../../../shared/schema/plan-policy";
 import { useToast } from "@/hooks/use-toast";
 
 function formatBytes(bytes: number) {
@@ -197,9 +198,11 @@ export default function ContainerDetailPage() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [actionLoading, setActionLoading] = useState<string | null>(null);
+  const [upgradeDialogOpen, setUpgradeDialogOpen] = useState(false);
   const effectivePlan = viewer?.active_org_effective_plan ?? viewer?.active_org_plan;
-  const manualScanMode = isManualScanPlan(effectivePlan, viewer?.active_org_scan_limit);
-  const scanQuotaExhausted = isScanQuotaExhausted(viewer?.active_org_scan_limit, viewer?.active_org_scan_remaining);
+
+  const { data: allowedHosts = [], isLoading: hostsLoading } = useDockerHosts(viewer?.active_org_id ?? null, { filterByPlan: true });
+  const isHostAllowed = hostId ? allowedHosts.some(h => h.id === hostId) : false;
 
   const { data: inspect, isLoading: inspectLoading, error: inspectError } = useContainerInspect(hostId, containerId);
   const {
@@ -207,7 +210,7 @@ export default function ContainerDetailPage() {
     error: statsError,
     isFetching: statsFetching,
     refetch: refetchStats,
-  } = useContainerStats(hostId, containerId, manualScanMode ? false : 10000);
+  } = useContainerStats(hostId, containerId, 10000);
   const { data: logsData, isLoading: logsLoading, refetch: refetchLogs } = useContainerLogs(hostId, containerId, 200);
 
   const handleAction = async (action: "container-start" | "container-stop" | "container-restart") => {
@@ -244,10 +247,44 @@ export default function ContainerDetailPage() {
     );
   }
 
-  if (inspectLoading) {
+  if (hostsLoading || inspectLoading) {
     return (
       <div className="flex h-64 items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
+
+  if (!isHostAllowed && allowedHosts.length > 0) {
+    const normalizedPlan = normalizePlan(effectivePlan);
+    const fallbackNodeLimit = PLAN_POLICY_BY_PLAN[normalizedPlan].nodeLimit;
+    const nodeLimit = viewer?.entitlements?.nodeLimit ?? fallbackNodeLimit;
+
+    return (
+      <div className="space-y-6 animate-fade-in">
+        <PageHeader
+          title="Access Restricted"
+          description="Host limit exceeded"
+          breadcrumbs={[{ label: "Containers", href: "/app/containers" }, { label: "Restricted" }]}
+        />
+        <div className="glass-card p-12 text-center">
+          <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-warning/10">
+            <Lock className="h-6 w-6 text-warning" />
+          </div>
+          <h2 className="text-xl font-semibold mb-2">Host Access Restricted</h2>
+          <p className="text-muted-foreground mb-6 max-w-md mx-auto">
+            This container belongs to a host that exceeds your current plan's node limit ({nodeLimit} node{nodeLimit === 1 ? "" : "s"}).
+          </p>
+          <div className="flex justify-center gap-4">
+            <Button variant="outline" asChild>
+              <Link to="/app/containers">Back to Containers</Link>
+            </Button>
+            <Button onClick={() => setUpgradeDialogOpen(true)}>
+              Upgrade Plan
+            </Button>
+          </div>
+        </div>
+        <HostUpgradeDialog open={upgradeDialogOpen} onOpenChange={setUpgradeDialogOpen} nodeLimit={nodeLimit} />
       </div>
     );
   }
@@ -364,20 +401,6 @@ export default function ContainerDetailPage() {
             </div>
 
             <div className="flex flex-wrap items-center gap-3">
-              {manualScanMode ? (
-                <Button
-                  variant="outline"
-                  className="gap-2 rounded-full px-7"
-                  onClick={async () => {
-                    await refetchStats();
-                    await queryClient.invalidateQueries({ queryKey: ["auth-me"] });
-                  }}
-                  disabled={statsFetching || scanQuotaExhausted}
-                >
-                  {statsFetching ? <Loader2 className="h-4 w-4 animate-spin" /> : <RotateCcw className="h-4 w-4" />}
-                  Refresh live stats
-                </Button>
-              ) : null}
               <Sheet>
                 <SheetTrigger asChild>
                   <Button className="gap-2 rounded-full px-7">
@@ -474,17 +497,6 @@ export default function ContainerDetailPage() {
             </div>
           </div>
         </div>
-
-        {manualScanMode ? (
-          <ScanQuotaStatusStrip
-            plan={effectivePlan}
-            limit={viewer?.active_org_scan_limit}
-            used={viewer?.active_org_scan_used}
-            remaining={viewer?.active_org_scan_remaining}
-            resetAt={viewer?.active_org_scan_reset_at}
-            scanCost={SCAN_REFRESH_COSTS.containerDetail}
-          />
-        ) : null}
 
         {statsError instanceof Error ? (
           <div className="rounded-2xl border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">

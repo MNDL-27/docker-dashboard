@@ -46,7 +46,6 @@ export interface OrganizationEntitlements {
   isDonorPremium: boolean;
   seatLimit: number | null;
   nodeLimit: number | null;
-  monthlyScanLimit: number | null;
   logTailLines: number;
   maxPayloadBytes: number;
   canUseWebhookDestinations: boolean;
@@ -87,7 +86,6 @@ export function computeOrganizationEntitlements({
       isDonorPremium,
       seatLimit: null,
       nodeLimit: null,
-      monthlyScanLimit: null,
       logTailLines: PLAN_POLICY_BY_PLAN.enterprise.logTailLines,
       maxPayloadBytes: PLAN_POLICY_BY_PLAN.enterprise.maxPayloadBytes,
       canUseWebhookDestinations: true,
@@ -114,7 +112,6 @@ export function computeOrganizationEntitlements({
     isDonorPremium,
     seatLimit: paidTierPolicy.seatLimit,
     nodeLimit: paidTierPolicy.nodeLimit,
-    monthlyScanLimit: isDonorPremium ? null : paidTierPolicy.monthlyScanLimit,
     logTailLines: paidTierPolicy.logTailLines,
     maxPayloadBytes: paidTierPolicy.maxPayloadBytes,
     canUseWebhookDestinations: paidTierPolicy.canUseWebhookDestinations,
@@ -254,6 +251,17 @@ export async function enforceOrganizationNodeLimit({
         last_error = ${HOST_LIMIT_EXCEEDED_ERROR},
         consecutive_failures = GREATEST(COALESCE(consecutive_failures, 0), 1)
       WHERE id = ANY(${blockedHostIds})
+    `;
+  }
+
+  if (allowedHostIds.length > 0) {
+    await sql`
+      UPDATE public.docker_hosts
+      SET
+        last_error = NULL,
+        consecutive_failures = 0
+      WHERE id = ANY(${allowedHostIds})
+        AND last_error = ${HOST_LIMIT_EXCEEDED_ERROR}
     `;
   }
 

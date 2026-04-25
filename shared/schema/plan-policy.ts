@@ -5,7 +5,6 @@ export type SubscriptionStatus = "active" | "inactive" | "past_due" | "canceled"
 export interface PlanPolicy {
   seatLimit: number | null;
   nodeLimit: number | null;
-  monthlyScanLimit: number | null;
   logTailLines: number;
   maxPayloadBytes: number;
   canUseWebhookDestinations: boolean;
@@ -18,7 +17,6 @@ export const PLAN_POLICY_BY_PLAN: Record<PlanId, PlanPolicy> = {
   free: {
     seatLimit: 1,
     nodeLimit: 1,
-    monthlyScanLimit: 100,
     logTailLines: 100,
     maxPayloadBytes: 4 * 1024 * 1024, // 4 MB
     canUseWebhookDestinations: false,
@@ -29,7 +27,6 @@ export const PLAN_POLICY_BY_PLAN: Record<PlanId, PlanPolicy> = {
   pro: {
     seatLimit: 1,
     nodeLimit: 5,
-    monthlyScanLimit: null,
     logTailLines: 1_000,
     maxPayloadBytes: 6 * 1024 * 1024, // 6 MB
     canUseWebhookDestinations: true,
@@ -40,7 +37,6 @@ export const PLAN_POLICY_BY_PLAN: Record<PlanId, PlanPolicy> = {
   team: {
     seatLimit: 10,
     nodeLimit: 25,
-    monthlyScanLimit: null,
     logTailLines: 5_000,
     maxPayloadBytes: 10 * 1024 * 1024, // 10 MB
     canUseWebhookDestinations: true,
@@ -51,7 +47,6 @@ export const PLAN_POLICY_BY_PLAN: Record<PlanId, PlanPolicy> = {
   enterprise: {
     seatLimit: null,
     nodeLimit: null,
-    monthlyScanLimit: null,
     logTailLines: 5_000,
     maxPayloadBytes: 10 * 1024 * 1024, // 10 MB
     canUseWebhookDestinations: true,

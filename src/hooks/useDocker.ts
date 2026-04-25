@@ -3,7 +3,7 @@ import { dockerApi } from "@/services/docker-api";
 import { apiFetch } from "@/lib/api";
 import type { DockerHost, ConnectionMode } from "@/types/database";
 import { useViewerState } from "@/hooks/useViewerState";
-import { normalizePlan, PLAN_POLICY_BY_PLAN } from "@/shared/schema/plan-policy";
+import { normalizePlan, PLAN_POLICY_BY_PLAN } from "../../shared/schema/plan-policy";
 
 export function useDockerHosts(orgId?: string | null, options: { filterByPlan?: boolean } = {}) {
   const { data: viewer } = useViewerState();
@@ -17,7 +17,7 @@ export function useDockerHosts(orgId?: string | null, options: { filterByPlan?: 
       if (!options.filterByPlan) return hosts;
       
       const entitlements = viewer?.entitlements;
-      const activePlan = normalizePlan(entitlements?.plan ?? viewer?.active_org_effective_plan);
+      const activePlan = normalizePlan(entitlements?.effectivePlan ?? viewer?.active_org_effective_plan);
       const nodeLimit = entitlements?.nodeLimit ?? PLAN_POLICY_BY_PLAN[activePlan].nodeLimit;
       
       if (nodeLimit === null) return hosts;
@@ -25,7 +25,7 @@ export function useDockerHosts(orgId?: string | null, options: { filterByPlan?: 
       const sorted = [...hosts].sort((a, b) => {
         const dateA = a.created_at || (a as any).createdAt ? new Date(a.created_at || (a as any).createdAt).getTime() : 0;
         const dateB = b.created_at || (b as any).createdAt ? new Date(b.created_at || (b as any).createdAt).getTime() : 0;
-        return dateA - dateB;
+        return dateA - dateB || a.id.localeCompare(b.id);
       });
       return sorted.slice(0, nodeLimit);
     },
