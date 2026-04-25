@@ -30,7 +30,7 @@ export function useDockerHosts(orgId?: string | null, options: { filterByPlan?: 
       return sorted.slice(0, nodeLimit);
     },
     enabled: !!orgId,
-    refetchInterval: 30000,
+    refetchInterval: 15000,
   });
 }
 
@@ -116,11 +116,38 @@ export function useUpdateDockerHost() {
 }
 
 export function useContainers(orgId?: string | null, hasHosts = true, refetchInterval: number | false = 30000) {
+  const queryClient = useQueryClient();
   const { data: allowedHosts } = useDockerHosts(orgId, { filterByPlan: true });
 
   return useQuery({
     queryKey: ['containers', orgId],
-    queryFn: () => dockerApi.allContainers(orgId!),
+    queryFn: async () => {
+      const containers = await dockerApi.allContainers(orgId!);
+
+      // Container fetch succeeded — the agent responded, so the host is alive.
+      // Optimistically update host status in cache to eliminate the stale-status
+      // gap between this fetch and the next hosts refetch cycle.
+      queryClient.setQueryData<DockerHost[]>(['docker-hosts', orgId], (prev) => {
+        if (!prev) return prev;
+        const respondingHostIds = new Set<string>(
+          containers
+            .map((c: any) => c._hostId || c.hostId)
+            .filter(Boolean),
+        );
+        if (respondingHostIds.size === 0) return prev;
+        let changed = false;
+        const updated = prev.map((host) => {
+          if (respondingHostIds.has(host.id) && host.status !== 'connected') {
+            changed = true;
+            return { ...host, status: 'connected', last_seen_at: new Date().toISOString() };
+          }
+          return host;
+        });
+        return changed ? updated : prev;
+      });
+
+      return containers;
+    },
     select: (containers) => {
       if (!allowedHosts) return containers;
       const allowedIds = new Set(allowedHosts.map(h => h.id));
