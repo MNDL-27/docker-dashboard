@@ -66,33 +66,136 @@ async function markOnboardingStatus(
       }),
     });
 
+    if (res.ok) return;
+
+    const data = await res.json().catch(() => ({}));
+    const isRetryable202 = res.status === 202 && data?.retry;
+    const isRetryableNotFound =
+      res.status === 404 &&
+      typeof data?.error === "string" &&
+      data.error.toLowerCase().includes("requested organization not found");
+
+    if ((isRetryable202 || isRetryableNotFound) && attempt < maxAttempts) {
+      await new Promise((resolve) => setTimeout(resolve, delay));
+      delay = Math.min(Math.floor(delay * 1.35), 4000);
+      continue;
+    }
+
     if (res.status === 202) {
-      const data = await res.json().catch(() => ({}));
-      if (data?.retry && attempt < maxAttempts) {
-        await new Promise((resolve) => setTimeout(resolve, delay));
-        delay = Math.min(Math.floor(delay * 1.35), 4000);
-        continue;
-      }
       throw new Error(data?.error || "Sync pending. Your account is currently syncing.");
     }
 
-    if (!res.ok) {
-      const data = await res.json().catch(() => ({}));
-      const isRetryableNotFound =
-        res.status === 404 &&
-        typeof data?.error === "string" &&
-        data.error.toLowerCase().includes("requested organization not found");
+    throw new Error(data?.error || `HTTP error ${res.status}`);
+  }
+}
 
-      if (isRetryableNotFound && attempt < maxAttempts) {
-        await new Promise((resolve) => setTimeout(resolve, delay));
-        delay = Math.min(Math.floor(delay * 1.35), 4000);
-        continue;
-      }
-      throw new Error(data?.error || `HTTP error ${res.status}`);
+// --- Sync Polling Logic ---
+
+type AuthSyncStatus =
+  | { type: "success"; hasOrgs: boolean; needsOnboarding: boolean }
+  | { type: "retry"; delay?: number }
+  | { type: "error" };
+
+async function checkAuthSyncStatus(): Promise<AuthSyncStatus> {
+  try {
+    // @ts-expect-error window.Clerk is injected globally by ClerkProvider
+    const token = await window.Clerk?.session?.getToken({ skipCache: true });
+    if (!token) return { type: "retry" };
+
+    const res = await fetch("/api/auth/me", {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+
+    if (res.status === 202) {
+      const syncState = await res.json().catch(() => ({}));
+      return { type: "retry", delay: syncState?.retry ? 2000 : undefined };
     }
 
-    return;
+    if (res.ok) {
+      const data = await res.json();
+      const hasOrgs = !!data.user?.has_orgs;
+      const onboardingStatus = normalizeOnboardingStatus(data.user?.onboarding_status);
+      const needsOnboarding = deriveNeedsOnboarding(hasOrgs, onboardingStatus);
+      return { type: "success", hasOrgs, needsOnboarding };
+    }
+
+    return { type: "retry" };
+  } catch {
+    return { type: "retry" };
   }
+}
+
+type SyncPollingResult =
+  | { status: "ready" }
+  | { status: "complete" }
+  | { status: "timeout" }
+  | { status: "cancelled" };
+
+async function pollForOrganizationSync(onCancelCheck: () => boolean): Promise<SyncPollingResult> {
+  const maxWait = 30_000;
+  const start = Date.now();
+  let delay = 500;
+
+  while (Date.now() - start < maxWait) {
+    if (onCancelCheck()) return { status: "cancelled" };
+
+    const syncStatus = await checkAuthSyncStatus();
+
+    if (syncStatus.type === "success") {
+      if (syncStatus.hasOrgs && syncStatus.needsOnboarding) return { status: "ready" };
+      if (!syncStatus.needsOnboarding) return { status: "complete" };
+    } else if (syncStatus.type === "retry" && syncStatus.delay) {
+      await new Promise((r) => setTimeout(r, syncStatus.delay));
+      continue;
+    }
+
+    await new Promise((r) => setTimeout(r, delay));
+    delay = Math.min(delay * 1.5, 2000);
+  }
+
+  return { status: "timeout" };
+}
+
+function useOrganizationSyncEffect(
+  setState: React.Dispatch<React.SetStateAction<OnboardingStep>>,
+  setError: React.Dispatch<React.SetStateAction<string | null>>
+) {
+  const navigate = useNavigate();
+  const { toast } = useToast();
+
+  useEffect(() => {
+    const resume = sessionStorage.getItem("onboarding_resume");
+    if (resume !== "connect-host") return;
+
+    let cancelled = false;
+
+    (async () => {
+      const result = await pollForOrganizationSync(() => cancelled);
+
+      if (cancelled) return;
+
+      switch (result.status) {
+        case "ready":
+          toast({ title: "Organization created", description: "Now connect your first Docker host." });
+          setState({ step: 1, phase: "basics" });
+          break;
+        case "complete":
+          sessionStorage.removeItem("onboarding_resume");
+          navigate("/app", { replace: true });
+          break;
+        case "timeout":
+          sessionStorage.removeItem("onboarding_resume");
+          setState({ step: 0, phase: "form" });
+          setError("Organization sync took too long. Please try creating your organization again.");
+          break;
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 }
 
 export function useOnboardingState() {
@@ -130,75 +233,7 @@ export function useOnboardingState() {
     }
   }, [isLoaded, orgId, state.step, state.phase]);
 
-  useEffect(() => {
-    const resume = sessionStorage.getItem("onboarding_resume");
-    if (resume !== "connect-host") return;
-    let cancelled = false;
-
-    (async () => {
-      const maxWait = 30_000;
-      const start = Date.now();
-      let delay = 500;
-
-      while (Date.now() - start < maxWait) {
-        if (cancelled) return;
-        try {
-          // @ts-expect-error window.Clerk is injected globally by ClerkProvider
-          const token = await window.Clerk?.session?.getToken({ skipCache: true });
-          if (token) {
-            const res = await fetch("/api/auth/me", {
-              headers: { Authorization: `Bearer ${token}` },
-            });
-
-            if (res.status === 202) {
-              const syncState = await res.json().catch(() => ({}));
-              if (syncState?.retry) {
-                await new Promise((r) => setTimeout(r, 2000));
-                continue;
-              }
-            }
-
-            if (res.ok) {
-              const data = await res.json();
-              const hasOrgs = !!data.user?.has_orgs;
-              const onboardingStatus = normalizeOnboardingStatus(data.user?.onboarding_status);
-              const needsOnboarding = deriveNeedsOnboarding(hasOrgs, onboardingStatus);
-
-              if (hasOrgs && needsOnboarding) {
-                if (!cancelled) {
-                  toast({ title: "Organization created", description: "Now connect your first Docker host." });
-                  setState({ step: 1, phase: "basics" });
-                }
-                return;
-              }
-
-              if (!needsOnboarding) {
-                sessionStorage.removeItem("onboarding_resume");
-                if (!cancelled) navigate("/app", { replace: true });
-                return;
-              }
-            }
-          }
-        } catch {
-          // retry
-        }
-
-        await new Promise((r) => setTimeout(r, delay));
-        delay = Math.min(delay * 1.5, 2000);
-      }
-
-      sessionStorage.removeItem("onboarding_resume");
-      if (!cancelled) {
-        setState({ step: 0, phase: "form" });
-        setError("Organization sync took too long. Please try creating your organization again.");
-      }
-    })();
-
-    return () => {
-      cancelled = true;
-    };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  useOrganizationSyncEffect(setState, setError);
 
   const completeOnboardingAndNavigate = useCallback(async () => {
     try {
@@ -330,24 +365,26 @@ export function useOnboardingState() {
       const result = await agentEnrollmentApi.finalize(enrollment.session_id);
       setFinalizeResult(result);
 
-      if (result.ok) {
-        if (result.reason_code === "agent_outdated" || result.reason_code === "metrics_unavailable") {
-          toast({
-            title: "Host connected with follow-up recommended",
-            description:
-              result.reason_code === "agent_outdated"
-                ? "The host is reachable, but the installed agent is behind the current release."
-                : "The host is reachable, but local metrics verification still needs attention.",
-          });
-        } else {
-          toast({ title: "Host connected!", description: `"${hostName}" is verified and ready.` });
-        }
-        setState({ step: 2, phase: "done" });
-      } else {
+      if (!result.ok) {
         setTestError(result.status || "Connection test failed.");
         setRemediationCommand(result.remediation_command);
         setState({ step: 1, phase: "test-failed" });
+        return;
       }
+
+      const isWarning = result.reason_code === "agent_outdated" || result.reason_code === "metrics_unavailable";
+      if (isWarning) {
+        toast({
+          title: "Host connected with follow-up recommended",
+          description:
+            result.reason_code === "agent_outdated"
+              ? "The host is reachable, but the installed agent is behind the current release."
+              : "The host is reachable, but local metrics verification still needs attention.",
+        });
+      } else {
+        toast({ title: "Host connected!", description: `"${hostName}" is verified and ready.` });
+      }
+      setState({ step: 2, phase: "done" });
     } catch (err) {
       setTestError(err instanceof Error ? err.message : "Connection test failed.");
       setState({ step: 1, phase: "test-failed" });
