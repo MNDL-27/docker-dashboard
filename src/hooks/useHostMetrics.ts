@@ -61,6 +61,10 @@ interface HostMetricsApiPoint {
   network_monthly_total?: number;
   uptimeSeconds?: number;
   uptime_seconds?: number;
+  used_cores?: number;
+  total_cores?: number;
+  memory_used?: number;
+  memory_limit?: number;
   disks?: unknown;
 }
 
@@ -78,13 +82,18 @@ interface HostMetricsApiDisk {
 }
 
 function toFiniteNumber(value: unknown): number | null {
+  if (value === null || value === "" || Array.isArray(value)) return null;
   const numeric = typeof value === "number" ? value : Number(value);
   return Number.isFinite(numeric) ? numeric : null;
 }
 
+function clamp(value: number, min: number, max: number): number {
+  return Math.min(max, Math.max(min, value));
+}
+
 function toTimestamp(value: unknown): number | null {
   if (typeof value === "number" && Number.isFinite(value)) return value;
-  if (typeof value === "string") {
+  if (typeof value === "string" && value !== "") {
     const numeric = Number(value);
     if (Number.isFinite(numeric)) return numeric;
     const parsed = Date.parse(value);
@@ -118,7 +127,7 @@ function normalizeHostMetricsDisk(value: unknown): HostMetricsDisk | null {
   const readBytesPerSec = normalizeOptionalRate(disk.readBytesPerSec ?? disk.read_bytes_per_sec);
   const writeBytesPerSec = normalizeOptionalRate(disk.writeBytesPerSec ?? disk.write_bytes_per_sec);
 
-  if (!device || !mount || usedBytes === null || totalBytes === null || usedBytes < 0 || totalBytes <= 0 || usedBytes > totalBytes) {
+  if (!device || !mount || usedBytes === null || totalBytes === null || usedBytes < 0 || totalBytes <= 0) {
     return null;
   }
 
@@ -126,7 +135,7 @@ function normalizeHostMetricsDisk(value: unknown): HostMetricsDisk | null {
     device,
     mount,
     usedBytes,
-    totalBytes,
+    totalBytes: Math.max(usedBytes, totalBytes),
     readBytesPerSec,
     writeBytesPerSec,
   };
@@ -134,12 +143,36 @@ function normalizeHostMetricsDisk(value: unknown): HostMetricsDisk | null {
 
 export function normalizeHostMetricsPoint(point: HostMetricsApiPoint): HostMetricsPoint | null {
   const timestamp = toTimestamp(point.timestamp) ?? Date.now();
-  const cpu = toFiniteNumber(point.cpu);
-  const memory = toFiniteNumber(point.memory);
-  const usedCores = toFiniteNumber(point.usedCores);
-  const totalCores = toFiniteNumber(point.totalCores);
-  const memoryUsed = toFiniteNumber(point.memoryUsed);
-  const memoryLimit = toFiniteNumber(point.memoryLimit);
+
+  const cpuRaw = toFiniteNumber(point.cpu);
+  const memoryRaw = toFiniteNumber(point.memory);
+  const usedCoresRaw = toFiniteNumber(point.usedCores ?? point.used_cores);
+  const totalCoresRaw = toFiniteNumber(point.totalCores ?? point.total_cores);
+  const memoryUsedRaw = toFiniteNumber(point.memoryUsed ?? point.memory_used);
+  const memoryLimitRaw = toFiniteNumber(point.memoryLimit ?? point.memory_limit);
+
+  // Critical field check
+  if (
+    cpuRaw === null ||
+    memoryRaw === null ||
+    usedCoresRaw === null ||
+    totalCoresRaw === null ||
+    memoryUsedRaw === null ||
+    memoryLimitRaw === null
+  ) {
+    return null;
+  }
+
+  // Range clamping for percentages
+  const cpu = clamp(cpuRaw, 0, 100);
+  const memory = clamp(memoryRaw, 0, 100);
+
+  // Logical consistency for cores/memory
+  const totalCores = Math.max(0, totalCoresRaw);
+  const usedCores = clamp(usedCoresRaw, 0, totalCores || usedCoresRaw);
+  const memoryLimit = Math.max(0, memoryLimitRaw);
+  const memoryUsed = clamp(memoryUsedRaw, 0, memoryLimit || memoryUsedRaw);
+
   const networkInBytesPerSec = normalizeOptionalRate(point.networkInBytesPerSec ?? point.network_in_bytes_per_sec);
   const networkOutBytesPerSec = normalizeOptionalRate(point.networkOutBytesPerSec ?? point.network_out_bytes_per_sec);
   const networkMonthlyTotal = toFiniteNumber(point.networkMonthlyTotal ?? point.network_monthly_total);
@@ -148,37 +181,6 @@ export function normalizeHostMetricsPoint(point: HostMetricsApiPoint): HostMetri
   const uptimeSecondsRaw = toFiniteNumber(point.uptimeSeconds ?? point.uptime_seconds);
   const uptimeSeconds = uptimeSecondsRaw !== null && uptimeSecondsRaw >= 0 ? uptimeSecondsRaw : null;
   const disks = Array.isArray(point.disks) ? point.disks.map(normalizeHostMetricsDisk).filter((disk): disk is HostMetricsDisk => disk !== null) : [];
-
-  if (
-    cpu === null ||
-    memory === null ||
-    usedCores === null ||
-    totalCores === null ||
-    memoryUsed === null ||
-    memoryLimit === null
-  ) {
-    return null;
-  }
-
-  if (
-    cpu < 0 ||
-    cpu > 100 ||
-    memory < 0 ||
-    memory > 100 ||
-    usedCores < 0 ||
-    totalCores < 0 ||
-    memoryUsed < 0 ||
-    memoryLimit < 0
-  ) {
-    return null;
-  }
-
-  if (totalCores === 0 && memoryLimit === 0) {
-    if (cpu !== 0 || memory !== 0 || usedCores !== 0 || memoryUsed !== 0) {
-      return null;
-    }
-  }
-  if ((cpu > 0 && totalCores === 0) || (memory > 0 && memoryLimit === 0)) return null;
 
   return {
     timestamp,
