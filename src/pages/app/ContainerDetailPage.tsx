@@ -260,7 +260,7 @@ export default function ContainerDetailPage() {
   if (!isHostAllowed && allowedHosts.length > 0) {
     const normalizedPlan = normalizePlan(effectivePlan);
     const fallbackNodeLimit = PLAN_POLICY_BY_PLAN[normalizedPlan].nodeLimit;
-    const nodeLimit = viewer?.entitlements?.nodeLimit ?? fallbackNodeLimit;
+    const nodeLimit = viewer?.entitlements ? viewer.entitlements.nodeLimit : fallbackNodeLimit;
 
     return (
       <div className="space-y-6 animate-fade-in">
