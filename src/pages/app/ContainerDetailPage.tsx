@@ -204,14 +204,16 @@ export default function ContainerDetailPage() {
   const { data: allowedHosts = [], isLoading: hostsLoading } = useDockerHosts(viewer?.active_org_id ?? null, { filterByPlan: true });
   const isHostAllowed = hostId ? allowedHosts.some(h => h.id === hostId) : false;
 
-  const { data: inspect, isLoading: inspectLoading, error: inspectError } = useContainerInspect(hostId, containerId);
+  // Only fetch container data if the host passes plan entitlement checks
+  const guardedHostId = isHostAllowed ? hostId : null;
+  const { data: inspect, isLoading: inspectLoading, error: inspectError } = useContainerInspect(guardedHostId, containerId);
   const {
     data: stats,
     error: statsError,
     isFetching: statsFetching,
     refetch: refetchStats,
-  } = useContainerStats(hostId, containerId, 10000);
-  const { data: logsData, isLoading: logsLoading, refetch: refetchLogs } = useContainerLogs(hostId, containerId, { tail: 200 });
+  } = useContainerStats(guardedHostId, containerId, 10000);
+  const { data: logsData, isLoading: logsLoading, refetch: refetchLogs } = useContainerLogs(guardedHostId, containerId, { tail: 200 });
 
   const handleAction = async (action: "container-start" | "container-stop" | "container-restart") => {
     if (!hostId || !containerId) return;

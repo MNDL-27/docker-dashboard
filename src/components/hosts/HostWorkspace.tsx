@@ -105,7 +105,7 @@ export function HostWorkspace() {
   const { data: viewer } = useViewerState();
   const { toast } = useToast();
   const deleteHost = useDeleteDockerHost();
-  const { data: hosts = [], isLoading, refetch } = useDockerHosts(currentOrg?.id);
+  const { data: hosts = [], isLoading, refetch } = useDockerHosts(currentOrg?.id, { filterByPlan: true });
   const [search, setSearch] = useState("");
   const [testing, setTesting] = useState(false);
   const [isInfrastructureVisible, setIsInfrastructureVisible] = useState(true);
