@@ -65,11 +65,19 @@ type OrganizationFeature =
 const HOST_LIMIT_EXCEEDED_ERROR =
   "Host is inactive because your current plan limit has been exceeded. Remove extra hosts or upgrade to re-enable this host.";
 
+/**
+ * Compute entitlements purely from the organization's plan.
+ * The plan is the absolute source of truth — isPlatformAdmin is accepted
+ * for signature compatibility but intentionally ignored here.
+ * Admin privileges only bypass user-level access checks (suspension,
+ * org locks, host quarantine) elsewhere in this module; they never
+ * inflate plan capacity or unlock paid features.
+ */
 export function computeOrganizationEntitlements({
   plan,
   subscriptionStatus,
   isDonorPremium,
-  isPlatformAdmin,
+  isPlatformAdmin: _isPlatformAdmin,
 }: {
   plan: string | null | undefined;
   subscriptionStatus: string | null | undefined;
@@ -78,25 +86,6 @@ export function computeOrganizationEntitlements({
 }): OrganizationEntitlements {
   const normalizedPlan = normalizePlan(plan);
   const normalizedStatus = normalizeSubscriptionStatus(subscriptionStatus);
-
-  if (isPlatformAdmin) {
-    return {
-      plan: normalizedPlan,
-      effectivePlan: normalizedPlan,
-      subscriptionStatus: normalizedStatus,
-      isPaidSubscriptionActive: true,
-      isDonorPremium,
-      seatLimit: null,
-      nodeLimit: null,
-      logTailLines: PLAN_POLICY_BY_PLAN.enterprise.logTailLines,
-      maxPayloadBytes: PLAN_POLICY_BY_PLAN.enterprise.maxPayloadBytes,
-      canUseWebhookDestinations: true,
-      canUseSlackDestinations: true,
-      canUseAdvancedAlerts: true,
-      canUseTeamCollaboration: true,
-      canUseLogs: true,
-    };
-  }
 
   const isPaidPlan = normalizedPlan !== "free";
   const isPaidSubscriptionActive = isPaidPlan && isPaidSubscriptionStatus(normalizedStatus);
