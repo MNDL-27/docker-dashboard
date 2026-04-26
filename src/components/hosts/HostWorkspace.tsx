@@ -114,7 +114,7 @@ export function HostWorkspace() {
   
   const normalizedPlan = normalizePlan(effectivePlan);
   const fallbackNodeLimit = PLAN_POLICY_BY_PLAN[normalizedPlan].nodeLimit;
-  const nodeLimit = viewer?.entitlements?.nodeLimit ?? fallbackNodeLimit;
+  const nodeLimit = viewer?.entitlements ? viewer.entitlements.nodeLimit : fallbackNodeLimit;
 
   // Hosts sorted by creation date (oldest first) — matches backend enforcement order
   const hostsSortedByCreation = useMemo(() => {

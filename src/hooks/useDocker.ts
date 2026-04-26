@@ -37,8 +37,14 @@ function buildHostBody(fields: HostMutationBase) {
 /** Resolve effective node limit from viewer entitlements + plan policy (WR-01) */
 function resolveNodeLimit(viewer: any): number | null {
   const entitlements = viewer?.entitlements;
-  const activePlan = normalizePlan(entitlements?.effectivePlan ?? viewer?.active_org_effective_plan);
-  return entitlements?.nodeLimit ?? PLAN_POLICY_BY_PLAN[activePlan].nodeLimit;
+  // When entitlements are loaded, use nodeLimit directly — null means unlimited
+  // (platform admins, enterprise). Only fall back to plan policy when entitlements
+  // haven't loaded yet (viewer is undefined/null).
+  if (entitlements) {
+    return entitlements.nodeLimit; // null = unlimited, number = capped
+  }
+  const activePlan = normalizePlan(viewer?.active_org_effective_plan);
+  return PLAN_POLICY_BY_PLAN[activePlan].nodeLimit;
 }
 
 /** Sort hosts by creation date (oldest first), breaking ties by ID (WR-01) */
