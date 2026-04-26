@@ -13,7 +13,7 @@ import { useViewerState } from "@/hooks/useViewerState";
 export default function LogsPage() {
   const { organization: currentOrg } = useOrganization();
   const { data: hosts = [] } = useDockerHosts(currentOrg?.id, { filterByPlan: true });
-  const { viewer } = useViewerState();
+  const { data: viewer } = useViewerState();
   const hasAccess = viewer?.entitlements?.canUseLogs ?? false;
   const [selectedHost, setSelectedHost] = useState<string>("");
   const [selectedContainer, setSelectedContainer] = useState<string>("");

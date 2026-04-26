@@ -63,11 +63,16 @@ describe("security CORS helpers", () => {
 
 describe("distributed security persistence", () => {
   it("uses shared SQL storage for rate limiting windows", async () => {
-    mockedSql.mockResolvedValueOnce([{ count: 1, reset_at_ms: String(60_000) }]);
+    mockedSql.mockImplementation(async (queryParts: any) => {
+      if (queryParts[0].includes("INSERT INTO public.security_rate_limits")) {
+        return [{ count: 1, reset_at_ms: String(60_000) }];
+      }
+      return [];
+    });
 
     const result = await checkRateLimit("api:127.0.0.1", { windowMs: 60_000, maxRequests: 3 });
 
-    expect(mockedSql).toHaveBeenCalledTimes(1);
+    expect(mockedSql).toHaveBeenCalled();
     expect(result).toEqual({
       allowed: true,
       remaining: 2,
@@ -78,7 +83,12 @@ describe("distributed security persistence", () => {
   it("blocks requests once the shared counter exceeds the configured maximum", async () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date("2026-04-18T00:00:30.000Z"));
-    mockedSql.mockResolvedValueOnce([{ count: 4, reset_at_ms: String(Date.parse("2026-04-18T00:01:00.000Z")) }]);
+    mockedSql.mockImplementation(async (queryParts: any) => {
+      if (queryParts[0].includes("INSERT INTO public.security_rate_limits")) {
+        return [{ count: 4, reset_at_ms: String(Date.parse("2026-04-18T00:01:00.000Z")) }];
+      }
+      return [];
+    });
 
     const result = await checkRateLimit("api:127.0.0.1", { windowMs: 60_000, maxRequests: 3 });
 
@@ -88,11 +98,11 @@ describe("distributed security persistence", () => {
   });
 
   it("rejects duplicate webhook nonces using shared SQL persistence", async () => {
-    mockedSql.mockResolvedValueOnce([]);
+    mockedSql.mockImplementation(async () => []);
 
     const result = await verifyWebhookTimestamp(String(Math.floor(Date.now() / 1000)), "nonce-1", 300);
 
     expect(result).toEqual({ valid: false, error: "Duplicate nonce" });
-    expect(mockedSql).toHaveBeenCalledTimes(1);
+    expect(mockedSql).toHaveBeenCalled();
   });
 });

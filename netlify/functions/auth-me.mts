@@ -91,7 +91,9 @@ export default async (req: Request) => {
     const entitlements = effectiveOrg
       ? await resolveOrganizationEntitlements({
           organizationId: effectiveOrg.id,
-          isPlatformAdmin,
+          // Plan is the absolute source of truth for all entitlements.
+          // Admin status never inflates plan capacity or unlocks paid features.
+          isPlatformAdmin: false,
         })
       : null;
     const effectivePlan = entitlements?.effectivePlan ?? 'free';

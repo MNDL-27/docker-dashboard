@@ -38,7 +38,7 @@ function buildHostBody(fields: HostMutationBase) {
 function resolveNodeLimit(viewer: any): number | null {
   const entitlements = viewer?.entitlements;
   // When entitlements are loaded, use nodeLimit directly — null means unlimited
-  // (platform admins, enterprise). Only fall back to plan policy when entitlements
+  // (enterprise/dedicated plans). Only fall back to plan policy when entitlements
   // haven't loaded yet (viewer is undefined/null).
   if (entitlements) {
     return entitlements.nodeLimit; // null = unlimited, number = capped
