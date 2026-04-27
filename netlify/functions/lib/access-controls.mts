@@ -53,6 +53,7 @@ export interface OrganizationEntitlements {
   canUseAdvancedAlerts: boolean;
   canUseTeamCollaboration: boolean;
   canUseLogs: boolean;
+  canUseFileManager: boolean;
 }
 
 type OrganizationFeature =
@@ -60,7 +61,8 @@ type OrganizationFeature =
   | "slack_destinations"
   | "advanced_alerts"
   | "team_collaboration"
-  | "logs";
+  | "logs"
+  | "file_manager";
 
 const HOST_LIMIT_EXCEEDED_ERROR =
   "Host is inactive because your current plan limit has been exceeded. Remove extra hosts or upgrade to re-enable this host.";
@@ -77,7 +79,7 @@ export function computeOrganizationEntitlements({
   plan,
   subscriptionStatus,
   isDonorPremium,
-  isPlatformAdmin: _isPlatformAdmin,
+  isPlatformAdmin,
 }: {
   plan: string | null | undefined;
   subscriptionStatus: string | null | undefined;
@@ -86,6 +88,26 @@ export function computeOrganizationEntitlements({
 }): OrganizationEntitlements {
   const normalizedPlan = normalizePlan(plan);
   const normalizedStatus = normalizeSubscriptionStatus(subscriptionStatus);
+
+  if (isPlatformAdmin) {
+    return {
+      plan: normalizedPlan,
+      effectivePlan: normalizedPlan,
+      subscriptionStatus: normalizedStatus,
+      isPaidSubscriptionActive: true,
+      isDonorPremium,
+      seatLimit: null,
+      nodeLimit: null,
+      logTailLines: 5000,
+      maxPayloadBytes: 10 * 1024 * 1024,
+      canUseWebhookDestinations: true,
+      canUseSlackDestinations: true,
+      canUseAdvancedAlerts: true,
+      canUseTeamCollaboration: true,
+      canUseLogs: true,
+      canUseFileManager: true,
+    };
+  }
 
   const isPaidPlan = normalizedPlan !== "free";
   const isPaidSubscriptionActive = isPaidPlan && isPaidSubscriptionStatus(normalizedStatus);
@@ -111,6 +133,7 @@ export function computeOrganizationEntitlements({
     canUseAdvancedAlerts: paidTierPolicy.canUseAdvancedAlerts || isDonorPremium,
     canUseTeamCollaboration: paidTierPolicy.canUseTeamCollaboration,
     canUseLogs: paidTierPolicy.canUseLogs || isDonorPremium,
+    canUseFileManager: paidTierPolicy.canUseFileManager,
   };
 }
 
@@ -168,6 +191,7 @@ export async function assertOrganizationFeatureAllowed({
     advanced_alerts: entitlements.canUseAdvancedAlerts,
     team_collaboration: entitlements.canUseTeamCollaboration,
     logs: entitlements.canUseLogs,
+    file_manager: entitlements.canUseFileManager,
   };
 
   if (allowedByFeature[feature]) {
@@ -180,6 +204,7 @@ export async function assertOrganizationFeatureAllowed({
     advanced_alerts: "Advanced Alert Rules require an Individual, Business, or Dedicated subscription.",
     team_collaboration: "Team collaboration requires a Business or Dedicated subscription.",
     logs: "Container logs require an Individual, Business, or Dedicated subscription.",
+    file_manager: "The File Manager requires an Individual, Business, or Dedicated subscription.",
   };
 
   throw new Error(messages[feature]);

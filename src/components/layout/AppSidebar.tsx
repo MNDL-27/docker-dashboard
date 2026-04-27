@@ -3,7 +3,7 @@ import { Link, useLocation } from "react-router-dom";
 import { LogoLink } from "@/components/shared/LogoLink";
 import { cn } from "@/lib/utils";
 import {
-  LayoutDashboard, Server, Box, FileText, Bell, CreditCard, Settings,
+  LayoutDashboard, Server, Box, FileText, FolderOpen, Bell, CreditCard, Settings,
   HelpCircle, ChevronLeft, ChevronRight,
   Building2, Users, Shield, BookOpen, Lock
 } from "lucide-react";
@@ -28,6 +28,7 @@ const navGroups = [
     label: "Observability",
     items: [
       { label: "Logs", icon: FileText, href: "/app/logs", premiumKey: "canUseLogs" as const },
+      { label: "Files", icon: FolderOpen, href: "/app/files", premiumKey: "canUseFileManager" as const },
       { label: "Alerts", icon: Bell, href: "/app/alerts" },
     ],
   },

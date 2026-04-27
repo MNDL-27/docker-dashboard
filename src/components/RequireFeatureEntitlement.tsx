@@ -6,7 +6,7 @@ interface RequireFeatureEntitlementProps {
   children: React.ReactNode;
   feature: keyof Pick<
     ViewerEntitlements,
-    "canUseTeamCollaboration" | "canUseSlackDestinations" | "canUseWebhookDestinations" | "canUseAdvancedAlerts"
+    "canUseTeamCollaboration" | "canUseSlackDestinations" | "canUseWebhookDestinations" | "canUseAdvancedAlerts" | "canUseFileManager"
   >;
   fallbackPath?: string;
 }

@@ -17,7 +17,11 @@ import {
   Settings2,
   Square,
   TerminalSquare,
+<<<<<<< HEAD
   Lock,
+=======
+  FolderOpen,
+>>>>>>> 479fc52 (feat: add Docker Container File Manager)
 } from "lucide-react";
 
 import { LogConsole } from "@/components/docker/LogConsole";
@@ -496,6 +500,12 @@ export default function ContainerDetailPage() {
                 <TerminalSquare className="h-4 w-4" />
                 Shell
               </Button>
+              <Link to={`/app/files?host=${hostId}&container=${containerId}`}>
+                <Button variant="outline" className="gap-2 rounded-full px-7">
+                  <FolderOpen className="h-4 w-4" />
+                  Browse Files
+                </Button>
+              </Link>
             </div>
           </div>
         </div>

@@ -833,6 +833,261 @@ export default async (req: Request) => {
         dockerPath = `/containers/${sanitizeContainerId(containerId)}/restart`; method = 'POST'; 
         timeoutMs = 8000;
         break;
+
+      case 'container-fs-list': {
+        if (!containerId) return createProblemResponse(400, "containerId required");
+        const fsPath = (params as any)?.path || '/';
+        if (typeof fsPath !== 'string' || !fsPath.startsWith('/') || fsPath.includes('..')) {
+          return createProblemResponse(400, "Invalid path", "Path must be absolute and must not contain '..'");
+        }
+
+        const sanitizedId = sanitizeContainerId(containerId);
+
+        // Build the exec create request manually since we need to send a JSON body.
+        const execBody = JSON.stringify({
+          AttachStdout: true,
+          AttachStderr: true,
+          Cmd: ['ls', '-la', '--time-style=long-iso', fsPath],
+        });
+
+        const execCreateUrl = buildValidatedAgentUrl(
+          host.host_url.replace(/\/$/, ''),
+          `/docker/containers/${sanitizedId}/exec`,
+        );
+        const execCreateHeaders: Record<string, string> = { 'Content-Type': 'application/json' };
+        if (secrets?.agent_api_key) execCreateHeaders['X-Agent-Key'] = secrets.agent_api_key;
+        if (host.docker_socket_path && host.docker_socket_path !== '/var/run/docker.sock') {
+          execCreateHeaders['X-Docker-Socket'] = host.docker_socket_path;
+        }
+        if (host.connection_mode === 'cloudflare_tunnel') {
+          if (secrets?.cf_service_token_id) execCreateHeaders['CF-Access-Client-Id'] = secrets.cf_service_token_id;
+          if (secrets?.cf_service_token_secret) execCreateHeaders['CF-Access-Client-Secret'] = secrets.cf_service_token_secret;
+        }
+
+        let execCreateResponse: Response;
+        try {
+          execCreateResponse = await fetch(execCreateUrl, {
+            method: 'POST',
+            headers: execCreateHeaders,
+            body: execBody,
+            signal: AbortSignal.timeout(8000),
+          });
+        } catch (err: any) {
+          return createProblemResponse(502, "Failed to create exec instance", err?.message);
+        }
+
+        if (!execCreateResponse.ok) {
+          const detail = await execCreateResponse.text();
+          return createProblemResponse(execCreateResponse.status || 502, "Failed to create exec", detail);
+        }
+
+        const execData = await execCreateResponse.json();
+        const execId = execData?.Id;
+        if (!execId) {
+          return createProblemResponse(502, "No exec ID returned");
+        }
+
+        // Start exec
+        const execStartUrl = buildValidatedAgentUrl(
+          host.host_url.replace(/\/$/, ''),
+          `/docker/exec/${execId}/start`,
+        );
+
+        let execStartResponse: Response;
+        try {
+          execStartResponse = await fetch(execStartUrl, {
+            method: 'POST',
+            headers: execCreateHeaders,
+            body: JSON.stringify({ Detach: false, Tty: false }),
+            signal: AbortSignal.timeout(8000),
+          });
+        } catch (err: any) {
+          return createProblemResponse(502, "Failed to start exec", err?.message);
+        }
+
+        if (!execStartResponse.ok) {
+          const detail = await execStartResponse.text();
+          return createProblemResponse(execStartResponse.status || 502, "Failed to exec ls", detail);
+        }
+
+        // Parse the multiplexed stream output
+        const execRawBytes = new Uint8Array(await execStartResponse.arrayBuffer());
+        let lsOutput = '';
+        let lsStderr = '';
+        let execOffset = 0;
+
+        while (execOffset + 8 <= execRawBytes.length) {
+          const streamType = execRawBytes[execOffset]; // 1=stdout, 2=stderr
+          const frameSize =
+            (execRawBytes[execOffset + 4] << 24) |
+            (execRawBytes[execOffset + 5] << 16) |
+            (execRawBytes[execOffset + 6] << 8) |
+            execRawBytes[execOffset + 7];
+          execOffset += 8;
+
+          if (execOffset + frameSize <= execRawBytes.length) {
+            const text = new TextDecoder().decode(execRawBytes.slice(execOffset, execOffset + frameSize));
+            if (streamType === 1) lsOutput += text;
+            else if (streamType === 2) lsStderr += text;
+          }
+          execOffset += frameSize;
+        }
+
+        // Fallback: if no framing detected, treat entire output as plain text
+        if (!lsOutput && execOffset === 0 && execRawBytes.length > 0) {
+          lsOutput = new TextDecoder().decode(execRawBytes);
+        }
+
+        if (lsStderr && !lsOutput) {
+          return createProblemResponse(400, "Directory listing failed", lsStderr.trim());
+        }
+
+        // Parse ls -la output into structured entries
+        const lines = lsOutput.split('\n').filter(Boolean);
+        const entries: Array<{
+          name: string;
+          type: 'file' | 'directory' | 'symlink' | 'other';
+          size: number;
+          permissions: string;
+          modified: string;
+          linkTarget?: string;
+        }> = [];
+
+        for (const line of lines) {
+          // Skip "total" line
+          if (line.startsWith('total ')) continue;
+          // ls -la --time-style=long-iso format:
+          // drwxr-xr-x  2 root root 4096 2024-03-15 10:30 dirname
+          // -rw-r--r--  1 root root  123 2024-03-15 10:30 filename
+          // lrwxrwxrwx  1 root root   11 2024-03-15 10:30 link -> target
+          const parts = line.match(
+            /^([dlcbps-])([rwxsStT-]{9})\s+\d+\s+\S+\s+\S+\s+(\d+)\s+(\d{4}-\d{2}-\d{2}\s+\d{2}:\d{2})\s+(.+)$/
+          );
+          if (!parts) continue;
+
+          const [, typeChar, perms, sizeStr, dateStr, nameField] = parts;
+          const fileType =
+            typeChar === 'd' ? 'directory' as const :
+            typeChar === 'l' ? 'symlink' as const :
+            typeChar === '-' ? 'file' as const :
+            'other' as const;
+
+          let name = nameField;
+          let linkTarget: string | undefined;
+          if (fileType === 'symlink' && nameField.includes(' -> ')) {
+            const arrowIndex = nameField.indexOf(' -> ');
+            name = nameField.slice(0, arrowIndex);
+            linkTarget = nameField.slice(arrowIndex + 4);
+          }
+
+          // Skip . and ..
+          if (name === '.' || name === '..') continue;
+
+          entries.push({
+            name,
+            type: fileType,
+            size: parseInt(sizeStr, 10),
+            permissions: typeChar + perms,
+            modified: dateStr,
+            linkTarget,
+          });
+        }
+
+        // Sort: directories first, then alphabetical
+        entries.sort((a, b) => {
+          if (a.type === 'directory' && b.type !== 'directory') return -1;
+          if (a.type !== 'directory' && b.type === 'directory') return 1;
+          return a.name.localeCompare(b.name);
+        });
+
+        return new Response(JSON.stringify({ entries, path: fsPath }), { headers: corsHeaders });
+      }
+
+      case 'container-fs-read': {
+        if (!containerId) return createProblemResponse(400, "containerId required");
+        const readPath = (params as any)?.path;
+        if (typeof readPath !== 'string' || !readPath.startsWith('/') || readPath.includes('..')) {
+          return createProblemResponse(400, "Invalid path", "Path must be absolute and must not contain '..'");
+        }
+
+        const sanitizedReadId = sanitizeContainerId(containerId);
+        const encodedPath = encodeURIComponent(readPath);
+        const archiveReq = buildRequest(
+          host as any,
+          secrets,
+          `/containers/${sanitizedReadId}/archive?path=${encodedPath}`,
+          'GET',
+        );
+
+        const archiveResp = await dockerFetch(archiveReq.url, archiveReq.method, archiveReq.headers, 10000);
+
+        if (!archiveResp.ok) {
+          const detail = await archiveResp.text();
+          if (archiveResp.status === 404) {
+            return createProblemResponse(404, "File not found", `${readPath} does not exist in this container`);
+          }
+          return createProblemResponse(
+            archiveResp.status || 502,
+            "Failed to read file",
+            detail,
+          );
+        }
+
+        // Docker archive returns a tar stream. Extract the single file.
+        const tarBytes = new Uint8Array(await archiveResp.arrayBuffer());
+
+        // 2MB limit for file content to prevent abuse
+        const MAX_FILE_READ = 2 * 1024 * 1024;
+
+        // Parse tar header (standard POSIX tar format)
+        // Header is 512 bytes. File name at offset 0 (100 bytes), size at offset 124 (12 bytes, octal)
+        if (tarBytes.length < 512) {
+          return createProblemResponse(502, "Invalid archive response", "Tar stream too short");
+        }
+
+        const sizeOctal = new TextDecoder().decode(tarBytes.slice(124, 136)).replace(/\0/g, '').trim();
+        const fileSize = parseInt(sizeOctal, 8);
+
+        if (!Number.isFinite(fileSize) || fileSize < 0) {
+          return createProblemResponse(502, "Invalid archive response", "Could not parse file size from tar header");
+        }
+
+        const truncated = fileSize > MAX_FILE_READ;
+        const readSize = Math.min(fileSize, MAX_FILE_READ);
+
+        // File data starts at offset 512
+        const fileData = tarBytes.slice(512, 512 + readSize);
+
+        // Detect if binary by checking for null bytes in the first 8KB
+        const sampleSize = Math.min(fileData.length, 8192);
+        let isBinary = false;
+        for (let i = 0; i < sampleSize; i++) {
+          if (fileData[i] === 0) {
+            isBinary = true;
+            break;
+          }
+        }
+
+        if (isBinary) {
+          return new Response(JSON.stringify({
+            content: '',
+            size: fileSize,
+            truncated: false,
+            binary: true,
+            message: 'Binary file — download is not supported in the current version.',
+          }), { headers: corsHeaders });
+        }
+
+        const content = new TextDecoder().decode(fileData);
+
+        return new Response(JSON.stringify({
+          content,
+          size: fileSize,
+          truncated,
+          binary: false,
+        }), { headers: corsHeaders });
+      }
+
       default:
         return createProblemResponse(400, `Unknown action: ${action}`);
     }

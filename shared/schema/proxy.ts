@@ -7,7 +7,8 @@ export const ProxyActionSchema = z.enum([
   "ping", "info", "version", "containers", 
   "container-inspect", "container-stats", "container-logs",
   "container-start", "container-stop", "container-restart",
-  "host-metrics", "all-containers", "all-container-stats"
+  "host-metrics", "all-containers", "all-container-stats",
+  "container-fs-list", "container-fs-read"
 ]).openapi("ProxyAction");
 
 export const ProxyRequestParamsSchema = z.object({

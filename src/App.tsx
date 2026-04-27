@@ -33,6 +33,7 @@ const HostsPage = lazy(() => import("./pages/app/HostsPage"));
 const HostDetailPage = lazy(() => import("./pages/app/HostDetailPage"));
 const ContainersPage = lazy(() => import("./pages/app/ContainersPage"));
 const ContainerDetailPage = lazy(() => import("./pages/app/ContainerDetailPage"));
+const FileManagerPage = lazy(() => import("./pages/app/FileManagerPage"));
 const LogsPage = lazy(() => import("./pages/app/LogsPage"));
 const AlertsPage = lazy(() => import("./pages/app/AlertsPage"));
 // MembersPage removed — functionality moved to Settings > Members tab
@@ -150,6 +151,14 @@ const App = () => {
                     <Route path="containers/:id" element={<ContainerDetailPage />} />
                     <Route path="monitoring" element={<Navigate to="/app/alerts" replace />} />
                     <Route path="logs" element={<LogsPage />} />
+                    <Route
+                      path="files"
+                      element={
+                        <RequireFeatureEntitlement feature="canUseFileManager">
+                          <FileManagerPage />
+                        </RequireFeatureEntitlement>
+                      }
+                    />
                     <Route path="alerts" element={<AlertsPage />} />
                     <Route path="incidents" element={<Navigate to="/app/alerts" replace />} />
                     <Route path="incidents/:id" element={<Navigate to="/app/alerts" replace />} />

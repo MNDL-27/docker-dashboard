@@ -55,4 +55,17 @@ export const dockerApi = {
     invoke({ action: 'container-restart', hostId, containerId }, genKey()),
   allContainers: (orgId: string) => invoke({ action: 'all-containers', orgId }),
   allContainerStats: (orgId: string) => invoke({ action: 'all-container-stats', orgId }),
+  listFiles: (hostId: string, containerId: string, path: string) =>
+    invoke({ action: 'container-fs-list', hostId, containerId, params: { path } }) as Promise<{ entries: FileEntry[] }>,
+  readFile: (hostId: string, containerId: string, path: string) =>
+    invoke({ action: 'container-fs-read', hostId, containerId, params: { path } }) as Promise<{ content: string; size: number; truncated: boolean }>,
 };
+
+export interface FileEntry {
+  name: string;
+  type: 'file' | 'directory' | 'symlink' | 'other';
+  size: number;
+  permissions: string;
+  modified: string;
+  linkTarget?: string;
+}

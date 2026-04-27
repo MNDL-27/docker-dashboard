@@ -12,6 +12,7 @@ export interface PlanPolicy {
   canUseAdvancedAlerts: boolean;
   canUseTeamCollaboration: boolean;
   canUseLogs: boolean;
+  canUseFileManager: boolean;
 }
 
 export const PLAN_POLICY_BY_PLAN: Record<PlanId, PlanPolicy> = {
@@ -25,6 +26,7 @@ export const PLAN_POLICY_BY_PLAN: Record<PlanId, PlanPolicy> = {
     canUseAdvancedAlerts: false,
     canUseTeamCollaboration: false,
     canUseLogs: false,
+    canUseFileManager: false,
   },
   pro: {
     seatLimit: 1,
@@ -36,6 +38,7 @@ export const PLAN_POLICY_BY_PLAN: Record<PlanId, PlanPolicy> = {
     canUseAdvancedAlerts: true,
     canUseTeamCollaboration: false,
     canUseLogs: true,
+    canUseFileManager: true,
   },
   team: {
     seatLimit: 10,
@@ -47,6 +50,7 @@ export const PLAN_POLICY_BY_PLAN: Record<PlanId, PlanPolicy> = {
     canUseAdvancedAlerts: true,
     canUseTeamCollaboration: true,
     canUseLogs: true,
+    canUseFileManager: true,
   },
   enterprise: {
     seatLimit: null,
@@ -58,6 +62,7 @@ export const PLAN_POLICY_BY_PLAN: Record<PlanId, PlanPolicy> = {
     canUseAdvancedAlerts: true,
     canUseTeamCollaboration: true,
     canUseLogs: true,
+    canUseFileManager: true,
   },
 };
 

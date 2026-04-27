@@ -13,6 +13,7 @@ export interface ViewerEntitlements {
   canUseAdvancedAlerts: boolean;
   canUseTeamCollaboration: boolean;
   canUseLogs: boolean;
+  canUseFileManager: boolean;
 }
 
 export interface ViewerState {
