@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { useOrganization } from "@clerk/clerk-react";
+import { useOrganization } from "@clerk/react";
 import { Download, Loader2, MailPlus, MoreHorizontal, Search, Shield, UserMinus, Users } from "lucide-react";
 
 import {

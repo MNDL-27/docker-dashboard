@@ -1,4 +1,4 @@
-import { useAuth, useClerk } from "@clerk/clerk-react";
+import { useAuth, useClerk } from "@clerk/react";
 import { useState, useEffect, useCallback } from "react";
 import { normalizeOnboardingStatus, deriveNeedsOnboarding, type OnboardingStatus } from "@/lib/onboarding-gate";
 

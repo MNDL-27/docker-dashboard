@@ -17,11 +17,8 @@ import {
   Settings2,
   Square,
   TerminalSquare,
-<<<<<<< HEAD
-  Lock,
-=======
   FolderOpen,
->>>>>>> 479fc52 (feat: add Docker Container File Manager)
+  Lock,
 } from "lucide-react";
 
 import { LogConsole } from "@/components/docker/LogConsole";

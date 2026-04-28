@@ -5,7 +5,7 @@ import { useToast } from "@/hooks/use-toast";
 import { AlertTriangle, Construction, Check, ArrowRight, X, Loader2, Zap, Box, HeartHandshake } from "lucide-react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
-import { useOrganization, useUser } from "@clerk/clerk-react";
+import { useOrganization, useUser } from "@clerk/react";
 import { useQuery } from "@tanstack/react-query";
 import { apiFetch } from "@/lib/api";
 import { getCheckoutPriceId, getPricingPlan } from "@/lib/pricing";

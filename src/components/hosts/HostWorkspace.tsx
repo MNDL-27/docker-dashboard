@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { useOrganization } from "@clerk/clerk-react";
+import { useOrganization } from "@clerk/react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useNavigate, useParams } from "react-router-dom";
 import { Loader2, Terminal } from "lucide-react";

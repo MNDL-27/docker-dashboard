@@ -50,6 +50,8 @@ export interface OrganizationMember {
 
 export type ConnectionMode = 'agent' | 'cloudflare_tunnel';
 
+export type ContainerRuntime = 'docker' | 'podman';
+
 export interface DockerHost {
   id: string;
   organization_id: string;
