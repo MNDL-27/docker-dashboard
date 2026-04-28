@@ -58,7 +58,7 @@ export const dockerApi = {
   listFiles: (hostId: string, containerId: string, path: string) =>
     invoke({ action: 'container-fs-list', hostId, containerId, params: { path } }) as Promise<{ entries: FileEntry[] }>,
   readFile: (hostId: string, containerId: string, path: string) =>
-    invoke({ action: 'container-fs-read', hostId, containerId, params: { path } }) as Promise<{ content: string; size: number; truncated: boolean }>,
+    invoke({ action: 'container-fs-read', hostId, containerId, params: { path } }) as Promise<{ content: string; size: number; truncated: boolean; binary?: boolean; message?: string }>,
 };
 
 export interface FileEntry {

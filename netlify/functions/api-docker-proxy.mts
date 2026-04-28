@@ -836,6 +836,23 @@ export default async (req: Request) => {
 
       case 'container-fs-list': {
         if (!containerId) return createProblemResponse(400, "containerId required");
+
+        // ── Entitlement check ──
+        {
+          const entitlements = await resolveOrganizationEntitlements({
+            organizationId: host.organization_id,
+            isPlatformAdmin: auth.isPlatformAdmin,
+          });
+          if (!entitlements.canUseFileManager) {
+            return createProblemResponse(
+              403,
+              "File Manager requires a paid subscription",
+              "The File Manager requires an Individual, Business, or Dedicated subscription.",
+              "feature_not_allowed",
+            );
+          }
+        }
+
         const fsPath = (params as any)?.path || '/';
         if (typeof fsPath !== 'string' || !fsPath.startsWith('/') || fsPath.includes('..')) {
           return createProblemResponse(400, "Invalid path", "Path must be absolute and must not contain '..'");
@@ -843,11 +860,16 @@ export default async (req: Request) => {
 
         const sanitizedId = sanitizeContainerId(containerId);
 
+        // Use sh -c with a portable ls command that falls back for BusyBox/Alpine
+        // GNU coreutils: ls -la --time-style=long-iso <path>
+        // BusyBox fallback: ls -la <path>  (no --time-style support)
+        const lsCmd = `ls -la --time-style=long-iso ${JSON.stringify(fsPath)} 2>/dev/null || ls -la ${JSON.stringify(fsPath)}`;
+
         // Build the exec create request manually since we need to send a JSON body.
         const execBody = JSON.stringify({
           AttachStdout: true,
           AttachStderr: true,
-          Cmd: ['ls', '-la', '--time-style=long-iso', fsPath],
+          Cmd: ['sh', '-c', lsCmd],
         });
 
         const execCreateUrl = buildValidatedAgentUrl(
@@ -956,13 +978,21 @@ export default async (req: Request) => {
         for (const line of lines) {
           // Skip "total" line
           if (line.startsWith('total ')) continue;
-          // ls -la --time-style=long-iso format:
-          // drwxr-xr-x  2 root root 4096 2024-03-15 10:30 dirname
-          // -rw-r--r--  1 root root  123 2024-03-15 10:30 filename
-          // lrwxrwxrwx  1 root root   11 2024-03-15 10:30 link -> target
-          const parts = line.match(
+
+          // Try GNU coreutils long-iso format first:
+          //   drwxr-xr-x  2 root root 4096 2024-03-15 10:30 dirname
+          // Then BusyBox format (Month Day HH:MM or Month Day Year):
+          //   drwxr-xr-x  2 root root 4096 Mar 15 10:30 dirname
+          //   drwxr-xr-x  2 root root 4096 Mar 15  2024 dirname
+          let parts = line.match(
             /^([dlcbps-])([rwxsStT-]{9})\s+\d+\s+\S+\s+\S+\s+(\d+)\s+(\d{4}-\d{2}-\d{2}\s+\d{2}:\d{2})\s+(.+)$/
           );
+          if (!parts) {
+            // BusyBox / traditional ls -la format
+            parts = line.match(
+              /^([dlcbps-])([rwxsStT-]{9})\s+\d+\s+\S+\s+\S+\s+(\d+)\s+(\w{3}\s+\d{1,2}\s+[\d:]+(?:\s+\d{4})?)\s+(.+)$/
+            );
+          }
           if (!parts) continue;
 
           const [, typeChar, perms, sizeStr, dateStr, nameField] = parts;
@@ -1005,6 +1035,23 @@ export default async (req: Request) => {
 
       case 'container-fs-read': {
         if (!containerId) return createProblemResponse(400, "containerId required");
+
+        // ── Entitlement check ──
+        {
+          const entitlements = await resolveOrganizationEntitlements({
+            organizationId: host.organization_id,
+            isPlatformAdmin: auth.isPlatformAdmin,
+          });
+          if (!entitlements.canUseFileManager) {
+            return createProblemResponse(
+              403,
+              "File Manager requires a paid subscription",
+              "The File Manager requires an Individual, Business, or Dedicated subscription.",
+              "feature_not_allowed",
+            );
+          }
+        }
+
         const readPath = (params as any)?.path;
         if (typeof readPath !== 'string' || !readPath.startsWith('/') || readPath.includes('..')) {
           return createProblemResponse(400, "Invalid path", "Path must be absolute and must not contain '..'");

@@ -358,6 +358,8 @@ export default function FileManagerPage() {
 
   const hasContainer = !!selectedContainerId && !!selectedHostId;
 
+  const canUseFileManager = !!viewer?.entitlements?.canUseFileManager;
+
   return (
     <div className="space-y-6 animate-fade-in">
       <PageHeader
@@ -366,182 +368,191 @@ export default function FileManagerPage() {
         breadcrumbs={[{ label: "File Manager" }]}
       />
 
-      <div className="grid gap-6 xl:grid-cols-[320px,1fr]">
-        {/* Left: Container selector */}
-        <div className="glass-card rounded-[28px] p-5">
-          <h3 className="mb-4 text-sm font-semibold uppercase tracking-[0.18em] text-muted-foreground">
-            Select Container
-          </h3>
-          {containersLoading ? (
-            <div className="flex items-center justify-center py-12">
-              <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-            </div>
-          ) : (
-            <ContainerSelector
-              containers={containers as any[]}
-              selectedContainerId={selectedContainerId}
-              selectedHostId={selectedHostId}
-              onSelect={handleSelectContainer}
-            />
-          )}
+      {!canUseFileManager ? (
+        <div className="glass-card rounded-[28px] p-8">
+          <PremiumFeatureBlock
+            title="File Manager"
+            description="Browse container filesystems, inspect configuration files, and preview logs directly from the dashboard. Upgrade to an Individual, Business, or Dedicated plan to unlock the File Manager."
+          />
         </div>
-
-        {/* Right: File browser + viewer */}
-        <div className="min-w-0 space-y-4">
-          {!hasContainer ? (
-            <div className="glass-card flex flex-col items-center justify-center rounded-[28px] py-24 text-center">
-              <FolderOpen className="mb-4 h-12 w-12 text-muted-foreground/30" />
-              <p className="text-lg font-medium text-foreground">Select a running container</p>
-              <p className="mt-2 max-w-sm text-sm text-muted-foreground">
-                Choose a container from the sidebar to browse its filesystem. Only running containers support file browsing.
-              </p>
-            </div>
-          ) : (
-            <>
-              {/* Toolbar */}
-              <div className="glass-card flex items-center gap-3 rounded-[20px] px-5 py-3">
-                <div className="flex-1 overflow-hidden">
-                  <PathBreadcrumb path={currentPath} onNavigate={handleNavigate} />
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className="relative">
-                    <Search className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
-                    <Input
-                      placeholder="Filter..."
-                      value={filterQuery}
-                      onChange={(e) => setFilterQuery(e.target.value)}
-                      className="h-8 w-40 bg-background/40 border-white/10 rounded-lg pl-8 text-xs"
-                    />
-                  </div>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-8 w-8 rounded-lg"
-                    onClick={handleRefresh}
-                    title="Refresh"
-                  >
-                    <RefreshCw className="h-3.5 w-3.5" />
-                  </Button>
-                </div>
+      ) : (
+        <div className="grid gap-6 xl:grid-cols-[320px,1fr]">
+          {/* Left: Container selector */}
+          <div className="glass-card rounded-[28px] p-5">
+            <h3 className="mb-4 text-sm font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+              Select Container
+            </h3>
+            {containersLoading ? (
+              <div className="flex items-center justify-center py-12">
+                <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
               </div>
+            ) : (
+              <ContainerSelector
+                containers={containers as any[]}
+                selectedContainerId={selectedContainerId}
+                selectedHostId={selectedHostId}
+                onSelect={handleSelectContainer}
+              />
+            )}
+          </div>
 
-              <div className={cn("grid gap-4", selectedFile ? "xl:grid-cols-[1fr,1fr]" : "xl:grid-cols-1")}>
-                {/* Directory listing */}
-                <div className="glass-card min-w-0 rounded-[24px] overflow-hidden">
-                  <div className="border-b border-white/5 px-5 py-3">
-                    <div className="flex items-center justify-between">
-                      <h4 className="text-sm font-semibold uppercase tracking-[0.18em] text-muted-foreground">
-                        {selectedContainerName || "Files"}
-                      </h4>
-                      <span className="rounded-full bg-white/5 px-3 py-0.5 text-xs text-muted-foreground">
-                        {filteredEntries.length} {filteredEntries.length === 1 ? "item" : "items"}
-                      </span>
-                    </div>
+          {/* Right: File browser + viewer */}
+          <div className="min-w-0 space-y-4">
+            {!hasContainer ? (
+              <div className="glass-card flex flex-col items-center justify-center rounded-[28px] py-24 text-center">
+                <FolderOpen className="mb-4 h-12 w-12 text-muted-foreground/30" />
+                <p className="text-lg font-medium text-foreground">Select a running container</p>
+                <p className="mt-2 max-w-sm text-sm text-muted-foreground">
+                  Choose a container from the sidebar to browse its filesystem. Only running containers support file browsing.
+                </p>
+              </div>
+            ) : (
+              <>
+                {/* Toolbar */}
+                <div className="glass-card flex items-center gap-3 rounded-[20px] px-5 py-3">
+                  <div className="flex-1 overflow-hidden">
+                    <PathBreadcrumb path={currentPath} onNavigate={handleNavigate} />
                   </div>
+                  <div className="flex items-center gap-2">
+                    <div className="relative">
+                      <Search className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+                      <Input
+                        placeholder="Filter..."
+                        value={filterQuery}
+                        onChange={(e) => setFilterQuery(e.target.value)}
+                        className="h-8 w-40 bg-background/40 border-white/10 rounded-lg pl-8 text-xs"
+                      />
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8 rounded-lg"
+                      onClick={handleRefresh}
+                      title="Refresh"
+                    >
+                      <RefreshCw className="h-3.5 w-3.5" />
+                    </Button>
+                  </div>
+                </div>
 
-                  {dirLoading ? (
-                    <div className="flex items-center justify-center py-16">
-                      <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                <div className={cn("grid gap-4", selectedFile ? "xl:grid-cols-[1fr,1fr]" : "xl:grid-cols-1")}>
+                  {/* Directory listing */}
+                  <div className="glass-card min-w-0 rounded-[24px] overflow-hidden">
+                    <div className="border-b border-white/5 px-5 py-3">
+                      <div className="flex items-center justify-between">
+                        <h4 className="text-sm font-semibold uppercase tracking-[0.18em] text-muted-foreground">
+                          {selectedContainerName || "Files"}
+                        </h4>
+                        <span className="rounded-full bg-white/5 px-3 py-0.5 text-xs text-muted-foreground">
+                          {filteredEntries.length} {filteredEntries.length === 1 ? "item" : "items"}
+                        </span>
+                      </div>
                     </div>
-                  ) : dirError ? (
-                    <div className="flex flex-col items-center justify-center gap-3 py-16 text-center">
-                      <AlertTriangle className="h-8 w-8 text-destructive/60" />
-                      <p className="text-sm text-destructive">{(dirError as Error).message}</p>
-                      <p className="text-xs text-muted-foreground">Make sure the container is running and the path exists.</p>
-                    </div>
-                  ) : filteredEntries.length === 0 ? (
-                    <div className="flex flex-col items-center justify-center py-16 text-center">
-                      <Folder className="mb-3 h-8 w-8 text-muted-foreground/30" />
-                      <p className="text-sm text-muted-foreground">
-                        {filterQuery ? "No files match your filter" : "Empty directory"}
-                      </p>
-                    </div>
-                  ) : (
-                    <div className="max-h-[560px] overflow-y-auto">
-                      {/* Parent directory */}
-                      {currentPath !== "/" && (
-                        <button
-                          type="button"
-                          onClick={() => {
-                            const parent = currentPath.split("/").slice(0, -1).join("/") || "/";
-                            handleNavigate(parent);
-                          }}
-                          className="flex w-full items-center gap-3 border-b border-white/5 px-5 py-2.5 text-left text-sm transition-colors hover:bg-white/5"
-                        >
-                          <Folder className="h-4 w-4 text-muted-foreground" />
-                          <span className="text-muted-foreground">..</span>
-                        </button>
-                      )}
-                      {filteredEntries.map((entry) => {
-                        const Icon = getFileIcon(entry);
-                        const entryPath = currentPath === "/" ? `/${entry.name}` : `${currentPath}/${entry.name}`;
-                        const isActive = selectedFile === entryPath;
-                        return (
+
+                    {dirLoading ? (
+                      <div className="flex items-center justify-center py-16">
+                        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                      </div>
+                    ) : dirError ? (
+                      <div className="flex flex-col items-center justify-center gap-3 py-16 text-center">
+                        <AlertTriangle className="h-8 w-8 text-destructive/60" />
+                        <p className="text-sm text-destructive">{(dirError as Error).message}</p>
+                        <p className="text-xs text-muted-foreground">Make sure the container is running and the path exists.</p>
+                      </div>
+                    ) : filteredEntries.length === 0 ? (
+                      <div className="flex flex-col items-center justify-center py-16 text-center">
+                        <Folder className="mb-3 h-8 w-8 text-muted-foreground/30" />
+                        <p className="text-sm text-muted-foreground">
+                          {filterQuery ? "No files match your filter" : "Empty directory"}
+                        </p>
+                      </div>
+                    ) : (
+                      <div className="max-h-[560px] overflow-y-auto">
+                        {/* Parent directory */}
+                        {currentPath !== "/" && (
                           <button
-                            key={entry.name}
                             type="button"
-                            onClick={() => handleEntryClick(entry)}
-                            className={cn(
-                              "group flex w-full items-center gap-3 border-b border-white/5 px-5 py-2.5 text-left text-sm transition-colors",
-                              isActive
-                                ? "bg-primary/10"
-                                : "hover:bg-white/5",
-                            )}
+                            onClick={() => {
+                              const parent = currentPath.split("/").slice(0, -1).join("/") || "/";
+                              handleNavigate(parent);
+                            }}
+                            className="flex w-full items-center gap-3 border-b border-white/5 px-5 py-2.5 text-left text-sm transition-colors hover:bg-white/5"
                           >
-                            <Icon
+                            <Folder className="h-4 w-4 text-muted-foreground" />
+                            <span className="text-muted-foreground">..</span>
+                          </button>
+                        )}
+                        {filteredEntries.map((entry) => {
+                          const Icon = getFileIcon(entry);
+                          const entryPath = currentPath === "/" ? `/${entry.name}` : `${currentPath}/${entry.name}`;
+                          const isActive = selectedFile === entryPath;
+                          return (
+                            <button
+                              key={entry.name}
+                              type="button"
+                              onClick={() => handleEntryClick(entry)}
                               className={cn(
-                                "h-4 w-4 shrink-0",
-                                entry.type === "directory"
-                                  ? "text-primary"
-                                  : entry.type === "symlink"
-                                    ? "text-sky-400"
-                                    : "text-muted-foreground",
-                              )}
-                            />
-                            <span
-                              className={cn(
-                                "min-w-0 flex-1 truncate",
-                                entry.type === "directory"
-                                  ? "font-medium text-foreground"
-                                  : isActive
-                                    ? "text-primary"
-                                    : "text-foreground/80",
+                                "group flex w-full items-center gap-3 border-b border-white/5 px-5 py-2.5 text-left text-sm transition-colors",
+                                isActive
+                                  ? "bg-primary/10"
+                                  : "hover:bg-white/5",
                               )}
                             >
-                              {entry.name}
-                              {entry.linkTarget && (
-                                <span className="ml-1.5 text-xs text-muted-foreground/60">→ {entry.linkTarget}</span>
-                              )}
-                            </span>
-                            <span className="shrink-0 text-xs text-muted-foreground/60">
-                              {entry.type === "directory" ? "" : formatFileSize(entry.size)}
-                            </span>
-                            <span className="hidden shrink-0 font-mono text-xs text-muted-foreground/40 sm:block">
-                              {entry.permissions}
-                            </span>
-                          </button>
-                        );
-                      })}
+                              <Icon
+                                className={cn(
+                                  "h-4 w-4 shrink-0",
+                                  entry.type === "directory"
+                                    ? "text-primary"
+                                    : entry.type === "symlink"
+                                      ? "text-sky-400"
+                                      : "text-muted-foreground",
+                                )}
+                              />
+                              <span
+                                className={cn(
+                                  "min-w-0 flex-1 truncate",
+                                  entry.type === "directory"
+                                    ? "font-medium text-foreground"
+                                    : isActive
+                                      ? "text-primary"
+                                      : "text-foreground/80",
+                                )}
+                              >
+                                {entry.name}
+                                {entry.linkTarget && (
+                                  <span className="ml-1.5 text-xs text-muted-foreground/60">→ {entry.linkTarget}</span>
+                                )}
+                              </span>
+                              <span className="shrink-0 text-xs text-muted-foreground/60">
+                                {entry.type === "directory" ? "" : formatFileSize(entry.size)}
+                              </span>
+                              <span className="hidden shrink-0 font-mono text-xs text-muted-foreground/40 sm:block">
+                                {entry.permissions}
+                              </span>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* File content viewer */}
+                  {selectedFile && selectedHostId && selectedContainerId && (
+                    <div className="glass-card min-w-0 overflow-hidden rounded-[24px]">
+                      <FileViewer
+                        hostId={selectedHostId}
+                        containerId={selectedContainerId}
+                        filePath={selectedFile}
+                        onClose={() => setSelectedFile(null)}
+                      />
                     </div>
                   )}
                 </div>
-
-                {/* File content viewer */}
-                {selectedFile && selectedHostId && selectedContainerId && (
-                  <div className="glass-card min-w-0 overflow-hidden rounded-[24px]">
-                    <FileViewer
-                      hostId={selectedHostId}
-                      containerId={selectedContainerId}
-                      filePath={selectedFile}
-                      onClose={() => setSelectedFile(null)}
-                    />
-                  </div>
-                )}
-              </div>
-            </>
-          )}
+              </>
+            )}
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }
