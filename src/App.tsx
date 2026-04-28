@@ -153,11 +153,7 @@ const App = () => {
                     <Route path="logs" element={<LogsPage />} />
                     <Route
                       path="files"
-                      element={
-                        <RequireFeatureEntitlement feature="canUseFileManager">
-                          <FileManagerPage />
-                        </RequireFeatureEntitlement>
-                      }
+                      element={<FileManagerPage />}
                     />
                     <Route path="alerts" element={<AlertsPage />} />
                     <Route path="incidents" element={<Navigate to="/app/alerts" replace />} />

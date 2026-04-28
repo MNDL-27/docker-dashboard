@@ -26,6 +26,7 @@ import { cn } from "@/lib/utils";
 import { useContainerFileList, useContainerFileContent } from "@/hooks/useContainerFiles";
 import { useContainers } from "@/hooks/useDocker";
 import { useViewerState } from "@/hooks/useViewerState";
+import { PremiumFeatureBlock } from "@/components/shared/PremiumFeatureBlock";
 import type { FileEntry } from "@/services/docker-api";
 
 // ── Helpers ──
@@ -210,7 +211,14 @@ function FileViewer({
   filePath: string;
   onClose: () => void;
 }) {
-  const { data, isLoading, error } = useContainerFileContent(hostId, containerId, filePath);
+  const { data: viewer } = useViewerState();
+  const canRead = !!viewer?.entitlements?.canUseFileManager;
+
+  const { data, isLoading, error } = useContainerFileContent(
+    canRead ? hostId : null,
+    canRead ? containerId : null,
+    canRead ? filePath : null
+  );
   const fileName = filePath.split("/").pop() || filePath;
   const lang = getLanguageFromPath(filePath);
 
@@ -233,7 +241,16 @@ function FileViewer({
 
       {/* Content */}
       <div className="flex-1 overflow-auto">
-        {isLoading ? (
+        {!canRead ? (
+          <div className="flex h-full items-center justify-center p-8">
+            <div className="max-w-md w-full">
+              <PremiumFeatureBlock
+                title="File Explorer Pro"
+                description="Viewing file contents is a premium feature. Upgrade your plan to inspect configuration files, logs, and more directly from the dashboard."
+              />
+            </div>
+          </div>
+        ) : isLoading ? (
           <div className="flex h-full items-center justify-center py-16">
             <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
           </div>
