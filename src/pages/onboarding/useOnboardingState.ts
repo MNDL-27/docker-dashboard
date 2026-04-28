@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { useOrganizationList, useAuth } from "@clerk/clerk-react";
+import { useOrganizationList, useAuth } from "@clerk/react";
 import { useToast } from "@/components/ui/use-toast";
 import { agentEnrollmentApi, type AgentEnrollmentCreateResponse, type AgentEnrollmentFinalizeResponse } from "@/services/agent-enrollment";
 import type { ConnectionMode } from "@/types/database";

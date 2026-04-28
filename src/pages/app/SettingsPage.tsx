@@ -6,7 +6,7 @@ import { ProfileSettings } from "@/components/settings/ProfileSettings";
 import { useSearchParams } from "react-router-dom";
 import { SlackDestinationsPanel } from "@/components/settings/SlackDestinationsPanel";
 import { WebhookDestinationsPanel } from "@/components/settings/WebhookDestinationsPanel";
-import { useOrganization } from "@clerk/clerk-react";
+import { useOrganization } from "@clerk/react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useViewerState } from "@/hooks/useViewerState";
 import { useDestinationSettings } from "@/hooks/useDestinationSettings";

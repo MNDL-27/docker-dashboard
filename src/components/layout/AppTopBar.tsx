@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Search, Command, Moon, Sun, LayoutDashboard, Server, Box, ActivitySquare, Settings, LifeBuoy } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { UserButton, OrganizationSwitcher, useOrganization } from "@clerk/clerk-react";
+import { UserButton, OrganizationSwitcher, useOrganization } from "@clerk/react";
 import {
   CommandDialog,
   CommandEmpty,

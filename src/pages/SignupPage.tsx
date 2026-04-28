@@ -1,4 +1,4 @@
-import { SignUp } from "@clerk/clerk-react";
+import { SignUp } from "@clerk/react";
 import { Link } from "react-router-dom";
 import { useSearchParams } from "react-router-dom";
 import { LogoLink } from "@/components/shared/LogoLink";

@@ -4,7 +4,7 @@ import { PremiumFeatureBlock } from "@/components/shared/PremiumFeatureBlock";
 import { Button } from "@/components/ui/button";
 import { Loader2, RefreshCw, FileText } from "lucide-react";
 import { useState } from "react";
-import { useOrganization } from "@clerk/clerk-react";
+import { useOrganization } from "@clerk/react";
 import { useDockerHosts } from "@/hooks/useDocker";
 import { dockerApi } from "@/services/docker-api";
 import { Link } from "react-router-dom";

@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { useOrganization } from "@clerk/clerk-react";
+import { useOrganization } from "@clerk/react";
 import { BellRing, Loader2, MessageSquareShare, ServerCrash, Webhook } from "lucide-react";
 import { Link } from "react-router-dom";
 

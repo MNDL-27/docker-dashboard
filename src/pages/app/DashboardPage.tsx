@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { useOrganization, useOrganizationList } from "@clerk/clerk-react";
+import { useOrganization, useOrganizationList } from "@clerk/react";
 import { useDockerHosts, useContainers } from "@/hooks/useDocker";
 import { useViewerState } from "@/hooks/useViewerState";
 import { buildDashboardStats } from "@/lib/dashboard-summary";

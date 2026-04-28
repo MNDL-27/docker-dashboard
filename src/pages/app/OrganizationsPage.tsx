@@ -2,7 +2,7 @@ import { PageHeader } from "@/components/shared/PageHeader";
 import { Button } from "@/components/ui/button";
 import { Building2, Loader2, Plus, Server } from "lucide-react";
 import { Link } from "react-router-dom";
-import { useOrganizationList } from "@clerk/clerk-react";
+import { useOrganizationList } from "@clerk/react";
 import { useDockerHosts } from "@/hooks/useDocker";
 import { useState } from "react";
 import { Input } from "@/components/ui/input";

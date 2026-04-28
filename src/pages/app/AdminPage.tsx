@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useOrganization } from "@clerk/clerk-react";
+import { useOrganization } from "@clerk/react";
 import { PageHeader } from "@/components/shared/PageHeader";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AddHostDialog } from "@/components/docker/AddHostDialog";

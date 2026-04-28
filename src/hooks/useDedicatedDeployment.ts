@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { useOrganizationList } from "@clerk/clerk-react";
+import { useOrganizationList } from "@clerk/react";
 import { apiFetch } from "@/lib/api";
 import { dedicatedDeploymentApi } from "@/services/dedicated-deployment-api";
 import type {

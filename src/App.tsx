@@ -8,7 +8,7 @@ import { ProtectedRoute } from "@/components/ProtectedRoute";
 import AppRootRedirect from "@/components/AppRootRedirect";
 import { isAppSubdomain, isDocsSubdomain, isPreviewAuthBypassEnabled } from "@/lib/hostname";
 import { RequireAppSubdomain } from "@/components/RequireAppSubdomain";
-import { ClerkProvider } from "@clerk/clerk-react";
+import { ClerkProvider } from "@clerk/react";
 import { RequirePlatformAdmin } from "@/components/RequirePlatformAdmin";
 import { Loader2 } from "lucide-react";
 import { lazy, Suspense, useEffect } from "react";
