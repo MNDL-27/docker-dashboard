@@ -6,12 +6,12 @@ import { ApiError } from "@/lib/api";
 export interface HostMetricsPoint {
   timestamp: number;
   time: string;
-  cpu: number;
-  memory: number;
-  usedCores: number;
-  totalCores: number;
-  memoryUsed: number;
-  memoryLimit: number;
+  cpu: number | null;
+  memory: number | null;
+  usedCores: number | null;
+  totalCores: number | null;
+  memoryUsed: number | null;
+  memoryLimit: number | null;
   networkInBytesPerSec: number | null;
   networkOutBytesPerSec: number | null;
   networkMonthlyTotal: number | null;
@@ -141,37 +141,15 @@ function normalizeHostMetricsDisk(value: unknown): HostMetricsDisk | null {
   };
 }
 
-export function normalizeHostMetricsPoint(point: HostMetricsApiPoint): HostMetricsPoint | null {
+function extractMetrics(point: HostMetricsApiPoint): HostMetricsPoint {
   const timestamp = toTimestamp(point.timestamp) ?? Date.now();
 
-  const cpuRaw = toFiniteNumber(point.cpu);
-  const memoryRaw = toFiniteNumber(point.memory);
-  const usedCoresRaw = toFiniteNumber(point.usedCores ?? point.used_cores);
-  const totalCoresRaw = toFiniteNumber(point.totalCores ?? point.total_cores);
-  const memoryUsedRaw = toFiniteNumber(point.memoryUsed ?? point.memory_used);
-  const memoryLimitRaw = toFiniteNumber(point.memoryLimit ?? point.memory_limit);
-
-  // Critical field check
-  if (
-    cpuRaw === null ||
-    memoryRaw === null ||
-    usedCoresRaw === null ||
-    totalCoresRaw === null ||
-    memoryUsedRaw === null ||
-    memoryLimitRaw === null
-  ) {
-    return null;
-  }
-
-  // Range clamping for percentages
-  const cpu = clamp(cpuRaw, 0, 100);
-  const memory = clamp(memoryRaw, 0, 100);
-
-  // Logical consistency for cores/memory
-  const totalCores = Math.max(0, totalCoresRaw);
-  const usedCores = clamp(usedCoresRaw, 0, totalCores || usedCoresRaw);
-  const memoryLimit = Math.max(0, memoryLimitRaw);
-  const memoryUsed = clamp(memoryUsedRaw, 0, memoryLimit || memoryUsedRaw);
+  const cpu = toFiniteNumber(point.cpu);
+  const memory = toFiniteNumber(point.memory);
+  const usedCores = toFiniteNumber(point.usedCores ?? point.used_cores);
+  const totalCores = toFiniteNumber(point.totalCores ?? point.total_cores);
+  const memoryUsed = toFiniteNumber(point.memoryUsed ?? point.memory_used);
+  const memoryLimit = toFiniteNumber(point.memoryLimit ?? point.memory_limit);
 
   const networkInBytesPerSec = normalizeOptionalRate(point.networkInBytesPerSec ?? point.network_in_bytes_per_sec);
   const networkOutBytesPerSec = normalizeOptionalRate(point.networkOutBytesPerSec ?? point.network_out_bytes_per_sec);
@@ -199,6 +177,46 @@ export function normalizeHostMetricsPoint(point: HostMetricsApiPoint): HostMetri
     uptimeSeconds,
     disks,
   };
+}
+
+function validateMetricsRanges(metrics: HostMetricsPoint): HostMetricsPoint {
+  const cpu = metrics.cpu !== null ? clamp(metrics.cpu, 0, 100) : null;
+  const memory = metrics.memory !== null ? clamp(metrics.memory, 0, 100) : null;
+
+  const totalCores = metrics.totalCores !== null ? Math.max(0, metrics.totalCores) : null;
+  const usedCores = metrics.usedCores !== null 
+    ? clamp(metrics.usedCores, 0, totalCores !== null ? totalCores : metrics.usedCores) 
+    : null;
+
+  const memoryLimit = metrics.memoryLimit !== null ? Math.max(0, metrics.memoryLimit) : null;
+  const memoryUsed = metrics.memoryUsed !== null 
+    ? clamp(metrics.memoryUsed, 0, memoryLimit !== null ? memoryLimit : metrics.memoryUsed) 
+    : null;
+
+  return {
+    ...metrics,
+    cpu,
+    memory,
+    usedCores,
+    totalCores,
+    memoryUsed,
+    memoryLimit,
+  };
+}
+
+function isMetricsSampleValid(metrics: HostMetricsPoint): boolean {
+  return metrics.cpu !== null && metrics.memory !== null;
+}
+
+export function normalizeHostMetricsPoint(point: HostMetricsApiPoint): HostMetricsPoint | null {
+  const extracted = extractMetrics(point);
+  const validated = validateMetricsRanges(extracted);
+
+  if (!isMetricsSampleValid(validated)) {
+    return null;
+  }
+
+  return validated;
 }
 
 function formatFailureDetails(details: unknown): string | null {

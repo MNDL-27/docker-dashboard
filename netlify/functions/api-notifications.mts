@@ -1,6 +1,7 @@
 import type { Config, Context } from "@netlify/functions";
 import { requireAuth } from "./lib/auth.mjs";
 import { sql } from "./lib/db.mjs";
+import { ensureNotificationsSchema } from "./lib/ensure-notifications-schema.mjs";
 
 export default async (req: Request, context: Context) => {
   if (req.method === "OPTIONS") {
@@ -20,6 +21,7 @@ export default async (req: Request, context: Context) => {
   };
 
   try {
+    await ensureNotificationsSchema();
     const auth = await requireAuth(req, { requireOrg: false });
 
     const url = new URL(req.url);
@@ -50,6 +52,19 @@ export default async (req: Request, context: Context) => {
     // POST /api/notifications/:id/dismiss
     if (req.method === "POST" && pathSegments[pathSegments.length - 1] === "dismiss") {
       const notificationId = pathSegments[pathSegments.length - 2];
+      
+      const [notification] = await sql`
+        SELECT id FROM public.notifications 
+        WHERE id = ${notificationId} 
+          AND (organization_id = ${auth.orgId} OR organization_id IS NULL)
+      `;
+
+      if (!notification) {
+        return new Response(JSON.stringify({ error: "Notification not found or unauthorized" }), {
+          status: 404,
+          headers: corsHeaders,
+        });
+      }
       
       await sql`
         INSERT INTO public.notification_dismissals (notification_id, user_id)

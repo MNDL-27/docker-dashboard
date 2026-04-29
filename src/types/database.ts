@@ -213,7 +213,7 @@ export interface Notification {
   message: string;
   type: "info" | "warning" | "error" | "success" | "update";
   link: string | null;
-  metadata: any;
+  metadata: Record<string, unknown> | null;
   created_by: string | null;
   expires_at: string | null;
   created_at: string;

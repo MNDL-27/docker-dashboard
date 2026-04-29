@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { Bell, Check, Info, AlertTriangle, AlertCircle, CheckCircle, RefreshCw } from "lucide-react";
 import { useNotifications, useDismissNotification, useDismissAllNotifications } from "../../hooks/useNotifications";
-import { useOrganization } from "@clerk/react";
+import { useViewerState } from "../../hooks/useViewerState";
 import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
 import { Button } from "../ui/button";
 import { cn } from "../../lib/utils";
@@ -26,8 +26,8 @@ const NotificationIcon = ({ type }: { type: Notification["type"] }) => {
 
 export function NotificationBell() {
   const [open, setOpen] = useState(false);
-  const { currentOrganization } = useOrganization();
-  const orgId = currentOrganization?.id || null;
+  const { data: viewer } = useViewerState();
+  const orgId = viewer?.active_org_id || null;
   
   const { data: notifications, unreadCount } = useNotifications(orgId);
   const dismissMutation = useDismissNotification(orgId);
@@ -47,7 +47,11 @@ export function NotificationBell() {
   const handleClick = (n: Notification) => {
     if (n.link) {
       setOpen(false);
-      navigate(n.link);
+      if (n.link.startsWith("http://") || n.link.startsWith("https://")) {
+        window.open(n.link, "_blank", "noopener,noreferrer");
+      } else {
+        navigate(n.link);
+      }
     }
   };
 
