@@ -436,8 +436,8 @@ check_config() {
   require_command socat
   require_command curl
   require_command jq
-  require_command df
   require_command mkdir
+  require_command df
   [ -S "$DOCKER_SOCKET" ] || fail "Docker socket not found at $DOCKER_SOCKET. Ensure Docker is running or update DOCKER_SOCKET."
 }
 
@@ -494,8 +494,37 @@ respond_json() {
   printf '%s' "$body"
 }
 
+json_escape() {
+  printf '%s' "$1" | sed 's/\\/\\\\/g; s/"/\\"/g'
+}
+
+validate_docker_path() {
+  local path="$1"
+
+  [ -n "$path" ] || return 1
+
+  case "$path" in
+    /*) ;;
+    *) return 1 ;;
+  esac
+
+  case "$path" in
+    *$'\r'*|*$'\n'*|*' '*|*'\t'*|*'\\'*|*'"'*|*"'"*|*'`'*|*';'*|*'|'*|*'&'*|*'<'*|*'>'*|*'('*|*')'*|*'{'*|*'}'*|*'['*|*']'*)
+      return 1
+      ;;
+  esac
+
+  case "$path" in
+    *'..'*)
+      return 1
+      ;;
+  esac
+
+  return 0
+}
+
 cleanup_handler() {
-  rm -f "${REQUEST_BODY_FILE:-}" "${RESPONSE_BODY_FILE:-}" "${RESPONSE_HEADERS_FILE:-}" "${CURL_ERROR_FILE:-}"
+  rm -f "${REQUEST_BODY_FILE:-}" "${RESPONSE_BODY_FILE:-}" "${RESPONSE_HEADERS_FILE:-}" "${CURL_ERROR_FILE:-}" "${FORWARD_HEADERS_FILE:-}"
 }
 
 trap cleanup_handler EXIT INT TERM
@@ -645,13 +674,15 @@ AGENT_KEY=""
 DOCKER_SOCK_OVERRIDE=""
 CONTENT_LENGTH=0
 CONTENT_TYPE=""
+IS_UPGRADE="false"
+FORWARD_HEADERS_FILE="$(mktemp "${TMPDIR:-/tmp}/watchtower-agent-forward-headers.XXXXXX")"
 
 while IFS= read -r header_line; do
-  header_line="$(printf '%s' "$header_line" | tr -d '\r')"
-  [ -z "$header_line" ] && break
+  header_line_stripped="$(printf '%s' "$header_line" | tr -d '\r')"
+  [ -z "$header_line_stripped" ] && break
 
-  header_name="$(printf '%s' "$header_line" | cut -d: -f1 | tr '[:upper:]' '[:lower:]')"
-  header_value="$(printf '%s' "${header_line#*:}" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')"
+  header_name="$(printf '%s' "$header_line_stripped" | cut -d: -f1 | tr '[:upper:]' '[:lower:]')"
+  header_value="$(printf '%s' "${header_line_stripped#*:}" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')"
 
   case "$header_name" in
     x-agent-key)
@@ -662,9 +693,26 @@ while IFS= read -r header_line; do
       ;;
     content-length)
       CONTENT_LENGTH="$header_value"
+      printf '%s\r\n' "$header_line_stripped" >> "$FORWARD_HEADERS_FILE"
       ;;
     content-type)
       CONTENT_TYPE="$header_value"
+      printf '%s\r\n' "$header_line_stripped" >> "$FORWARD_HEADERS_FILE"
+      ;;
+    upgrade)
+      IS_UPGRADE="true"
+      printf '%s\r\n' "$header_line_stripped" >> "$FORWARD_HEADERS_FILE"
+      ;;
+    connection)
+      case "$header_value" in
+        *[Uu][Pp][Gg][Rr][Aa][Dd][Ee]*)
+          IS_UPGRADE="true"
+          ;;
+      esac
+      printf '%s\r\n' "$header_line_stripped" >> "$FORWARD_HEADERS_FILE"
+      ;;
+    *)
+      printf '%s\r\n' "$header_line_stripped" >> "$FORWARD_HEADERS_FILE"
       ;;
   esac
 done
@@ -693,18 +741,26 @@ if [ "$CONTENT_LENGTH" -gt 0 ]; then
 fi
 
 # Handle /metrics endpoint for fleet dashboard
-# Returns: { cpu_time_ns: <ns>, system_time_ns: <ns>, online_cpus: <num>, memory_used: <bytes>, memory_limit: <bytes>, network_in_bytes_per_sec: <rate>, network_out_bytes_per_sec: <rate>, disk_read_bytes_per_sec: <rate>, disk_write_bytes_per_sec: <rate> }
+# Returns: { cpu_time_ns: <ns>, system_time_ns: <ns>, online_cpus: <num>, memory_used: <bytes>, memory_limit: <bytes> }
+# cpu_time_ns = container CPU usage delta
+# system_time_ns = system CPU time delta (aggregate across cores)
 # Backend computes: cpu % = Σ (cpu_time_ns / system_time_ns * online_cpus) × 100
 # This matches Docker's standard formula: (cpuDelta / systemDelta) * onlineCPUs * 100
-  if [ "$PATH_RAW" = "/metrics" ]; then
-    HOST_CORES=$(nproc 2>/dev/null || echo 1)
-    UPTIME_SECONDS=null
-    if [ -f /proc/uptime ]; then
-      UPTIME_SECONDS="$(awk '{printf "%d", $1}' /proc/uptime 2>/dev/null || true)"
-      if [ -z "$UPTIME_SECONDS" ]; then
-        UPTIME_SECONDS=null
-      fi
+if [ "$PATH_RAW" = "/metrics" ]; then
+  [ -S "$SOCKET_PATH" ] || {
+    ESCAPED_SOCKET_PATH="$(json_escape "$SOCKET_PATH")"
+    respond_json '500 Internal Server Error' "{\"error\":\"Docker socket not found at ${ESCAPED_SOCKET_PATH}\"}"
+    exit 0
+  }
+
+  HOST_CORES=$(nproc 2>/dev/null || echo 1)
+  UPTIME_SECONDS=null
+  if [ -f /proc/uptime ]; then
+    UPTIME_SECONDS="$(awk '{printf "%d", $1}' /proc/uptime 2>/dev/null || true)"
+    if [ -z "$UPTIME_SECONDS" ]; then
+      UPTIME_SECONDS=null
     fi
+  fi
 
     TOTAL_CPU_TICKS=0
     ACTIVE_CPU_TICKS=0
@@ -737,11 +793,11 @@ fi
     TOTAL_NETWORK_OUT_BYTES=0
     if [ -f /proc/net/dev ]; then
       read -r TOTAL_NETWORK_IN_BYTES TOTAL_NETWORK_OUT_BYTES <<< "$(awk '
-        $1 ~ /:/ {
-          sub(/:/, "", $1);
-          if ($1 !~ /^(lo|veth|docker|br-)/) {
-            rx+=$2; tx+=$10
-          }
+        $1 ~ /:/ { 
+          sub(/:/, "", $1); 
+          if ($1 !~ /^(lo|veth|docker|br-)/) { 
+            rx+=$2; tx+=$10 
+          } 
         } END {print rx+0, tx+0}' /proc/net/dev)"
     fi
 
@@ -750,8 +806,8 @@ fi
     CURRENT_DISK_SNAPSHOT=""
     if [ -f /proc/diskstats ]; then
       read -r DISK_SECTORS_READ DISK_SECTORS_WRITE <<< "$(awk '
-        $3 ~ /^(sd[a-z]+|vd[a-z]+|xvd[a-z]+|nvme[0-9]+n[0-9]+|mmcblk[0-9]+)$/ {
-          r+=$6; w+=$10
+        $3 ~ /^(sd[a-z]+|vd[a-z]+|xvd[a-z]+|nvme[0-9]+n[0-9]+|mmcblk[0-9]+)$/ { 
+          r+=$6; w+=$10 
         } END {print r+0, w+0}' /proc/diskstats)"
       CURRENT_DISK_SNAPSHOT="$(awk '
         $3 ~ /^(sd[a-z]+([0-9]+)?|vd[a-z]+([0-9]+)?|xvd[a-z]+([0-9]+)?|nvme[0-9]+n[0-9]+(p[0-9]+)?|mmcblk[0-9]+(p[0-9]+)?)$/ {
@@ -805,7 +861,7 @@ EOF
       NETWORK_OUT_RATE="$(calculate_rate "$TOTAL_NETWORK_OUT_BYTES" "$PREVIOUS_NETWORK_OUT_BYTES" "$ELAPSED_MS")"
       DISK_READ_RATE="$(calculate_rate "$TOTAL_DISK_READ_BYTES" "$PREVIOUS_DISK_READ_BYTES" "$ELAPSED_MS")"
       DISK_WRITE_RATE="$(calculate_rate "$TOTAL_DISK_WRITE_BYTES" "$PREVIOUS_DISK_WRITE_BYTES" "$ELAPSED_MS")"
-
+      
       DELTA_ACTIVE=$((ACTIVE_CPU_TICKS - PREVIOUS_ACTIVE))
       DELTA_TOTAL=$((TOTAL_CPU_TICKS - PREVIOUS_TOTAL))
       if [ "$DELTA_ACTIVE" -lt 0 ]; then DELTA_ACTIVE=0; fi
@@ -911,8 +967,26 @@ EOF
 DOCKER_PATH="${PATH_RAW#/docker}"
 [ -n "$DOCKER_PATH" ] || DOCKER_PATH="/"
 
+if ! validate_docker_path "$DOCKER_PATH"; then
+  respond_json '400 Bad Request' '{"error":"Invalid Docker API path"}'
+  exit 0
+fi
+
 [ -S "$SOCKET_PATH" ] || {
-  respond_json '500 Internal Server Error' "{\"error\":\"Docker socket not found at $SOCKET_PATH\"}"
+  ESCAPED_SOCKET_PATH="$(json_escape "$SOCKET_PATH")"
+  respond_json '500 Internal Server Error' "{\"error\":\"Docker socket not found at ${ESCAPED_SOCKET_PATH}\"}"
+  exit 0
+}
+
+if [ "$IS_UPGRADE" = "true" ]; then
+  {
+    printf '%s %s HTTP/1.1\r\n' "$METHOD" "$DOCKER_PATH"
+    if [ -f "$FORWARD_HEADERS_FILE" ]; then
+      cat "$FORWARD_HEADERS_FILE"
+    fi
+    printf '\r\n'
+    cat
+  } | socat -t 3600 - "UNIX-CONNECT:$SOCKET_PATH"
   exit 0
 }
 
@@ -953,10 +1027,8 @@ tail -n +2 "$RESPONSE_HEADERS_FILE" | while IFS= read -r header_line; do
   header_line="$(printf '%s' "$header_line" | tr -d '\r')"
   [ -z "$header_line" ] && continue
 
-  header_name="$(printf '%s' "$header_line" | cut -d: -f1 | tr '[:upper:]' '[:lower:]')"
-
-  case "$header_name" in
-    content-length|transfer-encoding|connection|access-control-allow-origin)
+  case "$(printf '%s' "$header_line" | tr '[:upper:]' '[:lower:]')" in
+    content-length:*|transfer-encoding:*|connection:*|access-control-allow-origin:*)
       continue
       ;;
   esac
@@ -977,6 +1049,7 @@ echo "Starting watchtower-agent on ${AGENT_BIND_ADDRESS}:${AGENT_PORT}"
 echo "Docker socket: ${DOCKER_SOCKET}"
 
 exec socat "TCP-LISTEN:${AGENT_PORT},bind=${AGENT_BIND_ADDRESS},reuseaddr,fork" "EXEC:${HANDLER_SCRIPT}"
+
 RUNTIME_EOF
 
 log "Installing uninstall helper"
@@ -1169,7 +1242,7 @@ if ! systemctl --quiet is-active "${SERVICE_NAME}.service"; then
 fi
 
 log "Verifying local health"
-if ! "${INSTALL_DIR}/watchtower-agent.sh" --check >/dev/null 2>&1; then
+if ! "${INSTALL_DIR}/watchtower-agent.sh" --check; then
   fail "Local agent verification failed after install. Inspect: sudo journalctl -u ${SERVICE_NAME} -n 50"
 fi
 
