@@ -355,7 +355,17 @@ export function isAgentVersionOutdated(agentVersion: string | null | undefined):
     return false;
   }
 
-  return agentVersion.trim() !== CURRENT_WATCHTOWER_AGENT_RELEASE.version;
+  const agentParts = agentVersion.trim().replace(/^v/, '').split('.').map(Number);
+  const currentParts = CURRENT_WATCHTOWER_AGENT_RELEASE.version.replace(/^v/, '').split('.').map(Number);
+
+  for (let i = 0; i < Math.max(agentParts.length, currentParts.length); i++) {
+    const a = agentParts[i] || 0;
+    const c = currentParts[i] || 0;
+    if (a < c) return true;
+    if (a > c) return false;
+  }
+
+  return false;
 }
 
 export function buildWatchtowerAgentReleaseResponse(
