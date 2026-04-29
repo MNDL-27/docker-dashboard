@@ -95,8 +95,8 @@ export const CURRENT_WATCHTOWER_AGENT_RELEASE: WatchtowerAgentRelease = {
   installerAssetName: "watchtower-agent-install.sh",
   runtimeAssetName: "watchtower-agent.sh",
   uninstallAssetName: "watchtower-agent-uninstall.sh",
-  installerSha256: "B955475C9699D9CFF433926E98C0197509C236820EB72AA740BA9C2F9AAA9F16",
-  runtimeSha256: "9ED554803D2647FA9C34B931788B64BDA03546AF0A98AFFF048A45DDC47C111C",
+  installerSha256: "59B3E84B78BE6714FFE3C7662BA9D3626EBC75755960AF3C2F18B6A56DFAE9C8",
+  runtimeSha256: "09F2BA0455F6FBE6205ADDD4C8BF0955FA8CFF0B0C5020E7F539714386397E6E",
   uninstallSha256: "449AFC5FF62742AF0FF15254827E82F120BDD17694C43500C08FAF9926D0985C",
 };
 
@@ -308,7 +308,7 @@ export function getWatchtowerAgentUpdateStatusCopy(
     case "update_required":
       return {
         title: "Update required",
-        description: `Agent is behind ${release.version}. Run sudo watchtower-agent-update on the host, or use the Update command below.`,
+        description: `Agent is behind ${release.version}. Run Preflight, Update, then Verify.`,
       };
     case "verification_required":
       return {
@@ -392,3 +392,5 @@ export function buildWatchtowerAgentReleaseResponse(
     mode_label: getWatchtowerAgentModeLabel("agent"),
   };
 }
+
+
