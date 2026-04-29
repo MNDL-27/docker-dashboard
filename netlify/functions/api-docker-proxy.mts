@@ -114,6 +114,54 @@ function extractDiagnosticMessage(details: unknown): string | null {
   return trimDiagnostic(String(details));
 }
 
+function getDiagnosticField(details: unknown, field: string) {
+  if (!details || typeof details !== 'object') {
+    return null;
+  }
+
+  const value = (details as Record<string, unknown>)[field];
+  return typeof value === 'string' ? value.trim() : null;
+}
+
+function stringifyDiagnostic(details: unknown) {
+  if (typeof details === 'string') {
+    return details;
+  }
+
+  if (details && typeof details === 'object') {
+    try {
+      return JSON.stringify(details);
+    } catch {
+      return '';
+    }
+  }
+
+  return details === null || details === undefined ? '' : String(details);
+}
+
+function isAgentDockerSocketFailure(details: unknown) {
+  const error = getDiagnosticField(details, 'error') ?? '';
+  const code = getDiagnosticField(details, 'code') ?? '';
+  const diagnostic = extractDiagnosticMessage(details) ?? '';
+  const haystack = `${code} ${error} ${diagnostic} ${stringifyDiagnostic(details)}`;
+
+  return /docker_socket_unavailable/i.test(haystack) ||
+    /docker socket not found/i.test(haystack) ||
+    /docker api request failed/i.test(haystack);
+}
+
+function summarizeDockerSocketFailure(details: unknown) {
+  const diagnostic = extractDiagnosticMessage(details);
+
+  if (diagnostic && /docker socket not found/i.test(diagnostic)) {
+    return `${diagnostic}. Confirm Docker is running and that the saved Docker socket path matches the host.`;
+  }
+
+  return diagnostic
+    ? `The Watchtower agent is reachable, but it could not talk to Docker through its configured socket (${diagnostic}). Re-run Troubleshoot / Repair so the systemd service gets Docker socket group access.`
+    : 'The Watchtower agent is reachable, but it could not talk to Docker through its configured socket. Re-run Troubleshoot / Repair so the systemd service gets Docker socket group access.';
+}
+
 function summarizeAgentConnectionFailure(
   status: number,
   rawDetails: string,
@@ -126,6 +174,10 @@ function summarizeAgentConnectionFailure(
 
   if (isAgentApiKeyFailure(status, rawDetails)) {
     return 'The Watchtower agent is reachable, but it rejected the saved API key. Re-enter the API key from /etc/watchtower-agent/watchtower-agent.env or run the agent repair command so Dockerdash and the agent use the same key.';
+  }
+
+  if (isAgentDockerSocketFailure(parsedDetails)) {
+    return summarizeDockerSocketFailure(parsedDetails);
   }
 
   if (status === 504) {
@@ -257,6 +309,15 @@ function normalizeDiskMetric(value: any) {
 }
 
 function classifyHostMetricsFailure(status: number, details: unknown) {
+  if (isAgentDockerSocketFailure(details)) {
+    return {
+      error: 'Docker socket unavailable',
+      code: 'docker_socket_unavailable',
+      details,
+      upstream_status: status,
+    };
+  }
+
   if (status === 404 || status === 405) {
     return {
       error: 'Host metrics endpoint unsupported',
@@ -293,6 +354,15 @@ function classifyHostMetricsFailure(status: number, details: unknown) {
 }
 
 function classifyDockerProxyFailure(status: number, details: unknown) {
+  if (isAgentDockerSocketFailure(details)) {
+    return {
+      error: 'Docker socket unavailable',
+      code: 'docker_socket_unavailable',
+      details,
+      upstream_status: status,
+    };
+  }
+
   if (status === 404 || status === 405) {
     return {
       error: 'Docker API endpoint unsupported',
@@ -1208,6 +1278,8 @@ export default async (req: Request) => {
       if (!ok) {
         const upstreamStatus = dockerResponse.status || 502;
         const agentApiKeyFailure = isAgentApiKeyFailure(upstreamStatus, text);
+        const parsedDetails = parseDiagnosticPayload(text);
+        const dockerSocketFailure = isAgentDockerSocketFailure(parsedDetails);
         await sql`
           UPDATE docker_hosts
           SET status = 'error'
@@ -1218,6 +1290,15 @@ export default async (req: Request) => {
 
         if (agentApiKeyFailure) {
           return createAgentUnauthorizedResponse(upstreamStatus, detail, corsHeaders);
+        }
+
+        if (dockerSocketFailure) {
+          return createProblemResponse(
+            502,
+            'Docker socket unavailable',
+            detail,
+            'docker_socket_unavailable',
+          );
         }
 
         return createProblemResponse(
