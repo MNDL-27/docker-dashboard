@@ -11,6 +11,7 @@ const mockedSql = vi.mocked(sql);
 
 afterEach(() => {
   mockedSql.mockReset();
+  vi.restoreAllMocks();
   vi.useRealTimers();
 });
 
@@ -54,6 +55,30 @@ describe("security CORS helpers", () => {
     const headers = buildCorsHeaders(req);
 
     expect(headers["Access-Control-Allow-Origin"]).toBeUndefined();
+  });
+
+  it("does not warn for requests with no Origin header", () => {
+    const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+    const req = new Request("https://dockerdash.app/.netlify/functions/api-test");
+
+    const headers = buildCorsHeaders(req);
+
+    expect(headers["Access-Control-Allow-Origin"]).toBeUndefined();
+    expect(warnSpy).not.toHaveBeenCalled();
+  });
+
+  it("warns and blocks explicit null origins", () => {
+    const warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+    const req = new Request("https://dockerdash.app/.netlify/functions/api-test", {
+      headers: {
+        origin: "null",
+      },
+    });
+
+    const headers = buildCorsHeaders(req);
+
+    expect(headers["Access-Control-Allow-Origin"]).toBeUndefined();
+    expect(warnSpy).toHaveBeenCalledWith("[CORS] Blocked untrusted origin: null");
   });
 
   it("keeps localhost origins in trusted set for local development", () => {

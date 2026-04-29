@@ -1,6 +1,11 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { buildApiErrorMessage, summarizeApiErrorText } from "@/lib/api";
+import { apiFetch, buildApiErrorMessage, summarizeApiErrorText } from "@/lib/api";
+
+afterEach(() => {
+  vi.restoreAllMocks();
+  vi.unstubAllGlobals();
+});
 
 describe("api error normalization", () => {
   it("uses RFC7807 problem details when present", () => {
@@ -43,5 +48,25 @@ describe("api error normalization", () => {
         "",
       ),
     ).toBe("Agent connection failed: connect ECONNREFUSED 127.0.0.1:9876");
+  });
+
+  it("does not call protected APIs when Clerk has no session token", async () => {
+    const fetchMock = vi.fn();
+    vi.stubGlobal("fetch", fetchMock);
+    vi.stubGlobal("window", {
+      Clerk: {
+        loaded: true,
+        session: {
+          getToken: vi.fn().mockResolvedValue(null),
+        },
+      },
+    });
+
+    await expect(apiFetch("/docker-proxy", { method: "POST", body: "{}" })).rejects.toMatchObject({
+      status: 401,
+      code: "missing_session_token",
+    });
+
+    expect(fetchMock).not.toHaveBeenCalled();
   });
 });

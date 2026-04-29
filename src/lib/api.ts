@@ -2,6 +2,15 @@ const API_BASE = import.meta.env.VITE_API_BASE_URL || '/api';
 
 import { summarizeDiagnosticText } from "../../shared/lib/diagnostics";
 
+type ClerkSession = {
+  getToken?: (options?: { skipCache?: boolean }) => Promise<string | null>;
+};
+
+type ClerkGlobal = {
+  loaded?: boolean;
+  session?: ClerkSession | null;
+};
+
 export interface ApiErrorBody {
   error?: string;
   code?: string;
@@ -99,32 +108,75 @@ export class ApiError extends Error {
   }
 }
 
-async function getClerkSessionToken(forceFresh = false) {
-  // @ts-expect-error window.Clerk is injected globally
-  return await window.Clerk?.session?.getToken(forceFresh ? { skipCache: true } : undefined);
+function wait(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-export async function apiFetch(path: string, options: RequestInit = {}) {
+function getClerkGlobal(): ClerkGlobal | null {
+  if (typeof window === "undefined") return null;
+  return ((window as unknown as { Clerk?: ClerkGlobal }).Clerk) ?? null;
+}
+
+async function getClerkSessionToken(forceFresh = false) {
+  const tokenOptions = forceFresh ? { skipCache: true } : undefined;
+
+  for (let attempt = 0; attempt < 5; attempt++) {
+    const clerk = getClerkGlobal();
+    const getToken = clerk?.session?.getToken;
+
+    if (getToken) {
+      const token = await getToken(tokenOptions);
+      if (token || clerk?.loaded !== false) {
+        return token ?? null;
+      }
+    } else if (clerk?.loaded) {
+      return null;
+    }
+
+    if (attempt < 4) {
+      await wait(50 * (attempt + 1));
+    }
+  }
+
+  return null;
+}
+
+interface ApiFetchOptions extends RequestInit {
+  requireAuth?: boolean;
+}
+
+export async function apiFetch(path: string, options: ApiFetchOptions = {}) {
+  const { requireAuth = true, ...requestOptions } = options;
   let token = await getClerkSessionToken(false);
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
-    ...((options.headers as Record<string, string>) || {}),
+    ...((requestOptions.headers as Record<string, string>) || {}),
   };
 
   if (token) {
     headers['Authorization'] = `Bearer ${token}`;
+  } else if (requireAuth) {
+    throw new ApiError(
+      401,
+      {
+        error: "Authentication required",
+        code: "missing_session_token",
+        details: "Clerk did not return a session token for this request.",
+      },
+      "Authentication required",
+    );
   }
 
   const fetchOptions: RequestInit = {
-    ...options,
+    ...requestOptions,
     headers,
   };
 
   // Handle body for POST/PUT requests
-  if (options.body && typeof options.body === 'string') {
-    fetchOptions.body = options.body;
-  } else if (options.body) {
-    fetchOptions.body = JSON.stringify(options.body);
+  if (requestOptions.body && typeof requestOptions.body === 'string') {
+    fetchOptions.body = requestOptions.body;
+  } else if (requestOptions.body) {
+    fetchOptions.body = JSON.stringify(requestOptions.body);
   }
 
   let response = await fetch(`${API_BASE}${path}`, fetchOptions);

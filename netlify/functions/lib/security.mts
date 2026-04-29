@@ -53,7 +53,7 @@ export function buildCorsHeaders(req: Request, allowCredentials = true): Record<
     if (allowCredentials) {
       headers['Access-Control-Allow-Credentials'] = 'true';
     }
-  } else {
+  } else if (requestOrigin) {
     // Don't set Access-Control-Allow-Origin for untrusted origins
     // This effectively blocks cross-origin requests from unknown sites
     console.warn(`[CORS] Blocked untrusted origin: ${requestOrigin}`);
