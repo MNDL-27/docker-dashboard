@@ -367,27 +367,9 @@ export default function ContainersPage() {
         </div>
       ) : null}
 
-      <div className="grid gap-6 xl:grid-cols-[minmax(0,1.55fr),minmax(320px,0.9fr)]">
-        <div className="glass-card relative overflow-hidden rounded-[28px] p-7">
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(14,165,233,0.12),transparent_42%),radial-gradient(circle_at_bottom_right,rgba(16,185,129,0.08),transparent_36%)]" />
-          <div className="relative">
-            <div className="flex flex-wrap items-center gap-3">
-              <span className="inline-flex rounded-full border border-primary/20 bg-primary/10 px-3 py-1 text-xs font-medium uppercase tracking-[0.18em] text-primary">Fleet workload view</span>
-              <span className="text-xs uppercase tracking-[0.18em] text-muted-foreground">{kpi.total} containers · {kpi.running} running · {uniqueHosts.length} hosts</span>
-            </div>
-            <div className="mt-6 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-              <SummaryChip label="Reporting hosts" value={hostCoverage} />
-              <SummaryChip label="Live stats" value={`${statsMap.size}`} />
-              <SummaryChip label="Filtered set" value={`${filtered.length}`} />
-              <SummaryChip label="Attention" value={`${kpi.unhealthy + kpi.restarting}`} />
-            </div>
-          </div>
-        </div>
-
-        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-1">
-          <FleetSignalCard label="Fleet CPU" value={fleetCpuCard.value} helper={fleetCpuCard.helper} icon={Cpu} status={fleetCpuCard.status} progress={fleetCpuCard.progress} />
-          <FleetSignalCard label="Fleet Memory" value={fleetMemoryCard.value} helper={fleetMemoryCard.helper} icon={MemoryStick} status={fleetMemoryCard.status} progress={fleetMemoryCard.progress} />
-        </div>
+      <div className="grid gap-4 sm:grid-cols-2">
+        <FleetSignalCard label="Fleet CPU" value={fleetCpuCard.value} helper={fleetCpuCard.helper} icon={Cpu} status={fleetCpuCard.status} progress={fleetCpuCard.progress} />
+        <FleetSignalCard label="Fleet Memory" value={fleetMemoryCard.value} helper={fleetMemoryCard.helper} icon={MemoryStick} status={fleetMemoryCard.status} progress={fleetMemoryCard.progress} />
       </div>
 
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
