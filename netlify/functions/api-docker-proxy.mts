@@ -124,6 +124,10 @@ function summarizeAgentConnectionFailure(
   const isCloudflareHtml =
     typeof diagnostic === 'string' && /Cloudflare HTML error page:/i.test(diagnostic);
 
+  if (isAgentApiKeyFailure(status, rawDetails)) {
+    return 'The Watchtower agent is reachable, but it rejected the saved API key. Re-enter the API key from /etc/watchtower-agent/watchtower-agent.env or run the agent repair command so Dockerdash and the agent use the same key.';
+  }
+
   if (status === 504) {
     return 'The Watchtower agent did not respond in time. Verify the agent service is running and reachable from Dockerdash.';
   }
@@ -154,6 +158,39 @@ function summarizeAgentConnectionFailure(
   }
 
   return `The Watchtower agent returned HTTP ${status}.`;
+}
+
+function isAgentApiKeyFailure(status: number, rawDetails: string) {
+  const diagnostic = extractDiagnosticMessage(parseDiagnosticPayload(rawDetails)) ?? '';
+  const lower = diagnostic.toLowerCase();
+
+  return lower.includes('invalid api key') ||
+    lower.includes('invalid agent api key') ||
+    (lower.includes('api key') && lower.includes('invalid'));
+}
+
+function createAgentUnauthorizedResponse(
+  upstreamStatus: number,
+  detail: string,
+  corsHeaders: Record<string, string>,
+) {
+  return new Response(
+    JSON.stringify({
+      type: 'agent_unauthorized',
+      title: 'Agent authentication failed',
+      status: 502,
+      detail,
+      code: 'agent_auth_failed',
+      upstream_status: upstreamStatus,
+    }),
+    {
+      status: 502,
+      headers: {
+        ...corsHeaders,
+        'Content-Type': 'application/problem+json',
+      },
+    },
+  );
 }
 
 function classifyTopLevelProxyError(error: unknown) {
@@ -1169,16 +1206,24 @@ export default async (req: Request) => {
       const ok = dockerResponse.ok;
 
       if (!ok) {
+        const upstreamStatus = dockerResponse.status || 502;
+        const agentApiKeyFailure = isAgentApiKeyFailure(upstreamStatus, text);
         await sql`
           UPDATE docker_hosts
           SET status = 'error'
           WHERE id = ${hostId}
         `;
 
+        const detail = summarizeAgentConnectionFailure(upstreamStatus, text, host.connection_mode);
+
+        if (agentApiKeyFailure) {
+          return createAgentUnauthorizedResponse(upstreamStatus, detail, corsHeaders);
+        }
+
         return createProblemResponse(
-          dockerResponse.status || 502,
+          upstreamStatus,
           'Connection test failed',
-          summarizeAgentConnectionFailure(dockerResponse.status || 502, text, host.connection_mode),
+          detail,
           'agent_connection_failed',
         );
       }
