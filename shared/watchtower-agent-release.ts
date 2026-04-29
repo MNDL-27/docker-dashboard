@@ -141,15 +141,15 @@ fi )`;
 }
 
 export function buildWatchtowerAgentPreflightCommand(
-  release: WatchtowerAgentRelease = CURRENT_WATCHTOWER_AGENT_RELEASE,
+  _release?: WatchtowerAgentRelease,
 ) {
-  return buildAtomicInstallerCommand({ release, action: "check" });
+  return "sudo watchtower-agent-update --check";
 }
 
 export function buildWatchtowerAgentUpgradeCommand(
-  release: WatchtowerAgentRelease = CURRENT_WATCHTOWER_AGENT_RELEASE,
+  _release?: WatchtowerAgentRelease,
 ) {
-  return buildAtomicInstallerCommand({ release, action: "install" });
+  return "sudo watchtower-agent-update";
 }
 
 export function buildWatchtowerAgentAssetUrl(
@@ -162,7 +162,7 @@ export function buildWatchtowerAgentAssetUrl(
 export function buildWatchtowerAgentInstallCommand(
   release: WatchtowerAgentRelease = CURRENT_WATCHTOWER_AGENT_RELEASE,
 ) {
-  return buildWatchtowerAgentUpgradeCommand(release);
+  return buildAtomicInstallerCommand({ release, action: "install" });
 }
 
 export function getWatchtowerAgentRecommendedBindAddress(
@@ -328,7 +328,7 @@ export function buildWatchtowerAgentUpdateCopy(
   release: WatchtowerAgentRelease = CURRENT_WATCHTOWER_AGENT_RELEASE,
 ): WatchtowerAgentUpdateCopy {
   return {
-    dialogDescription: "Use the hosted installer command for this host. The dashboard does not run privileged commands remotely.",
+    dialogDescription: "Run the updater command directly on the host. The dashboard does not execute privileged commands remotely.",
     statusPending: "Version pending",
     statusCurrent: "Current",
     statusUpdateRequired: "Update required",
@@ -346,7 +346,7 @@ export function buildWatchtowerAgentUpdateCopy(
       `Agent ${installedVersion} is behind ${latestVersion}.`,
     pendingSummary: "This host has not reported an installed agent version yet.",
     supportInstructions:
-      "Re-running the installer preserves the stored config in /etc/watchtower-agent/watchtower-agent.env. If the host still fails after Update, run Verify and inspect sudo journalctl -u watchtower-agent -n 50 before retrying Troubleshoot / Repair.",
+      "Running the updater preserves the stored config in /etc/watchtower-agent/watchtower-agent.env. If the host still fails after Update, run Verify and inspect sudo journalctl -u watchtower-agent -n 50 before retrying Troubleshoot / Repair.",
   };
 }
 
