@@ -96,15 +96,6 @@ function metricTone(value: number | null): "success" | "warning" | "destructive"
   return "success";
 }
 
-function SummaryChip({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="rounded-2xl border border-white/10 bg-background/35 px-4 py-3">
-      <div className="text-[10px] font-bold uppercase tracking-[0.22em] text-muted-foreground">{label}</div>
-      <div className="mt-2 text-lg font-semibold tracking-tight text-foreground">{value}</div>
-    </div>
-  );
-}
-
 function TelemetryBadge({
   loading,
   available,
