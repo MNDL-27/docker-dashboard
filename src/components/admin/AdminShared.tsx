@@ -28,8 +28,8 @@ export function DetailField({ label, value }: { label: string; value: string | n
   );
 }
 
-export function StatusPill({ active, label }: { active: boolean; label: string }) {
-  return <Badge variant={active ? "default" : "outline"}>{label}</Badge>;
+export function StatusPill({ active, label, variant }: { active: boolean; label: string; variant?: "default" | "secondary" | "destructive" | "outline" | "warning" }) {
+  return <Badge variant={variant || (active ? "default" : "outline")}>{label}</Badge>;
 }
 
 export function AdminActionDialog({

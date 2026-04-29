@@ -13,8 +13,9 @@ import { CURRENT_WATCHTOWER_AGENT_VERSION } from "@/lib/agent-version";
 // Shared formatting helpers
 // ---------------------------------------------------------------------------
 
-function formatBytes(bytes: number): string {
-  if (!Number.isFinite(bytes) || bytes <= 0) return "0 B";
+function formatBytes(bytes: number | null | undefined): string {
+  if (bytes === null || bytes === undefined || !Number.isFinite(bytes) || bytes < 0) return "Unavailable";
+  if (bytes === 0) return "0 B";
   const units = ["B", "KB", "MB", "GB", "TB"];
   const exponent = Math.min(Math.floor(Math.log(bytes) / Math.log(1024)), units.length - 1);
   const value = bytes / 1024 ** exponent;
@@ -51,7 +52,7 @@ function LoadingState() {
 }
 
 function RingCard({ point }: { point: HostMetricsPoint }) {
-  const value = Math.max(0, Math.min(100, point.cpu));
+  const value = point.cpu !== null ? Math.max(0, Math.min(100, point.cpu)) : 0;
   const colorVar = value >= 90 ? "var(--destructive)" : value >= 70 ? "var(--warning)" : "var(--primary)";
 
   return (
@@ -61,14 +62,20 @@ function RingCard({ point }: { point: HostMetricsPoint }) {
       </div>
       <div
         className="relative flex h-44 w-44 items-center justify-center rounded-full transition-all duration-500"
-        style={{ background: `conic-gradient(hsl(${colorVar}) ${value}%, rgba(255,255,255,0.06) ${value}% 100%)` }}
+        style={{
+          background: point.cpu !== null 
+            ? `conic-gradient(hsl(${colorVar}) ${value}%, rgba(255,255,255,0.06) ${value}% 100%)` 
+            : 'rgba(255,255,255,0.06)'
+        }}
       >
         <div className="flex h-32 w-32 items-center justify-center rounded-full bg-background/95">
-          <span className="text-4xl font-semibold tracking-tight">{value.toFixed(0)}%</span>
+          <span className="text-4xl font-semibold tracking-tight">
+            {point.cpu !== null ? `${value.toFixed(0)}%` : "Unavailable"}
+          </span>
         </div>
       </div>
       <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
-        {point.usedCores.toFixed(2)} / {point.totalCores.toFixed(2)} cores
+        {point.usedCores !== null ? point.usedCores.toFixed(2) : "--"} / {point.totalCores !== null ? point.totalCores.toFixed(2) : "--"} cores
       </p>
     </div>
   );
@@ -137,10 +144,10 @@ function MeterCard({
   title: string;
   value: string;
   helper?: string;
-  progress?: number;
+  progress?: number | null;
   footer?: string;
 }) {
-  const width = progress === undefined ? undefined : `${Math.max(0, Math.min(100, progress))}%`;
+  const width = progress === null || progress === undefined ? undefined : `${Math.max(0, Math.min(100, progress))}%`;
   return (
     <div className="glass-card p-5 space-y-4">
       <div className="flex items-start justify-between gap-4">
@@ -306,10 +313,10 @@ export interface HostMetricsGridProps {
   containersQuery: {
     isLoading: boolean;
     isFetching: boolean;
-    data: any;
+    data: unknown;
     error: unknown;
   };
-  containers: any[];
+  containers: unknown[];
   runningCount: number;
   metricsFailureDisplay: { title: string; description: string } | null;
   missingExtendedMetrics: boolean;
@@ -472,9 +479,9 @@ function MemoryPanel({
         <MeterCard
           title="Memory usage"
           value={formatBytes(latestPoint!.memoryUsed)}
-          helper={formatBytes(latestPoint!.memoryLimit)}
+          helper={latestPoint!.memoryLimit !== null ? formatBytes(latestPoint!.memoryLimit) : undefined}
           progress={latestPoint!.memory}
-          footer={`${latestPoint!.memory.toFixed(0)}% utilized`}
+          footer={latestPoint!.memory !== null ? `${latestPoint!.memory.toFixed(0)}% utilized` : undefined}
         />
       );
     case "stale":

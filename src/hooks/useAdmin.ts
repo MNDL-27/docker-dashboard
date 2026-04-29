@@ -67,6 +67,7 @@ function useAdminMutation<TVariables>(mutationFn: (variables: TVariables) => Pro
       queryClient.invalidateQueries({ queryKey: ["admin-billing-unmatched"] });
       queryClient.invalidateQueries({ queryKey: ["admin-donor-email-deliveries"] });
       queryClient.invalidateQueries({ queryKey: ["admin-donor-email-delivery"] });
+      queryClient.invalidateQueries({ queryKey: ["admin-notifications"] });
       queryClient.invalidateQueries({ queryKey: ["auth-me"] });
     },
   });
@@ -169,4 +170,17 @@ export function useAdminDonorEmailDelivery(deliveryId: string | null) {
 export function useAdminResendDonorEmailDelivery() {
   return useAdminMutation(({ deliveryId, reason }: { deliveryId: string; reason: string }) =>
     adminApi.resendDonorEmailDelivery(deliveryId, reason));
+}
+
+export function useAdminNotifications() {
+  return useQuery({ queryKey: ["admin-notifications"], queryFn: adminApi.getNotifications, ...adminQueryOptions });
+}
+
+export function useCreateAdminNotification() {
+  return useAdminMutation((values: { title: string; message: string; type?: string; organizationId?: string | null; link?: string | null; expiresAt?: string | null; reason: string }) =>
+    adminApi.createNotification(values));
+}
+
+export function useDeleteAdminNotification() {
+  return useAdminMutation(({ id, reason }: { id: string; reason: string }) => adminApi.deleteNotification(id, reason));
 }

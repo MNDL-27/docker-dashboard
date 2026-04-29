@@ -892,6 +892,95 @@ async function runAdminSecretMigration(req: Request) {
   return json({ success: true, result, operation: { ...operation, created_at: new Date(String(operation.created_at)).toISOString() } });
 }
 
+async function listNotifications() {
+  const rows = await sql`
+    SELECT
+      n.id,
+      n.organization_id,
+      n.title,
+      n.message,
+      n.type,
+      n.link,
+      n.expires_at,
+      n.created_at,
+      u.email as created_by_email,
+      (SELECT count(*) FROM public.notification_dismissals d WHERE d.notification_id = n.id)::int as dismiss_count
+    FROM public.notifications n
+    LEFT JOIN public.users u ON u.id = n.created_by
+    ORDER BY n.created_at DESC
+    LIMIT 100
+  `;
+  return rows;
+}
+
+async function createNotification(req: Request) {
+  const admin = await requirePlatformAdmin(req);
+  const body = await readBody(req);
+  
+  const title = body.title?.trim();
+  const message = body.message?.trim();
+  const type = body.type || 'info';
+  const organizationId = body.organizationId || null;
+  const link = body.link?.trim() || null;
+  const expiresAt = toNullableTimestamp(body.expiresAt);
+  const reason = normalizeAdminReason(body.reason);
+
+  assertAdminReason(reason);
+  if (!title || !message) throw new Error("Title and message are required");
+
+  const [notification] = await sql`
+    INSERT INTO public.notifications (
+      organization_id, title, message, type, link, created_by, expires_at
+    ) VALUES (
+      ${organizationId}, ${title}, ${message}, ${type}, ${link}, ${admin.auth.userId}, ${expiresAt}
+    )
+    RETURNING id
+  `;
+
+  await recordAdminAudit({
+    actorUserId: admin.auth.userId,
+    actorEmail: admin.actorEmail,
+    action: "create_notification",
+    targetType: "notification",
+    targetId: notification.id,
+    reason,
+    beforeState: {},
+    afterState: { title, message, type, organizationId, link, expiresAt }
+  });
+
+  return { success: true, notificationId: notification.id };
+}
+
+async function deleteNotification(id: string, req: Request) {
+  const admin = await requirePlatformAdmin(req);
+  const body = await readBody(req);
+  const reason = normalizeAdminReason(body.reason);
+
+  assertAdminReason(reason);
+
+  const [notification] = await sql`
+    SELECT * FROM public.notifications WHERE id = ${id}
+  `;
+  if (!notification) throw new Error("Notification not found");
+
+  await sql`
+    DELETE FROM public.notifications WHERE id = ${id}
+  `;
+
+  await recordAdminAudit({
+    actorUserId: admin.auth.userId,
+    actorEmail: admin.actorEmail,
+    action: "delete_notification",
+    targetType: "notification",
+    targetId: id,
+    reason,
+    beforeState: { title: notification.title },
+    afterState: {}
+  });
+
+  return { success: true };
+}
+
 export async function handleAdminRequest(req: Request) {
   // Build secure CORS headers based on request origin
   const corsHeaders = buildCorsHeaders(req);
@@ -1007,6 +1096,19 @@ export async function handleAdminRequest(req: Request) {
         actorEmail: admin.actorEmail,
         reason,
       }));
+    }
+
+    if (req.method === "GET" && parts.length === 1 && parts[0] === "notifications") {
+      await requirePlatformAdmin(req);
+      return json({ notifications: await listNotifications() });
+    }
+
+    if (req.method === "POST" && parts.length === 1 && parts[0] === "notifications") {
+      return json(await createNotification(req));
+    }
+
+    if (req.method === "DELETE" && parts.length === 2 && parts[0] === "notifications") {
+      return json(await deleteNotification(parts[1], req));
     }
 
     return json({ error: "Method not allowed" }, 405);
