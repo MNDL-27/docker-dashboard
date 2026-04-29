@@ -6,7 +6,7 @@ import { decryptHostSecrets, SecretCryptoError } from './lib/crypto.mjs';
 import { buildWatchtowerAgentReleaseResponse } from './lib/agent-release.mts';
 import { ensureDockerHostSchema } from './lib/ensure-docker-host-schema.mjs';
 import { buildValidatedAgentUrl } from './lib/host-url.mjs';
-import { createProblemResponse } from '../../shared/schema/error.ts';
+import { createProblemResponse as createBaseProblemResponse } from '../../shared/schema/error.ts';
 import { ProxyRequestParamsSchema } from '../../shared/schema/proxy.ts';
 import { formatDiagnosticDetail, parseDiagnosticPayload } from '../../shared/lib/diagnostics.ts';
 import { buildCorsHeaders, applyRateLimit, RATE_LIMITS, logSecurityEvent, getClientIp } from './lib/security.mjs';
@@ -485,6 +485,12 @@ export default async (req: Request) => {
 
   // Build CORS headers with trusted origins only
   const corsHeaders = buildCorsHeaders(req);
+  const createProblemResponse = (
+    status: number,
+    title: string,
+    detail?: string,
+    type?: string,
+  ) => createBaseProblemResponse(status, title, detail, type, corsHeaders);
 
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });

@@ -30,7 +30,8 @@ export function createProblemResponse(
   status: number,
   title: string,
   detail?: string,
-  type = "about:blank"
+  type = "about:blank",
+  headers: Record<string, string> = {},
 ): Response {
   return new Response(
     JSON.stringify({
@@ -42,6 +43,7 @@ export function createProblemResponse(
     {
       status,
       headers: {
+        ...headers,
         "Content-Type": "application/problem+json",
       },
     }
