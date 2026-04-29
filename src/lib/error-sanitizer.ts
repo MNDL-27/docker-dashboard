@@ -45,6 +45,13 @@ const AGENT_AUTH_PATTERNS = [
   /rejected the saved api key/i,
 ];
 
+const DOCKER_SOCKET_PATTERNS = [
+  /docker_socket_unavailable/i,
+  /docker socket not found/i,
+  /docker api request failed/i,
+  /configured socket/i,
+];
+
 const DOCKERDASH_EDGE_PATTERNS = [
   /cloudflare gateway error:/i,
   /app\.dockerdash\.app/i,
@@ -114,6 +121,11 @@ function isAgentAuthError(msg: string, error: unknown) {
   return AGENT_AUTH_PATTERNS.some((pattern) => pattern.test(haystack));
 }
 
+function isDockerSocketError(msg: string, error: unknown) {
+  const haystack = `${msg} ${stringifyStructuredError(error)}`;
+  return DOCKER_SOCKET_PATTERNS.some((pattern) => pattern.test(haystack));
+}
+
 export function sanitizeConnectionError(error: unknown): SanitizedError {
   const raw =
     error instanceof Error ? error.message : typeof error === "string" ? error : "Unknown error";
@@ -123,6 +135,15 @@ export function sanitizeConnectionError(error: unknown): SanitizedError {
       title: "API key mismatch",
       description:
         "The agent is reachable, but it rejected the saved API key. Re-enter the key from /etc/watchtower-agent/watchtower-agent.env or run the agent repair command so both sides use the same key.",
+      raw,
+    };
+  }
+
+  if (isDockerSocketError(raw, error)) {
+    return {
+      title: "Docker socket inaccessible",
+      description:
+        "The agent is reachable, but it cannot talk to Docker through its configured socket. Run Troubleshoot / Repair or reinstall the agent so the systemd service has Docker socket group access, then retry.",
       raw,
     };
   }

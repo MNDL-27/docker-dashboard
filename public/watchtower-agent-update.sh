@@ -9,6 +9,7 @@ SERVICE_NAME="watchtower-agent"
 INSTALL_DIR="/opt/watchtower-agent"
 CONFIG_DIR="/etc/watchtower-agent"
 ENV_FILE="${CONFIG_DIR}/watchtower-agent.env"
+SERVICE_FILE="/etc/systemd/system/watchtower-agent.service"
 UPDATE_URL="https://app.dockerdash.app/watchtower-agent.sh"
 INSTALLER_URL="https://app.dockerdash.app/watchtower-agent-install.sh"
 VERSION_URL="https://app.dockerdash.app/api/agent-release"
@@ -66,6 +67,62 @@ extract_runtime_version() {
   sed -n 's/^WATCHTOWER_AGENT_VERSION="${WATCHTOWER_AGENT_VERSION:-\([^"]*\)}"/\1/p' "$file_path" | head -1
 }
 
+repair_systemd_socket_group() {
+  [ -f "$SERVICE_FILE" ] || return 0
+  [ -f "$ENV_FILE" ] || return 0
+
+  # shellcheck disable=SC1090
+  . "$ENV_FILE"
+
+  local socket_path="${DOCKER_SOCKET:-/var/run/docker.sock}"
+  if [ ! -S "$socket_path" ]; then
+    warn "Docker socket not found at ${socket_path}; leaving systemd unit unchanged."
+    return 0
+  fi
+
+  local socket_group
+  socket_group="$(stat -c '%G' "$socket_path" 2>/dev/null || true)"
+  if [ -z "$socket_group" ] || [ "$socket_group" = "UNKNOWN" ] || [ "$socket_group" = "root" ]; then
+    warn "Docker socket group for ${socket_path} is not usable (${socket_group:-unknown}); leaving systemd unit unchanged."
+    return 0
+  fi
+
+  if grep -q "^SupplementaryGroups=${socket_group}$" "$SERVICE_FILE"; then
+    return 0
+  fi
+
+  step "Repairing systemd Docker socket group..."
+  if grep -q '^SupplementaryGroups=' "$SERVICE_FILE"; then
+    sed -i "s/^SupplementaryGroups=.*/SupplementaryGroups=${socket_group}/" "$SERVICE_FILE"
+  elif grep -q '^Group=' "$SERVICE_FILE"; then
+    sed -i "/^Group=/a SupplementaryGroups=${socket_group}" "$SERVICE_FILE"
+  else
+    warn "Could not find Group= in ${SERVICE_FILE}; reinstall the agent from Dockerdash to repair the unit."
+  fi
+}
+
+verify_local_docker_ping() {
+  [ -f "$ENV_FILE" ] || return 0
+
+  # shellcheck disable=SC1090
+  . "$ENV_FILE"
+
+  local bind_address="${AGENT_BIND_ADDRESS:-127.0.0.1}"
+  local port="${AGENT_PORT:-9876}"
+
+  case "$bind_address" in
+    ""|"0.0.0.0"|"::")
+      bind_address="127.0.0.1"
+      ;;
+  esac
+
+  if curl -fsS "http://${bind_address}:${port}/docker/_ping" -H "X-Agent-Key: ${AGENT_API_KEY}" >/dev/null 2>&1; then
+    success "Local Docker socket check passed"
+  else
+    warn "Agent is running, but local Docker ping failed. Inspect: sudo journalctl -u ${SERVICE_NAME} -n 50"
+  fi
+}
+
 FLAG_CHECK="false"
 FLAG_FORCE="false"
 FLAG_QUIET="false"
@@ -104,6 +161,9 @@ done
 
 command -v curl >/dev/null 2>&1 || fail "curl is required but not installed."
 command -v systemctl >/dev/null 2>&1 || fail "systemd is required for this updater."
+command -v stat >/dev/null 2>&1 || fail "stat is required but not installed."
+command -v sed >/dev/null 2>&1 || fail "sed is required but not installed."
+command -v grep >/dev/null 2>&1 || fail "grep is required but not installed."
 
 # ── Gather info ─────────────────────────────────────────────────────────
 
@@ -161,6 +221,8 @@ systemctl stop "${SERVICE_NAME}.service" 2>/dev/null || true
 step "Installing new agent runtime..."
 install -m 0755 "$LATEST_SCRIPT" "${INSTALL_DIR}/watchtower-agent.sh"
 
+repair_systemd_socket_group
+
 step "Verifying agent config..."
 if ! "${INSTALL_DIR}/watchtower-agent.sh" --check >/dev/null 2>&1; then
   warn "Config verification failed after update. Attempting rollback is not supported."
@@ -178,6 +240,7 @@ if systemctl --quiet is-active "${SERVICE_NAME}.service"; then
   INSTALLED_VERSION="$(extract_runtime_version "${INSTALL_DIR}/watchtower-agent.sh" || echo "unknown")"
   echo ""
   success "Agent updated successfully: ${BOLD}${INSTALLED_VERSION}${RESET}"
+  verify_local_docker_ping
   echo ""
   echo -e "  ${DIM}Service status:${RESET}  sudo systemctl status ${SERVICE_NAME}"
   echo -e "  ${DIM}Service logs:${RESET}    sudo journalctl -u ${SERVICE_NAME} -f"

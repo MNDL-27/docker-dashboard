@@ -24,6 +24,24 @@ describe("sanitizeConnectionError", () => {
     });
   });
 
+  it("classifies agent-side Docker socket failures separately from reachability", () => {
+    const error = Object.assign(
+      new Error(
+        "Docker socket unavailable: The Watchtower agent is reachable, but it could not talk to Docker through its configured socket.",
+      ),
+      {
+        body: {
+          type: "docker_socket_unavailable",
+          detail: "Docker API request failed",
+        },
+      },
+    );
+
+    expect(sanitizeConnectionError(error)).toMatchObject({
+      title: "Docker socket inaccessible",
+    });
+  });
+
   it("keeps Cloudflare reachability copy for real tunnel failures", () => {
     expect(sanitizeConnectionError("Cloudflare HTML error page: 502 Bad Gateway")).toMatchObject({
       title: "Tunnel unreachable",

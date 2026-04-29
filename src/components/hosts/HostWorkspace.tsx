@@ -43,6 +43,10 @@ function agentVerificationReason(
     return "The dashboard could not reach the host agent. Confirm the host URL, tunnel, and local service.";
   }
 
+  if (failure?.code === "docker_socket_unavailable") {
+    return "The agent is reachable, but it cannot reach Docker. Run Troubleshoot / Repair to restore Docker socket access.";
+  }
+
   if (failure?.malformedPayload) {
     return "The host returned a malformed metrics sample. Update the agent, then Verify the local service.";
   }
@@ -81,6 +85,13 @@ function formatHostMetricsFailure(
     return {
       title: "Metrics connection failed",
       description: "The dashboard could not reach the host agent metrics endpoint. Check the tunnel, host URL, and agent process.",
+    };
+  }
+
+  if (failure.code === "docker_socket_unavailable") {
+    return {
+      title: "Docker socket inaccessible",
+      description: "The agent is reachable, but the service cannot access Docker. Run Troubleshoot / Repair so systemd grants the agent Docker socket group access.",
     };
   }
 

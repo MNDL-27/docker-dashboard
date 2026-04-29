@@ -48,7 +48,7 @@ AGENT_PORT="${AGENT_PORT:-9876}"
 AGENT_BIND_ADDRESS="${AGENT_BIND_ADDRESS:-${AGENT_BIND:-0.0.0.0}}"
 DOCKER_SOCKET="${DOCKER_SOCKET:-/var/run/docker.sock}"
 WATCHTOWER_AGENT_STATE_DIR="${WATCHTOWER_AGENT_STATE_DIR:-/var/lib/watchtower-agent}"
-WATCHTOWER_AGENT_VERSION="${WATCHTOWER_AGENT_VERSION:-1.0.6}"
+WATCHTOWER_AGENT_VERSION="${WATCHTOWER_AGENT_VERSION:-1.0.7}"
 
 if [ "${1:-}" = "--check" ]; then
   check_config
@@ -331,7 +331,7 @@ fi
 if [ "$PATH_RAW" = "/metrics" ]; then
   [ -S "$SOCKET_PATH" ] || {
     ESCAPED_SOCKET_PATH="$(json_escape "$SOCKET_PATH")"
-    respond_json '500 Internal Server Error' "{\"error\":\"Docker socket not found at ${ESCAPED_SOCKET_PATH}\"}"
+    respond_json '500 Internal Server Error' "{\"error\":\"Docker socket not found at ${ESCAPED_SOCKET_PATH}\",\"code\":\"docker_socket_unavailable\",\"socket_path\":\"${ESCAPED_SOCKET_PATH}\"}"
     exit 0
   }
 
@@ -556,7 +556,7 @@ fi
 
 [ -S "$SOCKET_PATH" ] || {
   ESCAPED_SOCKET_PATH="$(json_escape "$SOCKET_PATH")"
-  respond_json '500 Internal Server Error' "{\"error\":\"Docker socket not found at ${ESCAPED_SOCKET_PATH}\"}"
+  respond_json '500 Internal Server Error' "{\"error\":\"Docker socket not found at ${ESCAPED_SOCKET_PATH}\",\"code\":\"docker_socket_unavailable\",\"socket_path\":\"${ESCAPED_SOCKET_PATH}\"}"
   exit 0
 }
 
@@ -591,7 +591,8 @@ fi
 
 if ! curl "${CURL_ARGS[@]}" 2>"$CURL_ERROR_FILE"; then
   ERROR_MESSAGE="$(tr -d '\r' <"$CURL_ERROR_FILE" | sed 's/"/\\"/g')"
-  respond_json '502 Bad Gateway' "{\"error\":\"Docker API request failed\",\"details\":\"${ERROR_MESSAGE}\"}"
+  ESCAPED_SOCKET_PATH="$(json_escape "$SOCKET_PATH")"
+  respond_json '502 Bad Gateway' "{\"error\":\"Docker API request failed\",\"code\":\"docker_socket_unavailable\",\"details\":\"${ERROR_MESSAGE}\",\"socket_path\":\"${ESCAPED_SOCKET_PATH}\"}"
   exit 0
 fi
 
@@ -631,4 +632,3 @@ echo "Starting watchtower-agent on ${AGENT_BIND_ADDRESS}:${AGENT_PORT}"
 echo "Docker socket: ${DOCKER_SOCKET}"
 
 exec socat "TCP-LISTEN:${AGENT_PORT},bind=${AGENT_BIND_ADDRESS},reuseaddr,fork" "EXEC:${HANDLER_SCRIPT}"
-
