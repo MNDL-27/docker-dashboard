@@ -85,11 +85,11 @@ const WATCHTOWER_AGENT_SOURCE_REF = "a788b98d70d3d8b9a342b32f28eef365e7ccde3d";
 const WATCHTOWER_AGENT_APP_BASE_URL = "https://app.dockerdash.app";
 
 export const CURRENT_WATCHTOWER_AGENT_RELEASE: WatchtowerAgentRelease = {
-  version: "1.0.7",
-  tag: "v1.0.7",
+  version: "1.0.8",
+  tag: "v1.0.8",
   sourceLabel: "Dockerdash hosted installer",
   published: false,
-  releaseUrl: `${WATCHTOWER_AGENT_APP_BASE_URL}/watchtower-agent-install.sh?v=1.0.7`,
+  releaseUrl: `${WATCHTOWER_AGENT_APP_BASE_URL}/watchtower-agent-install.sh?v=1.0.8`,
   releaseNotesUrl: `https://github.com/${WATCHTOWER_AGENT_GITHUB_OWNER}/${WATCHTOWER_AGENT_GITHUB_REPO}/commit/${WATCHTOWER_AGENT_SOURCE_REF}`,
   assetBaseUrl: WATCHTOWER_AGENT_APP_BASE_URL,
   installerAssetName: "watchtower-agent-install.sh",
