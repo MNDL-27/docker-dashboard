@@ -48,7 +48,7 @@ AGENT_PORT="${AGENT_PORT:-9876}"
 AGENT_BIND_ADDRESS="${AGENT_BIND_ADDRESS:-${AGENT_BIND:-0.0.0.0}}"
 DOCKER_SOCKET="${DOCKER_SOCKET:-/var/run/docker.sock}"
 WATCHTOWER_AGENT_STATE_DIR="${WATCHTOWER_AGENT_STATE_DIR:-/var/lib/watchtower-agent}"
-WATCHTOWER_AGENT_VERSION="${WATCHTOWER_AGENT_VERSION:-1.0.5}"
+WATCHTOWER_AGENT_VERSION="${WATCHTOWER_AGENT_VERSION:-1.0.6}"
 
 if [ "${1:-}" = "--check" ]; then
   check_config
@@ -255,6 +255,7 @@ fi
 AGENT_KEY=""
 DOCKER_SOCK_OVERRIDE=""
 CONTENT_LENGTH=0
+CONTENT_TYPE=""
 
 while IFS= read -r header_line; do
   header_line="$(printf '%s' "$header_line" | tr -d '\r')"
@@ -269,6 +270,9 @@ while IFS= read -r header_line; do
       ;;
     content-length:*)
       CONTENT_LENGTH="${header_line#*: }"
+      ;;
+    content-type:*)
+      CONTENT_TYPE="${header_line#*: }"
       ;;
   esac
 done
@@ -546,6 +550,9 @@ CURL_ARGS=(
 
 if [ "$CONTENT_LENGTH" -gt 0 ]; then
   CURL_ARGS+=(--data-binary "@$REQUEST_BODY_FILE")
+  if [ -n "$CONTENT_TYPE" ]; then
+    CURL_ARGS+=(--header "Content-Type: $CONTENT_TYPE")
+  fi
 fi
 
 if ! curl "${CURL_ARGS[@]}" 2>"$CURL_ERROR_FILE"; then

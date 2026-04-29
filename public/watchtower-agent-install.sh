@@ -466,7 +466,7 @@ AGENT_PORT="${AGENT_PORT:-9876}"
 AGENT_BIND_ADDRESS="${AGENT_BIND_ADDRESS:-${AGENT_BIND:-0.0.0.0}}"
 DOCKER_SOCKET="${DOCKER_SOCKET:-/var/run/docker.sock}"
 WATCHTOWER_AGENT_STATE_DIR="${WATCHTOWER_AGENT_STATE_DIR:-/var/lib/watchtower-agent}"
-WATCHTOWER_AGENT_VERSION="${WATCHTOWER_AGENT_VERSION:-1.0.5}"
+WATCHTOWER_AGENT_VERSION="${WATCHTOWER_AGENT_VERSION:-1.0.6}"
 
 if [ "${1:-}" = "--check" ]; then
   check_config
@@ -644,6 +644,7 @@ fi
 AGENT_KEY=""
 DOCKER_SOCK_OVERRIDE=""
 CONTENT_LENGTH=0
+CONTENT_TYPE=""
 
 while IFS= read -r header_line; do
   header_line="$(printf '%s' "$header_line" | tr -d '\r')"
@@ -661,6 +662,9 @@ while IFS= read -r header_line; do
       ;;
     content-length)
       CONTENT_LENGTH="$header_value"
+      ;;
+    content-type)
+      CONTENT_TYPE="$header_value"
       ;;
   esac
 done
@@ -924,6 +928,9 @@ CURL_ARGS=(
 
 if [ "$CONTENT_LENGTH" -gt 0 ]; then
   CURL_ARGS+=(--data-binary "@$REQUEST_BODY_FILE")
+  if [ -n "$CONTENT_TYPE" ]; then
+    CURL_ARGS+=(--header "Content-Type: $CONTENT_TYPE")
+  fi
 fi
 
 if ! curl "${CURL_ARGS[@]}" 2>"$CURL_ERROR_FILE"; then
@@ -1091,6 +1098,22 @@ UNINSTALL_EOF
 
 install -m 0755 "${INSTALL_DIR}/watchtower-agent-uninstall.sh" "$UNINSTALL_BIN"
 
+log "Installing update helper"
+UPDATE_BIN="/usr/local/bin/watchtower-agent-update"
+cat > "${INSTALL_DIR}/watchtower-agent-update.sh" <<'UPDATE_HELPER_EOF'
+#!/usr/bin/env bash
+set -euo pipefail
+INSTALL_DIR="/opt/watchtower-agent"
+UPDATE_URL="https://app.dockerdash.app/watchtower-agent-update.sh"
+TMP_FILE="$(mktemp "${TMPDIR:-/tmp}/watchtower-agent-update.XXXXXX")"
+trap 'rm -f "$TMP_FILE"' EXIT INT TERM
+curl -fsSL "$UPDATE_URL" -o "$TMP_FILE" || { echo "ERROR: Failed to download updater from ${UPDATE_URL}" >&2; exit 1; }
+chmod +x "$TMP_FILE"
+exec "$TMP_FILE" "$@"
+UPDATE_HELPER_EOF
+chmod 0755 "${INSTALL_DIR}/watchtower-agent-update.sh"
+install -m 0755 "${INSTALL_DIR}/watchtower-agent-update.sh" "$UPDATE_BIN"
+
 log "Writing protected environment file"
 ENV_FILE_TMP="$(mktemp "${CONFIG_DIR}/watchtower-agent.env.XXXXXX")"
 chmod 0600 "$ENV_FILE_TMP"
@@ -1162,6 +1185,7 @@ else
 fi
 cat <<EOF
 
+
 Service name: ${SERVICE_NAME}
 Runtime path: ${INSTALL_DIR}/watchtower-agent.sh
 Config file:  ${ENV_FILE}
@@ -1171,6 +1195,7 @@ Next commands:
   sudo systemctl status ${SERVICE_NAME}
   sudo journalctl -u ${SERVICE_NAME} -f
   sudo systemctl restart ${SERVICE_NAME}
+  sudo watchtower-agent-update
   sudo ${UNINSTALL_BIN}
   sudo ${UNINSTALL_BIN} --purge
 
