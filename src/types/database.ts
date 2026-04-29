@@ -205,3 +205,23 @@ export interface SlackDestination {
   updated_at: string;
   latest_attempt?: AlertDeliveryAttempt | null;
 }
+
+export interface Notification {
+  id: string;
+  organization_id: string | null;
+  title: string;
+  message: string;
+  type: "info" | "warning" | "error" | "success" | "update";
+  link: string | null;
+  metadata: any;
+  created_by: string | null;
+  expires_at: string | null;
+  created_at: string;
+}
+
+export interface NotificationDismissal {
+  id: string;
+  notification_id: string;
+  user_id: string;
+  dismissed_at: string;
+}

@@ -13,6 +13,7 @@ import {
   CommandShortcut,
 } from "@/components/ui/command";
 import { useContainers, useDockerHosts } from "@/hooks/useDocker";
+import { NotificationBell } from "./NotificationBell";
 
 type SearchableContainer = {
   Id?: string;
@@ -114,6 +115,8 @@ export function AppTopBar() {
 
         {/* Right: Actions */}
         <div className="flex items-center gap-1">
+          <NotificationBell />
+          
           <Button variant="ghost" size="icon" className="h-8 w-8" onClick={toggleTheme}>
             {isDark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
           </Button>

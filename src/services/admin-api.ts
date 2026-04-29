@@ -75,4 +75,12 @@ export const adminApi = {
   },
   resendDonorEmailDelivery: async (deliveryId: string, reason: string) =>
     apiFetch(`/admin/billing/email-deliveries/${deliveryId}/resend`, { method: "POST", body: { reason } }),
+  getNotifications: async () => {
+    const response = await apiFetch("/admin/notifications") as { notifications: any[] };
+    return response.notifications;
+  },
+  createNotification: async (values: { title: string; message: string; type?: string; organizationId?: string | null; link?: string | null; expiresAt?: string | null; reason: string }) =>
+    apiFetch("/admin/notifications", { method: "POST", body: values }),
+  deleteNotification: async (id: string, reason: string) =>
+    apiFetch(`/admin/notifications/${id}`, { method: "DELETE", body: { reason } }),
 };

@@ -334,3 +334,28 @@ BEGIN
   RETURN _org_id;
 END;
 $$;
+
+-- Notifications
+CREATE TABLE public.notifications (
+  id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
+  organization_id uuid REFERENCES public.organizations(id) ON DELETE CASCADE,
+  title text NOT NULL,
+  message text NOT NULL,
+  type text NOT NULL DEFAULT 'info',
+  link text,
+  metadata jsonb NOT NULL DEFAULT '{}'::jsonb,
+  created_by uuid REFERENCES public.users(id) ON DELETE SET NULL,
+  expires_at timestamptz,
+  created_at timestamptz NOT NULL DEFAULT now()
+);
+
+CREATE TABLE public.notification_dismissals (
+  id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
+  notification_id uuid NOT NULL REFERENCES public.notifications(id) ON DELETE CASCADE,
+  user_id uuid NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
+  dismissed_at timestamptz NOT NULL DEFAULT now(),
+  UNIQUE(notification_id, user_id)
+);
+
+CREATE INDEX idx_notifications_org_time ON public.notifications (organization_id, created_at DESC);
+CREATE INDEX idx_notification_dismissals_user ON public.notification_dismissals (user_id);

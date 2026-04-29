@@ -11,8 +11,9 @@ import { AdminHostManagement } from "@/components/admin/AdminHostManagement";
 import { AdminBillingManagement } from "@/components/admin/AdminBillingManagement";
 import { AdminOperations } from "@/components/admin/AdminOperations";
 import { AdminAuditLog } from "@/components/admin/AdminAuditLog";
+import { AdminNotifications } from "@/components/admin/AdminNotifications";
 
-const tabs = ["Overview", "Users", "Organizations", "Hosts", "Billing", "Operations", "Audit Log"] as const;
+const tabs = ["Overview", "Users", "Organizations", "Hosts", "Billing", "Operations", "Audit Log", "Notifications"] as const;
 type AdminTab = (typeof tabs)[number];
 
 export default function AdminPage() {
@@ -63,6 +64,10 @@ export default function AdminPage() {
 
         <TabsContent value="Audit Log">
           <AdminAuditLog />
+        </TabsContent>
+
+        <TabsContent value="Notifications">
+          <AdminNotifications />
         </TabsContent>
       </Tabs>
     </div>
