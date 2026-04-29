@@ -48,7 +48,7 @@ AGENT_PORT="${AGENT_PORT:-9876}"
 AGENT_BIND_ADDRESS="${AGENT_BIND_ADDRESS:-${AGENT_BIND:-0.0.0.0}}"
 DOCKER_SOCKET="${DOCKER_SOCKET:-/var/run/docker.sock}"
 WATCHTOWER_AGENT_STATE_DIR="${WATCHTOWER_AGENT_STATE_DIR:-/var/lib/watchtower-agent}"
-WATCHTOWER_AGENT_VERSION="${WATCHTOWER_AGENT_VERSION:-1.0.7}"
+WATCHTOWER_AGENT_VERSION="${WATCHTOWER_AGENT_VERSION:-1.0.8}"
 
 if [ "${1:-}" = "--check" ]; then
   check_config
@@ -570,7 +570,7 @@ if [ "$IS_UPGRADE" = "true" ]; then
     cat
   } | socat -t 3600 - "UNIX-CONNECT:$SOCKET_PATH"
   exit 0
-}
+fi
 
 CURL_ARGS=(
   --silent
