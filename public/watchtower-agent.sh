@@ -106,7 +106,7 @@ validate_docker_path() {
 }
 
 cleanup_handler() {
-  rm -f "${REQUEST_BODY_FILE:-}" "${RESPONSE_BODY_FILE:-}" "${RESPONSE_HEADERS_FILE:-}" "${CURL_ERROR_FILE:-}"
+  rm -f "${REQUEST_BODY_FILE:-}" "${RESPONSE_BODY_FILE:-}" "${RESPONSE_HEADERS_FILE:-}" "${CURL_ERROR_FILE:-}" "${FORWARD_HEADERS_FILE:-}"
 }
 
 trap cleanup_handler EXIT INT TERM
@@ -256,23 +256,45 @@ AGENT_KEY=""
 DOCKER_SOCK_OVERRIDE=""
 CONTENT_LENGTH=0
 CONTENT_TYPE=""
+IS_UPGRADE="false"
+FORWARD_HEADERS_FILE="$(mktemp "${TMPDIR:-/tmp}/watchtower-agent-forward-headers.XXXXXX")"
 
 while IFS= read -r header_line; do
-  header_line="$(printf '%s' "$header_line" | tr -d '\r')"
-  [ -z "$header_line" ] && break
+  header_line_stripped="$(printf '%s' "$header_line" | tr -d '\r')"
+  [ -z "$header_line_stripped" ] && break
 
-  case "$(printf '%s' "$header_line" | tr '[:upper:]' '[:lower:]')" in
-    x-agent-key:*)
-      AGENT_KEY="${header_line#*: }"
+  header_name="$(printf '%s' "$header_line_stripped" | cut -d: -f1 | tr '[:upper:]' '[:lower:]')"
+  header_value="$(printf '%s' "${header_line_stripped#*:}" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')"
+
+  case "$header_name" in
+    x-agent-key)
+      AGENT_KEY="$header_value"
       ;;
-    x-docker-socket:*)
-      DOCKER_SOCK_OVERRIDE="${header_line#*: }"
+    x-docker-socket)
+      DOCKER_SOCK_OVERRIDE="$header_value"
       ;;
-    content-length:*)
-      CONTENT_LENGTH="${header_line#*: }"
+    content-length)
+      CONTENT_LENGTH="$header_value"
+      printf '%s\r\n' "$header_line_stripped" >> "$FORWARD_HEADERS_FILE"
       ;;
-    content-type:*)
-      CONTENT_TYPE="${header_line#*: }"
+    content-type)
+      CONTENT_TYPE="$header_value"
+      printf '%s\r\n' "$header_line_stripped" >> "$FORWARD_HEADERS_FILE"
+      ;;
+    upgrade)
+      IS_UPGRADE="true"
+      printf '%s\r\n' "$header_line_stripped" >> "$FORWARD_HEADERS_FILE"
+      ;;
+    connection)
+      case "$header_value" in
+        *[Uu][Pp][Gg][Rr][Aa][Dd][Ee]*)
+          IS_UPGRADE="true"
+          ;;
+      esac
+      printf '%s\r\n' "$header_line_stripped" >> "$FORWARD_HEADERS_FILE"
+      ;;
+    *)
+      printf '%s\r\n' "$header_line_stripped" >> "$FORWARD_HEADERS_FILE"
       ;;
   esac
 done
@@ -535,6 +557,18 @@ fi
 [ -S "$SOCKET_PATH" ] || {
   ESCAPED_SOCKET_PATH="$(json_escape "$SOCKET_PATH")"
   respond_json '500 Internal Server Error' "{\"error\":\"Docker socket not found at ${ESCAPED_SOCKET_PATH}\"}"
+  exit 0
+}
+
+if [ "$IS_UPGRADE" = "true" ]; then
+  {
+    printf '%s %s HTTP/1.1\r\n' "$METHOD" "$DOCKER_PATH"
+    if [ -f "$FORWARD_HEADERS_FILE" ]; then
+      cat "$FORWARD_HEADERS_FILE"
+    fi
+    printf '\r\n'
+    cat
+  } | socat -t 3600 - "UNIX-CONNECT:$SOCKET_PATH"
   exit 0
 }
 
