@@ -1,5 +1,5 @@
 import type { Config, Context } from "@netlify/functions";
-import { verifyAuthToken } from "./lib/auth.mjs";
+import { requireAuth } from "./lib/auth.mjs";
 import { sql } from "./lib/db.mjs";
 
 export default async (req: Request, context: Context) => {
@@ -20,57 +20,21 @@ export default async (req: Request, context: Context) => {
   };
 
   try {
-    const authHeader = req.headers.get("Authorization");
-    if (!authHeader?.startsWith("Bearer ")) {
-      return new Response(JSON.stringify({ error: "Missing or invalid token" }), {
-        status: 401,
-        headers: corsHeaders,
-      });
-    }
-
-    const token = authHeader.split(" ")[1];
-    const user = await verifyAuthToken(token);
-    if (!user) {
-      return new Response(JSON.stringify({ error: "Invalid token" }), {
-        status: 401,
-        headers: corsHeaders,
-      });
-    }
+    const auth = await requireAuth(req, { requireOrg: false });
 
     const url = new URL(req.url);
     const pathSegments = url.pathname.split("/").filter(Boolean);
 
-    // GET /api/notifications?organizationId=...
+    // GET /api/notifications
     if (req.method === "GET") {
-      const organizationId = url.searchParams.get("organizationId");
-      if (!organizationId) {
-        return new Response(JSON.stringify({ error: "Missing organizationId" }), {
-          status: 400,
-          headers: corsHeaders,
-        });
-      }
-
-      // Verify user is in the org
-      const membership = await sql`
-        SELECT role FROM public.organization_members
-        WHERE organization_id = ${organizationId} AND user_id = ${user.sub}
-      `;
-
-      if (membership.length === 0) {
-        return new Response(JSON.stringify({ error: "Forbidden" }), {
-          status: 403,
-          headers: corsHeaders,
-        });
-      }
-
       // Fetch active notifications (global or org-specific) that haven't been dismissed by this user
       // and haven't expired
       const notifications = await sql`
         SELECT n.*
         FROM public.notifications n
         LEFT JOIN public.notification_dismissals d 
-          ON n.id = d.notification_id AND d.user_id = ${user.sub}
-        WHERE (n.organization_id = ${organizationId} OR n.organization_id IS NULL)
+          ON n.id = d.notification_id AND d.user_id = ${auth.userId}
+        WHERE (n.organization_id = ${auth.orgId} OR n.organization_id IS NULL)
           AND d.id IS NULL
           AND (n.expires_at IS NULL OR n.expires_at > now())
         ORDER BY n.created_at DESC
@@ -89,7 +53,7 @@ export default async (req: Request, context: Context) => {
       
       await sql`
         INSERT INTO public.notification_dismissals (notification_id, user_id)
-        VALUES (${notificationId}, ${user.sub})
+        VALUES (${notificationId}, ${auth.userId})
         ON CONFLICT (notification_id, user_id) DO NOTHING
       `;
 
@@ -101,23 +65,13 @@ export default async (req: Request, context: Context) => {
 
     // POST /api/notifications/dismiss-all
     if (req.method === "POST" && pathSegments[pathSegments.length - 1] === "dismiss-all") {
-      const body = await req.json();
-      const organizationId = body.organizationId;
-      
-      if (!organizationId) {
-        return new Response(JSON.stringify({ error: "Missing organizationId" }), {
-          status: 400,
-          headers: corsHeaders,
-        });
-      }
-
       // Get all active notifications for this org/global
       const notifications = await sql`
         SELECT n.id
         FROM public.notifications n
         LEFT JOIN public.notification_dismissals d 
-          ON n.id = d.notification_id AND d.user_id = ${user.sub}
-        WHERE (n.organization_id = ${organizationId} OR n.organization_id IS NULL)
+          ON n.id = d.notification_id AND d.user_id = ${auth.userId}
+        WHERE (n.organization_id = ${auth.orgId} OR n.organization_id IS NULL)
           AND d.id IS NULL
           AND (n.expires_at IS NULL OR n.expires_at > now())
       `;
@@ -125,7 +79,7 @@ export default async (req: Request, context: Context) => {
       if (notifications.length > 0) {
         const insertData = notifications.map(n => ({
           notification_id: n.id,
-          user_id: user.sub
+          user_id: auth.userId
         }));
 
         await sql`
@@ -148,7 +102,7 @@ export default async (req: Request, context: Context) => {
   } catch (error: any) {
     console.error("Notifications API Error:", error);
     return new Response(JSON.stringify({ error: error.message }), {
-      status: 500,
+      status: error.message?.includes('Unauthorized') || error.message?.includes('Sync pending') ? 401 : 500,
       headers: corsHeaders,
     });
   }
