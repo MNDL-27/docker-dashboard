@@ -35,9 +35,11 @@ export default async (req: Request) => {
   }
 
   try {
-    await ensureOnboardingSchema();
-    await ensureAdminSchema();
-    await ensureDedicatedDeploymentSchema();
+    await Promise.all([
+      ensureOnboardingSchema(),
+      ensureAdminSchema(),
+      ensureDedicatedDeploymentSchema(),
+    ]);
     const authContext = await requireAuth(req, { requireOrg: false });
 
     const users = await sql`
