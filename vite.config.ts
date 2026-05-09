@@ -23,9 +23,6 @@ export default defineConfig(({ mode }) => ({
             if (id.includes('/@clerk/')) {
               return 'vendor-clerk';
             }
-            if (id.includes('/recharts/') || id.includes('/d3-')) {
-              return 'vendor-charts';
-            }
             if (id.includes('/@tanstack/')) {
               return 'vendor-query';
             }
