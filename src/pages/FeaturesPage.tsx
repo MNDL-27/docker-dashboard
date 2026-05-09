@@ -27,36 +27,66 @@ export default function FeaturesPage() {
       <PublicNavbar />
 
       <main className="flex-1">
-        <section className="py-20">
-          <div className="max-w-5xl mx-auto px-4 text-center mb-16">
-            <h1 className="text-4xl md:text-5xl font-bold tracking-tight mb-4">The working Docker operations core</h1>
-            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">Docker Dashboard focuses on the features that are already implemented well: host connectivity, container visibility, logs, and practical alerts.</p>
-          </div>
-          <div className="max-w-5xl mx-auto px-4 space-y-12">
-            {features.map((f, i) => (
-              <div key={f.title} className={`flex flex-col md:flex-row gap-8 items-start ${i % 2 === 1 ? "md:flex-row-reverse" : ""}`}>
-                <div className="flex-1 space-y-4">
-                  <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center">
-                    <f.icon className="h-6 w-6 text-primary" />
-                  </div>
-                  <h2 className="text-2xl font-bold">{f.title}</h2>
-                  <p className="text-muted-foreground leading-relaxed">{f.desc}</p>
-                  <ul className="space-y-2">
-                    {f.details.map(d => (
-                      <li key={d} className="flex items-center gap-2 text-sm"><Check className="h-4 w-4 text-success shrink-0" />{d}</li>
-                    ))}
-                  </ul>
-                </div>
-                <div className="flex-1 glass-card h-48 flex items-center justify-center">
-                  <f.icon className="h-16 w-16 text-muted-foreground/20" />
-                </div>
-              </div>
-            ))}
+        {/* Hero Section */}
+        <section className="relative overflow-hidden py-24">
+          <div className="absolute inset-0 hero-glow dark:hero-glow-dark opacity-50" />
+          <div className="absolute inset-0 bg-[url('/noise.png')] opacity-[0.03] mix-blend-overlay"></div>
+          
+          <div className="relative max-w-5xl mx-auto px-4 text-center">
+            <h1 className="text-4xl md:text-6xl font-bold tracking-tight mb-6 text-gradient">
+              The Working Docker Operations Core
+            </h1>
+            <p className="text-lg md:text-xl text-muted-foreground max-w-2xl mx-auto leading-relaxed">
+              Docker Dashboard focuses on the features that are already implemented well: host connectivity, container visibility, logs, and practical alerts.
+            </p>
           </div>
         </section>
 
-        <section className="py-16 text-center">
-          <Link to={primaryHref}><Button size="lg" className="gap-2">Get Started Free <ArrowRight className="h-4 w-4" /></Button></Link>
+        {/* Features Grid */}
+        <section className="py-12 pb-24 relative z-10">
+          <div className="max-w-7xl mx-auto px-4">
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {features.map((f, i) => (
+                <div key={f.title} className="glass-card-interactive p-8 flex flex-col h-full animate-fade-in" style={{ animationDelay: `${i * 100}ms` }}>
+                  <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center mb-6 shrink-0">
+                    <f.icon className="h-6 w-6 text-primary" />
+                  </div>
+                  <h2 className="text-2xl font-bold mb-3">{f.title}</h2>
+                  <p className="text-muted-foreground leading-relaxed mb-6 flex-1">
+                    {f.desc}
+                  </p>
+                  <ul className="space-y-2 mt-auto pt-6 border-t border-border/50">
+                    {f.details.map(d => (
+                      <li key={d} className="flex items-start gap-2.5 text-sm text-muted-foreground">
+                        <Check className="h-4 w-4 text-primary shrink-0 mt-0.5" />
+                        <span>{d}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* CTA Section */}
+        <section className="py-24 relative overflow-hidden">
+          <div className="max-w-4xl mx-auto px-4 relative z-10">
+            <div className="glass-card-raised p-12 text-center relative overflow-hidden">
+              <div className="absolute top-0 right-0 -mt-16 -mr-16 w-64 h-64 bg-primary/10 blur-3xl rounded-full pointer-events-none"></div>
+              <div className="absolute bottom-0 left-0 -mb-16 -ml-16 w-64 h-64 bg-primary/10 blur-3xl rounded-full pointer-events-none"></div>
+              
+              <h2 className="text-3xl font-bold mb-4 relative z-10">Ready to take control of your hosts?</h2>
+              <p className="text-muted-foreground mb-8 max-w-xl mx-auto relative z-10">
+                Join thousands of developers managing their Docker infrastructure with Docker Dashboard.
+              </p>
+              <Link to={primaryHref} className="relative z-10">
+                <Button size="lg" className="gap-2 px-8 h-12 text-base shadow-lg shadow-primary/20">
+                  Get Started Free <ArrowRight className="h-5 w-5" />
+                </Button>
+              </Link>
+            </div>
+          </div>
         </section>
       </main>
 
