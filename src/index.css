@@ -2,6 +2,8 @@
 @tailwind components;
 @tailwind utilities;
 
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+
 @layer base {
   :root {
     --background: 0 0% 100%;
@@ -81,6 +83,9 @@
   * {
     @apply border-border;
   }
+  html {
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  }
   body {
     @apply bg-background text-foreground antialiased;
     font-feature-settings: "cv02", "cv03", "cv04", "cv11";
@@ -94,7 +99,58 @@
   .glass-card {
     @apply bg-card/80 backdrop-blur-sm border border-border rounded-lg;
   }
+  .glass-card-raised {
+    @apply bg-card/90 backdrop-blur-md border border-border rounded-xl shadow-lg shadow-black/5;
+  }
+  .glass-card-interactive {
+    @apply bg-card/80 backdrop-blur-sm border border-border rounded-lg transition-all duration-300 hover:border-primary/40 hover:shadow-lg hover:shadow-primary/5 hover:-translate-y-0.5;
+  }
   .surface {
     @apply bg-surface text-surface-foreground;
   }
+  .hero-glow {
+    background: radial-gradient(ellipse 60% 50% at 50% -10%, hsl(190 80% 50% / 0.15), transparent);
+  }
+  .hero-glow-dark {
+    background: radial-gradient(ellipse 80% 60% at 50% -20%, hsl(190 80% 50% / 0.08), transparent);
+  }
+  .grid-fade {
+    mask-image: linear-gradient(to bottom, black 50%, transparent 100%);
+    -webkit-mask-image: linear-gradient(to bottom, black 50%, transparent 100%);
+  }
+}
+
+/* Subtle grid background for hero sections */
+.bg-grid {
+  background-image:
+    linear-gradient(hsl(var(--border) / 0.4) 1px, transparent 1px),
+    linear-gradient(90deg, hsl(var(--border) / 0.4) 1px, transparent 1px);
+  background-size: 64px 64px;
+}
+
+/* Terminal-style code block styling */
+.terminal-block {
+  background: hsl(222 25% 4%);
+  border: 1px solid hsl(220 16% 16%);
+  border-radius: 0.75rem;
+  font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
+  font-size: 0.8125rem;
+  line-height: 1.6;
+}
+.terminal-block .prompt {
+  color: hsl(190 80% 50%);
+  user-select: none;
+}
+.terminal-block .comment {
+  color: hsl(220 12% 40%);
+}
+
+/* Smooth scrolling */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Selection color */
+::selection {
+  background: hsl(190 80% 50% / 0.25);
 }
