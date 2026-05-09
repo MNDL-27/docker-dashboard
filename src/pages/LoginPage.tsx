@@ -34,7 +34,7 @@ export default function LoginPage() {
         {/* Subtle background glow */}
         <div className="absolute top-0 left-0 w-full h-full bg-gradient-radial from-primary/5 via-transparent to-transparent opacity-50 pointer-events-none" />
 
-        <div className="relative z-10 w-full max-sm mx-auto flex-1 flex flex-col">
+        <div className="relative z-10 w-full max-w-sm mx-auto flex-1 flex flex-col">
           {/* Logo Nav */}
           <LogoLink className="flex items-center gap-2 mb-16">
             <div className="w-8 h-8 rounded-md bg-primary flex items-center justify-center">

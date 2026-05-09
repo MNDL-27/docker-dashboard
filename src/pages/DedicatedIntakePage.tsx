@@ -174,7 +174,7 @@ export default function DedicatedIntakePage() {
       </div>
 
       <main className="mx-auto grid max-w-6xl gap-6 px-4 py-10 lg:grid-cols-[1.2fr_0.8fr]">
-        <section className="rounded-[2rem] border border-border/70 bg-card/70 p-6 shadow-[0_24px_70px_-55px_black]">
+        <section className="rounded-2xl border border-border/70 bg-card/70 p-6 shadow-[0_24px_70px_-55px_black]">
           <div className="mb-8 grid gap-3 md:grid-cols-3 xl:grid-cols-6">
             {STEP_LABELS.map((step, index) => {
               const isActive = index === Math.min(stepIndex, STEP_LABELS.length - 1);
@@ -578,7 +578,7 @@ export default function DedicatedIntakePage() {
         </section>
 
         <aside className="space-y-5">
-          <div className="rounded-[1.75rem] border border-primary/25 bg-primary/8 p-6">
+          <div className="rounded-2xl border border-primary/25 bg-primary/8 p-6">
             <p className="text-xs font-semibold uppercase tracking-[0.24em] text-primary">
               Active deployment summary
             </p>
@@ -601,7 +601,7 @@ export default function DedicatedIntakePage() {
             </div>
           </div>
 
-          <div className="rounded-[1.75rem] border border-border/70 bg-card/70 p-6">
+          <div className="rounded-2xl border border-border/70 bg-card/70 p-6">
             <div className="flex items-center gap-3">
               <ShieldCheck className="h-5 w-5 text-primary" />
               <div className="font-medium">What happens after submission</div>
@@ -613,7 +613,7 @@ export default function DedicatedIntakePage() {
             </div>
           </div>
 
-          <div className="rounded-[1.75rem] border border-border/70 bg-card/70 p-6">
+          <div className="rounded-2xl border border-border/70 bg-card/70 p-6">
             <div className="flex items-center gap-3">
               <Building2 className="h-5 w-5 text-primary" />
               <div className="font-medium">Why this is different from self-serve</div>

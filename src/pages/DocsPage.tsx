@@ -1,5 +1,7 @@
 import { Link } from "react-router-dom";
 import { LogoLink } from "@/components/shared/LogoLink";
+import { PublicNavbar } from "@/components/layout/PublicNavbar";
+import { PublicFooter } from "@/components/layout/PublicFooter";
 import { Button } from "@/components/ui/button";
 import {
   Box,
@@ -197,26 +199,7 @@ export default function DocsPage() {
         description="Learn how to connect your Docker hosts, monitor containers, manage logs, and configure alerts with Docker Dashboard."
       />
       {/* Nav */}
-      <nav className="border-b border-border bg-card/50 backdrop-blur-sm sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-4 h-14 flex items-center justify-between">
-          <LogoLink forcePublic className="flex items-center gap-2">
-            <div className="w-7 h-7 rounded-md bg-primary flex items-center justify-center">
-              <Box className="h-4 w-4 text-primary-foreground" />
-            </div>
-            <span className="font-semibold tracking-tight">Docker Dashboard</span>
-          </LogoLink>
-          <div className="hidden md:flex items-center gap-6 text-sm">
-            <Link to="/features" className="text-muted-foreground hover:text-foreground transition-colors">Features</Link>
-            <Link to="/pricing" className="text-muted-foreground hover:text-foreground transition-colors">Pricing</Link>
-            <Link to="/security" className="text-muted-foreground hover:text-foreground transition-colors">Security</Link>
-            <Link to="/docs" className="text-foreground font-medium">Docs</Link>
-          </div>
-          <div className="flex items-center gap-2">
-            <Link to={authHref}><Button variant="ghost" size="sm">Log in</Button></Link>
-            <Link to={authHref}><Button size="sm">Start Free</Button></Link>
-          </div>
-        </div>
-      </nav>
+      <PublicNavbar />
 
       {/* Hero — compact */}
       <section className="py-12 md:py-16">
@@ -999,19 +982,7 @@ export default function DocsPage() {
       </section>
 
       {/* Footer */}
-      <footer className="border-t border-border py-8 bg-card/30">
-        <div className="max-w-5xl mx-auto px-4 flex flex-col md:flex-row items-center justify-between gap-4">
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <Box className="h-4 w-4 text-primary" />
-            <span>© 2024 Docker Dashboard. All rights reserved.</span>
-          </div>
-          <div className="flex items-center gap-4 text-sm text-muted-foreground">
-            <Link to="/security" className="hover:text-foreground transition-colors">Security</Link>
-            <Link to="/docs" className="hover:text-foreground transition-colors">Docs</Link>
-            <Link to="/contact" className="hover:text-foreground transition-colors">Contact</Link>
-          </div>
-        </div>
-      </footer>
+      <PublicFooter />
     </div>
   );
 }
