@@ -15,19 +15,24 @@ export default defineConfig(({ mode }) => ({
   build: {
     rollupOptions: {
       output: {
-        manualChunks: {
-          'vendor-react': ['react', 'react-dom', 'react-router-dom'],
-          'vendor-clerk': ['@clerk/clerk-react'],
-          'vendor-charts': ['recharts'],
-          'vendor-query': ['@tanstack/react-query'],
-          'vendor-ui': [
-            '@radix-ui/react-dialog',
-            '@radix-ui/react-dropdown-menu',
-            '@radix-ui/react-select',
-            '@radix-ui/react-tabs',
-            '@radix-ui/react-tooltip',
-            '@radix-ui/react-popover',
-          ],
+        manualChunks(id) {
+          if (id.includes('node_modules')) {
+            if (id.includes('/react-dom/') || id.includes('/react/') || id.includes('/react-router')) {
+              return 'vendor-react';
+            }
+            if (id.includes('/@clerk/')) {
+              return 'vendor-clerk';
+            }
+            if (id.includes('/recharts/') || id.includes('/d3-')) {
+              return 'vendor-charts';
+            }
+            if (id.includes('/@tanstack/')) {
+              return 'vendor-query';
+            }
+            if (id.includes('/@radix-ui/')) {
+              return 'vendor-ui';
+            }
+          }
         },
       },
     },
