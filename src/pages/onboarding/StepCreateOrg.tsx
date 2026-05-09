@@ -27,7 +27,7 @@ export function StepCreateOrg({ orgName, onOrgNameChange, onSubmit, error }: Pro
         </p>
       </div>
 
-      <div className="bg-card border border-border rounded-xl shadow-lg p-8 space-y-6">
+      <div className="glass-card-raised p-8 space-y-6">
         <div className="space-y-3">
           <Label htmlFor="org-name" className="text-base font-medium">Organization name</Label>
           <Input

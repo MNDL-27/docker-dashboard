@@ -9,7 +9,7 @@ interface Props {
 export function LoadingCard({ title, description }: Props) {
   return (
     <div className="animate-fade-in w-full">
-      <div className="bg-card border border-border rounded-xl shadow-lg p-10 text-center space-y-6">
+      <div className="glass-card-raised p-10 text-center space-y-6">
         <div className="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mx-auto">
           <Loader2 className="h-8 w-8 text-primary animate-spin" />
         </div>

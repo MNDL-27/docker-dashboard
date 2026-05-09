@@ -47,7 +47,7 @@ export function StepHostBasics({
         </p>
       </div>
 
-      <div className="bg-card border border-border rounded-xl shadow-lg p-8 space-y-6">
+      <div className="glass-card-raised p-8 space-y-6">
         {/* Host Name */}
         <div className="space-y-2">
           <Label htmlFor="host-name" className="text-base font-medium">Host Name</Label>

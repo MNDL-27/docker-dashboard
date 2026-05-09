@@ -66,7 +66,7 @@ export default function DedicatedDeploymentPage() {
           breadcrumbs={[{ label: "Management" }, { label: "Dedicated deployment" }]}
         />
 
-        <div className="rounded-[2rem] border border-border/70 bg-card/70 p-8">
+        <div className="rounded-2xl border border-border/70 bg-card/70 p-8">
           <h2 className="text-2xl font-semibold tracking-tight">Start the managed intake</h2>
           <p className="mt-3 max-w-2xl text-sm leading-6 text-muted-foreground">
             Dedicated environments are provisioned through an intake brief rather than the normal

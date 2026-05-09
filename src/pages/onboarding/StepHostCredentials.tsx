@@ -95,7 +95,7 @@ export function StepHostCredentials({
         </p>
       </div>
 
-      <div className="bg-card border border-border rounded-xl shadow-lg p-8 space-y-6">
+      <div className="glass-card-raised p-8 space-y-6">
         <div className="rounded-xl border border-primary/20 bg-primary/5 p-4 text-sm text-primary">
           {setupSummary}
         </div>

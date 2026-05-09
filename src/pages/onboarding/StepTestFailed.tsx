@@ -30,7 +30,7 @@ export function StepTestFailed({
         </p>
       </div>
 
-      <div className="bg-card border border-border rounded-xl shadow-lg p-8 space-y-6">
+      <div className="glass-card-raised p-8 space-y-6">
         <div className="flex items-start gap-2.5 p-3.5 rounded-lg border border-warning/20 bg-warning/5">
           <XCircle className="h-4 w-4 text-warning shrink-0 mt-0.5" />
           <div className="text-sm text-warning leading-relaxed">{testError || "Connection test failed."}</div>

@@ -11,7 +11,7 @@ export function StepComplete({ onContinue }: Props) {
 
   return (
     <div className="animate-fade-in w-full">
-      <div className="bg-card border border-border rounded-xl shadow-lg p-10 text-center space-y-6">
+      <div className="glass-card-raised p-10 text-center space-y-6">
         <div className="w-16 h-16 rounded-full bg-success/15 flex items-center justify-center mx-auto">
           <CheckCircle2 className="h-8 w-8 text-success" />
         </div>
