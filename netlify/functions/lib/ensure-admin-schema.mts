@@ -6,6 +6,12 @@ let schemaEnsurePromise: Promise<void> | null = null;
 const ADMIN_SCHEMA_MARKER_KEY = "admin_schema_v2";
 
 async function ensureSchemaMarkersTable() {
+  const tableExists = await sql`
+    SELECT 1 FROM information_schema.tables 
+    WHERE table_schema = 'public' AND table_name = 'runtime_schema_markers'
+  `;
+  if (tableExists.length > 0) return;
+
   await sql`
     CREATE TABLE IF NOT EXISTS public.runtime_schema_markers (
       key text PRIMARY KEY,

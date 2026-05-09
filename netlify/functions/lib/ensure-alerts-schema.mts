@@ -13,6 +13,16 @@ let schemaEnsured = false;
 export async function ensureAlertsSchema() {
   if (schemaEnsured) return;
 
+  const tbls = await sql`
+    SELECT table_name 
+    FROM information_schema.tables 
+    WHERE table_name = 'alert_rules'
+  `;
+  if (tbls.length > 0) {
+    schemaEnsured = true;
+    return;
+  }
+
   await sql`
     CREATE TABLE IF NOT EXISTS public.alert_rules (
       id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),

@@ -2,7 +2,6 @@ import type { Config } from '@netlify/functions';
 import { sql } from './lib/db.mjs';
 import { requireAuth } from './lib/auth.mjs';
 import { assertOrganizationWriteAllowed } from './lib/access-controls.mjs';
-import { ensureOnboardingSchema } from './lib/ensure-onboarding-schema.mjs';
 
 const headers = {
   'Access-Control-Allow-Origin': '*',
@@ -16,7 +15,6 @@ export default async (req: Request) => {
   }
 
   try {
-    await ensureOnboardingSchema();
     const authContext = await requireAuth(req, { requireOrg: false });
 
     if (req.method === 'GET') {

@@ -5,6 +5,16 @@ let schemaEnsured = false;
 export async function ensureDedicatedDeploymentSchema() {
   if (schemaEnsured) return;
 
+  const tbls = await sql`
+    SELECT table_name 
+    FROM information_schema.tables 
+    WHERE table_name = 'dedicated_deployments'
+  `;
+  if (tbls.length > 0) {
+    schemaEnsured = true;
+    return;
+  }
+
   await sql`
     CREATE OR REPLACE FUNCTION public.set_updated_at()
     RETURNS trigger AS $$

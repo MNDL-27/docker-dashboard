@@ -1,10 +1,7 @@
 import type { Config } from '@netlify/functions';
 import { sql } from './lib/db.mjs';
 import { requireAuth } from './lib/auth.mjs';
-import { ensureOnboardingSchema } from './lib/ensure-onboarding-schema.mjs';
-import { ensureAdminSchema } from './lib/ensure-admin-schema.mjs';
 import { isPlatformAdminEmail } from './lib/platform-admin.mjs';
-import { ensureDedicatedDeploymentSchema } from './lib/ensure-dedicated-deployment-schema.mjs';
 import { resolveOrganizationEntitlements } from './lib/access-controls.mjs';
 
 const allowedOrigins = new Set([
@@ -35,11 +32,6 @@ export default async (req: Request) => {
   }
 
   try {
-    await Promise.all([
-      ensureOnboardingSchema(),
-      ensureAdminSchema(),
-      ensureDedicatedDeploymentSchema(),
-    ]);
     const authContext = await requireAuth(req, { requireOrg: false });
 
     const users = await sql`

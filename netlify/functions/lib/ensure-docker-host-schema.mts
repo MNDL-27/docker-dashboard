@@ -13,6 +13,16 @@ let schemaEnsured = false;
 export async function ensureDockerHostSchema() {
   if (schemaEnsured) return;
 
+  const tbls = await sql`
+    SELECT table_name 
+    FROM information_schema.tables 
+    WHERE table_name = 'host_network_usage'
+  `;
+  if (tbls.length > 0) {
+    schemaEnsured = true;
+    return;
+  }
+
   await sql`
     ALTER TABLE public.docker_hosts
     ADD COLUMN IF NOT EXISTS agent_version text

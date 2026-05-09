@@ -15,22 +15,7 @@ export default defineConfig(({ mode }) => ({
   build: {
     rollupOptions: {
       output: {
-        manualChunks(id) {
-          if (id.includes('node_modules')) {
-            if (id.includes('/react-dom/') || id.includes('/react/') || id.includes('/react-router')) {
-              return 'vendor-react';
-            }
-            if (id.includes('/@clerk/')) {
-              return 'vendor-clerk';
-            }
-            if (id.includes('/@tanstack/')) {
-              return 'vendor-query';
-            }
-            if (id.includes('/@radix-ui/')) {
-              return 'vendor-ui';
-            }
-          }
-        },
+        // Removed manualChunks to fix Uncaught ReferenceError: Cannot access 'P' before initialization
       },
     },
   },

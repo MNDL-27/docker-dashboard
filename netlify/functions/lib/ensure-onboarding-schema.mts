@@ -13,6 +13,16 @@ let schemaEnsured = false;
 export async function ensureOnboardingSchema() {
   if (schemaEnsured) return;
 
+  const cols = await sql`
+    SELECT column_name 
+    FROM information_schema.columns 
+    WHERE table_name = 'organizations' AND column_name = 'onboarding_status'
+  `;
+  if (cols.length > 0) {
+    schemaEnsured = true;
+    return;
+  }
+
   await sql`
     ALTER TABLE public.organizations
     ADD COLUMN IF NOT EXISTS onboarding_status text

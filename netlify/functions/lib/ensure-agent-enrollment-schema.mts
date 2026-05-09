@@ -5,6 +5,16 @@ let schemaEnsured = false;
 export async function ensureAgentEnrollmentSchema() {
   if (schemaEnsured) return;
 
+  const tbls = await sql`
+    SELECT table_name 
+    FROM information_schema.tables 
+    WHERE table_name = 'agent_enrollment_sessions'
+  `;
+  if (tbls.length > 0) {
+    schemaEnsured = true;
+    return;
+  }
+
   await sql`
     CREATE TABLE IF NOT EXISTS public.agent_enrollment_sessions (
       id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),

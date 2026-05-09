@@ -3,7 +3,6 @@ import { sql } from './lib/db.mjs';
 import { requireAuth } from './lib/auth.mjs';
 import { assertHostProxyAllowed, assertOrganizationNodeCapacityAvailable, assertOrganizationWriteAllowed, enforceOrganizationNodeLimit } from './lib/access-controls.mjs';
 import { decryptHostSecrets, encryptSecret } from './lib/crypto.mjs';
-import { ensureOnboardingSchema } from './lib/ensure-onboarding-schema.mjs';
 import { parseStaleThresholdMinutes, staleCutoffDate } from './lib/host-health.mjs';
 import { normalizeAndValidateHostUrl } from './lib/host-url.mjs';
 
@@ -19,7 +18,6 @@ export default async (req: Request) => {
   }
 
   try {
-    await ensureOnboardingSchema();
     const auth = await requireAuth(req);
     const url = new URL(req.url);
     const hostId = url.searchParams.get('hostId');
