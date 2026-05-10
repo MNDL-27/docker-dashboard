@@ -16,15 +16,15 @@ export function PremiumFeatureBlock({ title, description, hasAccess, children }:
   }
 
   return (
-    <div className="flex flex-col items-center justify-center p-12 text-center border rounded-lg bg-secondary/20">
-      <div className="w-16 h-16 bg-primary/10 text-primary rounded-full flex items-center justify-center mb-6">
-        <Lock className="w-8 h-8" />
+    <div className="glass-card p-10 text-center">
+      <div className="mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+        <Lock className="h-6 w-6" />
       </div>
-      <h3 className="text-xl font-semibold mb-2">{title}</h3>
-      <p className="text-muted-foreground max-w-md mx-auto mb-8">
+      <h3 className="text-xl font-semibold tracking-tight mb-2">{title}</h3>
+      <p className="text-sm text-muted-foreground max-w-md mx-auto mb-6">
         {description}
       </p>
-      <Button asChild size="lg">
+      <Button asChild size="lg" className="gap-2">
         <Link to="/app/billing">
           Upgrade Plan
         </Link>
