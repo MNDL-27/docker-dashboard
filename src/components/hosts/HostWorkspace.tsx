@@ -2,8 +2,9 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useOrganization } from "@clerk/react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useNavigate, useParams } from "react-router-dom";
-import { Loader2, Terminal } from "lucide-react";
+import { Loader2, Server, Terminal } from "lucide-react";
 
+import { Badge } from "@/components/ui/badge";
 import { AddHostDialog } from "@/components/docker/AddHostDialog";
 import { HostUpgradeDialog } from "@/components/hosts/HostUpgradeDialog";
 import { HostSidebar } from "@/components/hosts/HostSidebar";
@@ -210,8 +211,10 @@ export function HostWorkspace() {
 
       {hosts.length === 0 ? (
         <div className="glass-card p-12 text-center">
-          <Terminal className="h-10 w-10 text-muted-foreground mx-auto mb-4" />
-          <h2 className="text-lg font-semibold mb-2">No Docker hosts connected</h2>
+          <div className="mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+            <Server className="h-7 w-7" />
+          </div>
+          <h2 className="text-xl font-semibold tracking-tight mb-2">No Docker hosts connected</h2>
           <p className="text-sm text-muted-foreground mb-6 max-w-md mx-auto">
             Connect a Docker host via a lightweight agent or Cloudflare Tunnel. No open Docker ports needed.
           </p>
