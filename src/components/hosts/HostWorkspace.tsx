@@ -72,6 +72,11 @@ export function HostWorkspace() {
     return !allowedHostIds.has(hostId);
   }, [allowedHostIds]);
 
+  const atNodeLimit = nodeLimit !== null && hosts.length >= nodeLimit;
+  const addHostDisabledReason = atNodeLimit
+    ? `Your plan allows up to ${nodeLimit} connected host(s). Upgrade to add more.`
+    : undefined;
+
   const filteredHosts = useMemo(() => {
     const query = search.trim().toLowerCase();
     if (!query) return hosts;
@@ -202,7 +207,7 @@ export function HostWorkspace() {
         title="Hosts"
         description={hosts.length > 0 ? `${hosts.length} host(s) configured` : "Connect Docker hosts to monitor"}
         breadcrumbs={[{ label: "Infrastructure" }, { label: "Hosts" }]}
-        actions={currentOrg ? <AddHostDialog orgId={currentOrg.id} /> : undefined}
+        actions={currentOrg ? <AddHostDialog orgId={currentOrg.id} disabledReason={addHostDisabledReason} /> : undefined}
       />
 
       {hosts.length === 0 ? (
@@ -251,6 +256,7 @@ export function HostWorkspace() {
               verificationReason={verificationReason}
               showAgentUpdateCta={showAgentUpdateCta}
               isInfrastructureVisible={isInfrastructureVisible}
+              addHostDisabledReason={addHostDisabledReason}
               onShowSidebar={() => setIsInfrastructureVisible(true)}
               onTest={handleTest}
               onRefreshLiveData={() => void handleRefreshLiveData()}

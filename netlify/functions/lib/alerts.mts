@@ -4,6 +4,7 @@ import { buildValidatedAgentUrl } from './host-url.mjs';
 import type { AppAuthContext } from './auth.mjs';
 import { deliverSlackAlerts } from './slack-delivery.mjs';
 import { deliverAlertWebhooks } from './webhook-destinations.mjs';
+import { enforceOrganizationNodeLimit } from './access-controls.mjs';
 
 type OrgRole = 'owner' | 'admin' | 'member' | 'viewer' | string;
 type AlertSeverity = 'info' | 'warning' | 'error' | 'critical';
@@ -228,11 +229,26 @@ export async function listAlertRules(auth: AppAuthContext) {
 }
 
 async function listAccessibleHosts(auth: AppAuthContext): Promise<DockerHostRow[]> {
+  // Run node-limit enforcement so hosts beyond the org's plan are excluded
+  // from alert evaluation. Without this, locked hosts would still be polled
+  // for `/containers/json?all=true` and would fire spurious `host_offline`
+  // alerts (their status is set to 'disconnected' by enforce itself).
+  const limitState = await enforceOrganizationNodeLimit({
+    organizationId: auth.orgId,
+    isPlatformAdmin: false,
+  });
+
+  if (limitState.allowedHostIds.length === 0) {
+    return [];
+  }
+
   const rows = await sql`
     SELECT h.*
     FROM docker_hosts h
     JOIN organization_members om ON h.organization_id = om.organization_id
-    WHERE h.organization_id = ${auth.orgId} AND om.user_id = ${auth.userId}
+    WHERE h.organization_id = ${auth.orgId}
+      AND om.user_id = ${auth.userId}
+      AND h.id = ANY(${limitState.allowedHostIds})
     ORDER BY h.created_at DESC
   `;
   return rows as DockerHostRow[];

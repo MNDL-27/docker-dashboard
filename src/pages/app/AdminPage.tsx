@@ -3,6 +3,9 @@ import { useOrganization } from "@clerk/react";
 import { PageHeader } from "@/components/shared/PageHeader";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AddHostDialog } from "@/components/docker/AddHostDialog";
+import { useDockerHosts } from "@/hooks/useDocker";
+import { useViewerState } from "@/hooks/useViewerState";
+import { PLAN_POLICY_BY_PLAN, normalizePlan } from "../../../shared/schema/plan-policy";
 
 import { AdminOverview } from "@/components/admin/AdminOverview";
 import { AdminUserManagement } from "@/components/admin/AdminUserManagement";
@@ -19,6 +22,16 @@ type AdminTab = (typeof tabs)[number];
 export default function AdminPage() {
   const [tab, setTab] = useState<AdminTab>("Overview");
   const { organization: currentOrg } = useOrganization();
+  const { data: viewer } = useViewerState();
+  const { data: hosts = [] } = useDockerHosts(currentOrg?.id, { filterByPlan: true });
+  const effectivePlan = viewer?.active_org_effective_plan ?? viewer?.active_org_plan;
+  const normalizedPlan = normalizePlan(effectivePlan);
+  const fallbackNodeLimit = PLAN_POLICY_BY_PLAN[normalizedPlan].nodeLimit;
+  const nodeLimit = viewer?.entitlements ? viewer.entitlements.nodeLimit : fallbackNodeLimit;
+  const atNodeLimit = nodeLimit !== null && hosts.length >= nodeLimit;
+  const addHostDisabledReason = atNodeLimit
+    ? `Your plan allows up to ${nodeLimit} connected host(s). Upgrade to add more.`
+    : undefined;
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -26,7 +39,7 @@ export default function AdminPage() {
         title="Admin"
         description="Internal control plane for platform operations, tenant access, and billing overrides"
         breadcrumbs={[{ label: "Admin" }]}
-        actions={currentOrg ? <AddHostDialog orgId={currentOrg.id} /> : undefined}
+        actions={currentOrg ? <AddHostDialog orgId={currentOrg.id} disabledReason={addHostDisabledReason} /> : undefined}
       />
 
       <Tabs value={tab} onValueChange={(value) => setTab(value as AdminTab)} className="space-y-4">
