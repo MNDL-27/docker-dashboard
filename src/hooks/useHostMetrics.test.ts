@@ -28,7 +28,7 @@ describe("normalizeHostMetricsPoint", () => {
       memory_used: 8000000000,
       memory_limit: 16000000000,
     };
-    const result = normalizeHostMetricsPoint(raw as any);
+    const result = normalizeHostMetricsPoint(raw as unknown as Parameters<typeof normalizeHostMetricsPoint>[0]);
     expect(result).not.toBeNull();
     expect(result?.usedCores).toBe(2);
     expect(result?.totalCores).toBe(4);
@@ -44,7 +44,7 @@ describe("normalizeHostMetricsPoint", () => {
       memoryUsed: 8000000000,
       memoryLimit: 16000000000,
     };
-    expect(normalizeHostMetricsPoint(raw as any)).toBeNull();
+    expect(normalizeHostMetricsPoint(raw as Parameters<typeof normalizeHostMetricsPoint>[0])).toBeNull();
   });
 
   it("clamps out of range values instead of returning null", () => {
@@ -57,7 +57,7 @@ describe("normalizeHostMetricsPoint", () => {
       memoryUsed: 20000000000,
       memoryLimit: 16000000000, // used > limit
     };
-    const result = normalizeHostMetricsPoint(raw as any);
+    const result = normalizeHostMetricsPoint(raw as Parameters<typeof normalizeHostMetricsPoint>[0]);
     expect(result).not.toBeNull();
     expect(result?.cpu).toBe(100);
     expect(result?.memory).toBe(0);
@@ -76,7 +76,7 @@ describe("normalizeHostMetricsPoint", () => {
       memoryLimit: 16000000000,
       networkInBytesPerSec: "", // Should become null, not 0
     };
-    const result = normalizeHostMetricsPoint(raw as any);
+    const result = normalizeHostMetricsPoint(raw as unknown as Parameters<typeof normalizeHostMetricsPoint>[0]);
     expect(result?.networkInBytesPerSec).toBeNull();
   });
 });

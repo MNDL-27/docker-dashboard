@@ -29,6 +29,15 @@ import { useViewerState } from "@/hooks/useViewerState";
 import { PremiumFeatureBlock } from "@/components/shared/PremiumFeatureBlock";
 import type { FileEntry } from "@/services/docker-api";
 
+interface ContainerListItem {
+  Id: string;
+  Names?: string[];
+  State?: string;
+  Image?: string;
+  _hostId?: string;
+  _hostName?: string;
+}
+
 // ── Helpers ──
 
 function getFileIcon(entry: FileEntry) {
@@ -118,7 +127,7 @@ function ContainerSelector({
   selectedHostId,
   onSelect,
 }: {
-  containers: any[];
+  containers: ContainerListItem[];
   selectedContainerId: string | null;
   selectedHostId: string | null;
   onSelect: (containerId: string, hostId: string, containerName: string) => void;
@@ -126,11 +135,11 @@ function ContainerSelector({
   const [searchQuery, setSearchQuery] = useState("");
 
   const filteredContainers = useMemo(() => {
-    const running = containers.filter((c: any) => c.State === "running");
+    const running = containers.filter((c) => c.State === "running");
     if (!searchQuery) return running;
     const q = searchQuery.toLowerCase();
     return running.filter(
-      (c: any) =>
+      (c) =>
         (c.Names?.[0] || "").toLowerCase().includes(q) ||
         (c.Image || "").toLowerCase().includes(q) ||
         (c._hostName || "").toLowerCase().includes(q),
@@ -156,14 +165,14 @@ function ContainerSelector({
               : "No running containers match your search. File browsing requires a running container."}
           </div>
         ) : (
-          filteredContainers.map((c: any) => {
+          filteredContainers.map((c) => {
             const name = (c.Names?.[0] || "").replace(/^\//, "");
             const isSelected = c.Id === selectedContainerId && c._hostId === selectedHostId;
             return (
               <button
                 key={`${c._hostId}-${c.Id}`}
                 type="button"
-                onClick={() => onSelect(c.Id, c._hostId, name)}
+                onClick={() => c._hostId && onSelect(c.Id, c._hostId, name)}
                 className={cn(
                   "flex w-full items-center gap-3 rounded-xl px-4 py-3 text-left transition-all",
                   isSelected
@@ -388,7 +397,7 @@ export default function FileManagerPage() {
               </div>
             ) : (
               <ContainerSelector
-                containers={containers as any[]}
+                containers={(Array.isArray(containers) ? containers : []) as ContainerListItem[]}
                 selectedContainerId={selectedContainerId}
                 selectedHostId={selectedHostId}
                 onSelect={handleSelectContainer}

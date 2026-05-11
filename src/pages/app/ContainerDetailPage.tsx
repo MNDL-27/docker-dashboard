@@ -40,6 +40,46 @@ import { dockerApi } from "@/services/docker-api";
 import { PLAN_POLICY_BY_PLAN, normalizePlan } from "../../../shared/schema/plan-policy";
 import { useToast } from "@/hooks/use-toast";
 
+interface DockerContainerStats {
+  cpu_stats?: {
+    cpu_usage?: { total_usage?: number };
+    system_cpu_usage?: number;
+    online_cpus?: number;
+  };
+  precpu_stats?: {
+    cpu_usage?: { total_usage?: number };
+    system_cpu_usage?: number;
+  };
+  memory_stats?: { usage?: number; limit?: number };
+  networks?: Record<string, { rx_bytes?: number; tx_bytes?: number }>;
+  blkio_stats?: { io_service_bytes_recursive?: Array<{ value?: number }> };
+}
+
+interface DockerContainerInspect {
+  Name?: string;
+  Image?: string;
+  RestartCount?: number;
+  Config?: { Image?: string; Env?: string[]; Labels?: Record<string, string> };
+  HostConfig?: { PortBindings?: Record<string, Array<{ HostIp?: string; HostPort?: string }> | null> };
+  NetworkSettings?: {
+    Networks?: Record<string, { IPAddress?: string }>;
+    Ports?: Record<string, Array<{ HostIp?: string; HostPort?: string }> | null>;
+  };
+  State?: {
+    Status?: string;
+    Health?: { Status?: string };
+    Running?: boolean;
+    Paused?: boolean;
+    StartedAt?: string;
+    RestartCount?: number;
+  };
+}
+
+interface DockerPortBinding {
+  HostIp?: string;
+  HostPort?: string;
+}
+
 function formatBytes(bytes: number) {
   if (!Number.isFinite(bytes) || bytes <= 0) return "0 B";
   const units = ["B", "KB", "MB", "GB", "TB"];
@@ -53,15 +93,15 @@ function formatCount(value: number | string | undefined | null) {
   return Number.isFinite(numeric) ? String(numeric) : "0";
 }
 
-function calcCpuPercent(stats: any) {
+function calcCpuPercent(stats: DockerContainerStats | null | undefined) {
   if (!stats?.cpu_stats || !stats?.precpu_stats) return "0.0";
-  const cpuDelta = stats.cpu_stats.cpu_usage.total_usage - stats.precpu_stats.cpu_usage.total_usage;
-  const sysDelta = stats.cpu_stats.system_cpu_usage - stats.precpu_stats.system_cpu_usage;
+  const cpuDelta = (stats.cpu_stats.cpu_usage?.total_usage ?? 0) - (stats.precpu_stats.cpu_usage?.total_usage ?? 0);
+  const sysDelta = (stats.cpu_stats.system_cpu_usage ?? 0) - (stats.precpu_stats.system_cpu_usage ?? 0);
   const cpus = stats.cpu_stats.online_cpus || 1;
   return sysDelta > 0 ? ((cpuDelta / sysDelta) * cpus * 100).toFixed(1) : "0.0";
 }
 
-function calcNetworkIo(stats: any) {
+function calcNetworkIo(stats: DockerContainerStats | null | undefined) {
   const networks = stats?.networks;
   if (!networks || typeof networks !== "object") {
     return null;
@@ -69,7 +109,7 @@ function calcNetworkIo(stats: any) {
 
   let rx = 0;
   let tx = 0;
-  for (const value of Object.values(networks) as Array<any>) {
+  for (const value of Object.values(networks)) {
     rx += Number(value?.rx_bytes || 0);
     tx += Number(value?.tx_bytes || 0);
   }
@@ -77,7 +117,7 @@ function calcNetworkIo(stats: any) {
   return { rx, tx, total: rx + tx };
 }
 
-function calcBlkioTotal(stats: any) {
+function calcBlkioTotal(stats: DockerContainerStats | null | undefined) {
   const entries = stats?.blkio_stats?.io_service_bytes_recursive;
   if (!Array.isArray(entries)) return null;
 
@@ -89,11 +129,11 @@ function calcBlkioTotal(stats: any) {
   return total > 0 ? total : 0;
 }
 
-function getPrimaryIp(inspect: any) {
+function getPrimaryIp(inspect: DockerContainerInspect | null | undefined) {
   const networks = inspect?.NetworkSettings?.Networks;
   if (!networks || typeof networks !== "object") return null;
 
-  for (const value of Object.values(networks) as Array<any>) {
+  for (const value of Object.values(networks)) {
     if (value?.IPAddress) {
       return value.IPAddress;
     }
@@ -102,7 +142,7 @@ function getPrimaryIp(inspect: any) {
   return null;
 }
 
-function getContainerHealth(state: any) {
+function getContainerHealth(state: DockerContainerInspect["State"] | null | undefined) {
   const healthStatus = state?.Health?.Status;
   if (healthStatus === "healthy") return "healthy";
   if (healthStatus === "unhealthy") return "unhealthy";
@@ -235,8 +275,8 @@ export default function ContainerDetailPage() {
       queryClient.invalidateQueries({ queryKey: ["container-stats", hostId, containerId] });
       queryClient.invalidateQueries({ queryKey: ["containers"] });
       queryClient.invalidateQueries({ queryKey: ["host-containers"] });
-    } catch (error: any) {
-      toast({ title: `${label} failed`, description: error.message, variant: "destructive" });
+    } catch (error) {
+      toast({ title: `${label} failed`, description: error instanceof Error ? error.message : String(error), variant: "destructive" });
     }
 
     setActionLoading(null);
@@ -463,7 +503,7 @@ export default function ContainerDetailPage() {
                         </div>
                       ) : (
                         <div className="grid gap-3 md:grid-cols-2">
-                          {networks.map(([networkName, network]: [string, any]) => (
+                          {networks.map(([networkName, network]: [string, { IPAddress?: string }]) => (
                             <div key={networkName} className="rounded-2xl border border-white/10 bg-background/40 p-4">
                               <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">{networkName}</p>
                               <p className="mt-2 font-mono text-sm">{network?.IPAddress || "-"}</p>
@@ -481,9 +521,9 @@ export default function ContainerDetailPage() {
                         </div>
                       ) : (
                         <div className="space-y-2">
-                          {portBindings.map(([port, bindings]: [string, any]) => (
+                          {portBindings.map(([port, bindings]: [string, DockerPortBinding[] | null | undefined]) => (
                             <div key={port} className="rounded-2xl border border-white/10 bg-background/40 p-4 font-mono text-sm">
-                              {port} - {(bindings || []).map((binding: any) => `${binding.HostIp || "0.0.0.0"}:${binding.HostPort}`).join(", ")}
+                              {port} - {(bindings || []).map((binding) => `${binding.HostIp || "0.0.0.0"}:${binding.HostPort}`).join(", ")}
                             </div>
                           ))}
                         </div>

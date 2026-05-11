@@ -1,4 +1,4 @@
-"// Manual type definitions for tables added via migration
+// Manual type definitions for tables added via migration
 
 export interface Organization {
   id: string;
@@ -206,4 +206,3 @@ export interface SlackDestination {
   updated_at: string;
   latest_attempt?: AlertDeliveryAttempt | null;
 }
-"

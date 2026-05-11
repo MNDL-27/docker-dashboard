@@ -48,8 +48,8 @@ export function AdminNotifications() {
       setLink("");
       setOrganizationId("");
       setReason("");
-    } catch (err: any) {
-      toast.error(err.message || "Failed to create notification");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to create notification");
     }
   };
 
@@ -60,8 +60,8 @@ export function AdminNotifications() {
     try {
       await deleteMutation.mutateAsync({ id, reason: reasonForDeletion });
       toast.success("Notification deleted successfully");
-    } catch (err: any) {
-      toast.error(err.message || "Failed to delete notification");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to delete notification");
     }
   };
 

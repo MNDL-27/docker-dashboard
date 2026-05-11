@@ -88,7 +88,7 @@ describe("security CORS helpers", () => {
 
 describe("distributed security persistence", () => {
   it("uses shared SQL storage for rate limiting windows", async () => {
-    mockedSql.mockImplementation(async (queryParts: any) => {
+    mockedSql.mockImplementation(async (queryParts: TemplateStringsArray) => {
       if (queryParts[0].includes("INSERT INTO public.security_rate_limits")) {
         return [{ count: 1, reset_at_ms: String(60_000) }];
       }
@@ -108,7 +108,7 @@ describe("distributed security persistence", () => {
   it("blocks requests once the shared counter exceeds the configured maximum", async () => {
     vi.useFakeTimers();
     vi.setSystemTime(new Date("2026-04-18T00:00:30.000Z"));
-    mockedSql.mockImplementation(async (queryParts: any) => {
+    mockedSql.mockImplementation(async (queryParts: TemplateStringsArray) => {
       if (queryParts[0].includes("INSERT INTO public.security_rate_limits")) {
         return [{ count: 4, reset_at_ms: String(Date.parse("2026-04-18T00:01:00.000Z")) }];
       }

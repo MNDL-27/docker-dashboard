@@ -27,7 +27,9 @@ export default function OrganizationsPage() {
         await createOrganization({ name: newName.trim() });
         setNewName("");
       }
-    } catch {}
+    } catch {
+      // Surface handled via toast in createOrganization; ignore here.
+    }
   };
 
   if (isLoading) {

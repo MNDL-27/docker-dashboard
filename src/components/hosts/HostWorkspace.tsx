@@ -222,8 +222,10 @@ export function HostWorkspace() {
     : null;
   const liveRefreshPending = containersQuery.isFetching || metricsQuery.isFetching;
 
-  const containers = Array.isArray(containersQuery.data) ? containersQuery.data : [];
-  const runningCount = containers.filter((container: any) => container.State === "running").length;
+  const containers: unknown[] = Array.isArray(containersQuery.data) ? containersQuery.data : [];
+  const runningCount = containers.filter(
+    (container): container is { State?: string } => typeof container === "object" && container !== null && (container as { State?: unknown }).State === "running",
+  ).length;
   const agentUpdateStatus = getWatchtowerAgentUpdateStatus({
     installedVersion: selectedHost?.agent_version ?? null,
     capabilityGap: selectedHostReadable ? missingExtendedMetrics || !!metricsQuery.failure : false,
@@ -271,7 +273,7 @@ export function HostWorkspace() {
           : undefined,
       });
       await refetch();
-    } catch (error: any) {
+    } catch (error) {
       const sanitized = sanitizeConnectionError(error);
       toast({ title: sanitized.title, description: sanitized.description, variant: "destructive" });
     } finally {
@@ -289,8 +291,8 @@ export function HostWorkspace() {
       const remainingHosts = Array.isArray(refreshed.data) ? refreshed.data : [];
       const fallbackHost = remainingHosts.find((host) => host.id !== selectedHost.id) ?? remainingHosts[0] ?? null;
       navigate(fallbackHost ? `/app/hosts/${fallbackHost.id}` : "/app/hosts", { replace: true });
-    } catch (error: any) {
-      toast({ title: "Failed", description: error.message, variant: "destructive" });
+    } catch (error) {
+      toast({ title: "Failed", description: error instanceof Error ? error.message : String(error), variant: "destructive" });
     }
   };
 

@@ -4,11 +4,13 @@ import { HostDetailHeader } from "@/components/hosts/HostDetailHeader";
 import { HostMetricsGrid } from "@/components/hosts/HostMetricsGrid";
 import { normalizeHostStatus } from "@/lib/host-health-state";
 import { sanitizeConnectionError } from "@/lib/error-sanitizer";
+import type { useHostContainers } from "@/hooks/useDocker";
+import type { useHostMetricsHistory } from "@/hooks/useHostMetrics";
 import type { DockerHost } from "@/types/database";
 
 interface SelectedHostViewProps {
   selectedHost: DockerHost;
-  containers: any[];
+  containers: unknown[];
   runningCount: number;
   orgId: string | undefined;
   testing: boolean;
@@ -18,8 +20,8 @@ interface SelectedHostViewProps {
   selectedHostStale: boolean;
   selectedHostReadable: boolean;
   missingExtendedMetrics: boolean;
-  metricsQuery: any;
-  containersQuery: any;
+  metricsQuery: ReturnType<typeof useHostMetricsHistory>;
+  containersQuery: ReturnType<typeof useHostContainers>;
   metricsFailureDisplay: { title: string; description: string } | null;
   metricsErrorMessage: string | null;
   agentUpdateStatus: string;

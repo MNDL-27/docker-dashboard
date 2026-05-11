@@ -133,7 +133,7 @@ export function AddHostDialog({ orgId, trigger, host }: AddHostDialogProps) {
         setCfServiceTokenId(secrets?.cfServiceTokenId ?? "");
         setCfServiceTokenSecret(secrets?.cfServiceTokenSecret ?? "");
       })
-      .catch((error: any) => {
+      .catch((error: unknown) => {
         if (!active) return;
         const sanitized = sanitizeConnectionError(error);
         toast({
@@ -209,7 +209,7 @@ export function AddHostDialog({ orgId, trigger, host }: AddHostDialogProps) {
           setTestError("Docker API did not respond with OK");
           toast({ title: "Host updated but unreachable", description: "Check URL and credentials.", variant: "destructive" });
         }
-      } catch (e: any) {
+      } catch (e) {
         setTestStatus("error");
         const sanitized = sanitizeConnectionError(e);
         setTestError(sanitized.description);
@@ -220,7 +220,7 @@ export function AddHostDialog({ orgId, trigger, host }: AddHostDialogProps) {
         setOpen(false);
         resetForm();
       }, 1500);
-    } catch (error: any) {
+    } catch (error) {
       const sanitized = sanitizeConnectionError(error);
       toast({ title: "Failed to update host", description: sanitized.description, variant: "destructive" });
     }
@@ -254,7 +254,7 @@ export function AddHostDialog({ orgId, trigger, host }: AddHostDialogProps) {
       setEnrollment(response);
       setGuidedError("");
       setStage("guided");
-    } catch (error: any) {
+    } catch (error) {
       const sanitized = sanitizeConnectionError(error);
       setGuidedError(sanitized.description || "Failed to prepare the guided setup command.");
       setStage("form");
@@ -295,7 +295,7 @@ export function AddHostDialog({ orgId, trigger, host }: AddHostDialogProps) {
         setRemediationCommand(result.remediation_command);
         setStage("guided");
       }
-    } catch (error: any) {
+    } catch (error) {
       setTestStatus("error");
       const sanitized = sanitizeConnectionError(error);
       setTestError(sanitized.description || "Connection test failed.");

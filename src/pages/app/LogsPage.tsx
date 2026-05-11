@@ -10,6 +10,12 @@ import { dockerApi } from "@/services/docker-api";
 import { Link } from "react-router-dom";
 import { useViewerState } from "@/hooks/useViewerState";
 
+interface ContainerListItem {
+  Id: string;
+  Names?: string[];
+  State?: string;
+}
+
 export default function LogsPage() {
   const { organization: currentOrg } = useOrganization();
   const { data: hosts = [] } = useDockerHosts(currentOrg?.id, { filterByPlan: true });
@@ -17,7 +23,7 @@ export default function LogsPage() {
   const hasAccess = viewer?.entitlements?.canUseLogs ?? false;
   const [selectedHost, setSelectedHost] = useState<string>("");
   const [selectedContainer, setSelectedContainer] = useState<string>("");
-  const [containers, setContainers] = useState<any[]>([]);
+  const [containers, setContainers] = useState<ContainerListItem[]>([]);
   const [logs, setLogs] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
 
@@ -40,8 +46,8 @@ export default function LogsPage() {
     try {
       const data = await dockerApi.containerLogs(selectedHost, selectedContainer, 300);
       setLogs(data?.logs || []);
-    } catch (e: any) {
-      setLogs([`Error: ${e.message}`]);
+    } catch (e) {
+      setLogs([`Error: ${e instanceof Error ? e.message : String(e)}`]);
     }
     setLoading(false);
   };
@@ -97,9 +103,9 @@ export default function LogsPage() {
                         disabled={!selectedHost}
                       >
                         <option value="">Select container...</option>
-                        {containers.map((c: any) => (
-                          <option key={c.Id} value={c.Id?.substring(0, 12)}>
-                            {(c.Names?.[0] || c.Id?.substring(0, 12)).replace(/^\//, '')} ({c.State})
+                        {containers.map((c) => (
+                          <option key={c.Id} value={c.Id.substring(0, 12)}>
+                            {(c.Names?.[0] ?? c.Id.substring(0, 12)).replace(/^\//, '')} ({c.State})
                           </option>
                         ))}
                       </select>
