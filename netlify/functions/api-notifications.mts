@@ -124,5 +124,5 @@ export default async (req: Request, context: Context) => {
 };
 
 export const config: Config = {
-  path: "/api/notifications/*",
+  path: ["/api/notifications", "/api/notifications/*"],
 };
