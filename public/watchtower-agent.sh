@@ -48,7 +48,7 @@ AGENT_PORT="${AGENT_PORT:-9876}"
 AGENT_BIND_ADDRESS="${AGENT_BIND_ADDRESS:-${AGENT_BIND:-0.0.0.0}}"
 DOCKER_SOCKET="${DOCKER_SOCKET:-/var/run/docker.sock}"
 WATCHTOWER_AGENT_STATE_DIR="${WATCHTOWER_AGENT_STATE_DIR:-/var/lib/watchtower-agent}"
-WATCHTOWER_AGENT_VERSION="${WATCHTOWER_AGENT_VERSION:-1.0.8}"
+WATCHTOWER_AGENT_VERSION="${WATCHTOWER_AGENT_VERSION:-1.0.9}"
 
 if [ "${1:-}" = "--check" ]; then
   check_config
@@ -90,17 +90,41 @@ validate_docker_path() {
     *) return 1 ;;
   esac
 
+  # Split path and query string so `&` and `=` can be used as query separators
+  # without enabling shell-metacharacter injection in the path portion. The
+  # entire URL is later passed to curl as a quoted argument, so neither
+  # portion is eval'd by the shell.
+  local route="${path%%\?*}"
+  local query=""
   case "$path" in
+    *\?*) query="${path#*\?}" ;;
+  esac
+
+  case "$route" in
     *$'\r'*|*$'\n'*|*' '*|*'\t'*|*'\\'*|*'"'*|*"'"*|*'`'*|*';'*|*'|'*|*'&'*|*'<'*|*'>'*|*'('*|*')'*|*'{'*|*'}'*|*'['*|*']'*)
       return 1
       ;;
   esac
 
-  case "$path" in
+  case "$route" in
     *'..'*)
       return 1
       ;;
   esac
+
+  if [ -n "$query" ]; then
+    case "$query" in
+      *$'\r'*|*$'\n'*|*' '*|*'\t'*|*'\\'*|*'"'*|*"'"*|*'`'*|*';'*|*'|'*|*'<'*|*'>'*|*'('*|*')'*|*'{'*|*'}'*|*'['*|*']'*)
+        return 1
+        ;;
+    esac
+
+    case "$query" in
+      *'..'*)
+        return 1
+        ;;
+    esac
+  fi
 
   return 0
 }
