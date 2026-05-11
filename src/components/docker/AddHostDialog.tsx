@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { cloneElement, isValidElement, useEffect, useState, type ReactElement } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -327,21 +327,23 @@ export function AddHostDialog({ orgId, trigger, host, disabledReason }: AddHostD
 
   // Gate when org is at plan limit. Render a disabled placeholder + tooltip so
   // users see why the action is blocked instead of getting a toast after
-  // filling out the form. Editing existing hosts is never gated.
+  // filling out the form. Editing existing hosts is never gated. Reuse the
+  // caller's trigger (or defaultTrigger) so the disabled state keeps the same
+  // size/label as the enabled state.
   if (disabledReason && !isEditing) {
+    const enabledTrigger = trigger ?? defaultTrigger;
+    const disabledTrigger = isValidElement(enabledTrigger)
+      ? cloneElement(enabledTrigger as ReactElement<{ className?: string; disabled?: boolean }>, {
+          disabled: true,
+          className: `${(enabledTrigger as ReactElement<{ className?: string }>).props.className ?? ""} pointer-events-none opacity-60`.trim(),
+        })
+      : enabledTrigger;
+
     return (
       <Tooltip>
         <TooltipTrigger asChild>
           <span tabIndex={0} className="inline-flex" aria-disabled="true">
-            <Button
-              size="sm"
-              className="gap-1.5 pointer-events-none opacity-60"
-              disabled
-              type="button"
-            >
-              <Plus className="h-3.5 w-3.5" />
-              Connect Host
-            </Button>
+            {disabledTrigger}
           </span>
         </TooltipTrigger>
         <TooltipContent>{disabledReason}</TooltipContent>

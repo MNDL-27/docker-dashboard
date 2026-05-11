@@ -235,7 +235,7 @@ async function listAccessibleHosts(auth: AppAuthContext): Promise<DockerHostRow[
   // alerts (their status is set to 'disconnected' by enforce itself).
   const limitState = await enforceOrganizationNodeLimit({
     organizationId: auth.orgId,
-    isPlatformAdmin: false,
+    isPlatformAdmin: auth.isPlatformAdmin,
   });
 
   if (limitState.allowedHostIds.length === 0) {
