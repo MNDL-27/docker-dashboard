@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -94,7 +94,7 @@ export function AddHostDialog({ orgId, trigger, host }: AddHostDialogProps) {
   const updateHost = useUpdateDockerHost();
   const { toast } = useToast();
 
-  const resetForm = useCallback(() => {
+  const resetForm = () => {
     setName(host?.name ?? "");
     setHostUrl(host?.host_url ?? "");
     setMode(host?.connection_mode ?? "agent");
@@ -113,12 +113,14 @@ export function AddHostDialog({ orgId, trigger, host }: AddHostDialogProps) {
     setTestError("");
     setTestMessage("");
     setRemediationCommand(null);
-  }, [host]);
+  };
 
   useEffect(() => {
     if (!open) return;
     resetForm();
-  }, [open, resetForm]);
+    // resetForm closes over `host`; both `open` and `host` are the only inputs that should re-fire this effect.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, host]);
 
   useEffect(() => {
     if (!open || !host) return;

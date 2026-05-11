@@ -27,46 +27,46 @@ import {
 } from "@/lib/agent-release";
 import { PLAN_POLICY_BY_PLAN, normalizePlan } from "../../../shared/schema/plan-policy";
 
-function buildAgentVersionLine(
-  agentVersion: string | null | undefined,
-  agentVersionError: string | null | undefined,
-  resultStatusDescription: string | null,
-  latestVersion: string,
-  updateAvailable: boolean,
-): string {
-  if (agentVersion) {
-    const fallback = updateAvailable ? `Update available: ${latestVersion}.` : `Current release is ${latestVersion}.`;
-    return `Agent ${agentVersion}. ${resultStatusDescription || fallback}`;
+type PingResult = Awaited<ReturnType<typeof dockerApi.ping>>;
+
+function buildAgentVersionLine(result: PingResult, latestVersion: string, statusDescription: string | null): string {
+  const fallback = statusDescription || `Current release is ${latestVersion}.`;
+  if (result.agent_version) {
+    const updateCopy = result.agent_update_available ? `Update available: ${latestVersion}.` : `Current release is ${latestVersion}.`;
+    return `Agent ${result.agent_version}. ${statusDescription || updateCopy}`;
   }
-  const fallback = `Current release is ${latestVersion}.`;
-  const description = resultStatusDescription || fallback;
-  if (agentVersionError) {
-    return `Agent version not reported yet (${agentVersionError}). ${description}`;
+  if (result.agent_version_error) {
+    return `Agent version not reported yet (${result.agent_version_error}). ${fallback}`;
   }
-  return `Agent version not reported yet. ${description}`;
+  return `Agent version not reported yet. ${fallback}`;
 }
 
-function buildPingToastDescription(
-  result: Awaited<ReturnType<typeof dockerApi.ping>>,
-): string | undefined {
+function buildPingToastDescription(result: PingResult): string | undefined {
   if (!result.ok) return undefined;
   const latestVersion = result.latest_agent_version || CURRENT_WATCHTOWER_AGENT_VERSION;
-  const resultStatusCopy =
-    result.agent_update_status
-      ? getWatchtowerAgentUpdateStatusCopy(result.agent_update_status, CURRENT_WATCHTOWER_AGENT_RELEASE)
-      : null;
-  const versionLine = buildAgentVersionLine(
-    result.agent_version,
-    result.agent_version_error,
-    resultStatusCopy?.description ?? null,
-    latestVersion,
-    !!result.agent_update_available,
-  );
+  const statusDescription = result.agent_update_status
+    ? getWatchtowerAgentUpdateStatusCopy(result.agent_update_status, CURRENT_WATCHTOWER_AGENT_RELEASE)?.description ?? null
+    : null;
+  const versionLine = buildAgentVersionLine(result, latestVersion, statusDescription);
   return [`Docker ${result.docker_version || "detected"}.`, versionLine].join(" ");
 }
 
 function isRunningContainer(value: unknown): value is { State?: string } {
   return typeof value === "object" && value !== null && (value as { State?: unknown }).State === "running";
+}
+
+function buildMetricsErrorMessage(failure: HostMetricsFailure | null | undefined): string | null {
+  if (!failure) return null;
+  const parts = [failure.message];
+  if (failure.upstreamStatus) parts.push(`Upstream status: ${failure.upstreamStatus}.`);
+  return parts.filter(Boolean).join(" ");
+}
+
+function resolveAgentUpdateCopy(status: ReturnType<typeof getWatchtowerAgentUpdateStatus>) {
+  return (
+    getWatchtowerAgentUpdateStatusCopy(status, CURRENT_WATCHTOWER_AGENT_RELEASE) ??
+    getWatchtowerAgentUpdateStatusCopy("pending", CURRENT_WATCHTOWER_AGENT_RELEASE)
+  );
 }
 
 function agentVerificationReason(
@@ -254,14 +254,7 @@ export function HostWorkspace() {
   const missingUptimeMetric = !!metricsQuery.latestPoint && metricsQuery.latestPoint.uptimeSeconds === null;
   const missingDiskMetrics = !!metricsQuery.latestPoint && metricsQuery.latestPoint.disks.length === 0;
   const missingExtendedMetrics = missingUptimeMetric || missingDiskMetrics;
-  const metricsErrorMessage = metricsQuery.failure
-    ? [
-        metricsQuery.failure.message,
-        metricsQuery.failure.upstreamStatus ? `Upstream status: ${metricsQuery.failure.upstreamStatus}.` : null,
-      ]
-        .filter(Boolean)
-        .join(" ")
-    : null;
+  const metricsErrorMessage = buildMetricsErrorMessage(metricsQuery.failure);
   const liveRefreshPending = containersQuery.isFetching || metricsQuery.isFetching;
 
   const containers: unknown[] = Array.isArray(containersQuery.data) ? containersQuery.data : [];
@@ -270,9 +263,7 @@ export function HostWorkspace() {
     installedVersion: selectedHost?.agent_version ?? null,
     capabilityGap: selectedHostReadable ? missingExtendedMetrics || !!metricsQuery.failure : false,
   });
-  const agentUpdateStatusCopy =
-    getWatchtowerAgentUpdateStatusCopy(agentUpdateStatus, CURRENT_WATCHTOWER_AGENT_RELEASE)
-    ?? getWatchtowerAgentUpdateStatusCopy("pending", CURRENT_WATCHTOWER_AGENT_RELEASE);
+  const agentUpdateStatusCopy = resolveAgentUpdateCopy(agentUpdateStatus);
   const verificationReason = agentVerificationReason(metricsQuery.failure, missingExtendedMetrics);
   const showAgentUpdateCta = !!selectedHost && agentUpdateStatus !== "current";
 
