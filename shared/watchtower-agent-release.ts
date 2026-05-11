@@ -81,7 +81,7 @@ export interface WatchtowerAgentUpdateCopy {
 
 const WATCHTOWER_AGENT_GITHUB_OWNER = "MNDL-27";
 const WATCHTOWER_AGENT_GITHUB_REPO = "docker-watchtower-dash";
-const WATCHTOWER_AGENT_SOURCE_REF = "8802573793efc4c8dae105b369cd2a6dbebb83b4";
+const WATCHTOWER_AGENT_SOURCE_REF = "29eff6b6b49e4283492a26c0ae473f92170e4655";
 const WATCHTOWER_AGENT_APP_BASE_URL = "https://app.dockerdash.app";
 
 export const CURRENT_WATCHTOWER_AGENT_RELEASE: WatchtowerAgentRelease = {
