@@ -2,6 +2,7 @@ import type { Config } from '@netlify/functions';
 import { sql } from './lib/db.mjs';
 import crypto from 'crypto';
 import { applyRateLimit, RATE_LIMITS, verifyWebhookTimestamp, logSecurityEvent, getClientIp } from './lib/security.mjs';
+import { enforceOrganizationNodeLimit } from './lib/access-controls.mjs';
 
 const PADDLE_WEBHOOK_SECRET = process.env.PADDLE_WEBHOOK_SECRET;
 
@@ -124,6 +125,18 @@ export default async (req: Request) => {
         billing_updated_at = NOW()
       WHERE id = ${organization_id}
     `;
+
+    // Re-evaluate node limit immediately so a downgrade (or cancellation that
+    // flips the org back to 'free') locks excess hosts without waiting for the
+    // next background poll.
+    try {
+      await enforceOrganizationNodeLimit({
+        organizationId: organization_id,
+        isPlatformAdmin: false,
+      });
+    } catch (enforceError) {
+      console.error('Failed to enforce node limit after Paddle webhook update', enforceError);
+    }
 
     return new Response(JSON.stringify({ success: true }), { 
       status: 200,

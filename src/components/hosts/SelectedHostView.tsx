@@ -29,6 +29,7 @@ interface SelectedHostViewProps {
   verificationReason: string | null;
   showAgentUpdateCta: boolean;
   isInfrastructureVisible: boolean;
+  addHostDisabledReason?: string;
   onShowSidebar: () => void;
   onTest: () => void;
   onRefreshLiveData: () => void;
@@ -56,6 +57,7 @@ export function SelectedHostView({
   verificationReason,
   showAgentUpdateCta,
   isInfrastructureVisible,
+  addHostDisabledReason,
   onShowSidebar,
   onTest,
   onRefreshLiveData,
@@ -86,6 +88,7 @@ export function SelectedHostView({
         agentUpdateStatusCopy={agentUpdateStatusCopy}
         verificationReason={verificationReason}
         showAgentUpdateCta={showAgentUpdateCta}
+        addHostDisabledReason={addHostDisabledReason}
         onTest={onTest}
         onRefreshLiveData={onRefreshLiveData}
         onDelete={onDelete}

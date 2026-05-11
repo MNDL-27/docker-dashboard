@@ -175,7 +175,10 @@ export default function OrganizationsPage() {
 }
 
 function OrgCard({ org }: { org: { id: string; name: string; slug: string | null } }) {
-  const { data: hosts = [] } = useDockerHosts(org.id, { filterByPlan: true });
+  // Drop `filterByPlan` here: it would cap the count using the *active* org's
+  // node limit, not the target org's. Each org's host count must reflect that
+  // org's own state, not the viewer's currently-selected org's entitlements.
+  const { data: hosts = [] } = useDockerHosts(org.id);
   const hostCount = hosts.length;
 
   return (

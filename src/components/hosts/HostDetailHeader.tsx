@@ -71,6 +71,7 @@ export interface HostDetailHeaderProps {
   agentUpdateStatusCopy: { title: string; description: string };
   verificationReason: string | null;
   showAgentUpdateCta: boolean;
+  addHostDisabledReason?: string;
   onTest: () => void;
   onRefreshLiveData: () => void;
   onDelete: () => void;
@@ -90,6 +91,7 @@ export function HostDetailHeader({
   agentUpdateStatusCopy,
   verificationReason,
   showAgentUpdateCta,
+  addHostDisabledReason,
   onTest,
   onRefreshLiveData,
   onDelete,
@@ -175,6 +177,7 @@ export function HostDetailHeader({
           {orgId ? (
             <AddHostDialog
               orgId={orgId}
+              disabledReason={addHostDisabledReason}
               trigger={
                 <Button className="gap-2">
                   <Plus className="h-4 w-4" />

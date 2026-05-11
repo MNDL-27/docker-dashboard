@@ -1,8 +1,9 @@
-import { useEffect, useState } from "react";
+import { cloneElement, isValidElement, useEffect, useState, type ReactElement } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { Plus, Loader2, CheckCircle2, XCircle, ShieldCheck, CloudCog, Terminal, Pencil, Eye, EyeOff, Copy, RefreshCw, Wrench } from "lucide-react";
 import { useAddDockerHost, useUpdateDockerHost } from "@/hooks/useDocker";
 import { dockerApi } from "@/services/docker-api";
@@ -16,6 +17,11 @@ interface AddHostDialogProps {
   orgId: string;
   trigger?: React.ReactNode;
   host?: DockerHost | null;
+  /**
+   * When set, the trigger renders disabled and shows this string in a tooltip.
+   * Used to gate "Add host" when the org has reached its plan node limit.
+   */
+  disabledReason?: string;
 }
 
 interface EditableHostSecrets {
@@ -69,7 +75,7 @@ function CommandBlock({
   );
 }
 
-export function AddHostDialog({ orgId, trigger, host }: AddHostDialogProps) {
+export function AddHostDialog({ orgId, trigger, host, disabledReason }: AddHostDialogProps) {
   const isEditing = !!host;
   const [open, setOpen] = useState(false);
   const [stage, setStage] = useState<GuidedStage>("form");
@@ -312,15 +318,43 @@ export function AddHostDialog({ orgId, trigger, host }: AddHostDialogProps) {
 
   const isBusy = addHost.isPending || updateHost.isPending || loadingSecrets || stage === "finalizing";
 
+  const defaultTrigger = (
+    <Button size="sm" className="gap-1.5">
+      {isEditing ? <Pencil className="h-3.5 w-3.5" /> : <Plus className="h-3.5 w-3.5" />}
+      {isEditing ? "Edit Host" : "Connect Host"}
+    </Button>
+  );
+
+  // Gate when org is at plan limit. Render a disabled placeholder + tooltip so
+  // users see why the action is blocked instead of getting a toast after
+  // filling out the form. Editing existing hosts is never gated. Reuse the
+  // caller's trigger (or defaultTrigger) so the disabled state keeps the same
+  // size/label as the enabled state.
+  if (disabledReason && !isEditing) {
+    const enabledTrigger = trigger ?? defaultTrigger;
+    const disabledTrigger = isValidElement(enabledTrigger)
+      ? cloneElement(enabledTrigger as ReactElement<{ className?: string; disabled?: boolean }>, {
+          disabled: true,
+          className: `${(enabledTrigger as ReactElement<{ className?: string }>).props.className ?? ""} pointer-events-none opacity-60`.trim(),
+        })
+      : enabledTrigger;
+
+    return (
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <span tabIndex={0} className="inline-flex" aria-disabled="true">
+            {disabledTrigger}
+          </span>
+        </TooltipTrigger>
+        <TooltipContent>{disabledReason}</TooltipContent>
+      </Tooltip>
+    );
+  }
+
   return (
     <Dialog open={open} onOpenChange={(value) => { setOpen(value); if (!value) resetForm(); }}>
       <DialogTrigger asChild>
-        {trigger || (
-          <Button size="sm" className="gap-1.5">
-            {isEditing ? <Pencil className="h-3.5 w-3.5" /> : <Plus className="h-3.5 w-3.5" />}
-            {isEditing ? "Edit Host" : "Connect Host"}
-          </Button>
-        )}
+        {trigger || defaultTrigger}
       </DialogTrigger>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>

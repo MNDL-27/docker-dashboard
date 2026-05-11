@@ -1,6 +1,7 @@
 import crypto from "crypto";
 
 import { sql } from "./db.mjs";
+import { enforceOrganizationNodeLimit } from "./access-controls.mjs";
 import { requirePlatformAdmin } from "./admin-auth.mjs";
 import { normalizeAdminReason, assertAdminReason, recordAdminAudit } from "./admin-audit.mjs";
 import { extractDnr8Token, parseFiniteNumber, coerceString } from "./donor-billing-helpers.mjs";
@@ -215,6 +216,20 @@ async function extendDonorPremium({
     WHERE id = ${organizationId}
     RETURNING id, donor_premium_expires_at, payment_provider
   `;
+
+  // Re-evaluate node limit so a freshly-extended donor sees previously locked
+  // hosts unlocked immediately (clears HOST_LIMIT_EXCEEDED last_error). Also
+  // protects against future donor-billing changes that reduce entitlement.
+  if (updated) {
+    try {
+      await enforceOrganizationNodeLimit({
+        organizationId,
+        isPlatformAdmin: false,
+      });
+    } catch (enforceError) {
+      console.error('Failed to enforce node limit after donor premium extension', enforceError);
+    }
+  }
 
   return updated ?? null;
 }
