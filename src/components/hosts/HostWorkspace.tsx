@@ -22,6 +22,7 @@ import { getWatchtowerAgentUpdateStatus } from "@/lib/agent-release";
 import { PLAN_POLICY_BY_PLAN, normalizePlan } from "../../../shared/schema/plan-policy";
 import {
   agentVerificationReason,
+  buildAddHostDisabledReason,
   buildMetricsErrorMessage,
   buildPingToastDescription,
   formatHostMetricsFailure,
@@ -72,10 +73,7 @@ export function HostWorkspace() {
     return !allowedHostIds.has(hostId);
   }, [allowedHostIds]);
 
-  const atNodeLimit = nodeLimit !== null && hosts.length >= nodeLimit;
-  const addHostDisabledReason = atNodeLimit
-    ? `Your plan allows up to ${nodeLimit} connected host(s). Upgrade to add more.`
-    : undefined;
+  const addHostDisabledReason = buildAddHostDisabledReason(hosts.length, nodeLimit);
 
   const filteredHosts = useMemo(() => {
     const query = search.trim().toLowerCase();
