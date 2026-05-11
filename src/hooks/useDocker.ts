@@ -2,7 +2,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { dockerApi } from "@/services/docker-api";
 import { apiFetch } from "@/lib/api";
 import type { DockerHost, ConnectionMode } from "@/types/database";
-import { useViewerState } from "@/hooks/useViewerState";
+import { useViewerState, type ViewerState } from "@/hooks/useViewerState";
 import { normalizePlan, PLAN_POLICY_BY_PLAN } from "../../shared/schema/plan-policy";
 
 // ── Shared types & helpers ──────────────────────────────────────────
@@ -34,8 +34,14 @@ function buildHostBody(fields: HostMutationBase) {
   };
 }
 
+/** Subset of the Docker container payload that the proxy annotates with host metadata. */
+interface ContainerHostRef {
+  _hostId?: string;
+  hostId?: string;
+}
+
 /** Resolve effective node limit from viewer entitlements + plan policy (WR-01) */
-function resolveNodeLimit(viewer: any): number | null {
+function resolveNodeLimit(viewer: ViewerState | null | undefined): number | null {
   const entitlements = viewer?.entitlements;
   // When entitlements are loaded, use nodeLimit directly — null means unlimited
   // (enterprise/dedicated plans). Only fall back to plan policy when entitlements
@@ -148,7 +154,7 @@ export function useContainers(orgId?: string | null, hasHosts = true, refetchInt
         if (!prev) return prev;
         const respondingHostIds = new Set<string>(
           containers
-            .map((c: any) => c._hostId || c.hostId)
+            .map((c: ContainerHostRef) => c._hostId || c.hostId)
             .filter(Boolean),
         );
         if (respondingHostIds.size === 0) return prev;

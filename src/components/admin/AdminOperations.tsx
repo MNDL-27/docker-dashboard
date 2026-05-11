@@ -12,7 +12,8 @@ import {
   useAdminOperations,
   useRunAdminSecretMigration,
 } from "@/hooks/useAdmin";
-import { StatusPill, formatDate } from "./AdminShared";
+import { StatusPill } from "./AdminShared";
+import { formatDate } from "./admin-utils";
 
 export function AdminOperations() {
   const { toast } = useToast();

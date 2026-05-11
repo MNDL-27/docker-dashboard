@@ -13,100 +13,21 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { isReadableHostStatus, normalizeHostStatus } from "@/lib/host-health-state";
 import { useDeleteDockerHost, useDockerHosts, useHostContainers } from "@/hooks/useDocker";
-import { HostMetricsFailure, useHostMetricsHistory } from "@/hooks/useHostMetrics";
+import { useHostMetricsHistory } from "@/hooks/useHostMetrics";
 import { useViewerState } from "@/hooks/useViewerState";
 import { useToast } from "@/hooks/use-toast";
 import { dockerApi } from "@/services/docker-api";
-import type { DockerHost } from "@/types/database";
-import { CURRENT_WATCHTOWER_AGENT_VERSION } from "@/lib/agent-version";
 import { sanitizeConnectionError } from "@/lib/error-sanitizer";
-import {
-  CURRENT_WATCHTOWER_AGENT_RELEASE,
-  getWatchtowerAgentUpdateStatus,
-  getWatchtowerAgentUpdateStatusCopy,
-} from "@/lib/agent-release";
+import { getWatchtowerAgentUpdateStatus } from "@/lib/agent-release";
 import { PLAN_POLICY_BY_PLAN, normalizePlan } from "../../../shared/schema/plan-policy";
-
-function agentVerificationReason(
-  failure: HostMetricsFailure | null | undefined,
-  missingExtendedMetrics: boolean,
-): string | null {
-  if (failure?.unsupportedEndpoint) {
-    return "This host agent does not expose /metrics yet. Run Preflight, Update, then Verify.";
-  }
-
-  if (failure?.code === "agent_timeout") {
-    return "The agent responded too slowly. Check the local service, then use Troubleshoot / Repair.";
-  }
-
-  if (failure?.code === "agent_connection_failed") {
-    return "The dashboard could not reach the host agent. Confirm the host URL, tunnel, and local service.";
-  }
-
-  if (failure?.code === "docker_socket_unavailable") {
-    return "The agent is reachable, but it cannot reach Docker. Run Troubleshoot / Repair to restore Docker socket access.";
-  }
-
-  if (failure?.malformedPayload) {
-    return "The host returned a malformed metrics sample. Update the agent, then Verify the local service.";
-  }
-
-  if (missingExtendedMetrics) {
-    return "The current agent version is installed, but uptime and per-disk fields are still missing. Run Verify or Troubleshoot / Repair.";
-  }
-
-  return null;
-}
-
-function formatHostMetricsFailure(
-  failure: HostMetricsFailure | null | undefined,
-  host: DockerHost | null,
-) {
-  if (!failure) return null;
-
-  if (failure.unsupportedEndpoint) {
-    const versionCopy = host?.agent_version
-      ? `Installed agent: ${host.agent_version}. Current release: ${CURRENT_WATCHTOWER_AGENT_VERSION}.`
-      : `Current release: ${CURRENT_WATCHTOWER_AGENT_VERSION}.`;
-    return {
-      title: "Metrics endpoint unavailable",
-      description: `This host agent does not expose /metrics yet. Upgrade the agent and test the connection again. ${versionCopy}`,
-    };
-  }
-
-  if (failure.code === "agent_timeout") {
-    return {
-      title: "Metrics request timed out",
-      description: "The dashboard reached the host agent, but /metrics did not respond before the timeout window.",
-    };
-  }
-
-  if (failure.code === "agent_connection_failed") {
-    return {
-      title: "Metrics connection failed",
-      description: "The dashboard could not reach the host agent metrics endpoint. Check the tunnel, host URL, and agent process.",
-    };
-  }
-
-  if (failure.code === "docker_socket_unavailable") {
-    return {
-      title: "Docker socket inaccessible",
-      description: "The agent is reachable, but the service cannot access Docker. Run Troubleshoot / Repair so systemd grants the agent Docker socket group access.",
-    };
-  }
-
-  if (failure.malformedPayload) {
-    return {
-      title: "Malformed metrics payload",
-      description: "The host agent returned a success response, but the metrics payload was incomplete or invalid.",
-    };
-  }
-
-  return {
-    title: "Host metrics unavailable",
-    description: "The host agent did not return a usable metrics sample.",
-  };
-}
+import {
+  agentVerificationReason,
+  buildMetricsErrorMessage,
+  buildPingToastDescription,
+  formatHostMetricsFailure,
+  isRunningContainer,
+  resolveAgentUpdateCopy,
+} from "./host-workspace-helpers";
 
 export function HostWorkspace() {
   const queryClient = useQueryClient();
@@ -212,25 +133,16 @@ export function HostWorkspace() {
   const missingUptimeMetric = !!metricsQuery.latestPoint && metricsQuery.latestPoint.uptimeSeconds === null;
   const missingDiskMetrics = !!metricsQuery.latestPoint && metricsQuery.latestPoint.disks.length === 0;
   const missingExtendedMetrics = missingUptimeMetric || missingDiskMetrics;
-  const metricsErrorMessage = metricsQuery.failure
-    ? [
-        metricsQuery.failure.message,
-        metricsQuery.failure.upstreamStatus ? `Upstream status: ${metricsQuery.failure.upstreamStatus}.` : null,
-      ]
-        .filter(Boolean)
-        .join(" ")
-    : null;
+  const metricsErrorMessage = buildMetricsErrorMessage(metricsQuery.failure);
   const liveRefreshPending = containersQuery.isFetching || metricsQuery.isFetching;
 
-  const containers = Array.isArray(containersQuery.data) ? containersQuery.data : [];
-  const runningCount = containers.filter((container: any) => container.State === "running").length;
+  const containers: unknown[] = Array.isArray(containersQuery.data) ? containersQuery.data : [];
+  const runningCount = containers.filter(isRunningContainer).length;
   const agentUpdateStatus = getWatchtowerAgentUpdateStatus({
     installedVersion: selectedHost?.agent_version ?? null,
     capabilityGap: selectedHostReadable ? missingExtendedMetrics || !!metricsQuery.failure : false,
   });
-  const agentUpdateStatusCopy =
-    getWatchtowerAgentUpdateStatusCopy(agentUpdateStatus, CURRENT_WATCHTOWER_AGENT_RELEASE)
-    ?? getWatchtowerAgentUpdateStatusCopy("pending", CURRENT_WATCHTOWER_AGENT_RELEASE);
+  const agentUpdateStatusCopy = resolveAgentUpdateCopy(agentUpdateStatus);
   const verificationReason = agentVerificationReason(metricsQuery.failure, missingExtendedMetrics);
   const showAgentUpdateCta = !!selectedHost && agentUpdateStatus !== "current";
 
@@ -252,26 +164,12 @@ export function HostWorkspace() {
     setTesting(true);
     try {
       const result = await dockerApi.ping(selectedHost.id);
-      const latestVersion = result.latest_agent_version || CURRENT_WATCHTOWER_AGENT_VERSION;
-      const resultStatusCopy =
-        result.agent_update_status
-          ? getWatchtowerAgentUpdateStatusCopy(result.agent_update_status, CURRENT_WATCHTOWER_AGENT_RELEASE)
-          : null;
       toast({
         title: result.ok ? "Connection successful" : "Connection failed",
-        description: result.ok
-          ? [
-              `Docker ${result.docker_version || "detected"}.`,
-              result.agent_version
-                ? `Agent ${result.agent_version}. ${resultStatusCopy?.description || (result.agent_update_available ? `Update available: ${latestVersion}.` : `Current release is ${latestVersion}.`)}`
-                : result.agent_version_error
-                  ? `Agent version not reported yet (${result.agent_version_error}). ${resultStatusCopy?.description || `Current release is ${latestVersion}.`}`
-                  : `Agent version not reported yet. ${resultStatusCopy?.description || `Current release is ${latestVersion}.`}`,
-            ].join(" ")
-          : undefined,
+        description: buildPingToastDescription(result),
       });
       await refetch();
-    } catch (error: any) {
+    } catch (error) {
       const sanitized = sanitizeConnectionError(error);
       toast({ title: sanitized.title, description: sanitized.description, variant: "destructive" });
     } finally {
@@ -289,8 +187,8 @@ export function HostWorkspace() {
       const remainingHosts = Array.isArray(refreshed.data) ? refreshed.data : [];
       const fallbackHost = remainingHosts.find((host) => host.id !== selectedHost.id) ?? remainingHosts[0] ?? null;
       navigate(fallbackHost ? `/app/hosts/${fallbackHost.id}` : "/app/hosts", { replace: true });
-    } catch (error: any) {
-      toast({ title: "Failed", description: error.message, variant: "destructive" });
+    } catch (error) {
+      toast({ title: "Failed", description: error instanceof Error ? error.message : String(error), variant: "destructive" });
     }
   };
 

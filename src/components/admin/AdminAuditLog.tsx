@@ -1,6 +1,6 @@
 import { useAdminAuditLog } from "@/hooks/useAdmin";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { formatDate } from "./AdminShared";
+import { formatDate } from "./admin-utils";
 
 export function AdminAuditLog() {
   const auditLogQuery = useAdminAuditLog();

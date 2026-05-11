@@ -40,6 +40,46 @@ import { dockerApi } from "@/services/docker-api";
 import { PLAN_POLICY_BY_PLAN, normalizePlan } from "../../../shared/schema/plan-policy";
 import { useToast } from "@/hooks/use-toast";
 
+interface DockerContainerStats {
+  cpu_stats?: {
+    cpu_usage?: { total_usage?: number };
+    system_cpu_usage?: number;
+    online_cpus?: number;
+  };
+  precpu_stats?: {
+    cpu_usage?: { total_usage?: number };
+    system_cpu_usage?: number;
+  };
+  memory_stats?: { usage?: number; limit?: number };
+  networks?: Record<string, { rx_bytes?: number; tx_bytes?: number }>;
+  blkio_stats?: { io_service_bytes_recursive?: Array<{ value?: number }> };
+}
+
+interface DockerContainerInspect {
+  Name?: string;
+  Image?: string;
+  RestartCount?: number;
+  Config?: { Image?: string; Env?: string[]; Labels?: Record<string, string> };
+  HostConfig?: { PortBindings?: Record<string, Array<{ HostIp?: string; HostPort?: string }> | null> };
+  NetworkSettings?: {
+    Networks?: Record<string, { IPAddress?: string }>;
+    Ports?: Record<string, Array<{ HostIp?: string; HostPort?: string }> | null>;
+  };
+  State?: {
+    Status?: string;
+    Health?: { Status?: string };
+    Running?: boolean;
+    Paused?: boolean;
+    StartedAt?: string;
+    RestartCount?: number;
+  };
+}
+
+interface DockerPortBinding {
+  HostIp?: string;
+  HostPort?: string;
+}
+
 function formatBytes(bytes: number) {
   if (!Number.isFinite(bytes) || bytes <= 0) return "0 B";
   const units = ["B", "KB", "MB", "GB", "TB"];
@@ -53,15 +93,15 @@ function formatCount(value: number | string | undefined | null) {
   return Number.isFinite(numeric) ? String(numeric) : "0";
 }
 
-function calcCpuPercent(stats: any) {
+function calcCpuPercent(stats: DockerContainerStats | null | undefined) {
   if (!stats?.cpu_stats || !stats?.precpu_stats) return "0.0";
-  const cpuDelta = stats.cpu_stats.cpu_usage.total_usage - stats.precpu_stats.cpu_usage.total_usage;
-  const sysDelta = stats.cpu_stats.system_cpu_usage - stats.precpu_stats.system_cpu_usage;
+  const cpuDelta = (stats.cpu_stats.cpu_usage?.total_usage ?? 0) - (stats.precpu_stats.cpu_usage?.total_usage ?? 0);
+  const sysDelta = (stats.cpu_stats.system_cpu_usage ?? 0) - (stats.precpu_stats.system_cpu_usage ?? 0);
   const cpus = stats.cpu_stats.online_cpus || 1;
   return sysDelta > 0 ? ((cpuDelta / sysDelta) * cpus * 100).toFixed(1) : "0.0";
 }
 
-function calcNetworkIo(stats: any) {
+function calcNetworkIo(stats: DockerContainerStats | null | undefined) {
   const networks = stats?.networks;
   if (!networks || typeof networks !== "object") {
     return null;
@@ -69,7 +109,7 @@ function calcNetworkIo(stats: any) {
 
   let rx = 0;
   let tx = 0;
-  for (const value of Object.values(networks) as Array<any>) {
+  for (const value of Object.values(networks)) {
     rx += Number(value?.rx_bytes || 0);
     tx += Number(value?.tx_bytes || 0);
   }
@@ -77,7 +117,7 @@ function calcNetworkIo(stats: any) {
   return { rx, tx, total: rx + tx };
 }
 
-function calcBlkioTotal(stats: any) {
+function calcBlkioTotal(stats: DockerContainerStats | null | undefined) {
   const entries = stats?.blkio_stats?.io_service_bytes_recursive;
   if (!Array.isArray(entries)) return null;
 
@@ -89,11 +129,11 @@ function calcBlkioTotal(stats: any) {
   return total > 0 ? total : 0;
 }
 
-function getPrimaryIp(inspect: any) {
+function getPrimaryIp(inspect: DockerContainerInspect | null | undefined) {
   const networks = inspect?.NetworkSettings?.Networks;
   if (!networks || typeof networks !== "object") return null;
 
-  for (const value of Object.values(networks) as Array<any>) {
+  for (const value of Object.values(networks)) {
     if (value?.IPAddress) {
       return value.IPAddress;
     }
@@ -102,7 +142,7 @@ function getPrimaryIp(inspect: any) {
   return null;
 }
 
-function getContainerHealth(state: any) {
+function getContainerHealth(state: DockerContainerInspect["State"] | null | undefined) {
   const healthStatus = state?.Health?.Status;
   if (healthStatus === "healthy") return "healthy";
   if (healthStatus === "unhealthy") return "unhealthy";
@@ -191,6 +231,62 @@ function ConfigRow({ label, value }: { label: string; value: string }) {
   );
 }
 
+type ContainerAction = "container-start" | "container-stop" | "container-restart";
+
+function getContainerActionFn(action: ContainerAction) {
+  if (action === "container-start") return dockerApi.startContainer;
+  if (action === "container-stop") return dockerApi.stopContainer;
+  return dockerApi.restartContainer;
+}
+
+function getHealthStatusTone(health: string): string {
+  if (health === "healthy" || health === "running") {
+    return "border-success/20 bg-success/10 text-success";
+  }
+  if (health === "unhealthy") {
+    return "border-destructive/20 bg-destructive/10 text-destructive";
+  }
+  return "border-warning/20 bg-warning/10 text-warning";
+}
+
+function HostAccessRestrictedView({
+  nodeLimit,
+  upgradeDialogOpen,
+  setUpgradeDialogOpen,
+}: {
+  nodeLimit: number | null;
+  upgradeDialogOpen: boolean;
+  setUpgradeDialogOpen: (open: boolean) => void;
+}) {
+  return (
+    <div className="space-y-6 animate-fade-in">
+      <PageHeader
+        title="Access Restricted"
+        description="Host limit exceeded"
+        breadcrumbs={[{ label: "Containers", href: "/app/containers" }, { label: "Restricted" }]}
+      />
+      <div className="glass-card p-12 text-center">
+        <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-warning/10">
+          <Lock className="h-6 w-6 text-warning" />
+        </div>
+        <h2 className="text-xl font-semibold mb-2">Host Access Restricted</h2>
+        <p className="text-muted-foreground mb-6 max-w-md mx-auto">
+          This container belongs to a host that exceeds your current plan's node limit ({nodeLimit} node{nodeLimit === 1 ? "" : "s"}).
+        </p>
+        <div className="flex justify-center gap-4">
+          <Button variant="outline" asChild>
+            <Link to="/app/containers">Back to Containers</Link>
+          </Button>
+          <Button onClick={() => setUpgradeDialogOpen(true)}>
+            Upgrade Plan
+          </Button>
+        </div>
+      </div>
+      <HostUpgradeDialog open={upgradeDialogOpen} onOpenChange={setUpgradeDialogOpen} nodeLimit={nodeLimit} />
+    </div>
+  );
+}
+
 export default function ContainerDetailPage() {
   const { id: containerId } = useParams();
   const [searchParams] = useSearchParams();
@@ -216,27 +312,21 @@ export default function ContainerDetailPage() {
   } = useContainerStats(guardedHostId, containerId, 10000);
   const { data: logsData, isLoading: logsLoading, refetch: refetchLogs } = useContainerLogs(guardedHostId, containerId, { tail: 200 });
 
-  const handleAction = async (action: "container-start" | "container-stop" | "container-restart") => {
+  const handleAction = async (action: ContainerAction) => {
     if (!hostId || !containerId) return;
     const label = action.replace("container-", "");
     setActionLoading(label);
 
     try {
-      const fn =
-        action === "container-start"
-          ? dockerApi.startContainer
-          : action === "container-stop"
-            ? dockerApi.stopContainer
-            : dockerApi.restartContainer;
-
+      const fn = getContainerActionFn(action);
       const result = await fn(hostId, containerId);
       toast({ title: result.ok ? `Container ${label}ed` : `${label} failed` });
       queryClient.invalidateQueries({ queryKey: ["container-inspect", hostId, containerId] });
       queryClient.invalidateQueries({ queryKey: ["container-stats", hostId, containerId] });
       queryClient.invalidateQueries({ queryKey: ["containers"] });
       queryClient.invalidateQueries({ queryKey: ["host-containers"] });
-    } catch (error: any) {
-      toast({ title: `${label} failed`, description: error.message, variant: "destructive" });
+    } catch (error) {
+      toast({ title: `${label} failed`, description: error instanceof Error ? error.message : String(error), variant: "destructive" });
     }
 
     setActionLoading(null);
@@ -264,31 +354,11 @@ export default function ContainerDetailPage() {
     const nodeLimit = viewer?.entitlements ? viewer.entitlements.nodeLimit : fallbackNodeLimit;
 
     return (
-      <div className="space-y-6 animate-fade-in">
-        <PageHeader
-          title="Access Restricted"
-          description="Host limit exceeded"
-          breadcrumbs={[{ label: "Containers", href: "/app/containers" }, { label: "Restricted" }]}
-        />
-        <div className="glass-card p-12 text-center">
-          <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-warning/10">
-            <Lock className="h-6 w-6 text-warning" />
-          </div>
-          <h2 className="text-xl font-semibold mb-2">Host Access Restricted</h2>
-          <p className="text-muted-foreground mb-6 max-w-md mx-auto">
-            This container belongs to a host that exceeds your current plan's node limit ({nodeLimit} node{nodeLimit === 1 ? "" : "s"}).
-          </p>
-          <div className="flex justify-center gap-4">
-            <Button variant="outline" asChild>
-              <Link to="/app/containers">Back to Containers</Link>
-            </Button>
-            <Button onClick={() => setUpgradeDialogOpen(true)}>
-              Upgrade Plan
-            </Button>
-          </div>
-        </div>
-        <HostUpgradeDialog open={upgradeDialogOpen} onOpenChange={setUpgradeDialogOpen} nodeLimit={nodeLimit} />
-      </div>
+      <HostAccessRestrictedView
+        nodeLimit={nodeLimit}
+        upgradeDialogOpen={upgradeDialogOpen}
+        setUpgradeDialogOpen={setUpgradeDialogOpen}
+      />
     );
   }
 
@@ -314,12 +384,7 @@ export default function ContainerDetailPage() {
   const health = getContainerHealth(state);
   const networkIo = calcNetworkIo(stats);
   const blkioTotal = calcBlkioTotal(stats);
-  const statusTone =
-    health === "healthy" || health === "running"
-      ? "border-success/20 bg-success/10 text-success"
-      : health === "unhealthy"
-        ? "border-destructive/20 bg-destructive/10 text-destructive"
-        : "border-warning/20 bg-warning/10 text-warning";
+  const statusTone = getHealthStatusTone(health);
 
   const environment = Array.isArray(config.Env) ? config.Env : [];
   const networks = inspect.NetworkSettings?.Networks ? Object.entries(inspect.NetworkSettings.Networks) : [];
@@ -463,7 +528,7 @@ export default function ContainerDetailPage() {
                         </div>
                       ) : (
                         <div className="grid gap-3 md:grid-cols-2">
-                          {networks.map(([networkName, network]: [string, any]) => (
+                          {networks.map(([networkName, network]: [string, { IPAddress?: string }]) => (
                             <div key={networkName} className="rounded-2xl border border-white/10 bg-background/40 p-4">
                               <p className="text-xs uppercase tracking-[0.16em] text-muted-foreground">{networkName}</p>
                               <p className="mt-2 font-mono text-sm">{network?.IPAddress || "-"}</p>
@@ -481,9 +546,9 @@ export default function ContainerDetailPage() {
                         </div>
                       ) : (
                         <div className="space-y-2">
-                          {portBindings.map(([port, bindings]: [string, any]) => (
+                          {portBindings.map(([port, bindings]: [string, DockerPortBinding[] | null | undefined]) => (
                             <div key={port} className="rounded-2xl border border-white/10 bg-background/40 p-4 font-mono text-sm">
-                              {port} - {(bindings || []).map((binding: any) => `${binding.HostIp || "0.0.0.0"}:${binding.HostPort}`).join(", ")}
+                              {port} - {(bindings || []).map((binding) => `${binding.HostIp || "0.0.0.0"}:${binding.HostPort}`).join(", ")}
                             </div>
                           ))}
                         </div>

@@ -12,6 +12,7 @@ import type {
   AdminUserDetail,
   AdminUserRow,
 } from "@/types/admin";
+import type { Notification } from "@/types/database";
 
 export const adminApi = {
   getOverview: async () => apiFetch("/admin/overview") as Promise<AdminOverview>,
@@ -76,7 +77,7 @@ export const adminApi = {
   resendDonorEmailDelivery: async (deliveryId: string, reason: string) =>
     apiFetch(`/admin/billing/email-deliveries/${deliveryId}/resend`, { method: "POST", body: { reason } }),
   getNotifications: async () => {
-    const response = await apiFetch("/admin/notifications") as { notifications: any[] };
+    const response = await apiFetch("/admin/notifications") as { notifications: Notification[] };
     return response.notifications;
   },
   createNotification: async (values: { title: string; message: string; type?: string; organizationId?: string | null; link?: string | null; expiresAt?: string | null; reason: string }) =>

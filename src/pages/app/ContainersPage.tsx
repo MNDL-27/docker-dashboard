@@ -32,6 +32,28 @@ import { PLAN_POLICY_BY_PLAN, normalizePlan } from "../../../shared/schema/plan-
 
 type BadgeStatus = "running" | "unhealthy" | "exited" | "restarting" | "paused" | "critical" | "warning";
 
+interface ContainerListItem {
+  Id: string;
+  Names?: string[];
+  Image?: string;
+  State?: string;
+  Status?: string;
+  Created?: number;
+  RestartCount?: number;
+  HostConfig?: { RestartPolicy?: { MaximumRetryCount?: number } };
+  _hostId?: string;
+  _hostName?: string;
+}
+
+interface ContainerStatsItem {
+  containerId: string;
+  cpu_percent: number;
+  memory_usage: number;
+  memory_limit: number;
+  net_rx: number;
+  net_tx: number;
+}
+
 const STATE_TABS = [
   { key: "all", label: "All" },
   { key: "running", label: "Running" },
@@ -198,11 +220,14 @@ export default function ContainersPage() {
   const [imageFilter, setImageFilter] = useState("");
   const [actionLoading, setActionLoading] = useState<string | null>(null);
 
-  const containers: any[] = useMemo(() => (Array.isArray(rawContainers) ? rawContainers : []), [rawContainers]);
+  const containers: ContainerListItem[] = useMemo(
+    () => (Array.isArray(rawContainers) ? (rawContainers as ContainerListItem[]) : []),
+    [rawContainers],
+  );
 
   const uniqueHosts = useMemo(() => {
     const map = new Map<string, string>();
-    containers.forEach((c: any) => {
+    containers.forEach((c) => {
       if (c._hostId && c._hostName) map.set(c._hostId, c._hostName);
     });
     return Array.from(map.entries());
@@ -210,13 +235,13 @@ export default function ContainersPage() {
 
   const uniqueImages = useMemo(() => {
     const set = new Set<string>();
-    containers.forEach((c: any) => c.Image && set.add(c.Image));
+    containers.forEach((c) => c.Image && set.add(c.Image));
     return Array.from(set).sort();
   }, [containers]);
 
   const statsMap = useMemo(() => {
-    const map = new Map<string, any>();
-    if (Array.isArray(rawStats)) rawStats.forEach((s: any) => map.set(s.containerId, s));
+    const map = new Map<string, ContainerStatsItem>();
+    if (Array.isArray(rawStats)) (rawStats as ContainerStatsItem[]).forEach((s) => map.set(s.containerId, s));
     return map;
   }, [rawStats]);
 
@@ -224,7 +249,7 @@ export default function ContainersPage() {
     let running = 0;
     let unhealthy = 0;
     let restarting = 0;
-    containers.forEach((c: any) => {
+    containers.forEach((c) => {
       if (c.State === "running") running++;
       const status = (c.Status || "").toLowerCase();
       if (status.includes("unhealthy") || c.State === "unhealthy") unhealthy++;
@@ -265,7 +290,7 @@ export default function ContainersPage() {
   }, [fleetMetricsLoading, latestFleetMetrics]);
 
   const filtered = useMemo(() => {
-    return containers.filter((c: any) => {
+    return containers.filter((c) => {
       const name = (c.Names?.[0] || "").replace(/^\//, "").toLowerCase();
       const image = (c.Image || "").toLowerCase();
       const hostName = (c._hostName || "").toLowerCase();
@@ -403,7 +428,7 @@ export default function ContainersPage() {
               <div className="flex items-center gap-1 rounded-full border border-white/10 bg-background/35 p-1">
                 {STATE_TABS.map((tab) => {
                   const isActive = stateTab === tab.key;
-                  const count = tab.key === "all" ? containers.length : tab.key === "unhealthy" ? kpi.unhealthy : tab.key === "running" ? kpi.running : tab.key === "restarting" ? kpi.restarting : containers.filter((c: any) => c.State === tab.key).length;
+                  const count = tab.key === "all" ? containers.length : tab.key === "unhealthy" ? kpi.unhealthy : tab.key === "running" ? kpi.running : tab.key === "restarting" ? kpi.restarting : containers.filter((c) => c.State === tab.key).length;
                   return (
                     <button
                       key={tab.key}
@@ -470,7 +495,7 @@ export default function ContainersPage() {
               </TableRow>
             ) : null}
 
-            {filtered.map((c: any) => {
+            {filtered.map((c) => {
               const name = (c.Names?.[0] || c.Id?.substring(0, 12) || "unknown").replace(/^\//, "");
               const health = (c.Status || "").toLowerCase().includes("unhealthy") ? "unhealthy" : undefined;
               const badge = mapState(c.State, health);

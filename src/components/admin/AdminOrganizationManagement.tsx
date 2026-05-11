@@ -11,7 +11,8 @@ import {
   useUnlockAdminOrganization,
   useResetAdminOnboarding,
 } from "@/hooks/useAdmin";
-import { StatusPill, DetailField, formatDate, filterByQuery, AdminActionDialog } from "./AdminShared";
+import { StatusPill, DetailField, AdminActionDialog } from "./AdminShared";
+import { formatDate, filterByQuery } from "./admin-utils";
 import type { AdminOrganizationRow } from "@/types/admin";
 
 export function AdminOrganizationManagement() {

@@ -59,7 +59,7 @@ function SummaryCard({ label, value, helper, icon: Icon }: { label: string; valu
 
 export interface HostDetailHeaderProps {
   selectedHost: DockerHost;
-  containers: any[];
+  containers: unknown[];
   runningCount: number;
   orgId: string | undefined;
   testing: boolean;
