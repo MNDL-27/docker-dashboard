@@ -17,7 +17,8 @@ import {
   useHardEnableAdminUser,
   useAddAdminOrgBan,
 } from "@/hooks/useAdmin";
-import { StatusPill, DetailField, formatDate, filterByQuery, AdminActionDialog } from "./AdminShared";
+import { StatusPill, DetailField, AdminActionDialog } from "./AdminShared";
+import { formatDate, filterByQuery } from "./admin-utils";
 import type { AdminUserRow } from "@/types/admin";
 
 export function AdminUserManagement() {

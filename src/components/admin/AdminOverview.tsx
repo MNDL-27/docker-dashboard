@@ -2,7 +2,8 @@ import { Loader2, Building2, Users, Server, UserX, Lock, AlertTriangle } from "l
 import { MetricCard } from "@/components/shared/MetricCard";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useAdminOverview } from "@/hooks/useAdmin";
-import { StatusPill, formatDate } from "./AdminShared";
+import { StatusPill } from "./AdminShared";
+import { formatDate } from "./admin-utils";
 
 export function AdminOverview() {
   const overviewQuery = useAdminOverview();

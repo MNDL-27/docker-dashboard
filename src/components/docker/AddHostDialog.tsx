@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -94,7 +94,7 @@ export function AddHostDialog({ orgId, trigger, host }: AddHostDialogProps) {
   const updateHost = useUpdateDockerHost();
   const { toast } = useToast();
 
-  const resetForm = () => {
+  const resetForm = useCallback(() => {
     setName(host?.name ?? "");
     setHostUrl(host?.host_url ?? "");
     setMode(host?.connection_mode ?? "agent");
@@ -113,12 +113,12 @@ export function AddHostDialog({ orgId, trigger, host }: AddHostDialogProps) {
     setTestError("");
     setTestMessage("");
     setRemediationCommand(null);
-  };
+  }, [host]);
 
   useEffect(() => {
     if (!open) return;
     resetForm();
-  }, [open, host]);
+  }, [open, resetForm]);
 
   useEffect(() => {
     if (!open || !host) return;

@@ -231,6 +231,62 @@ function ConfigRow({ label, value }: { label: string; value: string }) {
   );
 }
 
+type ContainerAction = "container-start" | "container-stop" | "container-restart";
+
+function getContainerActionFn(action: ContainerAction) {
+  if (action === "container-start") return dockerApi.startContainer;
+  if (action === "container-stop") return dockerApi.stopContainer;
+  return dockerApi.restartContainer;
+}
+
+function getHealthStatusTone(health: string): string {
+  if (health === "healthy" || health === "running") {
+    return "border-success/20 bg-success/10 text-success";
+  }
+  if (health === "unhealthy") {
+    return "border-destructive/20 bg-destructive/10 text-destructive";
+  }
+  return "border-warning/20 bg-warning/10 text-warning";
+}
+
+function HostAccessRestrictedView({
+  nodeLimit,
+  upgradeDialogOpen,
+  setUpgradeDialogOpen,
+}: {
+  nodeLimit: number | null;
+  upgradeDialogOpen: boolean;
+  setUpgradeDialogOpen: (open: boolean) => void;
+}) {
+  return (
+    <div className="space-y-6 animate-fade-in">
+      <PageHeader
+        title="Access Restricted"
+        description="Host limit exceeded"
+        breadcrumbs={[{ label: "Containers", href: "/app/containers" }, { label: "Restricted" }]}
+      />
+      <div className="glass-card p-12 text-center">
+        <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-warning/10">
+          <Lock className="h-6 w-6 text-warning" />
+        </div>
+        <h2 className="text-xl font-semibold mb-2">Host Access Restricted</h2>
+        <p className="text-muted-foreground mb-6 max-w-md mx-auto">
+          This container belongs to a host that exceeds your current plan's node limit ({nodeLimit} node{nodeLimit === 1 ? "" : "s"}).
+        </p>
+        <div className="flex justify-center gap-4">
+          <Button variant="outline" asChild>
+            <Link to="/app/containers">Back to Containers</Link>
+          </Button>
+          <Button onClick={() => setUpgradeDialogOpen(true)}>
+            Upgrade Plan
+          </Button>
+        </div>
+      </div>
+      <HostUpgradeDialog open={upgradeDialogOpen} onOpenChange={setUpgradeDialogOpen} nodeLimit={nodeLimit} />
+    </div>
+  );
+}
+
 export default function ContainerDetailPage() {
   const { id: containerId } = useParams();
   const [searchParams] = useSearchParams();
@@ -256,19 +312,13 @@ export default function ContainerDetailPage() {
   } = useContainerStats(guardedHostId, containerId, 10000);
   const { data: logsData, isLoading: logsLoading, refetch: refetchLogs } = useContainerLogs(guardedHostId, containerId, { tail: 200 });
 
-  const handleAction = async (action: "container-start" | "container-stop" | "container-restart") => {
+  const handleAction = async (action: ContainerAction) => {
     if (!hostId || !containerId) return;
     const label = action.replace("container-", "");
     setActionLoading(label);
 
     try {
-      const fn =
-        action === "container-start"
-          ? dockerApi.startContainer
-          : action === "container-stop"
-            ? dockerApi.stopContainer
-            : dockerApi.restartContainer;
-
+      const fn = getContainerActionFn(action);
       const result = await fn(hostId, containerId);
       toast({ title: result.ok ? `Container ${label}ed` : `${label} failed` });
       queryClient.invalidateQueries({ queryKey: ["container-inspect", hostId, containerId] });
@@ -304,31 +354,11 @@ export default function ContainerDetailPage() {
     const nodeLimit = viewer?.entitlements ? viewer.entitlements.nodeLimit : fallbackNodeLimit;
 
     return (
-      <div className="space-y-6 animate-fade-in">
-        <PageHeader
-          title="Access Restricted"
-          description="Host limit exceeded"
-          breadcrumbs={[{ label: "Containers", href: "/app/containers" }, { label: "Restricted" }]}
-        />
-        <div className="glass-card p-12 text-center">
-          <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-warning/10">
-            <Lock className="h-6 w-6 text-warning" />
-          </div>
-          <h2 className="text-xl font-semibold mb-2">Host Access Restricted</h2>
-          <p className="text-muted-foreground mb-6 max-w-md mx-auto">
-            This container belongs to a host that exceeds your current plan's node limit ({nodeLimit} node{nodeLimit === 1 ? "" : "s"}).
-          </p>
-          <div className="flex justify-center gap-4">
-            <Button variant="outline" asChild>
-              <Link to="/app/containers">Back to Containers</Link>
-            </Button>
-            <Button onClick={() => setUpgradeDialogOpen(true)}>
-              Upgrade Plan
-            </Button>
-          </div>
-        </div>
-        <HostUpgradeDialog open={upgradeDialogOpen} onOpenChange={setUpgradeDialogOpen} nodeLimit={nodeLimit} />
-      </div>
+      <HostAccessRestrictedView
+        nodeLimit={nodeLimit}
+        upgradeDialogOpen={upgradeDialogOpen}
+        setUpgradeDialogOpen={setUpgradeDialogOpen}
+      />
     );
   }
 
@@ -354,12 +384,7 @@ export default function ContainerDetailPage() {
   const health = getContainerHealth(state);
   const networkIo = calcNetworkIo(stats);
   const blkioTotal = calcBlkioTotal(stats);
-  const statusTone =
-    health === "healthy" || health === "running"
-      ? "border-success/20 bg-success/10 text-success"
-      : health === "unhealthy"
-        ? "border-destructive/20 bg-destructive/10 text-destructive"
-        : "border-warning/20 bg-warning/10 text-warning";
+  const statusTone = getHealthStatusTone(health);
 
   const environment = Array.isArray(config.Env) ? config.Env : [];
   const networks = inspect.NetworkSettings?.Networks ? Object.entries(inspect.NetworkSettings.Networks) : [];

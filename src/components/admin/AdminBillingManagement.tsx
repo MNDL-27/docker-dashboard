@@ -16,7 +16,8 @@ import {
   useAdminDonorEmailDelivery,
   useAdminResendDonorEmailDelivery,
 } from "@/hooks/useAdmin";
-import { DetailField, StatusPill, formatDate } from "./AdminShared";
+import { DetailField, StatusPill } from "./AdminShared";
+import { formatDate } from "./admin-utils";
 import type { AdminBillingEvent, AdminBillingUpdate, AdminDonorEmailDelivery } from "@/types/admin";
 
 export function AdminBillingManagement() {

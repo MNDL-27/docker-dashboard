@@ -146,37 +146,38 @@ export function FleetResourceChart({
   const [chartData, setChartData] = useState<FleetMetrics[]>([]);
   const { data: newData, isLoading, error } = useFleetMetrics(orgId, refetchInterval);
 
-       // Initialize with some data points if empty (only once)
-   useEffect(() => {
-     if (chartData.length === 0 && orgId) {
-       const now = new Date();
-       const initialData: FleetMetrics[] = [];
-        for (let i = maxDataPoints - 1; i >= 0; i--) {
-          const date = new Date(now.getTime() - i * 60000);
-          const t = date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false });
-          const cpu = Math.max(0, Math.min(100, 30 + Math.random() * 20));
-          const memory = Math.max(0, Math.min(100, 45 + Math.random() * 20));
-         // Mock data for new fields: assume 4 cores and 8GB memory for initial mock
-          const totalCoresMock = 4;
-          const memoryLimitMock = 8 * 1024 * 1024 * 1024; // 8GB in bytes
-           initialData.push({
-             timestamp: date.getTime(),
-             time: t,
-             cpu: cpu,
-             memory: memory,
-             usedCores: (cpu / 100) * totalCoresMock,
-             totalCores: totalCoresMock,
-            memoryUsed: (memory / 100) * memoryLimitMock,
-            memoryLimit: memoryLimitMock,
-            networkInBytesPerSec: null,
-            networkOutBytesPerSec: null,
-            diskReadBytesPerSec: null,
-            diskWriteBytesPerSec: null,
-          });
-        }
-        setChartData(initialData);
+  // Bootstrap with mocked points if empty. Uses functional setState so chartData isn't a dep
+  // (the effect must only re-run on orgId/maxDataPoints, not after the bootstrap mutates state).
+  useEffect(() => {
+    setChartData((current) => {
+      if (current.length > 0 || !orgId) return current;
+      const now = new Date();
+      const initialData: FleetMetrics[] = [];
+      for (let i = maxDataPoints - 1; i >= 0; i--) {
+        const date = new Date(now.getTime() - i * 60000);
+        const t = date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false });
+        const cpu = Math.max(0, Math.min(100, 30 + Math.random() * 20));
+        const memory = Math.max(0, Math.min(100, 45 + Math.random() * 20));
+        const totalCoresMock = 4;
+        const memoryLimitMock = 8 * 1024 * 1024 * 1024;
+        initialData.push({
+          timestamp: date.getTime(),
+          time: t,
+          cpu: cpu,
+          memory: memory,
+          usedCores: (cpu / 100) * totalCoresMock,
+          totalCores: totalCoresMock,
+          memoryUsed: (memory / 100) * memoryLimitMock,
+          memoryLimit: memoryLimitMock,
+          networkInBytesPerSec: null,
+          networkOutBytesPerSec: null,
+          diskReadBytesPerSec: null,
+          diskWriteBytesPerSec: null,
+        });
       }
-    }, [orgId, maxDataPoints]);
+      return initialData;
+    });
+  }, [orgId, maxDataPoints]);
 
   // Update with new data points as they come in
   useEffect(() => {

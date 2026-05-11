@@ -27,6 +27,48 @@ import {
 } from "@/lib/agent-release";
 import { PLAN_POLICY_BY_PLAN, normalizePlan } from "../../../shared/schema/plan-policy";
 
+function buildAgentVersionLine(
+  agentVersion: string | null | undefined,
+  agentVersionError: string | null | undefined,
+  resultStatusDescription: string | null,
+  latestVersion: string,
+  updateAvailable: boolean,
+): string {
+  if (agentVersion) {
+    const fallback = updateAvailable ? `Update available: ${latestVersion}.` : `Current release is ${latestVersion}.`;
+    return `Agent ${agentVersion}. ${resultStatusDescription || fallback}`;
+  }
+  const fallback = `Current release is ${latestVersion}.`;
+  const description = resultStatusDescription || fallback;
+  if (agentVersionError) {
+    return `Agent version not reported yet (${agentVersionError}). ${description}`;
+  }
+  return `Agent version not reported yet. ${description}`;
+}
+
+function buildPingToastDescription(
+  result: Awaited<ReturnType<typeof dockerApi.ping>>,
+): string | undefined {
+  if (!result.ok) return undefined;
+  const latestVersion = result.latest_agent_version || CURRENT_WATCHTOWER_AGENT_VERSION;
+  const resultStatusCopy =
+    result.agent_update_status
+      ? getWatchtowerAgentUpdateStatusCopy(result.agent_update_status, CURRENT_WATCHTOWER_AGENT_RELEASE)
+      : null;
+  const versionLine = buildAgentVersionLine(
+    result.agent_version,
+    result.agent_version_error,
+    resultStatusCopy?.description ?? null,
+    latestVersion,
+    !!result.agent_update_available,
+  );
+  return [`Docker ${result.docker_version || "detected"}.`, versionLine].join(" ");
+}
+
+function isRunningContainer(value: unknown): value is { State?: string } {
+  return typeof value === "object" && value !== null && (value as { State?: unknown }).State === "running";
+}
+
 function agentVerificationReason(
   failure: HostMetricsFailure | null | undefined,
   missingExtendedMetrics: boolean,
@@ -223,9 +265,7 @@ export function HostWorkspace() {
   const liveRefreshPending = containersQuery.isFetching || metricsQuery.isFetching;
 
   const containers: unknown[] = Array.isArray(containersQuery.data) ? containersQuery.data : [];
-  const runningCount = containers.filter(
-    (container): container is { State?: string } => typeof container === "object" && container !== null && (container as { State?: unknown }).State === "running",
-  ).length;
+  const runningCount = containers.filter(isRunningContainer).length;
   const agentUpdateStatus = getWatchtowerAgentUpdateStatus({
     installedVersion: selectedHost?.agent_version ?? null,
     capabilityGap: selectedHostReadable ? missingExtendedMetrics || !!metricsQuery.failure : false,
@@ -254,23 +294,9 @@ export function HostWorkspace() {
     setTesting(true);
     try {
       const result = await dockerApi.ping(selectedHost.id);
-      const latestVersion = result.latest_agent_version || CURRENT_WATCHTOWER_AGENT_VERSION;
-      const resultStatusCopy =
-        result.agent_update_status
-          ? getWatchtowerAgentUpdateStatusCopy(result.agent_update_status, CURRENT_WATCHTOWER_AGENT_RELEASE)
-          : null;
       toast({
         title: result.ok ? "Connection successful" : "Connection failed",
-        description: result.ok
-          ? [
-              `Docker ${result.docker_version || "detected"}.`,
-              result.agent_version
-                ? `Agent ${result.agent_version}. ${resultStatusCopy?.description || (result.agent_update_available ? `Update available: ${latestVersion}.` : `Current release is ${latestVersion}.`)}`
-                : result.agent_version_error
-                  ? `Agent version not reported yet (${result.agent_version_error}). ${resultStatusCopy?.description || `Current release is ${latestVersion}.`}`
-                  : `Agent version not reported yet. ${resultStatusCopy?.description || `Current release is ${latestVersion}.`}`,
-            ].join(" ")
-          : undefined,
+        description: buildPingToastDescription(result),
       });
       await refetch();
     } catch (error) {

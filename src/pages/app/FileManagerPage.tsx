@@ -323,7 +323,7 @@ export default function FileManagerPage() {
     refetch: refetchDir,
   } = useContainerFileList(selectedHostId, selectedContainerId, currentPath);
 
-  const entries = dirData?.entries ?? [];
+  const entries = useMemo(() => dirData?.entries ?? [], [dirData]);
   const filteredEntries = useMemo(() => {
     if (!filterQuery) return entries;
     const q = filterQuery.toLowerCase();

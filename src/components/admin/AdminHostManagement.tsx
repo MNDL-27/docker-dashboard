@@ -11,7 +11,8 @@ import {
   useUnquarantineAdminHost,
   useMarkAdminHostNeedsReconnect,
 } from "@/hooks/useAdmin";
-import { StatusPill, formatDate, filterByQuery, AdminActionDialog } from "./AdminShared";
+import { StatusPill, AdminActionDialog } from "./AdminShared";
+import { formatDate, filterByQuery } from "./admin-utils";
 import type { AdminHostRow } from "@/types/admin";
 import { normalizeHostStatus } from "@/lib/host-health-state";
 
