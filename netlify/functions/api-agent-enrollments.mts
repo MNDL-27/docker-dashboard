@@ -68,13 +68,25 @@ function trimOrDefault(value: unknown, fallback: string) {
 
 async function requireOrgAdmin(organizationId: string, userId: string, isPlatformAdmin: boolean) {
   await assertOrganizationWriteAllowed({ organizationId, isPlatformAdmin });
+  if (isPlatformAdmin) return true;
 
   const members = await sql`
     SELECT role FROM organization_members
     WHERE organization_id = ${organizationId} AND user_id = ${userId}
   `;
 
-  return members.length > 0 && ["owner", "admin"].includes(members[0].role);
+  if (members.length > 0 && ["owner", "admin"].includes(members[0].role)) {
+    return true;
+  }
+
+  // Fallback: during onboarding the membership row may not have synced from Clerk yet.
+  // If the user created the org, treat them as an admin.
+  const org = await sql`
+    SELECT created_by FROM organizations
+    WHERE id = ${organizationId}
+  `;
+
+  return org.length > 0 && org[0].created_by === userId;
 }
 
 function buildAgentHeaders(options: {

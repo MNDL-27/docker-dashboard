@@ -30,17 +30,25 @@ export default async (req: Request) => {
         organizationId: targetOrgId,
         isPlatformAdmin: auth.isPlatformAdmin,
       });
+      if (auth.isPlatformAdmin) return true;
 
       const members = await sql`
         SELECT role FROM organization_members
         WHERE organization_id = ${targetOrgId} AND user_id = ${auth.userId}
       `;
 
-      if (members.length === 0 || !['owner', 'admin'].includes(members[0].role)) {
-        return false;
+      if (members.length > 0 && ['owner', 'admin'].includes(members[0].role)) {
+        return true;
       }
 
-      return true;
+      // Fallback: during onboarding the membership row may not have synced from Clerk yet.
+      // If the user created the org, treat them as an admin.
+      const org = await sql`
+        SELECT created_by FROM organizations
+        WHERE id = ${targetOrgId}
+      `;
+
+      return org.length > 0 && org[0].created_by === auth.userId;
     }
 
     if (req.method === 'GET') {
