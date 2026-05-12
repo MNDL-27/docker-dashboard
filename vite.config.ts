@@ -16,7 +16,7 @@ export default defineConfig(({ mode }) => ({
     react(),
     VitePWA({
       registerType: "autoUpdate",
-      includeAssets: ["favicon.ico", "apple-touch-icon.png", "pwa-icon.svg"],
+      includeAssets: ["favicon.ico", "apple-touch-icon.png"],
       manifest: {
         name: "DockerDash — Fleet Monitoring for Self-Hosted Docker",
         short_name: "DockerDash",
@@ -50,7 +50,7 @@ export default defineConfig(({ mode }) => ({
         globPatterns: ["**/*.{js,css,html,ico,png,svg,woff2}"],
         runtimeCaching: [
           {
-            urlPattern: /^\/api\//,
+            urlPattern: /\/api\//,
             handler: "NetworkFirst",
             options: {
               cacheName: "api-cache",
