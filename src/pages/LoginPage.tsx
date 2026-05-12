@@ -4,7 +4,7 @@ import { LogoLink } from "@/components/shared/LogoLink";
 import { Box, Server, Shield, Activity } from "lucide-react";
 import { LoginBackground } from "@/components/ui/LoginBackground";
 import { SEO } from "@/components/shared/SEO";
-import { useEffect } from "react";
+import { useEffect, useMemo } from "react";
 import { getSafeNextPath } from "@/lib/auth-redirect";
 
 const features = [
@@ -15,7 +15,8 @@ const features = [
 
 export default function LoginPage() {
   const [searchParams] = useSearchParams();
-  const nextPath = getSafeNextPath(searchParams.get("next"), "/app");
+  const nextParam = searchParams.get("next");
+  const nextPath = useMemo(() => getSafeNextPath(nextParam, "/app"), [nextParam]);
 
   useEffect(() => {
     const plan = searchParams.get("plan");
@@ -86,8 +87,7 @@ export default function LoginPage() {
         <div className="w-full max-w-[400px]">
           {/* We rely entirely on Clerk for Auth to not break existing flow or sign-up states. */}
           <SignIn 
-            routing="path" 
-            path="/login" 
+            routing="hash" 
             signUpUrl="/sign-up"
             forceRedirectUrl={nextPath}
             fallbackRedirectUrl={nextPath} 
