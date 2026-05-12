@@ -6,6 +6,7 @@ import { Box, Server, Shield, Activity } from "lucide-react";
 import { LoginBackground } from "@/components/ui/LoginBackground";
 import { getSafeNextPath } from "@/lib/auth-redirect";
 import { SEO } from "@/components/shared/SEO";
+import { useMemo } from "react";
 
 const features = [
   { icon: Server, title: "Multi-Host Monitoring", desc: "Monitor all your Docker hosts from a single pane of glass." },
@@ -15,7 +16,8 @@ const features = [
 
 export default function SignupPage() {
   const [searchParams] = useSearchParams();
-  const nextPath = getSafeNextPath(searchParams.get("next"), "/app");
+  const nextParam = searchParams.get("next");
+  const nextPath = useMemo(() => getSafeNextPath(nextParam, "/app"), [nextParam]);
 
   return (
     <div className="min-h-screen flex flex-col md:flex-row bg-background relative overflow-hidden">
@@ -73,8 +75,7 @@ export default function SignupPage() {
 
         <div className="w-full max-w-[400px]">
           <SignUp
-            routing="path"
-            path="/sign-up"
+            routing="hash"
             signInUrl="/login"
             forceRedirectUrl={nextPath}
             fallbackRedirectUrl={nextPath}
