@@ -182,10 +182,10 @@ export default function AlertsPage() {
         <>
           <AlertsSummaryCards summary={summary} />
 
-          <div className="flex flex-col gap-3 rounded-xl border border-border bg-card/60 p-4 lg:flex-row lg:items-center lg:justify-between">
+          <div className="flex flex-col gap-3 rounded-xl border border-border bg-card/60 p-3 sm:p-4 lg:flex-row lg:items-center lg:justify-between">
             <div>
-              <p className="text-sm font-medium">Active view</p>
-              <p className="text-xs text-muted-foreground">Currently showing {filterLabel} for the active organization.</p>
+              <p className="text-xs sm:text-sm font-medium">Active view</p>
+              <p className="text-[10px] sm:text-xs text-muted-foreground">Currently showing {filterLabel} for the active organization.</p>
             </div>
             <div className="flex flex-col gap-2 sm:flex-row">
               <Select value={severityFilter} onValueChange={setSeverityFilter}>
@@ -220,19 +220,19 @@ export default function AlertsPage() {
           />
 
           {hasSlackRules && enabledSlackDestinationsCount === 0 ? (
-            <div className="rounded-xl border border-warning/30 bg-warning/10 p-4">
-              <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-                <div className="flex items-start gap-3">
-                  <div className="rounded-full bg-warning/15 p-2">
-                    <MessageSquareShare className="h-4 w-4 text-warning" />
+            <div className="rounded-xl border border-warning/30 bg-warning/10 p-3 sm:p-4">
+              <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+                <div className="flex items-start gap-2 sm:gap-3">
+                  <div className="rounded-full bg-warning/15 p-1.5 sm:p-2 shrink-0">
+                    <MessageSquareShare className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-warning" />
                   </div>
-                  <div>
-                    <p className="text-sm font-medium">Slack notifications are enabled on one or more rules, but no Slack destinations are configured.</p>
-                    <p className="text-xs text-muted-foreground">Those rules will keep evaluating normally, but Slack messages will not be sent until an organization-level destination is added.</p>
+                  <div className="min-w-0">
+                    <p className="text-xs sm:text-sm font-medium">Slack notifications are enabled on one or more rules, but no Slack destinations are configured.</p>
+                    <p className="text-[10px] sm:text-xs text-muted-foreground mt-0.5">Those rules will keep evaluating normally, but Slack messages will not be sent until an organization-level destination is added.</p>
                   </div>
                 </div>
                 {canManage ? (
-                  <Button asChild size="sm" variant="outline">
+                  <Button asChild size="sm" variant="outline" className="self-start mt-1 md:mt-0">
                     <Link to="/app/settings?tab=Notifications">Open Notifications</Link>
                   </Button>
                 ) : null}
@@ -241,19 +241,19 @@ export default function AlertsPage() {
           ) : null}
 
           {hasWebhookRules && enabledWebhookDestinationsCount === 0 ? (
-            <div className="rounded-xl border border-warning/30 bg-warning/10 p-4">
-              <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-                <div className="flex items-start gap-3">
-                  <div className="rounded-full bg-warning/15 p-2">
-                    <Webhook className="h-4 w-4 text-warning" />
+            <div className="rounded-xl border border-warning/30 bg-warning/10 p-3 sm:p-4">
+              <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+                <div className="flex items-start gap-2 sm:gap-3">
+                  <div className="rounded-full bg-warning/15 p-1.5 sm:p-2 shrink-0">
+                    <Webhook className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-warning" />
                   </div>
-                  <div>
-                    <p className="text-sm font-medium">Webhook delivery is enabled on one or more rules, but no destinations are configured.</p>
-                    <p className="text-xs text-muted-foreground">Those rules will continue evaluating normally, but outbound webhook sends will be skipped until an organization-level destination is added.</p>
+                  <div className="min-w-0">
+                    <p className="text-xs sm:text-sm font-medium">Webhook delivery is enabled on one or more rules, but no destinations are configured.</p>
+                    <p className="text-[10px] sm:text-xs text-muted-foreground mt-0.5">Those rules will continue evaluating normally, but outbound webhook sends will be skipped until an organization-level destination is added.</p>
                   </div>
                 </div>
                 {canManage ? (
-                  <Button asChild size="sm" variant="outline">
+                  <Button asChild size="sm" variant="outline" className="self-start mt-1 md:mt-0">
                     <Link to="/app/settings?tab=Webhooks">Open Webhooks</Link>
                   </Button>
                 ) : null}

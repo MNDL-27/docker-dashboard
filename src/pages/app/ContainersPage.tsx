@@ -169,20 +169,20 @@ function FleetSignalCard({
   const iconTone = status === "destructive" ? "text-destructive" : status === "warning" ? "text-warning" : status === "success" ? "text-primary" : "text-muted-foreground";
 
   return (
-    <div className="glass-card rounded-[28px] p-6">
-      <div className="flex items-start justify-between gap-4">
-        <div>
-          <p className="text-xs font-bold uppercase tracking-[0.24em] text-muted-foreground">{label}</p>
-          <p className="mt-4 text-4xl font-semibold tracking-tight text-foreground">{value}</p>
+    <div className="glass-card rounded-2xl sm:rounded-[28px] p-4 sm:p-6">
+      <div className="flex items-start justify-between gap-3 sm:gap-4">
+        <div className="min-w-0">
+          <p className="text-[10px] sm:text-xs font-bold uppercase tracking-[0.24em] text-muted-foreground">{label}</p>
+          <p className="mt-2 sm:mt-4 text-2xl sm:text-4xl font-semibold tracking-tight text-foreground">{value}</p>
         </div>
-        <div className="rounded-2xl border border-white/10 bg-background/40 p-3">
-          <Icon className={cn("h-5 w-5", iconTone)} />
+        <div className="rounded-xl sm:rounded-2xl border border-white/10 bg-background/40 p-2 sm:p-3 shrink-0">
+          <Icon className={cn("h-4 w-4 sm:h-5 sm:w-5", iconTone)} />
         </div>
       </div>
-      <div className="mt-5 h-2 overflow-hidden rounded-full bg-white/5">
+      <div className="mt-3 sm:mt-5 h-1.5 sm:h-2 overflow-hidden rounded-full bg-white/5">
         <div className={cn("h-full rounded-full transition-all", barTone)} style={{ width: `${Math.max(0, Math.min(100, progress))}%` }} />
       </div>
-      <p className="mt-3 text-sm leading-6 text-muted-foreground">{helper}</p>
+      <p className="mt-2 sm:mt-3 text-xs sm:text-sm leading-5 sm:leading-6 text-muted-foreground">{helper}</p>
     </div>
   );
 }
@@ -361,13 +361,13 @@ export default function ContainersPage() {
     return (
       <div className="space-y-6 animate-fade-in">
         <PageHeader title="Containers" breadcrumbs={[{ label: "Infrastructure" }, { label: "Containers" }]} />
-        <div className="glass-card p-12 text-center">
-          <Box className="mx-auto mb-4 h-10 w-10 text-muted-foreground" />
-          <h2 className="mb-2 text-lg font-semibold">No containers found</h2>
-          <p className="mb-4 text-sm text-muted-foreground">
+        <div className="glass-card p-6 sm:p-12 text-center">
+          <Box className="mx-auto mb-3 sm:mb-4 h-8 w-8 sm:h-10 sm:w-10 text-muted-foreground" />
+          <h2 className="mb-1 sm:mb-2 text-base sm:text-lg font-semibold">No containers found</h2>
+          <p className="mb-3 sm:mb-4 text-xs sm:text-sm text-muted-foreground">
             {hosts.length === 0 ? "Connect a Docker host first, then containers will appear here." : "No containers are currently running on your connected hosts."}
           </p>
-          {hosts.length === 0 && <Link to="/app/hosts"><Button variant="outline">Go to Hosts</Button></Link>}
+          {hosts.length === 0 && <Link to="/app/hosts"><Button variant="outline" size="sm" className="sm:size-default">Go to Hosts</Button></Link>}
         </div>
       </div>
     );
@@ -404,28 +404,28 @@ export default function ContainersPage() {
         <KPICard label="Restarting" value={kpi.restarting} subtext="Potential crash loops" icon={RotateCw} status={kpi.restarting > 0 ? "warning" : "neutral"} />
       </div>
 
-      <div className="glass-card overflow-hidden rounded-[28px]">
-        <div className="border-b border-white/5 px-6 py-5">
-          <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
+      <div className="glass-card overflow-hidden rounded-2xl sm:rounded-[28px]">
+        <div className="border-b border-white/5 px-4 sm:px-6 py-4 sm:py-5">
+          <div className="flex flex-col gap-3 sm:gap-4 md:flex-row md:items-center md:justify-between">
             <div>
-              <h3 className="text-lg font-semibold tracking-tight text-foreground">Containers</h3>
-              <p className="mt-1 text-sm text-muted-foreground">
-                Live stats update automatically. Use the control rail to narrow the dataset before acting.
+              <h3 className="text-base sm:text-lg font-semibold tracking-tight text-foreground">Containers</h3>
+              <p className="mt-0.5 sm:mt-1 text-xs sm:text-sm text-muted-foreground">
+                Live stats update automatically.
               </p>
             </div>
-            <div className="rounded-full border border-white/10 bg-background/35 px-4 py-2 text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">Showing {filtered.length} of {containers.length}</div>
+            <div className="self-start md:self-auto rounded-full border border-white/10 bg-background/35 px-3 sm:px-4 py-1.5 sm:py-2 text-[10px] sm:text-xs font-medium uppercase tracking-[0.18em] text-muted-foreground">Showing {filtered.length} of {containers.length}</div>
           </div>
         </div>
 
-        <div className="border-b border-white/5 px-6 py-5">
-          <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
-            <div className="relative w-full xl:max-w-md">
+        <div className="border-b border-white/5 px-4 sm:px-6 py-4 sm:py-5">
+          <div className="flex flex-col gap-3 sm:gap-4">
+            <div className="relative w-full">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-              <Input placeholder="Search containers, images, or hosts..." className="h-10 rounded-full border-white/10 bg-background/40 pl-10" value={search} onChange={(e) => setSearch(e.target.value)} />
+              <Input placeholder="Search containers, images, or hosts..." className="h-10 rounded-full border-white/10 bg-background/40 pl-10 text-xs sm:text-sm" value={search} onChange={(e) => setSearch(e.target.value)} />
             </div>
 
-            <div className="flex flex-wrap items-center gap-3">
-              <div className="flex items-center gap-1 rounded-full border border-white/10 bg-background/35 p-1">
+            <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+              <div className="flex items-center gap-1 rounded-full border border-white/10 bg-background/35 p-1 overflow-x-auto flex-nowrap">
                 {STATE_TABS.map((tab) => {
                   const isActive = stateTab === tab.key;
                   const count = tab.key === "all" ? containers.length : tab.key === "unhealthy" ? kpi.unhealthy : tab.key === "running" ? kpi.running : tab.key === "restarting" ? kpi.restarting : containers.filter((c) => c.State === tab.key).length;
@@ -433,41 +433,41 @@ export default function ContainersPage() {
                     <button
                       key={tab.key}
                       onClick={() => setStateTab(tab.key)}
-                      className={cn("rounded-full px-3 py-1.5 text-xs transition-colors", isActive ? "bg-card text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground")}
+                      className={cn("whitespace-nowrap rounded-full px-2.5 sm:px-3 py-1.5 text-[10px] sm:text-xs transition-colors", isActive ? "bg-card text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground")}
                     >
                       <span className="font-medium">{tab.label}</span>
-                      <span className="ml-1.5 text-[10px] tabular-nums opacity-70">{count}</span>
+                      <span className="ml-1 text-[9px] sm:text-[10px] tabular-nums opacity-70">{count}</span>
                     </button>
                   );
                 })}
               </div>
 
               <div className="relative">
-                <select value={hostFilter} onChange={(e) => setHostFilter(e.target.value)} className="appearance-none rounded-full border border-white/10 bg-background/40 px-4 py-2 pr-9 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-ring">
+                <select value={hostFilter} onChange={(e) => setHostFilter(e.target.value)} className="appearance-none rounded-full border border-white/10 bg-background/40 px-3 sm:px-4 py-1.5 sm:py-2 pr-7 sm:pr-9 text-[10px] sm:text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-ring">
                   <option value="">All hosts</option>
                   {uniqueHosts.map(([id, name]) => <option key={id} value={id}>{name}</option>)}
                 </select>
-                <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+                <ChevronDown className="pointer-events-none absolute right-2 sm:right-3 top-1/2 h-3 sm:h-3.5 w-3 sm:w-3.5 -translate-y-1/2 text-muted-foreground" />
               </div>
 
               <div className="relative">
-                <select value={imageFilter} onChange={(e) => setImageFilter(e.target.value)} className="max-w-[180px] appearance-none truncate rounded-full border border-white/10 bg-background/40 px-4 py-2 pr-9 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-ring">
+                <select value={imageFilter} onChange={(e) => setImageFilter(e.target.value)} className="max-w-[140px] sm:max-w-[180px] appearance-none truncate rounded-full border border-white/10 bg-background/40 px-3 sm:px-4 py-1.5 sm:py-2 pr-7 sm:pr-9 text-[10px] sm:text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-ring">
                   <option value="">All images</option>
                   {uniqueImages.map((img) => <option key={img} value={img}>{shortenImage(img)}</option>)}
                 </select>
-                <ChevronDown className="pointer-events-none absolute right-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+                <ChevronDown className="pointer-events-none absolute right-2 sm:right-3 top-1/2 h-3 sm:h-3.5 w-3 sm:w-3.5 -translate-y-1/2 text-muted-foreground" />
               </div>
 
-              {hasActiveFilters ? <Button variant="ghost" className="rounded-full px-4 text-xs" onClick={clearFilters}>Clear filters</Button> : null}
+              {hasActiveFilters ? <Button variant="ghost" className="rounded-full px-3 sm:px-4 text-[10px] sm:text-xs" onClick={clearFilters}>Clear</Button> : null}
             </div>
           </div>
 
           {hasActiveFilters ? (
-            <div className="mt-4 flex flex-wrap gap-2">
-              {search ? <span className="rounded-full border border-primary/20 bg-primary/10 px-3 py-1 text-xs text-primary">Search: {search}</span> : null}
-              {stateTab !== "all" ? <span className="rounded-full border border-white/10 bg-background/45 px-3 py-1 text-xs text-muted-foreground">State: {STATE_TABS.find((tab) => tab.key === stateTab)?.label}</span> : null}
-              {hostFilter ? <span className="rounded-full border border-white/10 bg-background/45 px-3 py-1 text-xs text-muted-foreground">Host: {activeHostLabel}</span> : null}
-              {imageFilter ? <span className="rounded-full border border-white/10 bg-background/45 px-3 py-1 text-xs text-muted-foreground">Image: {shortenImage(imageFilter)}</span> : null}
+            <div className="mt-3 sm:mt-4 flex flex-wrap gap-1.5 sm:gap-2">
+              {search ? <span className="rounded-full border border-primary/20 bg-primary/10 px-2 sm:px-3 py-0.5 sm:py-1 text-[10px] sm:text-xs text-primary">Search: {search}</span> : null}
+              {stateTab !== "all" ? <span className="rounded-full border border-white/10 bg-background/45 px-2 sm:px-3 py-0.5 sm:py-1 text-[10px] sm:text-xs text-muted-foreground">State: {STATE_TABS.find((tab) => tab.key === stateTab)?.label}</span> : null}
+              {hostFilter ? <span className="rounded-full border border-white/10 bg-background/45 px-2 sm:px-3 py-0.5 sm:py-1 text-[10px] sm:text-xs text-muted-foreground">Host: {activeHostLabel}</span> : null}
+              {imageFilter ? <span className="rounded-full border border-white/10 bg-background/45 px-2 sm:px-3 py-0.5 sm:py-1 text-[10px] sm:text-xs text-muted-foreground">Image: {shortenImage(imageFilter)}</span> : null}
             </div>
           ) : null}
         </div>

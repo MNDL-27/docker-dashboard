@@ -56,7 +56,7 @@ export function HostSidebar({
           />
         </div>
       </div>
-      <ScrollArea className="h-[calc(100vh-18rem)]">
+      <ScrollArea className="h-[50vh] lg:h-[calc(100vh-18rem)]">
         <div className="space-y-3 p-4">
           {filteredHosts.length === 0 ? (
             <div className="rounded-2xl border border-dashed border-white/10 p-6 text-center text-sm text-muted-foreground">

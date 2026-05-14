@@ -4,11 +4,11 @@ import { AppTopBar } from "./AppTopBar";
 
 export function AppShell() {
   return (
-    <div className="flex h-screen w-full overflow-hidden">
-      <AppSidebar />
-      <div className="flex-1 flex flex-col overflow-hidden">
+    <div className="flex min-h-dvh w-full md:h-screen">
+      <AppSidebar className="hidden md:flex" />
+      <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
         <AppTopBar />
-        <main className="flex-1 overflow-y-auto p-6">
+        <main className="flex-1 overflow-y-auto p-2 sm:p-3 md:p-6 overscroll-contain">
           <Outlet />
         </main>
       </div>

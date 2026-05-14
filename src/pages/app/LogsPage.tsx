@@ -62,16 +62,16 @@ export default function LogsPage() {
         hasAccess={hasAccess}
       >
         {connectedHosts.length === 0 ? (
-          <div className="glass-card p-12 text-center">
-            <FileText className="h-10 w-10 text-muted-foreground mx-auto mb-4" />
-            <h2 className="text-lg font-semibold mb-2">No connected hosts</h2>
-            <p className="text-sm text-muted-foreground mb-4">Connect a Docker host first to view container logs.</p>
-            <Link to="/app/hosts"><Button variant="outline">Go to Hosts</Button></Link>
+          <div className="glass-card p-6 sm:p-12 text-center">
+            <FileText className="h-8 w-8 sm:h-10 sm:w-10 text-muted-foreground mx-auto mb-3 sm:mb-4" />
+            <h2 className="text-base sm:text-lg font-semibold mb-1 sm:mb-2">No connected hosts</h2>
+            <p className="text-xs sm:text-sm text-muted-foreground mb-3 sm:mb-4">Connect a Docker host first to view container logs.</p>
+            <Link to="/app/hosts"><Button variant="outline" size="sm" className="sm:size-default">Go to Hosts</Button></Link>
           </div>
         ) : (
           <>
-            <div className="grid gap-6 lg:grid-cols-[minmax(0,1.15fr),minmax(0,0.85fr)]">
-              <div className="glass-card p-6">
+            <div className="grid gap-4 sm:gap-6 lg:grid-cols-[minmax(0,1.15fr),minmax(0,0.85fr)]">
+              <div className="glass-card p-4 sm:p-6">
                 <div className="flex items-center gap-2">
                   <Server className="h-4 w-4 text-primary" />
                   <h3 className="text-sm font-semibold tracking-tight">Log source</h3>
@@ -120,10 +120,10 @@ export default function LogsPage() {
               </div>
 
               <div className="space-y-4">
-                <div className="glass-card p-6">
+                <div className="glass-card p-4 sm:p-6">
                   <div className="flex items-center gap-2">
-                    <TerminalSquare className="h-4 w-4 text-primary" />
-                    <h3 className="text-sm font-semibold tracking-tight">Log explorer</h3>
+                    <TerminalSquare className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-primary" />
+                    <h3 className="text-xs sm:text-sm font-semibold tracking-tight">Log explorer</h3>
                   </div>
                   <p className="mt-2 text-xs text-muted-foreground">
                     Logs are fetched on demand. Use the filters to focus on errors or specific timestamps.
@@ -134,10 +134,10 @@ export default function LogsPage() {
                   </div>
                 </div>
 
-                <div className="glass-card p-6">
+                <div className="glass-card p-4 sm:p-6">
                   <div className="flex items-center gap-2">
-                    <FileText className="h-4 w-4 text-primary" />
-                    <h3 className="text-sm font-semibold tracking-tight">Log retention</h3>
+                    <FileText className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-primary" />
+                    <h3 className="text-xs sm:text-sm font-semibold tracking-tight">Log retention</h3>
                   </div>
                   <div className="mt-3 space-y-2 text-sm text-muted-foreground">
                     <div className="flex items-center justify-between">
@@ -163,7 +163,7 @@ export default function LogsPage() {
                 loading={loading}
                 title="Fetched Logs"
                 emptyMessage='Click "Fetch Logs" to load container logs.'
-                heightClassName="h-[600px]"
+                heightClassName="h-[300px] sm:h-[600px]"
                 onRefresh={handleFetchLogs}
                 refreshLabel="Fetch Again"
               />
