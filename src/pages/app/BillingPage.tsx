@@ -1,7 +1,7 @@
 import { PageHeader } from "@/components/shared/PageHeader";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { Construction, Check, Loader2, Zap, Box, HeartHandshake } from "lucide-react";
+import { Construction, Check, Loader2, Zap, Box, HeartHandshake, Rocket, Mail } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";
 import { useOrganization, useUser } from "@clerk/react";
@@ -14,7 +14,7 @@ export default function BillingPage() {
   const navigate = useNavigate();
   const { organization } = useOrganization();
   const { user } = useUser();
-  const { data: viewer } = useViewerState();
+  const { data: viewer, isLoading: viewerLoading } = useViewerState();
   const { toast } = useToast();
   const [donorIntentLoading, setDonorIntentLoading] = useState(false);
   const [donorIntent, setDonorIntent] = useState<null | {
@@ -94,7 +94,7 @@ export default function BillingPage() {
     setDonorTransactionId('');
   };
 
-  if (isLoading) {
+  if (viewerLoading || (Boolean(activeOrganizationId) && isLoading)) {
     return (
       <div className="flex items-center justify-center h-64">
         <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
@@ -224,17 +224,47 @@ export default function BillingPage() {
             </ul>
           </div>
           <div className="p-4 rounded-lg bg-primary/5 border border-primary/10">
-            <p className="text-sm mb-4">Need advanced alerting, more seats, or a support response target? Upgrade to Individual or Business.</p>
-            <Button className="w-full" onClick={() => navigate('/pricing')}>View Paid Plans</Button>
+            <p className="text-sm mb-4">Need advanced alerting, more seats, or a support response target? Upgrade to Pro or Team.</p>
+            <Button className="w-full" onClick={() => navigate('/pricing')}>Compare Plans →</Button>
           </div>
         </div>
 
-        <div className="glass-card p-12 text-center flex flex-col items-center justify-center border-dashed">
-          <Construction className="h-10 w-10 text-muted-foreground mb-3" />
-          <h3 className="font-medium mb-1">Coming Soon</h3>
-          <p className="text-sm text-muted-foreground max-w-xs mx-auto">
-            Invoice history and self-serve plan switching are under development.
-          </p>
+        <div className="space-y-4">
+          <div className="glass-card p-6">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
+                <Rocket className="h-5 w-5 text-primary" />
+              </div>
+              <div>
+                <h3 className="font-bold">Pro Plan</h3>
+                <p className="text-xs text-muted-foreground">For individual operators</p>
+              </div>
+            </div>
+            <p className="text-xs text-muted-foreground mb-4">
+              Unlimited hosts, premium alerting, file manager, SSH-over-HTTP, and dedicated support response target.
+            </p>
+            <Button className="w-full gap-2" variant="default" onClick={() => window.open('https://github.com/MNDL-27/docker-watchtower-dash/issues/new?template=upgrade_request.md&title=Pro+plan+upgrade+request', '_blank')}>
+              <Mail className="h-4 w-4" /> Request Pro Upgrade
+            </Button>
+          </div>
+
+          <div className="glass-card p-6">
+            <div className="flex items-center gap-3 mb-4">
+              <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
+                <Zap className="h-5 w-5 text-primary" />
+              </div>
+              <div>
+                <h3 className="font-bold">Team Plan</h3>
+                <p className="text-xs text-muted-foreground">For teams and organizations</p>
+              </div>
+            </div>
+            <p className="text-xs text-muted-foreground mb-4">
+              Everything in Pro plus team member seats, dedicated deployment options, and priority support.
+            </p>
+            <Button className="w-full gap-2" variant="default" onClick={() => window.open('https://github.com/MNDL-27/docker-watchtower-dash/issues/new?template=upgrade_request.md&title=Team+plan+upgrade+request', '_blank')}>
+              <Mail className="h-4 w-4" /> Request Team Upgrade
+            </Button>
+          </div>
         </div>
 
         <div className="glass-card p-8 md:col-span-2">
