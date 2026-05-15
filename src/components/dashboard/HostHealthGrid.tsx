@@ -34,13 +34,13 @@ interface HostHealthGridProps {
 export function HostHealthGrid({ hosts, className }: HostHealthGridProps) {
   return (
     <div className={cn("glass-card overflow-hidden flex flex-col h-full", className)}>
-      <div className="p-4 border-b border-white/5 flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <Server className="h-4 w-4 text-primary" />
-          <h3 className="text-sm font-semibold tracking-tight">Host Health Overview</h3>
+      <div className="p-3 sm:p-4 border-b border-white/5 flex items-center justify-between gap-2">
+        <div className="flex items-center gap-1.5 sm:gap-2 min-w-0">
+          <Server className="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0 text-primary" />
+          <h3 className="text-xs sm:text-sm font-semibold tracking-tight truncate">Host Health</h3>
         </div>
-        <Link to="/app/hosts" className="text-[11px] font-bold text-primary hover:underline flex items-center">
-          MANAGE HOSTS <ChevronRight className="h-3 w-3 ml-0.5" />
+        <Link to="/app/hosts" className="text-[10px] sm:text-[11px] font-bold text-primary hover:underline flex items-center shrink-0">
+          MANAGE <ChevronRight className="h-2.5 w-2.5 sm:h-3 sm:w-3 ml-0.5" />
         </Link>
       </div>
       
@@ -63,36 +63,36 @@ export function HostHealthGrid({ hosts, className }: HostHealthGridProps) {
                 <Link 
                   key={host.id} 
                   to={`/app/hosts/${host.id}`}
-                  className="flex items-center justify-between p-3 hover:bg-white/5 transition-colors group"
+                  className="flex items-center justify-between p-2.5 sm:p-3 hover:bg-white/5 transition-colors group"
                 >
-                  <div className="flex items-center gap-3">
-                    <div className={cn("p-1.5 rounded-lg", colors.bg)}>
+                  <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+                    <div className={cn("p-1 sm:p-1.5 rounded-lg shrink-0", colors.bg)}>
                       {isHealthy ? (
-                        <CheckCircle2 className={cn("h-4 w-4", colors.text)} />
+                        <CheckCircle2 className={cn("h-3.5 w-3.5 sm:h-4 sm:w-4", colors.text)} />
                       ) : isWarning ? (
-                        <AlertTriangle className={cn("h-4 w-4", colors.text)} />
+                        <AlertTriangle className={cn("h-3.5 w-3.5 sm:h-4 sm:w-4", colors.text)} />
                       ) : (
-                        <AlertCircle className={cn("h-4 w-4", colors.text)} />
+                        <AlertCircle className={cn("h-3.5 w-3.5 sm:h-4 sm:w-4", colors.text)} />
                       )}
                     </div>
-                    <div className="flex flex-col">
-                      <span className="text-sm font-semibold group-hover:text-primary transition-colors">{host.name}</span>
-                      <span className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider">
-                        {host.os_info || "Linux"} • {host.connection_mode.replace('_', ' ')}
+                    <div className="flex flex-col min-w-0">
+                      <span className="text-xs sm:text-sm font-semibold group-hover:text-primary transition-colors truncate">{host.name}</span>
+                      <span className="text-[9px] sm:text-[10px] text-muted-foreground uppercase font-bold tracking-wider truncate">
+                        {host.os_info || "Linux"}
                       </span>
                     </div>
                   </div>
                   
-                  <div className="flex items-center gap-4 text-right">
+                  <div className="flex items-center gap-2 sm:gap-4 text-right shrink-0">
                     <div className="flex flex-col items-end">
                       <div className="flex items-center gap-1">
-                        <Activity className={cn("h-3 w-3", isHealthy ? "text-success" : "text-muted-foreground")} />
-                        <span className={cn("text-[10px] font-bold uppercase tracking-tighter", colors.text)}>
+                        <Activity className={cn("h-2.5 w-2.5 sm:h-3 sm:w-3", isHealthy ? "text-success" : "text-muted-foreground")} />
+                        <span className={cn("text-[9px] sm:text-[10px] font-bold uppercase tracking-tighter", colors.text)}>
                           {label}
                         </span>
                       </div>
                       {host.last_seen_at && (
-                        <span className="text-[10px] text-muted-foreground font-medium">
+                        <span className="text-[9px] sm:text-[10px] text-muted-foreground font-medium">
                           Seen {new Date(host.last_seen_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                         </span>
                       )}

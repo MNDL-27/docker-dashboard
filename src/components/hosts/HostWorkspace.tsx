@@ -42,7 +42,7 @@ export function HostWorkspace() {
   const { data: hosts = [], isLoading, refetch } = useDockerHosts(currentOrg?.id, { filterByPlan: true });
   const [search, setSearch] = useState("");
   const [testing, setTesting] = useState(false);
-  const [isInfrastructureVisible, setIsInfrastructureVisible] = useState(true);
+  const [isInfrastructureVisible, setIsInfrastructureVisible] = useState(() => window.innerWidth >= 1024);
   const [upgradeDialogOpen, setUpgradeDialogOpen] = useState(false);
   const effectivePlan = viewer?.active_org_effective_plan ?? viewer?.active_org_plan;
   
@@ -210,18 +210,18 @@ export function HostWorkspace() {
       />
 
       {hosts.length === 0 ? (
-        <div className="glass-card p-12 text-center">
-          <div className="mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/10 text-primary">
-            <Server className="h-7 w-7" />
+        <div className="glass-card p-6 sm:p-12 text-center">
+          <div className="mx-auto mb-4 sm:mb-5 flex h-10 w-10 sm:h-14 sm:w-14 items-center justify-center rounded-xl sm:rounded-2xl bg-primary/10 text-primary">
+            <Server className="h-5 w-5 sm:h-7 sm:w-7" />
           </div>
-          <h2 className="text-xl font-semibold tracking-tight mb-2">No Docker hosts connected</h2>
-          <p className="text-sm text-muted-foreground mb-6 max-w-md mx-auto">
+          <h2 className="text-lg sm:text-xl font-semibold tracking-tight mb-1 sm:mb-2">No Docker hosts connected</h2>
+          <p className="text-xs sm:text-sm text-muted-foreground mb-4 sm:mb-6 max-w-md mx-auto">
             Connect a Docker host via a lightweight agent or Cloudflare Tunnel. No open Docker ports needed.
           </p>
-          {currentOrg && <AddHostDialog orgId={currentOrg.id} trigger={<Button>Connect Your First Host</Button>} />}
+          {currentOrg && <AddHostDialog orgId={currentOrg.id} trigger={<Button size="sm" className="sm:size-default">Connect Your First Host</Button>} />}
         </div>
       ) : (
-        <div className={cn("grid gap-6", isInfrastructureVisible ? "xl:grid-cols-[320px,minmax(0,1fr)]" : "xl:grid-cols-[minmax(0,1fr)]")}>
+        <div className={cn("grid gap-4 sm:gap-6", isInfrastructureVisible ? "lg:grid-cols-[300px,minmax(0,1fr)]" : "lg:grid-cols-[minmax(0,1fr)]")}>
           {isInfrastructureVisible ? (
             <HostSidebar
               filteredHosts={filteredHosts}
@@ -264,7 +264,7 @@ export function HostWorkspace() {
               onDelete={handleDelete}
             />
           ) : (
-            <div className="glass-card p-10 text-center text-muted-foreground">Select a host to view its details.</div>
+            <div className="glass-card p-6 sm:p-10 text-center text-xs sm:text-sm text-muted-foreground">Select a host to view its details.</div>
           )}
         </div>
       )}

@@ -7,6 +7,7 @@ import { buildDashboardStats } from "@/lib/dashboard-summary";
 import { DashboardLoadingState } from "@/components/dashboard/DashboardLoadingState";
 import { DashboardNoOrganizationState } from "@/components/dashboard/DashboardNoOrganizationState";
 import { DashboardEmptyHostsState } from "@/components/dashboard/DashboardEmptyHostsState";
+import { DashboardConnectionErrorState } from "@/components/dashboard/DashboardConnectionErrorState";
 import { DashboardOverview } from "@/components/dashboard/DashboardOverview";
 
 export default function DashboardPage() {
@@ -23,7 +24,7 @@ export default function DashboardPage() {
   const hasOrgs = userMemberships.count ? userMemberships.count > 0 : false;
   const orgLoading = !orgLoaded || !listLoaded;
 
-  const { data: hosts = [], isLoading: hostsLoading } = useDockerHosts(currentOrg?.id, { filterByPlan: true });
+  const { data: hosts = [], isLoading: hostsLoading, isError: hostsError, error: hostsQueryError } = useDockerHosts(currentOrg?.id, { filterByPlan: true });
   const {
     data: containers = [],
     isLoading: containersLoading,
@@ -40,6 +41,11 @@ export default function DashboardPage() {
 
   if (!hasOrgs) {
     return <DashboardNoOrganizationState />;
+  }
+
+  if (hostsError) {
+    const message = hostsQueryError instanceof Error ? hostsQueryError.message : undefined;
+    return <DashboardConnectionErrorState organizationName={currentOrg?.name} errorMessage={message} />;
   }
 
   const isLoading = (hostsLoading || containersLoading) && hosts.length === 0;

@@ -72,9 +72,9 @@ export default function SettingsPage() {
       />
 
       <Tabs value={tab} onValueChange={onChange} className="space-y-4">
-        <TabsList className="h-auto w-full justify-start overflow-x-auto bg-secondary p-1">
+        <TabsList className="h-auto w-full justify-start overflow-x-auto bg-secondary p-1 -mx-2 sm:mx-0 px-2 sm:px-0">
           {ALL_TABS.map((t) => (
-            <TabsTrigger key={t} value={t} className="text-xs">
+            <TabsTrigger key={t} value={t} className="text-[10px] sm:text-xs whitespace-nowrap">
               {t}
             </TabsTrigger>
           ))}

@@ -48,40 +48,6 @@ function metricTone(value: number | null | undefined): MetricTone {
   return "success";
 }
 
-function SignalCard({
-  label,
-  value,
-  helper,
-  icon: Icon,
-  tone = "neutral",
-}: {
-  label: string;
-  value: string;
-  helper: string;
-  icon: typeof Cpu;
-  tone?: MetricTone;
-}) {
-  const toneClass = {
-    success: "text-success",
-    warning: "text-warning",
-    destructive: "text-destructive",
-    neutral: "text-foreground",
-  }[tone];
-
-  return (
-    <div className="glass-card p-5">
-      <div className="flex items-center justify-between">
-        <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-muted-foreground">{label}</p>
-        <div className="rounded-lg bg-primary/10 p-2 text-primary">
-          <Icon className="h-4 w-4" />
-        </div>
-      </div>
-      <div className={`mt-4 text-3xl font-semibold tracking-tight ${toneClass}`}>{value}</div>
-      <p className="mt-2 text-xs text-muted-foreground">{helper}</p>
-    </div>
-  );
-}
-
 export default function MonitoringPage() {
   const { organization } = useOrganization();
   const orgId = organization?.id ?? null;
@@ -159,24 +125,24 @@ export default function MonitoringPage() {
       />
 
       {!hostsLoading && hosts.length === 0 ? (
-        <div className="glass-card p-6 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-          <div className="flex items-center gap-3">
-            <div className="rounded-lg bg-primary/10 p-3 text-primary">
-              <Server className="h-5 w-5" />
+        <div className="glass-card p-4 sm:p-6 flex flex-col gap-3 sm:gap-4 md:flex-row md:items-center md:justify-between">
+          <div className="flex items-center gap-2 sm:gap-3">
+            <div className="rounded-lg bg-primary/10 p-2 sm:p-3 text-primary shrink-0">
+              <Server className="h-4 w-4 sm:h-5 sm:w-5" />
             </div>
             <div>
-              <h3 className="text-base font-semibold">No hosts connected</h3>
-              <p className="text-sm text-muted-foreground">Connect a Docker host to start collecting telemetry.</p>
+              <h3 className="text-sm sm:text-base font-semibold">No hosts connected</h3>
+              <p className="text-xs sm:text-sm text-muted-foreground">Connect a Docker host to start collecting telemetry.</p>
             </div>
           </div>
-          <Button asChild>
+          <Button asChild size="sm" className="self-start md:self-auto">
             <Link to="/app/hosts">Connect a host</Link>
           </Button>
         </div>
       ) : null}
 
       {metricsError instanceof Error ? (
-        <div className="rounded-2xl border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
+        <div className="rounded-xl border border-destructive/30 bg-destructive/10 px-3 sm:px-4 py-2.5 sm:py-3 text-xs sm:text-sm text-destructive">
           {metricsError.message}
         </div>
       ) : null}

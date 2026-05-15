@@ -3,53 +3,25 @@ import { Link, useLocation } from "react-router-dom";
 import { LogoLink } from "@/components/shared/LogoLink";
 import { cn } from "@/lib/utils";
 import {
-  LayoutDashboard, Server, Box, FileText, FolderOpen, Bell, CreditCard, Settings,
-  HelpCircle, ChevronLeft, ChevronRight,
-  Building2, Users, Shield, BookOpen, Lock
+  Box,
+  ChevronLeft,
+  ChevronRight,
+  Lock,
 } from "lucide-react";
 import { useViewerState } from "@/hooks/useViewerState";
+import { appNavGroups } from "./app-nav";
 
-const navGroups = [
-  {
-    label: "Overview",
-    items: [
-      { label: "Dashboard", icon: LayoutDashboard, href: "/app" },
-      { label: "Organizations", icon: Building2, href: "/app/organizations" },
-    ],
-  },
-  {
-    label: "Infrastructure",
-    items: [
-      { label: "Hosts", icon: Server, href: "/app/hosts" },
-      { label: "Containers", icon: Box, href: "/app/containers" },
-    ],
-  },
-  {
-    label: "Observability",
-    items: [
-      { label: "Logs", icon: FileText, href: "/app/logs", premiumKey: "canUseLogs" as const },
-      { label: "Files", icon: FolderOpen, href: "/app/files", premiumKey: "canUseFileManager" as const },
-      { label: "Alerts", icon: Bell, href: "/app/alerts" },
-    ],
-  },
-  {
-    label: "Management",
-    items: [
-      { label: "Billing", icon: CreditCard, href: "/app/billing" },
-      { label: "Settings", icon: Settings, href: "/app/settings" },
-      { label: "Admin", icon: Shield, href: "/app/admin" },
-      { label: "Help", icon: HelpCircle, href: "/app/help" },
-    ],
-  },
-];
+interface AppSidebarProps {
+  className?: string;
+}
 
-export function AppSidebar() {
+export function AppSidebar({ className }: AppSidebarProps) {
   const [collapsed, setCollapsed] = useState(false);
   const location = useLocation();
   const { data: viewer } = useViewerState();
   const entitlements = viewer?.entitlements;
 
-  const visibleGroups = navGroups.map((group) => ({
+  const visibleGroups = appNavGroups.map((group) => ({
     ...group,
     items: group.items.filter((item) => {
       if (item.href === "/app/admin" && !viewer?.is_platform_admin) return false;
@@ -60,7 +32,8 @@ export function AppSidebar() {
   return (
     <aside className={cn(
       "flex flex-col h-screen border-r border-border bg-sidebar shrink-0 transition-all duration-200",
-      collapsed ? "w-16" : "w-56"
+      collapsed ? "w-16" : "w-56",
+      className
     )}>
       {/* Logo */}
       <div className="flex items-center h-14 px-4 border-b border-border shrink-0">
