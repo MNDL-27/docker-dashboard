@@ -1,7 +1,7 @@
 import { PageHeader } from "@/components/shared/PageHeader";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { Construction, Check, Loader2, Zap, Box, HeartHandshake, Rocket, Mail } from "lucide-react";
+import { Check, Loader2, Zap, Box, HeartHandshake, Rocket, Mail } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";
 import { useOrganization, useUser } from "@clerk/react";
@@ -184,6 +184,75 @@ export default function BillingPage() {
                 </li>
               ))}
             </ul>
+          </div>
+        </div>
+
+        <div className="glass-card p-8">
+          <div className="flex items-start gap-3">
+            <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center">
+              <HeartHandshake className="h-6 w-6 text-primary" />
+            </div>
+            <div>
+              <h3 className="text-xl font-bold">Dedicated managed instance</h3>
+              <p className="text-sm text-muted-foreground">
+                Need isolated infrastructure, custom allocations, and a guided deployment handoff instead of self-serve checkout?
+              </p>
+            </div>
+          </div>
+          <div className="mt-6 flex flex-wrap gap-3">
+            <Button onClick={() => navigate('/dedicated/start')}>View dedicated deployment</Button>
+            {viewer?.dedicated_deployment_status ? (
+              <Button variant="outline" onClick={() => navigate('/app/dedicated-deployment')}>
+                Open deployment status
+              </Button>
+            ) : null}
+          </div>
+        </div>
+
+        <div className="glass-card p-8">
+          <div className="flex items-start gap-3">
+            <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center">
+              <HeartHandshake className="h-6 w-6 text-primary" />
+            </div>
+            <div>
+              <h3 className="text-xl font-bold">Donor premium (manual verification)</h3>
+              <p className="text-sm text-muted-foreground">
+                You can unlock premium via Liberapay or PayPal donations while checkout integrations are limited in your region.
+              </p>
+            </div>
+          </div>
+          <div className="mt-6 grid gap-4 md:grid-cols-2">
+            <Button variant="outline" onClick={handleCreateDonorIntent} disabled={donorIntentLoading}>
+              {donorIntentLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+              Generate donor token (DNR-8)
+            </Button>
+            <div className="flex gap-2">
+              <Button variant="outline" className="flex-1" onClick={() => window.open(donationUrl, '_blank')}>Open Liberapay</Button>
+              <Button variant="outline" className="flex-1" onClick={() => window.open(paypalDonationUrl, '_blank')}>Open PayPal</Button>
+            </div>
+          </div>
+          {donorIntent ? (
+            <div className="mt-4 rounded-lg border border-border p-4 space-y-2">
+              <div className="text-xs uppercase tracking-wide text-muted-foreground">Reference token</div>
+              <div className="font-mono text-sm">{donorIntent.reference_token}</div>
+              <ul className="space-y-1 text-xs text-muted-foreground">
+                {donorIntent.instructions.map((instruction) => (
+                  <li key={instruction}>• {instruction}</li>
+                ))}
+              </ul>
+              <p className="text-[11px] text-muted-foreground">
+                Manual verification target: within 24 hours. Access is granted for {donorIntent.grant_days} days per matched donation.
+              </p>
+            </div>
+          ) : null}
+          <div className="mt-4 flex gap-2">
+            <input
+              value={donorTransactionId}
+              onChange={(event) => setDonorTransactionId(event.target.value)}
+              placeholder="Paste PayPal transaction ID"
+              className="h-9 flex-1 rounded-md border border-input bg-background px-3 text-sm"
+            />
+            <Button size="sm" onClick={handleSubmitTransactionHint}>I have paid</Button>
           </div>
         </div>
       </div>
