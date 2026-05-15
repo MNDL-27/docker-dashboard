@@ -119,9 +119,6 @@ export default function DedicatedStartPage() {
                     Dedicated (Managed Instance)
                   </h2>
                 </div>
-                <span className="rounded-full border border-primary/30 bg-primary/12 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.22em] text-primary">
-                  White-glove
-                </span>
               </div>
 
               <div className="mt-6 rounded-3xl border border-border/70 bg-background/60 p-5">
