@@ -3,6 +3,7 @@ export interface AdminOverview {
     total_organizations: number;
     total_users: number;
     active_hosts: number;
+    active_users: number;
     suspended_users: number;
     locked_organizations: number;
     quarantined_hosts: number;

@@ -12,6 +12,7 @@ import { ClerkProvider } from "@clerk/react";
 import { RequirePlatformAdmin } from "@/components/RequirePlatformAdmin";
 import { Loader2 } from "lucide-react";
 import { lazy, Suspense, useEffect } from "react";
+import { usePageViewTracking } from "@/hooks/usePageViewTracking";
 
 const LandingPage = lazy(() => import("./pages/LandingPage"));
 const FeaturesPage = lazy(() => import("./pages/FeaturesPage"));
@@ -93,6 +94,8 @@ const RouteFallback = () => (
   </div>
 );
 
+const PageViewTracker = () => { usePageViewTracking(); return null; };
+
 const App = () => {
   const previewBypass = isPreviewAuthBypassEnabled();
 
@@ -112,6 +115,7 @@ const App = () => {
             <Toaster />
             <Sonner />
             <BrowserRouter>
+              <PageViewTracker />
               <Suspense fallback={<RouteFallback />}>
                 <Routes>
                   {/* Marketing */}

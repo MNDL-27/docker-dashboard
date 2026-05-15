@@ -6,6 +6,7 @@ import { ensureAdminSchema } from "./ensure-admin-schema.mjs";
 import { runSecretMigration } from "./secret-migration.mjs";
 import { buildCorsHeaders } from "./security.mjs";
 import { adminMatchBillingEvent, listUnmatchedBillingEvents, resendDonorEmailDelivery } from "./donor-billing.mjs";
+import { ensurePageViewsSchema } from "./ensure-page-views-schema.mjs";
 
 const headers = {
   "Access-Control-Allow-Origin": "*",  // Will be overridden by buildCorsHeaders in responses
@@ -38,13 +39,14 @@ function toNullableTimestamp(value: unknown) {
 }
 
 async function getOverview() {
-  const [orgCount, userCount, activeHosts, suspendedUsers, lockedOrgs, quarantinedHosts] = await Promise.all([
+  const [orgCount, userCount, activeHosts, suspendedUsers, lockedOrgs, quarantinedHosts, activeUsers] = await Promise.all([
     sql<{ count: string }[]>`SELECT count(*)::text AS count FROM public.organizations`,
     sql<{ count: string }[]>`SELECT count(*)::text AS count FROM public.users`,
     sql<{ count: string }[]>`SELECT count(*)::text AS count FROM public.docker_hosts WHERE status = 'connected'`,
     sql<{ count: string }[]>`SELECT count(*)::text AS count FROM public.user_access_controls WHERE is_suspended = true OR is_hard_disabled = true`,
     sql<{ count: string }[]>`SELECT count(*)::text AS count FROM public.organization_access_controls WHERE is_locked = true`,
     sql<{ count: string }[]>`SELECT count(*)::text AS count FROM public.docker_host_admin_controls WHERE is_quarantined = true`,
+    sql<{ count: string }[]>`SELECT count(*)::text AS count FROM public.page_views WHERE last_active_at > now() - make_interval(mins => 2)`,
   ]);
 
   const recentOperations = await sql`
@@ -67,6 +69,7 @@ async function getOverview() {
       total_organizations: Number(orgCount[0]?.count || "0"),
       total_users: Number(userCount[0]?.count || "0"),
       active_hosts: Number(activeHosts[0]?.count || "0"),
+      active_users: Number(activeUsers[0]?.count || "0"),
       suspended_users: Number(suspendedUsers[0]?.count || "0"),
       locked_organizations: Number(lockedOrgs[0]?.count || "0"),
       quarantined_hosts: Number(quarantinedHosts[0]?.count || "0"),
@@ -996,6 +999,7 @@ export async function handleAdminRequest(req: Request) {
 
   try {
     await ensureAdminSchema();
+    await ensurePageViewsSchema();
     const parts = parsePath(req);
 
     if (req.method === "GET" && parts.length === 0) {
