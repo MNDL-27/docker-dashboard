@@ -74,8 +74,8 @@ export function AdminBillingManagement() {
               <div className="mt-3 grid gap-3 sm:grid-cols-2">
                 <DetailField label="Plan" value={selectedBillingOrganization.plan} />
                 <DetailField label="Status" value={selectedBillingOrganization.subscription_status} />
-                <DetailField label="Paddle Subscription" value={selectedBillingOrganization.paddle_subscription_id} />
-                <DetailField label="Paddle Customer" value={selectedBillingOrganization.paddle_customer_id} />
+                <DetailField label="Subscription ID" value={selectedBillingOrganization.paddle_subscription_id} />
+                <DetailField label="Customer ID" value={selectedBillingOrganization.paddle_customer_id} />
                 <DetailField
                   label="Current Period End"
                   value={formatDate(selectedBillingOrganization.current_period_ends_at)}

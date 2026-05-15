@@ -193,9 +193,5 @@ export function getPricingPlan(planId: PlanId) {
 }
 
 export function getCheckoutPriceId(planId: Extract<PlanId, "pro" | "team">) {
-  if (planId === "pro") {
-    return import.meta.env.VITE_PADDLE_LAUNCH_PRICE_ID || import.meta.env.VITE_PADDLE_PRO_PRICE_ID || "";
-  }
-
-  return import.meta.env.VITE_PADDLE_SCALE_PRICE_ID || import.meta.env.VITE_PADDLE_TEAM_PRICE_ID || "";
+  return "";
 }

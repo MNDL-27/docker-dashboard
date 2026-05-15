@@ -36,7 +36,7 @@ export default function PrivacyPage() {
           <section className="mb-10">
             <h2 className="text-xl font-semibold mb-4 text-foreground">4. Billing Data</h2>
             <p className="text-muted-foreground mb-4">
-              Payment processing is handled by Paddle. We do not store your credit card information on our servers. Paddle provides us with transactional data required for subscription management.
+              We do not store your credit card information on our servers. Payment providers provide us with only the transactional data required for subscription management.
             </p>
           </section>
 

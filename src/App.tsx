@@ -57,36 +57,6 @@ const DarkModeInit = ({ children }: { children: React.ReactNode }) => {
   return <>{children}</>;
 };
 
-let paddleInitialized = false;
-
-const PaddleInitializer = ({ children }: { children: React.ReactNode }) => {
-  useEffect(() => {
-    if (paddleInitialized) return;
-
-    const token = import.meta.env.VITE_PADDLE_CLIENT_TOKEN;
-    if (!token) {
-      console.warn("Paddle client token missing; skipping initialization.");
-      return;
-    }
-
-    if (!window.Paddle) {
-      console.warn("Paddle.js script not loaded yet; initialization will be retried on next mount or by safe interaction.");
-      return;
-    }
-
-    try {
-      const environment = token.startsWith('live_') ? 'production' : 'sandbox';
-      window.Paddle.Environment.set(environment);
-      window.Paddle.Initialize({ token });
-      paddleInitialized = true;
-      console.log(`Paddle.js initialized successfully in ${environment} mode.`);
-    } catch (error) {
-      console.error("Failed to initialize Paddle.js:", error);
-    }
-  }, []);
-  return <>{children}</>;
-};
-
 const RouteFallback = () => (
   <div className="flex min-h-[40vh] items-center justify-center">
     <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
@@ -108,70 +78,68 @@ const App = () => {
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
         <DarkModeInit>
-          <PaddleInitializer>
-            <Toaster />
-            <Sonner />
-            <BrowserRouter>
-              <Suspense fallback={<RouteFallback />}>
-                <Routes>
-                  {/* Marketing */}
-                  <Route path="/" element={isDocsSubdomain() ? <DocsPage /> : isAppSubdomain() ? <AppRootRedirect /> : <LandingPage />} />
-                  <Route path="/features" element={<FeaturesPage />} />
-                  <Route path="/pricing" element={<PricingPage />} />
-                  <Route path="/security" element={<SecurityPage />} />
-                  <Route path="/docs" element={<DocsPage />} />
-                  <Route path="/contact" element={<ContactPage />} />
-                  <Route path="/dedicated/start" element={<DedicatedStartPage />} />
-                  <Route path="/tos" element={<TermsPage />} />
-                  <Route path="/privacy" element={<PrivacyPage />} />
-                  <Route path="/refunds" element={<RefundsPage />} />
-                  {/* Auth */}
-                  <Route path="/login/*" element={previewBypass ? <Navigate to="/app" replace /> : <RequireAppSubdomain><LoginPage /></RequireAppSubdomain>} />
-                  <Route path="/sign-up/*" element={previewBypass ? <Navigate to="/app" replace /> : <RequireAppSubdomain><SignupPage /></RequireAppSubdomain>} />
-                  <Route path="/signup" element={previewBypass ? <Navigate to="/app" replace /> : <RequireAppSubdomain><Navigate to="/sign-up" replace /></RequireAppSubdomain>} />
-                  <Route path="/create-org" element={<RequireAppSubdomain><CreateOrgPage /></RequireAppSubdomain>} />
-                  <Route path="/onboarding" element={<RequireAppSubdomain key="onboarding"><ProtectedRoute requireOnboarded={false}><OnboardingPage /></ProtectedRoute></RequireAppSubdomain>} />
+          <Toaster />
+          <Sonner />
+          <BrowserRouter>
+            <Suspense fallback={<RouteFallback />}>
+              <Routes>
+                {/* Marketing */}
+                <Route path="/" element={isDocsSubdomain() ? <DocsPage /> : isAppSubdomain() ? <AppRootRedirect /> : <LandingPage />} />
+                <Route path="/features" element={<FeaturesPage />} />
+                <Route path="/pricing" element={<PricingPage />} />
+                <Route path="/security" element={<SecurityPage />} />
+                <Route path="/docs" element={<DocsPage />} />
+                <Route path="/contact" element={<ContactPage />} />
+                <Route path="/dedicated/start" element={<DedicatedStartPage />} />
+                <Route path="/tos" element={<TermsPage />} />
+                <Route path="/privacy" element={<PrivacyPage />} />
+                <Route path="/refunds" element={<RefundsPage />} />
+                {/* Auth */}
+                <Route path="/login/*" element={previewBypass ? <Navigate to="/app" replace /> : <RequireAppSubdomain><LoginPage /></RequireAppSubdomain>} />
+                <Route path="/sign-up/*" element={previewBypass ? <Navigate to="/app" replace /> : <RequireAppSubdomain><SignupPage /></RequireAppSubdomain>} />
+                <Route path="/signup" element={previewBypass ? <Navigate to="/app" replace /> : <RequireAppSubdomain><Navigate to="/sign-up" replace /></RequireAppSubdomain>} />
+                <Route path="/create-org" element={<RequireAppSubdomain><CreateOrgPage /></RequireAppSubdomain>} />
+                <Route path="/onboarding" element={<RequireAppSubdomain key="onboarding"><ProtectedRoute requireOnboarded={false}><OnboardingPage /></ProtectedRoute></RequireAppSubdomain>} />
+                <Route
+                  path="/dedicated/intake"
+                  element={
+                    <RequireAppSubdomain key="dedicated-intake">
+                      <ProtectedRoute requireOnboarded={false} allowMissingOrganization skipResolvedRedirect>
+                        <DedicatedIntakePage />
+                      </ProtectedRoute>
+                    </RequireAppSubdomain>
+                  }
+                />
+                {/* App Shell - Protected */}
+                <Route path="/app" element={<RequireAppSubdomain key="app"><ProtectedRoute><AppShell /></ProtectedRoute></RequireAppSubdomain>}>
+                  <Route index element={<DashboardPage />} />
+                  <Route path="organizations" element={<OrganizationsPage />} />
+                  <Route path="hosts" element={<HostsPage />} />
+                  <Route path="hosts/:id" element={<HostDetailPage />} />
+                  <Route path="containers" element={<ContainersPage />} />
+                  <Route path="containers/:id" element={<ContainerDetailPage />} />
+                  <Route path="monitoring" element={<Navigate to="/app/alerts" replace />} />
+                  <Route path="logs" element={<LogsPage />} />
                   <Route
-                    path="/dedicated/intake"
-                    element={
-                      <RequireAppSubdomain key="dedicated-intake">
-                        <ProtectedRoute requireOnboarded={false} allowMissingOrganization skipResolvedRedirect>
-                          <DedicatedIntakePage />
-                        </ProtectedRoute>
-                      </RequireAppSubdomain>
-                    }
+                    path="files"
+                    element={<FileManagerPage />}
                   />
-                  {/* App Shell - Protected */}
-                  <Route path="/app" element={<RequireAppSubdomain key="app"><ProtectedRoute><AppShell /></ProtectedRoute></RequireAppSubdomain>}>
-                    <Route index element={<DashboardPage />} />
-                    <Route path="organizations" element={<OrganizationsPage />} />
-                    <Route path="hosts" element={<HostsPage />} />
-                    <Route path="hosts/:id" element={<HostDetailPage />} />
-                    <Route path="containers" element={<ContainersPage />} />
-                    <Route path="containers/:id" element={<ContainerDetailPage />} />
-                    <Route path="monitoring" element={<Navigate to="/app/alerts" replace />} />
-                    <Route path="logs" element={<LogsPage />} />
-                    <Route
-                      path="files"
-                      element={<FileManagerPage />}
-                    />
-                    <Route path="alerts" element={<AlertsPage />} />
-                    <Route path="incidents" element={<Navigate to="/app/alerts" replace />} />
-                    <Route path="incidents/:id" element={<Navigate to="/app/alerts" replace />} />
-                    <Route path="deployments" element={<Navigate to="/app/hosts" replace />} />
-                    <Route path="billing" element={<BillingPage />} />
-                    <Route path="members" element={<Navigate to="/app/settings?tab=Members" replace />} />
-                    <Route path="dedicated-deployment" element={<DedicatedDeploymentPage />} />
-                    <Route path="settings" element={<SettingsPage />} />
-                    <Route path="admin" element={<RequirePlatformAdmin><AdminPage /></RequirePlatformAdmin>} />
-                    <Route path="help" element={<HelpPage />} />
-                    <Route path="setup-guide" element={<SetupGuidePage />} />
-                  </Route>
-                  <Route path="*" element={<NotFound />} />
-                </Routes>
-              </Suspense>
-            </BrowserRouter>
-          </PaddleInitializer>
+                  <Route path="alerts" element={<AlertsPage />} />
+                  <Route path="incidents" element={<Navigate to="/app/alerts" replace />} />
+                  <Route path="incidents/:id" element={<Navigate to="/app/alerts" replace />} />
+                  <Route path="deployments" element={<Navigate to="/app/hosts" replace />} />
+                  <Route path="billing" element={<BillingPage />} />
+                  <Route path="members" element={<Navigate to="/app/settings?tab=Members" replace />} />
+                  <Route path="dedicated-deployment" element={<DedicatedDeploymentPage />} />
+                  <Route path="settings" element={<SettingsPage />} />
+                  <Route path="admin" element={<RequirePlatformAdmin><AdminPage /></RequirePlatformAdmin>} />
+                  <Route path="help" element={<HelpPage />} />
+                  <Route path="setup-guide" element={<SetupGuidePage />} />
+                </Route>
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </Suspense>
+          </BrowserRouter>
         </DarkModeInit>
       </TooltipProvider>
     </QueryClientProvider>

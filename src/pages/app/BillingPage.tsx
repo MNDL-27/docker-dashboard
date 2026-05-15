@@ -1,24 +1,21 @@
 import { PageHeader } from "@/components/shared/PageHeader";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { AlertTriangle, Construction, Check, ArrowRight, X, Loader2, Zap, Box, HeartHandshake } from "lucide-react";
-import { useSearchParams, useNavigate } from "react-router-dom";
-import { useEffect, useState } from "react";
+import { Construction, Check, Loader2, Zap, Box, HeartHandshake } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { useState } from "react";
 import { useOrganization, useUser } from "@clerk/react";
 import { useQuery } from "@tanstack/react-query";
 import { apiFetch } from "@/lib/api";
-import { getCheckoutPriceId, getPricingPlan } from "@/lib/pricing";
+import { getPricingPlan } from "@/lib/pricing";
 import { useViewerState } from "@/hooks/useViewerState";
 
 export default function BillingPage() {
-  const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const { organization } = useOrganization();
   const { user } = useUser();
   const { data: viewer } = useViewerState();
   const { toast } = useToast();
-  const [selectedPlan, setSelectedPlan] = useState<"pro" | "team" | null>(null);
   const [donorIntentLoading, setDonorIntentLoading] = useState(false);
   const [donorIntent, setDonorIntent] = useState<null | {
     reference_token: string;
@@ -26,9 +23,6 @@ export default function BillingPage() {
     grant_days: number;
   }>(null);
   const [donorTransactionId, setDonorTransactionId] = useState("");
-  const [paddleStatus, setPaddleStatus] = useState<"checking" | "ready" | "unavailable">(() =>
-    typeof window !== "undefined" && window.Paddle ? "ready" : "checking",
-  );
   const freePlanDetails = getPricingPlan("free");
   const activeOrganizationId = viewer?.active_org_id ?? null;
   const effectivePlan = viewer?.active_org_effective_plan ?? viewer?.active_org_plan;
@@ -52,92 +46,7 @@ export default function BillingPage() {
     enabled: Boolean(activeOrganizationId),
   });
 
-  useEffect(() => {
-    const plan = searchParams.get("plan") || sessionStorage.getItem("dockerdash_pending_plan");
-    if ((plan === "pro" || plan === "team") && (!orgDetails || orgDetails.plan === "free")) {
-      setSelectedPlan(plan);
-      if (plan) sessionStorage.setItem("dockerdash_pending_plan", plan);
-    }
-  }, [searchParams, orgDetails]);
 
-  useEffect(() => {
-    if (typeof window === "undefined") {
-      return;
-    }
-
-    if (window.Paddle) {
-      setPaddleStatus("ready");
-      return;
-    }
-
-    const paddleScript = document.querySelector<HTMLScriptElement>('script[src*="cdn.paddle.com/paddle/v2/paddle.js"]');
-    const markReady = () => setPaddleStatus("ready");
-    const markUnavailable = () => setPaddleStatus("unavailable");
-    const timeoutId = window.setTimeout(() => {
-      if (!window.Paddle) {
-        markUnavailable();
-      }
-    }, 4000);
-
-    paddleScript?.addEventListener("load", markReady);
-    paddleScript?.addEventListener("error", markUnavailable);
-
-    return () => {
-      window.clearTimeout(timeoutId);
-      paddleScript?.removeEventListener("load", markReady);
-      paddleScript?.removeEventListener("error", markUnavailable);
-    };
-  }, []);
-
-  const handleClearPlan = () => {
-    sessionStorage.removeItem("dockerdash_pending_plan");
-    setSelectedPlan(null);
-    navigate("/app/billing", { replace: true });
-  };
-
-  const handleCheckout = () => {
-    if (!selectedPlan || !activeOrganizationId) {
-      return;
-    }
-
-    if (!window.Paddle) {
-      setPaddleStatus("unavailable");
-      toast({
-        title: "Checkout is unavailable",
-        description: "Paddle did not load in this browser. Disable blockers for Paddle and try again.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    const priceId = getCheckoutPriceId(selectedPlan);
-
-    if (!priceId) {
-      console.error("Missing Price ID for plan:", selectedPlan);
-      toast({
-        title: "Checkout is unavailable",
-        description: "The billing price ID is missing for this plan.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    window.Paddle.Checkout.open({
-      items: [{ priceId: priceId, quantity: 1 }],
-      customer: user?.primaryEmailAddress?.emailAddress ? { email: user.primaryEmailAddress.emailAddress } : undefined,
-      customData: {
-        organization_id: activeOrganizationId,
-        intended_plan: selectedPlan
-      },
-      settings: {
-        displayMode: 'overlay',
-        theme: 'dark'
-      }
-    });
-
-    // Clear local intent once handoff starts
-    sessionStorage.removeItem("dockerdash_pending_plan");
-  };
 
   const donationUrl = import.meta.env.VITE_DONATION_URL || "https://liberapay.com/MNDL-27/";
   const paypalDonationUrl = import.meta.env.VITE_PAYPAL_DONATION_URL || "https://www.paypal.com/paypalme/ProtikMondal27";
@@ -151,7 +60,7 @@ export default function BillingPage() {
         method: 'POST',
         body: {
           organization_id: activeOrganizationId,
-          intended_plan: selectedPlan || 'pro',
+          intended_plan: 'pro',
           payer_email: user?.primaryEmailAddress?.emailAddress || undefined,
         },
       }) as { reference_token: string; instructions: string[]; grant_days: number };
@@ -237,7 +146,7 @@ export default function BillingPage() {
               )}
               <div className="flex justify-between text-sm">
                 <span className="text-muted-foreground">Payment Method</span>
-                <span>{orgDetails.payment_provider ? `${orgDetails.payment_provider} managed` : 'Paddle managed'}</span>
+                <span>{orgDetails.payment_provider ? `${orgDetails.payment_provider} managed` : 'Platform managed'}</span>
               </div>
               {orgDetails.donor_premium_expires_at && (
                 <div className="flex justify-between text-sm">
@@ -253,7 +162,7 @@ export default function BillingPage() {
                   Deployment Status
                 </Button>
               ) : null}
-              <Button variant="outline" size="sm" onClick={() => window.open('https://paddle.com/support', '_blank')}>
+              <Button variant="outline" size="sm" onClick={() => window.open('https://github.com/MNDL-27/docker-watchtower-dash/issues', '_blank')}>
                 Billing Support
               </Button>
               {orgDetails.cancel_at_period_end ? (
@@ -275,122 +184,6 @@ export default function BillingPage() {
                 </li>
               ))}
             </ul>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  // Checkout State View (User selected a plan but hasn't paid)
-  if (selectedPlan && (selectedPlan === "pro" || selectedPlan === "team")) {
-    const details = getPricingPlan(selectedPlan);
-    if (!details) {
-      return null;
-    }
-    const paddleBlocked = paddleStatus === "unavailable";
-    return (
-      <div className="space-y-6 animate-fade-in">
-        <PageHeader
-          title="Complete your Subscription"
-          description={`Almost there. Activate the ${details.name} plan to unlock the paid operating envelope and premium alerting.`}
-          breadcrumbs={[{ label: "Management" }, { label: "Billing" }, { label: "Checkout" }]}
-        />
-
-        
-        
-        <div className="max-w-md mx-auto space-y-4">
-          <div className="glass-card overflow-hidden ring-2 ring-primary">
-            <div className="p-6 border-b border-border bg-primary/5 flex justify-between items-center">
-              <div>
-                <h3 className="font-bold text-lg">{details.name} Plan</h3>
-                <p className="text-2xl font-bold">{details.priceLabel}</p>
-              </div>
-              <Button variant="ghost" size="icon" onClick={handleClearPlan}>
-                <X className="h-4 w-4" />
-              </Button>
-            </div>
-            <div className="p-6 space-y-4">
-              {paddleBlocked && (
-                <Alert variant="destructive" className="bg-destructive/5">
-                  <AlertTriangle className="h-4 w-4" />
-                  <AlertTitle>Checkout blocked in this browser</AlertTitle>
-                  <AlertDescription>
-                    Paddle failed to load. Disable ad or privacy blockers for Paddle, then refresh and try again.
-                  </AlertDescription>
-                </Alert>
-              )}
-              <ul className="space-y-2">
-                {details.highlights.map(f => (
-                  <li key={f} className="flex items-center gap-2 text-sm">
-                    <Check className="h-4 w-4 text-success" /> {f}
-                  </li>
-                ))}
-              </ul>
-              <Button className="w-full gap-2" onClick={handleCheckout} disabled={paddleStatus === "checking"}>
-                Proceed to Checkout <ArrowRight className="h-4 w-4" />
-              </Button>
-              {paddleStatus === "checking" && (
-                <p className="text-xs text-muted-foreground text-center">
-                  Loading secure checkout...
-                </p>
-              )}
-              <button 
-                onClick={handleClearPlan}
-                className="w-full text-xs text-muted-foreground hover:text-foreground transition-colors"
-              >
-                No thanks, stay on Free tier for now
-              </button>
-            </div>
-          </div>
-
-          <div className="glass-card p-5 border-dashed">
-            <div className="flex items-start gap-3">
-              <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
-                <HeartHandshake className="h-5 w-5 text-primary" />
-              </div>
-              <div>
-                <h4 className="font-semibold">Donor access fallback</h4>
-                <p className="text-xs text-muted-foreground">
-                  If checkout is blocked in your country, donate manually and include the reference token in your payment note.
-                </p>
-              </div>
-            </div>
-
-            <div className="mt-4 space-y-3">
-              <Button variant="outline" className="w-full" onClick={handleCreateDonorIntent} disabled={donorIntentLoading}>
-                {donorIntentLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-                Generate donor token (DNR-8)
-              </Button>
-
-              {donorIntent ? (
-                <div className="rounded-lg border border-border p-3 space-y-2">
-                  <p className="text-xs uppercase tracking-wide text-muted-foreground">Reference token</p>
-                  <p className="font-mono text-sm">{donorIntent.reference_token}</p>
-                  <ul className="space-y-1 text-xs text-muted-foreground">
-                    {donorIntent.instructions.map((instruction) => (
-                      <li key={instruction}>• {instruction}</li>
-                    ))}
-                  </ul>
-                  <div className="flex gap-2">
-                    <Button size="sm" variant="outline" onClick={() => window.open(donationUrl, '_blank')}>Open Liberapay</Button>
-                    <Button size="sm" variant="outline" onClick={() => window.open(paypalDonationUrl, '_blank')}>Open PayPal</Button>
-                  </div>
-                  <p className="text-[11px] text-muted-foreground">
-                    Manual verification target: within 24 hours. Access is granted for {donorIntent.grant_days} days per matched donation.
-                  </p>
-                </div>
-              ) : null}
-
-              <div className="flex gap-2">
-                <input
-                  value={donorTransactionId}
-                  onChange={(event) => setDonorTransactionId(event.target.value)}
-                  placeholder="Paste PayPal transaction ID"
-                  className="h-9 flex-1 rounded-md border border-input bg-background px-3 text-sm"
-                />
-                <Button size="sm" onClick={handleSubmitTransactionHint}>I have paid</Button>
-              </div>
-            </div>
           </div>
         </div>
       </div>
