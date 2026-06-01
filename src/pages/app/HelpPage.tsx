@@ -1,4 +1,5 @@
 import { PageHeader } from "@/components/shared/PageHeader";
+import { SentryTestButton } from "@/components/SentryTestButton";
 import { BookOpen, Mail, Wrench } from "lucide-react";
 import { Link } from "react-router-dom";
 
@@ -36,6 +37,11 @@ export default function HelpPage() {
             </Link>
           )
         ))}
+      </div>
+
+      <div className="pt-4 border-t border-border/40 flex items-center justify-between">
+        <p className="text-xs text-muted-foreground/40">Need to verify error tracking?</p>
+        <SentryTestButton />
       </div>
     </div>
   );
