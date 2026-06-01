@@ -78,4 +78,6 @@ Thumbs.db
 
 # Local MCP / tooling state
 .mcp-npm-cache/
-.obsidian-mcp-local/
+
+# Graphify knowledge graph output (regenerable)
+graphify-out/

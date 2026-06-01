@@ -1,1 +1,0 @@
-{"nodes": [{"id": "app", "label": "App", "file_type": "code", "source_file": "src/App.tsx"}], "edges": [{"source": "app", "target": "useeffect", "relation": "calls", "confidence": "EXTRACTED", "confidence_score": 1.0, "source_file": "src/App.tsx"}], "hyperedges": []}
