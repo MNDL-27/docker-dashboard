@@ -48,9 +48,6 @@ export interface AdminOrganizationRow {
   subscription_status: string;
   current_period_ends_at: string | null;
   cancel_at_period_end: boolean;
-  paddle_subscription_id: string | null;
-  paddle_customer_id: string | null;
-  paddle_price_id: string | null;
   donor_premium_expires_at: string | null;
   payment_provider: string | null;
   onboarding_status: string;

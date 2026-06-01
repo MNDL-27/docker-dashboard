@@ -261,7 +261,7 @@ describe("downgrade flow — effective node limit", () => {
   });
 
   it("SCENARIO: pro user cancels → nodeLimit drops to 1 (free)", () => {
-    // Paddle sends subscription.canceled → plan stays 'pro' in webhook but
+    // Webhook sends subscription.canceled → plan stays 'pro' but
     // isPaidSubscriptionActive becomes false → getEffectivePlanForEnforcement
     // returns 'free' → nodeLimit = 1
     expect(resolveNodeLimit({ plan: "pro", subscriptionStatus: "canceled" })).toBe(1);

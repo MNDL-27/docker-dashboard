@@ -12,9 +12,6 @@ export interface Organization {
   updated_at: string;
   plan: 'free' | 'pro' | 'team' | 'enterprise';
   subscription_status: 'active' | 'inactive' | 'past_due' | 'canceled' | 'paused';
-  paddle_subscription_id?: string | null;
-  paddle_customer_id?: string | null;
-  paddle_price_id?: string | null;
   current_period_ends_at?: string | null;
   cancel_at_period_end: boolean;
   donor_premium_expires_at?: string | null;

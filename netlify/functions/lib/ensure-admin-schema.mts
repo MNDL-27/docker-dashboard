@@ -100,21 +100,6 @@ export async function ensureAdminSchema() {
 
     await sql`
       ALTER TABLE public.organizations
-      ADD COLUMN IF NOT EXISTS paddle_subscription_id text
-    `;
-
-    await sql`
-      ALTER TABLE public.organizations
-      ADD COLUMN IF NOT EXISTS paddle_customer_id text
-    `;
-
-    await sql`
-      ALTER TABLE public.organizations
-      ADD COLUMN IF NOT EXISTS paddle_price_id text
-    `;
-
-    await sql`
-      ALTER TABLE public.organizations
       ADD COLUMN IF NOT EXISTS current_period_ends_at timestamptz
     `;
 
