@@ -5,7 +5,7 @@ import { enforceOrganizationNodeLimit } from "./access-controls.mjs";
 import { requirePlatformAdmin } from "./admin-auth.mjs";
 import { normalizeAdminReason, assertAdminReason, recordAdminAudit } from "./admin-audit.mjs";
 import { extractDnr8Token, parseFiniteNumber, coerceString } from "./donor-billing-helpers.mjs";
-import { donorActivationTemplate, donorRenewalReminderTemplate } from "./donor-email-templates.mjs";
+import { donorActivationTemplate, donorRenewalReminderTemplate, donorRevokedTemplate } from "./donor-email-templates.mjs";
 import { sendEmail } from "./email.mjs";
 import { verifyWebhookTimestamp } from "./security.mjs";
 
@@ -753,6 +753,16 @@ export async function resendDonorEmailDelivery({
     subject = tpl.subject;
     text = tpl.body;
     html = tpl.html;
+  } else if (templateName === 'revoked') {
+    const tpl = donorRevokedTemplate({
+      name: contact.full_name,
+      orgName: contact.org_name,
+      expiresAt,
+      reason: typeof metadata.reason === 'string' ? metadata.reason : 'expired',
+    });
+    subject = tpl.subject;
+    text = tpl.body;
+    html = tpl.html;
   } else {
     throw new Error(`Unsupported template for resend: ${templateName}`);
   }
@@ -879,6 +889,97 @@ export async function sendDueDonorReminders() {
       } else {
         errors.push({ organization_id: String(row.id), error: result.error || 'Unknown email failure' });
       }
+    } catch (error) {
+      errors.push({ organization_id: String(row.id), error: error instanceof Error ? error.message : 'Unknown error' });
+    }
+  }
+
+  return {
+    scanned: rows.length,
+    sent,
+    errors,
+  };
+}
+
+export async function sendDonorRevokedEmail({
+  organizationId,
+  expiresAt,
+  reason,
+}: {
+  organizationId: string;
+  expiresAt: string;
+  reason: string;
+}) {
+  const contact = await getOrganizationOwnerContact(organizationId);
+  if (!contact) return;
+
+  const template = donorRevokedTemplate({
+    name: contact.full_name,
+    orgName: contact.org_name,
+    expiresAt,
+    reason,
+  });
+
+  const result = await sendEmail({
+    to: contact.email,
+    subject: template.subject,
+    text: template.body,
+    html: template.html,
+  });
+
+  await recordEmailDelivery({
+    organizationId,
+    recipientEmail: contact.email,
+    template: "revoked",
+    provider: result.provider,
+    providerMessageId: result.messageId,
+    status: result.success ? "sent" : "failed",
+    error: result.error,
+    metadata: {
+      expires_at: expiresAt,
+      reason,
+    },
+  });
+}
+
+export async function sendDueDonorRevocations() {
+  // Find organizations where donor premium expired yesterday (date-based)
+  // and no successful revoked email has been sent yet. Date-based approach is
+  // consistent with the existing sendDueDonorReminders query patterns.
+  // Failed sends are excluded from dedup so they can be retried on the next run.
+  const rows = await sql`
+    SELECT
+      o.id,
+      o.name,
+      o.donor_premium_expires_at,
+      u.email,
+      u.full_name
+    FROM public.organizations o
+    JOIN public.organization_members om ON om.organization_id = o.id
+    JOIN public.users u ON u.id = om.user_id
+    WHERE o.donor_premium_expires_at IS NOT NULL
+      AND o.donor_premium_expires_at::date = CURRENT_DATE - 1
+      AND om.role = 'owner'
+      AND NOT EXISTS (
+        SELECT 1
+        FROM public.donor_email_deliveries d
+        WHERE d.organization_id = o.id
+          AND d.template = 'revoked'
+          AND d.status = 'sent'
+      )
+  `;
+
+  let sent = 0;
+  const errors: Array<{ organization_id: string; error: string }> = [];
+
+  for (const row of rows) {
+    try {
+      await sendDonorRevokedEmail({
+        organizationId: String(row.id),
+        expiresAt: new Date(String(row.donor_premium_expires_at)).toISOString(),
+        reason: "expired",
+      });
+      sent += 1;
     } catch (error) {
       errors.push({ organization_id: String(row.id), error: error instanceof Error ? error.message : 'Unknown error' });
     }

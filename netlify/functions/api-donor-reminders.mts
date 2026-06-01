@@ -1,6 +1,6 @@
 import type { Config } from "@netlify/functions";
 
-import { donorJsonHeaders, sendDueDonorReminders } from "./lib/donor-billing.mjs";
+import { donorJsonHeaders, sendDueDonorReminders, sendDueDonorRevocations } from "./lib/donor-billing.mjs";
 
 const headers = donorJsonHeaders();
 
@@ -22,8 +22,25 @@ export default async (req: Request) => {
   }
 
   try {
-    const result = await sendDueDonorReminders();
-    return new Response(JSON.stringify({ success: true, ...result }), { status: 200, headers });
+    const remindersResult = await sendDueDonorReminders();
+    const revocationsResult = await sendDueDonorRevocations();
+
+    const combinedErrors = [
+      ...(remindersResult.errors || []),
+      ...(revocationsResult.errors || []),
+    ];
+
+    return new Response(
+      JSON.stringify({
+        success: true,
+        reminders_sent: remindersResult.sent,
+        reminders_scanned: remindersResult.scanned,
+        revocations_sent: revocationsResult.sent,
+        revocations_scanned: revocationsResult.scanned,
+        errors: combinedErrors.length > 0 ? combinedErrors : undefined,
+      }),
+      { status, headers },
+    );
   } catch (error) {
     return new Response(
       JSON.stringify({ error: error instanceof Error ? error.message : "Failed to send donor reminders" }),
