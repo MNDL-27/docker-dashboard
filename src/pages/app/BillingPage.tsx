@@ -162,7 +162,7 @@ export default function BillingPage() {
                   Deployment Status
                 </Button>
               ) : null}
-              <Button variant="outline" size="sm" onClick={() => window.open('https://github.com/MNDL-27/docker-watchtower-dash/issues', '_blank')}>
+              <Button variant="outline" size="sm" onClick={() => navigate('/contact')}>
                 Billing Support
               </Button>
               {orgDetails.cancel_at_period_end ? (
@@ -312,7 +312,7 @@ export default function BillingPage() {
             <p className="text-xs text-muted-foreground mb-4">
               Unlimited hosts, premium alerting, file manager, SSH-over-HTTP, and dedicated support response target.
             </p>
-            <Button className="w-full gap-2" variant="default" onClick={() => window.open('https://github.com/MNDL-27/docker-watchtower-dash/issues/new?template=upgrade_request.md&title=Pro+plan+upgrade+request', '_blank')}>
+            <Button className="w-full gap-2" variant="default" onClick={() => navigate('/contact')}>
               <Mail className="h-4 w-4" /> Request Pro Upgrade
             </Button>
           </div>
@@ -330,7 +330,7 @@ export default function BillingPage() {
             <p className="text-xs text-muted-foreground mb-4">
               Everything in Pro plus team member seats, dedicated deployment options, and priority support.
             </p>
-            <Button className="w-full gap-2" variant="default" onClick={() => window.open('https://github.com/MNDL-27/docker-watchtower-dash/issues/new?template=upgrade_request.md&title=Team+plan+upgrade+request', '_blank')}>
+            <Button className="w-full gap-2" variant="default" onClick={() => navigate('/contact')}>
               <Mail className="h-4 w-4" /> Request Team Upgrade
             </Button>
           </div>

@@ -83,7 +83,6 @@ export function AdminBillingManagement() {
                   label="Donor Premium Expires"
                   value={formatDate(selectedBillingOrganization.donor_premium_expires_at)}
                 />
-                <DetailField label="Payment Provider" value={selectedBillingOrganization.payment_provider ?? "—"} />
                 <DetailField
                   label="Cancel At Period End"
                   value={selectedBillingOrganization.cancel_at_period_end ? "Yes" : "No"}
