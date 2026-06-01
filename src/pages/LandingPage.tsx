@@ -62,7 +62,7 @@ export default function LandingPage() {
                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
                   <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-primary"></span>
                 </span>
-                Public Beta — Free for up to 3 hosts
+                Public Beta — Free for 1 host
               </div>
 
               <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold tracking-tight leading-[1.08]">
@@ -247,7 +247,7 @@ export default function LandingPage() {
           <div className="max-w-3xl mx-auto px-4 text-center space-y-6">
             <h2 className="text-3xl md:text-4xl font-bold tracking-tight">Stop SSHing into boxes to check uptime</h2>
             <p className="text-lg text-muted-foreground leading-relaxed">
-              Free tier includes 3 hosts, 2 team members, and 24-hour log retention. 
+              Free tier includes 1 host, 1 team member, and limited log retention. 
               No credit card required.
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-3 pt-2">
