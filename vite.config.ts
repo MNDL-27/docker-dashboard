@@ -24,7 +24,37 @@ export default defineConfig(({ mode }) => ({
     sourcemap: "hidden",
     rollupOptions: {
       output: {
-        // Removed manualChunks to fix Uncaught ReferenceError: Cannot access 'P' before initialization
+        manualChunks(id) {
+          // Split large vendor libraries into separate cacheable chunks.
+          // Using a function-based approach (not object-based) to avoid
+          // the 'Cannot access X before initialization' circular dependency
+          // issue that can occur with object-based manualChunks + Clerk.
+          if (id.includes('node_modules')) {
+            // IMPORTANT: Do NOT split React or ReactDOM into their own chunk.
+            // Many libraries (Clerk, Radix, framer-motion, etc.) expect React
+            // to be in the same initialization scope. Splitting React out causes
+            // 'Cannot read properties of undefined (reading useLayoutEffect)'
+            // at runtime due to module initialization ordering issues.
+            if (id.includes('@clerk')) return 'vendor-clerk';
+            if (id.includes('@tanstack/react-query')) return 'vendor-query';
+            if (id.includes('lucide-react')) return 'vendor-lucide';
+            if (id.includes('recharts')) return 'vendor-charts';
+            if (id.includes('@sentry')) return 'vendor-sentry';
+            if (id.includes('date-fns')) return 'vendor-date';
+            if (id.includes('react-router') || id.includes('@remix-run')) return 'vendor-router';
+            if (id.includes('three')) return 'vendor-three';
+            if (id.includes('zod')) return 'vendor-validation';
+            if (id.includes('framer-motion')) return 'vendor-motion';
+            if (id.includes('@radix-ui')) return 'vendor-radix';
+            if (id.includes('react-hook-form') || id.includes('@hookform')) return 'vendor-forms';
+            if (id.includes('cmdk') || id.includes('vaul') || id.includes('sonner') || id.includes('embla')) return 'vendor-ui';
+            if (id.includes('tailwind-merge') || id.includes('clsx') || id.includes('class-variance-authority') || id.includes('tailwindcss-animate')) return 'vendor-utils';
+            if (id.includes('react-resizable-panels') || id.includes('input-otp') || id.includes('react-day-picker') || id.includes('next-themes')) return 'vendor-ui-extras';
+            // react, react-dom stay in the main chunk to avoid initialization
+            // ordering issues with Clerk, Radix, framer-motion, etc.
+            return 'vendor';
+          }
+        },
       },
     },
   },
