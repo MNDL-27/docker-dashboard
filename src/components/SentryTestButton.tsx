@@ -8,7 +8,7 @@ export function SentryTestButton() {
     >
       <button
         onClick={() => {
-          throw new Error("Sentry test error from SentryTestButton");
+          throw new Error("Sentry test error — source maps should now work!");
         }}
         className="inline-flex items-center gap-2 text-xs text-muted-foreground/50 hover:text-muted-foreground transition-colors"
       >
