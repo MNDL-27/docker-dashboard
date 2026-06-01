@@ -1,0 +1,359 @@
+{
+  "directed": false,
+  "multigraph": false,
+  "graph": {},
+  "nodes": [
+    {
+      "label": "AppShell.tsx",
+      "file_type": "code",
+      "source_file": "AppShell.tsx",
+      "source_location": "L1",
+      "id": "c_code_docker_watchtower_dash_src_components_layout_appshell_tsx",
+      "community": 0,
+      "norm_label": "appshell.tsx"
+    },
+    {
+      "label": "AppShell()",
+      "file_type": "code",
+      "source_file": "AppShell.tsx",
+      "source_location": "L5",
+      "id": "layout_appshell_appshell",
+      "community": 0,
+      "norm_label": "appshell()"
+    },
+    {
+      "label": "AppSidebar.tsx",
+      "file_type": "code",
+      "source_file": "AppSidebar.tsx",
+      "source_location": "L1",
+      "id": "c_code_docker_watchtower_dash_src_components_layout_appsidebar_tsx",
+      "community": 0,
+      "norm_label": "appsidebar.tsx"
+    },
+    {
+      "label": "navGroups",
+      "file_type": "code",
+      "source_file": "AppSidebar.tsx",
+      "source_location": "L12",
+      "id": "layout_appsidebar_navgroups",
+      "community": 0,
+      "norm_label": "navgroups"
+    },
+    {
+      "label": "AppSidebar()",
+      "file_type": "code",
+      "source_file": "AppSidebar.tsx",
+      "source_location": "L46",
+      "id": "layout_appsidebar_appsidebar",
+      "community": 0,
+      "norm_label": "appsidebar()"
+    },
+    {
+      "label": "AppTopBar.tsx",
+      "file_type": "code",
+      "source_file": "AppTopBar.tsx",
+      "source_location": "L1",
+      "id": "c_code_docker_watchtower_dash_src_components_layout_apptopbar_tsx",
+      "community": 1,
+      "norm_label": "apptopbar.tsx"
+    },
+    {
+      "label": "SearchableContainer",
+      "file_type": "code",
+      "source_file": "AppTopBar.tsx",
+      "source_location": "L18",
+      "id": "layout_apptopbar_searchablecontainer",
+      "community": 1,
+      "norm_label": "searchablecontainer"
+    },
+    {
+      "label": "quickSearchItems",
+      "file_type": "code",
+      "source_file": "AppTopBar.tsx",
+      "source_location": "L27",
+      "id": "layout_apptopbar_quicksearchitems",
+      "community": 1,
+      "norm_label": "quicksearchitems"
+    },
+    {
+      "label": "AppTopBar()",
+      "file_type": "code",
+      "source_file": "AppTopBar.tsx",
+      "source_location": "L36",
+      "id": "layout_apptopbar_apptopbar",
+      "community": 0,
+      "norm_label": "apptopbar()"
+    },
+    {
+      "label": "NotificationBell.tsx",
+      "file_type": "code",
+      "source_file": "NotificationBell.tsx",
+      "source_location": "L1",
+      "id": "c_code_docker_watchtower_dash_src_components_layout_notificationbell_tsx",
+      "community": 1,
+      "norm_label": "notificationbell.tsx"
+    },
+    {
+      "label": "NotificationIcon()",
+      "file_type": "code",
+      "source_file": "NotificationBell.tsx",
+      "source_location": "L12",
+      "id": "layout_notificationbell_notificationicon",
+      "community": 1,
+      "norm_label": "notificationicon()"
+    },
+    {
+      "label": "NotificationBell()",
+      "file_type": "code",
+      "source_file": "NotificationBell.tsx",
+      "source_location": "L27",
+      "id": "layout_notificationbell_notificationbell",
+      "community": 1,
+      "norm_label": "notificationbell()"
+    },
+    {
+      "label": "PublicFooter.tsx",
+      "file_type": "code",
+      "source_file": "PublicFooter.tsx",
+      "source_location": "L1",
+      "id": "c_code_docker_watchtower_dash_src_components_layout_publicfooter_tsx",
+      "community": 2,
+      "norm_label": "publicfooter.tsx"
+    },
+    {
+      "label": "footerLinks",
+      "file_type": "code",
+      "source_file": "PublicFooter.tsx",
+      "source_location": "L4",
+      "id": "layout_publicfooter_footerlinks",
+      "community": 2,
+      "norm_label": "footerlinks"
+    },
+    {
+      "label": "PublicFooter()",
+      "file_type": "code",
+      "source_file": "PublicFooter.tsx",
+      "source_location": "L23",
+      "id": "layout_publicfooter_publicfooter",
+      "community": 2,
+      "norm_label": "publicfooter()"
+    },
+    {
+      "label": "PublicNavbar.tsx",
+      "file_type": "code",
+      "source_file": "PublicNavbar.tsx",
+      "source_location": "L1",
+      "id": "c_code_docker_watchtower_dash_src_components_layout_publicnavbar_tsx",
+      "community": 3,
+      "norm_label": "publicnavbar.tsx"
+    },
+    {
+      "label": "navLinks",
+      "file_type": "code",
+      "source_file": "PublicNavbar.tsx",
+      "source_location": "L8",
+      "id": "layout_publicnavbar_navlinks",
+      "community": 3,
+      "norm_label": "navlinks"
+    },
+    {
+      "label": "PublicNavbar()",
+      "file_type": "code",
+      "source_file": "PublicNavbar.tsx",
+      "source_location": "L15",
+      "id": "layout_publicnavbar_publicnavbar",
+      "community": 3,
+      "norm_label": "publicnavbar()"
+    }
+  ],
+  "links": [
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "AppShell.tsx",
+      "source_location": "L2",
+      "weight": 1.0,
+      "source": "c_code_docker_watchtower_dash_src_components_layout_appshell_tsx",
+      "target": "c_code_docker_watchtower_dash_src_components_layout_appsidebar_tsx",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "AppShell.tsx",
+      "source_location": "L2",
+      "weight": 1.0,
+      "source": "c_code_docker_watchtower_dash_src_components_layout_appshell_tsx",
+      "target": "layout_appsidebar_appsidebar",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "AppShell.tsx",
+      "source_location": "L3",
+      "weight": 1.0,
+      "source": "c_code_docker_watchtower_dash_src_components_layout_appshell_tsx",
+      "target": "c_code_docker_watchtower_dash_src_components_layout_apptopbar_tsx",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "AppShell.tsx",
+      "source_location": "L3",
+      "weight": 1.0,
+      "source": "c_code_docker_watchtower_dash_src_components_layout_appshell_tsx",
+      "target": "layout_apptopbar_apptopbar",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "AppShell.tsx",
+      "source_location": "L5",
+      "weight": 1.0,
+      "source": "c_code_docker_watchtower_dash_src_components_layout_appshell_tsx",
+      "target": "layout_appshell_appshell",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "AppSidebar.tsx",
+      "source_location": "L12",
+      "weight": 1.0,
+      "source": "c_code_docker_watchtower_dash_src_components_layout_appsidebar_tsx",
+      "target": "layout_appsidebar_navgroups",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "AppSidebar.tsx",
+      "source_location": "L46",
+      "weight": 1.0,
+      "source": "c_code_docker_watchtower_dash_src_components_layout_appsidebar_tsx",
+      "target": "layout_appsidebar_appsidebar",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "AppTopBar.tsx",
+      "source_location": "L16",
+      "weight": 1.0,
+      "source": "c_code_docker_watchtower_dash_src_components_layout_apptopbar_tsx",
+      "target": "c_code_docker_watchtower_dash_src_components_layout_notificationbell_tsx",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "AppTopBar.tsx",
+      "source_location": "L16",
+      "weight": 1.0,
+      "source": "c_code_docker_watchtower_dash_src_components_layout_apptopbar_tsx",
+      "target": "layout_notificationbell_notificationbell",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "AppTopBar.tsx",
+      "source_location": "L18",
+      "weight": 1.0,
+      "source": "c_code_docker_watchtower_dash_src_components_layout_apptopbar_tsx",
+      "target": "layout_apptopbar_searchablecontainer",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "AppTopBar.tsx",
+      "source_location": "L27",
+      "weight": 1.0,
+      "source": "c_code_docker_watchtower_dash_src_components_layout_apptopbar_tsx",
+      "target": "layout_apptopbar_quicksearchitems",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "AppTopBar.tsx",
+      "source_location": "L36",
+      "weight": 1.0,
+      "source": "c_code_docker_watchtower_dash_src_components_layout_apptopbar_tsx",
+      "target": "layout_apptopbar_apptopbar",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "NotificationBell.tsx",
+      "source_location": "L12",
+      "weight": 1.0,
+      "source": "c_code_docker_watchtower_dash_src_components_layout_notificationbell_tsx",
+      "target": "layout_notificationbell_notificationicon",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "NotificationBell.tsx",
+      "source_location": "L27",
+      "weight": 1.0,
+      "source": "c_code_docker_watchtower_dash_src_components_layout_notificationbell_tsx",
+      "target": "layout_notificationbell_notificationbell",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "PublicFooter.tsx",
+      "source_location": "L4",
+      "weight": 1.0,
+      "source": "c_code_docker_watchtower_dash_src_components_layout_publicfooter_tsx",
+      "target": "layout_publicfooter_footerlinks",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "PublicFooter.tsx",
+      "source_location": "L23",
+      "weight": 1.0,
+      "source": "c_code_docker_watchtower_dash_src_components_layout_publicfooter_tsx",
+      "target": "layout_publicfooter_publicfooter",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "PublicNavbar.tsx",
+      "source_location": "L8",
+      "weight": 1.0,
+      "source": "c_code_docker_watchtower_dash_src_components_layout_publicnavbar_tsx",
+      "target": "layout_publicnavbar_navlinks",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "PublicNavbar.tsx",
+      "source_location": "L15",
+      "weight": 1.0,
+      "source": "c_code_docker_watchtower_dash_src_components_layout_publicnavbar_tsx",
+      "target": "layout_publicnavbar_publicnavbar",
+      "confidence_score": 1.0
+    }
+  ],
+  "hyperedges": [],
+  "built_at_commit": "ed28244c211be7b6c2b23ccf8ca4f5a7352c3e35"
+}

@@ -1,0 +1,710 @@
+{
+  "nodes": [
+    {
+      "id": "c_code_docker_watchtower_dash_netlify_functions_lib_access_controls_test_ts",
+      "label": "access-controls.test.ts",
+      "file_type": "code",
+      "source_file": "access-controls.test.ts",
+      "source_location": "L1"
+    },
+    {
+      "id": "c_code_docker_watchtower_dash_netlify_functions_lib_admin_audit_test_ts",
+      "label": "admin-audit.test.ts",
+      "file_type": "code",
+      "source_file": "admin-audit.test.ts",
+      "source_location": "L1"
+    },
+    {
+      "id": "lib_admin_audit_test_normalizeadminreason",
+      "label": "normalizeAdminReason()",
+      "file_type": "code",
+      "source_file": "admin-audit.test.ts",
+      "source_location": "L3"
+    },
+    {
+      "id": "lib_admin_audit_test_assertadminreason",
+      "label": "assertAdminReason()",
+      "file_type": "code",
+      "source_file": "admin-audit.test.ts",
+      "source_location": "L7"
+    },
+    {
+      "id": "c_code_docker_watchtower_dash_netlify_functions_lib_donor_billing_helpers_test_ts",
+      "label": "donor-billing-helpers.test.ts",
+      "file_type": "code",
+      "source_file": "donor-billing-helpers.test.ts",
+      "source_location": "L1"
+    },
+    {
+      "id": "c_code_docker_watchtower_dash_netlify_functions_lib_donor_billing_test_ts",
+      "label": "donor-billing.test.ts",
+      "file_type": "code",
+      "source_file": "donor-billing.test.ts",
+      "source_location": "L1"
+    },
+    {
+      "id": "c_code_docker_watchtower_dash_netlify_functions_lib_donor_email_templates_test_ts",
+      "label": "donor-email-templates.test.ts",
+      "file_type": "code",
+      "source_file": "donor-email-templates.test.ts",
+      "source_location": "L1"
+    },
+    {
+      "id": "lib_donor_email_templates_test_tpl",
+      "label": "tpl",
+      "file_type": "code",
+      "source_file": "donor-email-templates.test.ts",
+      "source_location": "L11"
+    },
+    {
+      "id": "c_code_docker_watchtower_dash_netlify_functions_lib_email_retry_test_ts",
+      "label": "email-retry.test.ts",
+      "file_type": "code",
+      "source_file": "email-retry.test.ts",
+      "source_location": "L1"
+    },
+    {
+      "id": "lib_email_retry_test_tpl",
+      "label": "tpl",
+      "file_type": "code",
+      "source_file": "email-retry.test.ts",
+      "source_location": "L7"
+    },
+    {
+      "id": "c_code_docker_watchtower_dash_netlify_functions_lib_email_test_ts",
+      "label": "email.test.ts",
+      "file_type": "code",
+      "source_file": "email.test.ts",
+      "source_location": "L1"
+    },
+    {
+      "id": "c_code_docker_watchtower_dash_netlify_functions_lib_host_health_mjs",
+      "label": "host-health.mjs",
+      "file_type": "code",
+      "source_file": "host-health.mjs",
+      "source_location": "L1"
+    },
+    {
+      "id": "lib_host_health_parsestalethresholdminutes",
+      "label": "parseStaleThresholdMinutes()",
+      "file_type": "code",
+      "source_file": "host-health.mjs",
+      "source_location": "L4"
+    },
+    {
+      "id": "lib_host_health_stalecutoffdate",
+      "label": "staleCutoffDate()",
+      "file_type": "code",
+      "source_file": "host-health.mjs",
+      "source_location": "L10"
+    },
+    {
+      "id": "lib_host_health_shouldmarkhoststale",
+      "label": "shouldMarkHostStale()",
+      "file_type": "code",
+      "source_file": "host-health.mjs",
+      "source_location": "L14"
+    },
+    {
+      "id": "lib_host_health_failurestatusforcount",
+      "label": "failureStatusForCount()",
+      "file_type": "code",
+      "source_file": "host-health.mjs",
+      "source_location": "L25"
+    },
+    {
+      "id": "c_code_docker_watchtower_dash_netlify_functions_lib_org_access_test_ts",
+      "label": "org-access.test.ts",
+      "file_type": "code",
+      "source_file": "org-access.test.ts",
+      "source_location": "L1"
+    },
+    {
+      "id": "netlify_functions_lib_security_test_ts",
+      "label": "security.test.ts",
+      "file_type": "code",
+      "source_file": "netlify\\functions\\lib\\security.test.ts",
+      "source_location": "L1"
+    },
+    {
+      "id": "lib_security_test_mockedsql",
+      "label": "mockedSql",
+      "file_type": "code",
+      "source_file": "netlify\\functions\\lib\\security.test.ts",
+      "source_location": "L10"
+    },
+    {
+      "id": "lib_security_test_req",
+      "label": "req",
+      "file_type": "code",
+      "source_file": "netlify\\functions\\lib\\security.test.ts",
+      "source_location": "L26"
+    },
+    {
+      "id": "lib_security_test_headers",
+      "label": "headers",
+      "file_type": "code",
+      "source_file": "netlify\\functions\\lib\\security.test.ts",
+      "source_location": "L32"
+    },
+    {
+      "id": "lib_security_test_warnspy",
+      "label": "warnSpy",
+      "file_type": "code",
+      "source_file": "netlify\\functions\\lib\\security.test.ts",
+      "source_location": "L61"
+    }
+  ],
+  "edges": [
+    {
+      "source": "c_code_docker_watchtower_dash_netlify_functions_lib_access_controls_test_ts",
+      "target": "vitest",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "access-controls.test.ts",
+      "source_location": "L1",
+      "weight": 1.0
+    },
+    {
+      "source": "c_code_docker_watchtower_dash_netlify_functions_lib_admin_audit_test_ts",
+      "target": "vitest",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "admin-audit.test.ts",
+      "source_location": "L1",
+      "weight": 1.0
+    },
+    {
+      "source": "c_code_docker_watchtower_dash_netlify_functions_lib_admin_audit_test_ts",
+      "target": "lib_admin_audit_test_normalizeadminreason",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "admin-audit.test.ts",
+      "source_location": "L3",
+      "weight": 1.0
+    },
+    {
+      "source": "c_code_docker_watchtower_dash_netlify_functions_lib_admin_audit_test_ts",
+      "target": "lib_admin_audit_test_assertadminreason",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "admin-audit.test.ts",
+      "source_location": "L7",
+      "weight": 1.0
+    },
+    {
+      "source": "c_code_docker_watchtower_dash_netlify_functions_lib_donor_billing_helpers_test_ts",
+      "target": "vitest",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "donor-billing-helpers.test.ts",
+      "source_location": "L1",
+      "weight": 1.0
+    },
+    {
+      "source": "c_code_docker_watchtower_dash_netlify_functions_lib_donor_billing_helpers_test_ts",
+      "target": "c_code_docker_watchtower_dash_netlify_functions_lib_donor_billing_helpers_mjs",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "donor-billing-helpers.test.ts",
+      "source_location": "L3",
+      "weight": 1.0
+    },
+    {
+      "source": "c_code_docker_watchtower_dash_netlify_functions_lib_donor_billing_helpers_test_ts",
+      "target": "lib_donor_billing_helpers_coercestring",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "donor-billing-helpers.test.ts",
+      "source_location": "L3",
+      "weight": 1.0
+    },
+    {
+      "source": "c_code_docker_watchtower_dash_netlify_functions_lib_donor_billing_helpers_test_ts",
+      "target": "lib_donor_billing_helpers_extractdnr8token",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "donor-billing-helpers.test.ts",
+      "source_location": "L3",
+      "weight": 1.0
+    },
+    {
+      "source": "c_code_docker_watchtower_dash_netlify_functions_lib_donor_billing_helpers_test_ts",
+      "target": "lib_donor_billing_helpers_parsefinitenumber",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "donor-billing-helpers.test.ts",
+      "source_location": "L3",
+      "weight": 1.0
+    },
+    {
+      "source": "c_code_docker_watchtower_dash_netlify_functions_lib_donor_billing_test_ts",
+      "target": "vitest",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "donor-billing.test.ts",
+      "source_location": "L1",
+      "weight": 1.0
+    },
+    {
+      "source": "c_code_docker_watchtower_dash_netlify_functions_lib_donor_email_templates_test_ts",
+      "target": "vitest",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "donor-email-templates.test.ts",
+      "source_location": "L1",
+      "weight": 1.0
+    },
+    {
+      "source": "c_code_docker_watchtower_dash_netlify_functions_lib_donor_email_templates_test_ts",
+      "target": "c_code_docker_watchtower_dash_netlify_functions_lib_donor_email_templates_mjs",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "donor-email-templates.test.ts",
+      "source_location": "L3",
+      "weight": 1.0
+    },
+    {
+      "source": "c_code_docker_watchtower_dash_netlify_functions_lib_donor_email_templates_test_ts",
+      "target": "lib_donor_email_templates_donoractivationtemplate",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "donor-email-templates.test.ts",
+      "source_location": "L3",
+      "weight": 1.0
+    },
+    {
+      "source": "c_code_docker_watchtower_dash_netlify_functions_lib_donor_email_templates_test_ts",
+      "target": "lib_donor_email_templates_donorrenewalremindertemplate",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "donor-email-templates.test.ts",
+      "source_location": "L3",
+      "weight": 1.0
+    },
+    {
+      "source": "c_code_docker_watchtower_dash_netlify_functions_lib_donor_email_templates_test_ts",
+      "target": "lib_donor_email_templates_donorrevokedtemplate",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "donor-email-templates.test.ts",
+      "source_location": "L3",
+      "weight": 1.0
+    },
+    {
+      "source": "c_code_docker_watchtower_dash_netlify_functions_lib_donor_email_templates_test_ts",
+      "target": "lib_donor_email_templates_test_tpl",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "donor-email-templates.test.ts",
+      "source_location": "L11",
+      "weight": 1.0
+    },
+    {
+      "source": "c_code_docker_watchtower_dash_netlify_functions_lib_donor_email_templates_test_ts",
+      "target": "lib_donor_email_templates_test_tpl",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "donor-email-templates.test.ts",
+      "source_location": "L18",
+      "weight": 1.0
+    },
+    {
+      "source": "c_code_docker_watchtower_dash_netlify_functions_lib_donor_email_templates_test_ts",
+      "target": "lib_donor_email_templates_test_tpl",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "donor-email-templates.test.ts",
+      "source_location": "L25",
+      "weight": 1.0
+    },
+    {
+      "source": "c_code_docker_watchtower_dash_netlify_functions_lib_email_retry_test_ts",
+      "target": "vitest",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "email-retry.test.ts",
+      "source_location": "L1",
+      "weight": 1.0
+    },
+    {
+      "source": "c_code_docker_watchtower_dash_netlify_functions_lib_email_retry_test_ts",
+      "target": "c_code_docker_watchtower_dash_netlify_functions_lib_donor_email_templates_mjs",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "email-retry.test.ts",
+      "source_location": "L3",
+      "weight": 1.0
+    },
+    {
+      "source": "c_code_docker_watchtower_dash_netlify_functions_lib_email_retry_test_ts",
+      "target": "lib_donor_email_templates_donoractivationtemplate",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "email-retry.test.ts",
+      "source_location": "L3",
+      "weight": 1.0
+    },
+    {
+      "source": "c_code_docker_watchtower_dash_netlify_functions_lib_email_retry_test_ts",
+      "target": "lib_donor_email_templates_donorrenewalremindertemplate",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "email-retry.test.ts",
+      "source_location": "L3",
+      "weight": 1.0
+    },
+    {
+      "source": "c_code_docker_watchtower_dash_netlify_functions_lib_email_retry_test_ts",
+      "target": "lib_email_retry_test_tpl",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "email-retry.test.ts",
+      "source_location": "L7",
+      "weight": 1.0
+    },
+    {
+      "source": "c_code_docker_watchtower_dash_netlify_functions_lib_email_retry_test_ts",
+      "target": "lib_email_retry_test_tpl",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "email-retry.test.ts",
+      "source_location": "L18",
+      "weight": 1.0
+    },
+    {
+      "source": "c_code_docker_watchtower_dash_netlify_functions_lib_email_test_ts",
+      "target": "vitest",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "email.test.ts",
+      "source_location": "L1",
+      "weight": 1.0
+    },
+    {
+      "source": "c_code_docker_watchtower_dash_netlify_functions_lib_email_test_ts",
+      "target": "c_code_docker_watchtower_dash_netlify_functions_lib_email_mjs",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "email.test.ts",
+      "source_location": "L3",
+      "weight": 1.0
+    },
+    {
+      "source": "c_code_docker_watchtower_dash_netlify_functions_lib_email_test_ts",
+      "target": "lib_email_sendemail",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "email.test.ts",
+      "source_location": "L3",
+      "weight": 1.0
+    },
+    {
+      "source": "c_code_docker_watchtower_dash_netlify_functions_lib_host_health_mjs",
+      "target": "lib_host_health_parsestalethresholdminutes",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "host-health.mjs",
+      "source_location": "L4",
+      "weight": 1.0
+    },
+    {
+      "source": "c_code_docker_watchtower_dash_netlify_functions_lib_host_health_mjs",
+      "target": "lib_host_health_stalecutoffdate",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "host-health.mjs",
+      "source_location": "L10",
+      "weight": 1.0
+    },
+    {
+      "source": "c_code_docker_watchtower_dash_netlify_functions_lib_host_health_mjs",
+      "target": "lib_host_health_shouldmarkhoststale",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "host-health.mjs",
+      "source_location": "L14",
+      "weight": 1.0
+    },
+    {
+      "source": "c_code_docker_watchtower_dash_netlify_functions_lib_host_health_mjs",
+      "target": "lib_host_health_failurestatusforcount",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "host-health.mjs",
+      "source_location": "L25",
+      "weight": 1.0
+    },
+    {
+      "source": "lib_host_health_shouldmarkhoststale",
+      "target": "lib_host_health_stalecutoffdate",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "host-health.mjs",
+      "source_location": "L22",
+      "weight": 1.0
+    },
+    {
+      "source": "c_code_docker_watchtower_dash_netlify_functions_lib_org_access_test_ts",
+      "target": "vitest",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "org-access.test.ts",
+      "source_location": "L1",
+      "weight": 1.0
+    },
+    {
+      "source": "c_code_docker_watchtower_dash_netlify_functions_lib_org_access_test_ts",
+      "target": "c_code_docker_watchtower_dash_netlify_functions_lib_org_access_mjs",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "org-access.test.ts",
+      "source_location": "L3",
+      "weight": 1.0
+    },
+    {
+      "source": "c_code_docker_watchtower_dash_netlify_functions_lib_org_access_test_ts",
+      "target": "lib_org_access_assertorganizationmembermutationallowed",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "org-access.test.ts",
+      "source_location": "L3",
+      "weight": 1.0
+    },
+    {
+      "source": "c_code_docker_watchtower_dash_netlify_functions_lib_org_access_test_ts",
+      "target": "lib_org_access_buildorganizationaccesssummary",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "org-access.test.ts",
+      "source_location": "L3",
+      "weight": 1.0
+    },
+    {
+      "source": "c_code_docker_watchtower_dash_netlify_functions_lib_org_access_test_ts",
+      "target": "lib_org_access_normalizeorganizationrole",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "org-access.test.ts",
+      "source_location": "L3",
+      "weight": 1.0
+    },
+    {
+      "source": "netlify_functions_lib_security_test_ts",
+      "target": "vitest",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "netlify\\functions\\lib\\security.test.ts",
+      "source_location": "L1",
+      "weight": 1.0
+    },
+    {
+      "source": "netlify_functions_lib_security_test_ts",
+      "target": "netlify_functions_lib_db_mjs",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "netlify\\functions\\lib\\security.test.ts",
+      "source_location": "L7",
+      "weight": 1.0
+    },
+    {
+      "source": "netlify_functions_lib_security_test_ts",
+      "target": "lib_db_sql",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "netlify\\functions\\lib\\security.test.ts",
+      "source_location": "L7",
+      "weight": 1.0
+    },
+    {
+      "source": "netlify_functions_lib_security_test_ts",
+      "target": "netlify_functions_lib_security_mts",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "netlify\\functions\\lib\\security.test.ts",
+      "source_location": "L8",
+      "weight": 1.0
+    },
+    {
+      "source": "netlify_functions_lib_security_test_ts",
+      "target": "lib_security_buildcorsheaders",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "netlify\\functions\\lib\\security.test.ts",
+      "source_location": "L8",
+      "weight": 1.0
+    },
+    {
+      "source": "netlify_functions_lib_security_test_ts",
+      "target": "lib_security_checkratelimit",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "netlify\\functions\\lib\\security.test.ts",
+      "source_location": "L8",
+      "weight": 1.0
+    },
+    {
+      "source": "netlify_functions_lib_security_test_ts",
+      "target": "lib_security_getallowedorigin",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "netlify\\functions\\lib\\security.test.ts",
+      "source_location": "L8",
+      "weight": 1.0
+    },
+    {
+      "source": "netlify_functions_lib_security_test_ts",
+      "target": "lib_security_trusted_origins",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "netlify\\functions\\lib\\security.test.ts",
+      "source_location": "L8",
+      "weight": 1.0
+    },
+    {
+      "source": "netlify_functions_lib_security_test_ts",
+      "target": "lib_security_verifywebhooktimestamp",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "netlify\\functions\\lib\\security.test.ts",
+      "source_location": "L8",
+      "weight": 1.0
+    },
+    {
+      "source": "netlify_functions_lib_security_test_ts",
+      "target": "lib_security_test_mockedsql",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "netlify\\functions\\lib\\security.test.ts",
+      "source_location": "L10",
+      "weight": 1.0
+    },
+    {
+      "source": "netlify_functions_lib_security_test_ts",
+      "target": "lib_security_test_req",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "netlify\\functions\\lib\\security.test.ts",
+      "source_location": "L26",
+      "weight": 1.0
+    },
+    {
+      "source": "netlify_functions_lib_security_test_ts",
+      "target": "lib_security_test_headers",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "netlify\\functions\\lib\\security.test.ts",
+      "source_location": "L32",
+      "weight": 1.0
+    },
+    {
+      "source": "netlify_functions_lib_security_test_ts",
+      "target": "lib_security_test_req",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "netlify\\functions\\lib\\security.test.ts",
+      "source_location": "L49",
+      "weight": 1.0
+    },
+    {
+      "source": "netlify_functions_lib_security_test_ts",
+      "target": "lib_security_test_headers",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "netlify\\functions\\lib\\security.test.ts",
+      "source_location": "L55",
+      "weight": 1.0
+    },
+    {
+      "source": "netlify_functions_lib_security_test_ts",
+      "target": "lib_security_test_warnspy",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "netlify\\functions\\lib\\security.test.ts",
+      "source_location": "L61",
+      "weight": 1.0
+    },
+    {
+      "source": "netlify_functions_lib_security_test_ts",
+      "target": "lib_security_test_req",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "netlify\\functions\\lib\\security.test.ts",
+      "source_location": "L62",
+      "weight": 1.0
+    },
+    {
+      "source": "netlify_functions_lib_security_test_ts",
+      "target": "lib_security_test_headers",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "netlify\\functions\\lib\\security.test.ts",
+      "source_location": "L64",
+      "weight": 1.0
+    },
+    {
+      "source": "netlify_functions_lib_security_test_ts",
+      "target": "lib_security_test_warnspy",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "netlify\\functions\\lib\\security.test.ts",
+      "source_location": "L71",
+      "weight": 1.0
+    },
+    {
+      "source": "netlify_functions_lib_security_test_ts",
+      "target": "lib_security_test_req",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "netlify\\functions\\lib\\security.test.ts",
+      "source_location": "L72",
+      "weight": 1.0
+    },
+    {
+      "source": "netlify_functions_lib_security_test_ts",
+      "target": "lib_security_test_headers",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "netlify\\functions\\lib\\security.test.ts",
+      "source_location": "L78",
+      "weight": 1.0
+    }
+  ],
+  "input_tokens": 0,
+  "output_tokens": 0
+}

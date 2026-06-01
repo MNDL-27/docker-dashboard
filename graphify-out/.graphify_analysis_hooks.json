@@ -1,0 +1,343 @@
+{
+  "communities": {
+    "0": [
+      "c_code_docker_watchtower_dash_src_hooks_useadmin_ts",
+      "hooks_useadmin_adminqueryoptions",
+      "hooks_useadmin_useaddadminorgban",
+      "hooks_useadmin_useadminauditlog",
+      "hooks_useadmin_useadmindonoremaildeliveries",
+      "hooks_useadmin_useadmindonoremaildelivery",
+      "hooks_useadmin_useadminhosts",
+      "hooks_useadmin_useadminmatchbillingevent",
+      "hooks_useadmin_useadminmutation",
+      "hooks_useadmin_useadminnotifications",
+      "hooks_useadmin_useadminoperations",
+      "hooks_useadmin_useadminorganization",
+      "hooks_useadmin_useadminorganizations",
+      "hooks_useadmin_useadminoverview",
+      "hooks_useadmin_useadminresenddonoremaildelivery",
+      "hooks_useadmin_useadminunmatchedbillingevents",
+      "hooks_useadmin_useadminuser",
+      "hooks_useadmin_useadminusers",
+      "hooks_useadmin_useapproveadminuser",
+      "hooks_useadmin_usecreateadminnotification",
+      "hooks_useadmin_usedeleteadminnotification",
+      "hooks_useadmin_useharddisableadminuser",
+      "hooks_useadmin_usehardenableadminuser",
+      "hooks_useadmin_uselockadminorganization",
+      "hooks_useadmin_usemarkadminhostneedsreconnect",
+      "hooks_useadmin_usequarantineadminhost",
+      "hooks_useadmin_useremoveadminorgban",
+      "hooks_useadmin_useresetadminonboarding",
+      "hooks_useadmin_userevokeadminuserapproval",
+      "hooks_useadmin_userunadminsecretmigration",
+      "hooks_useadmin_usesuspendadminuser",
+      "hooks_useadmin_useunlockadminorganization",
+      "hooks_useadmin_useunquarantineadminhost",
+      "hooks_useadmin_useunsuspendadminuser",
+      "hooks_useadmin_useupdateadminbilling"
+    ],
+    "1": [
+      "c_code_docker_watchtower_dash_src_hooks_usehostmetrics_ts",
+      "hooks_usehostmetrics_clamp",
+      "hooks_usehostmetrics_extractmetrics",
+      "hooks_usehostmetrics_formatfailuredetails",
+      "hooks_usehostmetrics_formattimelabel",
+      "hooks_usehostmetrics_gethostmetricsfailure",
+      "hooks_usehostmetrics_hostmetricsapidisk",
+      "hooks_usehostmetrics_hostmetricsapipoint",
+      "hooks_usehostmetrics_hostmetricsdisk",
+      "hooks_usehostmetrics_hostmetricsfailure",
+      "hooks_usehostmetrics_hostmetricspoint",
+      "hooks_usehostmetrics_ismetricssamplevalid",
+      "hooks_usehostmetrics_normalizehostmetricsdisk",
+      "hooks_usehostmetrics_normalizehostmetricspoint",
+      "hooks_usehostmetrics_normalizeoptionalrate",
+      "hooks_usehostmetrics_test_raw",
+      "hooks_usehostmetrics_test_result",
+      "hooks_usehostmetrics_tofinitenumber",
+      "hooks_usehostmetrics_totimestamp",
+      "hooks_usehostmetrics_usehostmetrics",
+      "hooks_usehostmetrics_usehostmetricshistory",
+      "hooks_usehostmetrics_usehostmetricshistoryoptions",
+      "hooks_usehostmetrics_usehostmetricsoptions",
+      "hooks_usehostmetrics_validatemetricsranges",
+      "src_hooks_usehostmetrics_test_ts"
+    ],
+    "2": [
+      "c_code_docker_watchtower_dash_src_hooks_useviewerstate_ts",
+      "hooks_usedocker_buildhostbody",
+      "hooks_usedocker_containerhostref",
+      "hooks_usedocker_containerlogoptions",
+      "hooks_usedocker_hostmutationbase",
+      "hooks_usedocker_hostsecrets",
+      "hooks_usedocker_resolvenodelimit",
+      "hooks_usedocker_sorthostsbycreation",
+      "hooks_usedocker_useadddockerhost",
+      "hooks_usedocker_useallcontainerstats",
+      "hooks_usedocker_usecontainerinspect",
+      "hooks_usedocker_usecontainerlogs",
+      "hooks_usedocker_usecontainers",
+      "hooks_usedocker_usecontainerstats",
+      "hooks_usedocker_usedeletedockerhost",
+      "hooks_usedocker_usedockerhosts",
+      "hooks_usedocker_usehostcontainers",
+      "hooks_usedocker_useupdatedockerhost",
+      "hooks_useviewerstate_useviewerstate",
+      "hooks_useviewerstate_viewerentitlements",
+      "hooks_useviewerstate_viewerstate",
+      "src_hooks_usedocker_ts"
+    ],
+    "3": [
+      "c_code_docker_watchtower_dash_src_hooks_usedestinationsettings_ts",
+      "c_code_docker_watchtower_dash_src_hooks_useslackdestinations_ts",
+      "c_code_docker_watchtower_dash_src_hooks_usewebhookdestinations_ts",
+      "hooks_use_toast_usetoast",
+      "hooks_usedestinationsettings_buildtesttoast",
+      "hooks_usedestinationsettings_testresult",
+      "hooks_usedestinationsettings_usedestinationsettings",
+      "hooks_useslackdestinations_invalidateslackqueries",
+      "hooks_useslackdestinations_usecreateslackdestination",
+      "hooks_useslackdestinations_useslackdestinations",
+      "hooks_useslackdestinations_usetestslackdestination",
+      "hooks_useslackdestinations_useupdateslackdestination",
+      "hooks_usewebhookdestinations_invalidatewebhookqueries",
+      "hooks_usewebhookdestinations_usecreatewebhookdestination",
+      "hooks_usewebhookdestinations_usetestwebhookdestination",
+      "hooks_usewebhookdestinations_useupdatewebhookdestination",
+      "hooks_usewebhookdestinations_usewebhookdestinations"
+    ],
+    "4": [
+      "c_code_docker_watchtower_dash_src_hooks_use_toast_ts",
+      "hooks_use_toast_action",
+      "hooks_use_toast_actiontype",
+      "hooks_use_toast_actiontypes",
+      "hooks_use_toast_addtoremovequeue",
+      "hooks_use_toast_dispatch",
+      "hooks_use_toast_genid",
+      "hooks_use_toast_listeners",
+      "hooks_use_toast_memorystate",
+      "hooks_use_toast_reducer",
+      "hooks_use_toast_state",
+      "hooks_use_toast_toast",
+      "hooks_use_toast_toastertoast",
+      "hooks_use_toast_toasttimeouts"
+    ],
+    "5": [
+      "c_code_docker_watchtower_dash_src_hooks_usealerts_ts",
+      "hooks_usealerts_invalidatealertsqueries",
+      "hooks_usealerts_useacknowledgealert",
+      "hooks_usealerts_usealertrules",
+      "hooks_usealerts_usealertsworkspace",
+      "hooks_usealerts_usecreatealertrule",
+      "hooks_usealerts_usecreateincident",
+      "hooks_usealerts_useincidentsfeed",
+      "hooks_usealerts_useresolvealert",
+      "hooks_usealerts_useupdatealertrule"
+    ],
+    "6": [
+      "c_code_docker_watchtower_dash_src_hooks_usefleetmetrics_ts",
+      "hooks_usefleetmetrics_fleetmetrics",
+      "hooks_usefleetmetrics_fleetmetricsapipoint",
+      "hooks_usefleetmetrics_formattimelabel",
+      "hooks_usefleetmetrics_normalizefleetmetricpoint",
+      "hooks_usefleetmetrics_normalizeoptionalrate",
+      "hooks_usefleetmetrics_tofinitenumber",
+      "hooks_usefleetmetrics_totimestamp",
+      "hooks_usefleetmetrics_usefleetmetrics"
+    ],
+    "7": [
+      "c_code_docker_watchtower_dash_src_hooks_useorganizationaccess_ts",
+      "hooks_useorganizationaccess_invalidateorganizationaccessqueries",
+      "hooks_useorganizationaccess_useinviteorganizationmember",
+      "hooks_useorganizationaccess_useorganizationaccess",
+      "hooks_useorganizationaccess_useremoveorganizationmember",
+      "hooks_useorganizationaccess_useresendorganizationinvitation",
+      "hooks_useorganizationaccess_userevokeorganizationinvitation",
+      "hooks_useorganizationaccess_useupdateorganizationmemberrole"
+    ],
+    "8": [
+      "c_code_docker_watchtower_dash_src_hooks_usededicateddeployment_ts",
+      "hooks_usededicateddeployment_dedicated_steps",
+      "hooks_usededicateddeployment_default_dedicated_intake",
+      "hooks_usededicateddeployment_sanitizeorgname",
+      "hooks_usededicateddeployment_usededicateddeployment",
+      "hooks_usededicateddeployment_usededicatedintakestate",
+      "hooks_usededicateddeployment_waitforactiveorganization"
+    ],
+    "9": [
+      "c_code_docker_watchtower_dash_src_hooks_useauthme_ts",
+      "hooks_useauthme_authmestate",
+      "hooks_useauthme_initialstate",
+      "hooks_useauthme_unauthenticatedstate",
+      "hooks_useauthme_useauthme"
+    ],
+    "10": [
+      "c_code_docker_watchtower_dash_src_hooks_usenotifications_ts",
+      "hooks_usenotifications_notifications_query_key",
+      "hooks_usenotifications_usedismissallnotifications",
+      "hooks_usenotifications_usedismissnotification",
+      "hooks_usenotifications_usenotifications"
+    ],
+    "11": [
+      "c_code_docker_watchtower_dash_src_hooks_usecontainerfiles_ts",
+      "hooks_usecontainerfiles_usecontainerfilecontent",
+      "hooks_usecontainerfiles_usecontainerfilelist"
+    ],
+    "12": [
+      "c_code_docker_watchtower_dash_src_hooks_use_mobile_tsx",
+      "hooks_use_mobile_useismobile"
+    ]
+  },
+  "cohesion": {
+    "0": 0.09,
+    "1": 0.13,
+    "2": 0.11,
+    "3": 0.24,
+    "4": 0.19,
+    "5": 0.2,
+    "6": 0.36,
+    "7": 0.25,
+    "8": 0.29,
+    "9": 0.4,
+    "10": 0.4,
+    "11": 0.67,
+    "12": 1.0
+  },
+  "gods": [
+    {
+      "id": "hooks_useadmin_useadminmutation",
+      "label": "useAdminMutation()",
+      "degree": 21
+    },
+    {
+      "id": "hooks_usedestinationsettings_usedestinationsettings",
+      "label": "useDestinationSettings()",
+      "degree": 10
+    },
+    {
+      "id": "hooks_usehostmetrics_extractmetrics",
+      "label": "extractMetrics()",
+      "degree": 6
+    },
+    {
+      "id": "hooks_usefleetmetrics_normalizefleetmetricpoint",
+      "label": "normalizeFleetMetricPoint()",
+      "degree": 5
+    },
+    {
+      "id": "hooks_usehostmetrics_normalizehostmetricspoint",
+      "label": "normalizeHostMetricsPoint()",
+      "degree": 5
+    },
+    {
+      "id": "hooks_usehostmetrics_tofinitenumber",
+      "label": "toFiniteNumber()",
+      "degree": 4
+    },
+    {
+      "id": "hooks_usehostmetrics_normalizeoptionalrate",
+      "label": "normalizeOptionalRate()",
+      "degree": 4
+    },
+    {
+      "id": "hooks_use_toast_reducer",
+      "label": "reducer()",
+      "degree": 3
+    },
+    {
+      "id": "hooks_use_toast_dispatch",
+      "label": "dispatch()",
+      "degree": 3
+    },
+    {
+      "id": "hooks_use_toast_toast",
+      "label": "Toast",
+      "degree": 3
+    }
+  ],
+  "surprises": [
+    {
+      "source": "useDestinationSettings()",
+      "target": "useToast()",
+      "source_files": [
+        "useDestinationSettings.ts",
+        "use-toast.ts"
+      ],
+      "confidence": "INFERRED",
+      "relation": "calls",
+      "why": "inferred connection - not explicitly stated in source; connects across different repos/directories"
+    },
+    {
+      "source": "useDestinationSettings()",
+      "target": "useSlackDestinations()",
+      "source_files": [
+        "useDestinationSettings.ts",
+        "useSlackDestinations.ts"
+      ],
+      "confidence": "INFERRED",
+      "relation": "calls",
+      "why": "inferred connection - not explicitly stated in source; connects across different repos/directories"
+    },
+    {
+      "source": "useDestinationSettings()",
+      "target": "useCreateSlackDestination()",
+      "source_files": [
+        "useDestinationSettings.ts",
+        "useSlackDestinations.ts"
+      ],
+      "confidence": "INFERRED",
+      "relation": "calls",
+      "why": "inferred connection - not explicitly stated in source; connects across different repos/directories"
+    },
+    {
+      "source": "useDestinationSettings()",
+      "target": "useUpdateSlackDestination()",
+      "source_files": [
+        "useDestinationSettings.ts",
+        "useSlackDestinations.ts"
+      ],
+      "confidence": "INFERRED",
+      "relation": "calls",
+      "why": "inferred connection - not explicitly stated in source; connects across different repos/directories"
+    },
+    {
+      "source": "useDestinationSettings()",
+      "target": "useTestSlackDestination()",
+      "source_files": [
+        "useDestinationSettings.ts",
+        "useSlackDestinations.ts"
+      ],
+      "confidence": "INFERRED",
+      "relation": "calls",
+      "why": "inferred connection - not explicitly stated in source; connects across different repos/directories"
+    }
+  ],
+  "questions": [
+    {
+      "type": "verify_inferred",
+      "question": "Are the 9 inferred relationships involving `useDestinationSettings()` (e.g. with `useToast()` and `useSlackDestinations()`) actually correct?",
+      "why": "`useDestinationSettings()` has 9 INFERRED edges - model-reasoned connections that need verification."
+    },
+    {
+      "type": "isolated_nodes",
+      "question": "What connects `ToasterToast`, `actionTypes`, `ActionType` to the rest of the system?",
+      "why": "32 weakly-connected nodes found - possible documentation gaps or missing edges."
+    },
+    {
+      "type": "low_cohesion",
+      "question": "Should `Community 0` be split into smaller, more focused modules?",
+      "why": "Cohesion score 0.09 - nodes in this community are weakly interconnected."
+    },
+    {
+      "type": "low_cohesion",
+      "question": "Should `Community 1` be split into smaller, more focused modules?",
+      "why": "Cohesion score 0.13 - nodes in this community are weakly interconnected."
+    },
+    {
+      "type": "low_cohesion",
+      "question": "Should `Community 2` be split into smaller, more focused modules?",
+      "why": "Cohesion score 0.11 - nodes in this community are weakly interconnected."
+    }
+  ]
+}

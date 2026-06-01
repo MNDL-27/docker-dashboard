@@ -22,6 +22,7 @@ export default async (req: Request) => {
       totalOrgs: data.metrics.total_organizations,
       totalUsers: data.metrics.total_users,
       activeHosts: data.metrics.active_hosts,
+      activeUsers: data.metrics.active_users,
     }
   }), { headers });
 };

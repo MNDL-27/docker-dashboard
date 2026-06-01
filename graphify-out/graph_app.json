@@ -1,0 +1,1910 @@
+{
+  "directed": false,
+  "multigraph": false,
+  "graph": {},
+  "nodes": [
+    {
+      "label": "AdminPage.tsx",
+      "file_type": "code",
+      "source_file": "src/pages/app/AdminPage.tsx",
+      "source_location": "L1",
+      "id": "src_pages_app_adminpage_tsx",
+      "community": 7,
+      "norm_label": "adminpage.tsx"
+    },
+    {
+      "label": "tabs",
+      "file_type": "code",
+      "source_file": "src/pages/app/AdminPage.tsx",
+      "source_location": "L19",
+      "id": "app_adminpage_tabs",
+      "community": 7,
+      "norm_label": "tabs"
+    },
+    {
+      "label": "AdminTab",
+      "file_type": "code",
+      "source_file": "src/pages/app/AdminPage.tsx",
+      "source_location": "L20",
+      "id": "app_adminpage_admintab",
+      "community": 7,
+      "norm_label": "admintab"
+    },
+    {
+      "label": "AdminPage()",
+      "file_type": "code",
+      "source_file": "src/pages/app/AdminPage.tsx",
+      "source_location": "L22",
+      "id": "app_adminpage_adminpage",
+      "community": 7,
+      "norm_label": "adminpage()"
+    },
+    {
+      "label": "AlertsPage.tsx",
+      "file_type": "code",
+      "source_file": "AlertsPage.tsx",
+      "source_location": "L1",
+      "id": "c_code_docker_watchtower_dash_src_pages_app_alertspage_tsx",
+      "community": 13,
+      "norm_label": "alertspage.tsx"
+    },
+    {
+      "label": "AlertsPage()",
+      "file_type": "code",
+      "source_file": "AlertsPage.tsx",
+      "source_location": "L25",
+      "id": "app_alertspage_alertspage",
+      "community": 13,
+      "norm_label": "alertspage()"
+    },
+    {
+      "label": "BillingPage.tsx",
+      "file_type": "code",
+      "source_file": "BillingPage.tsx",
+      "source_location": "L1",
+      "id": "c_code_docker_watchtower_dash_src_pages_app_billingpage_tsx",
+      "community": 14,
+      "norm_label": "billingpage.tsx"
+    },
+    {
+      "label": "BillingPage()",
+      "file_type": "code",
+      "source_file": "BillingPage.tsx",
+      "source_location": "L14",
+      "id": "app_billingpage_billingpage",
+      "community": 14,
+      "norm_label": "billingpage()"
+    },
+    {
+      "label": "ContainerDetailPage.tsx",
+      "file_type": "code",
+      "source_file": "src/pages/app/ContainerDetailPage.tsx",
+      "source_location": "L1",
+      "id": "src_pages_app_containerdetailpage_tsx",
+      "community": 0,
+      "norm_label": "containerdetailpage.tsx"
+    },
+    {
+      "label": "DockerContainerStats",
+      "file_type": "code",
+      "source_file": "src/pages/app/ContainerDetailPage.tsx",
+      "source_location": "L43",
+      "id": "app_containerdetailpage_dockercontainerstats",
+      "community": 0,
+      "norm_label": "dockercontainerstats"
+    },
+    {
+      "label": "DockerContainerInspect",
+      "file_type": "code",
+      "source_file": "src/pages/app/ContainerDetailPage.tsx",
+      "source_location": "L58",
+      "id": "app_containerdetailpage_dockercontainerinspect",
+      "community": 0,
+      "norm_label": "dockercontainerinspect"
+    },
+    {
+      "label": "DockerPortBinding",
+      "file_type": "code",
+      "source_file": "src/pages/app/ContainerDetailPage.tsx",
+      "source_location": "L78",
+      "id": "app_containerdetailpage_dockerportbinding",
+      "community": 0,
+      "norm_label": "dockerportbinding"
+    },
+    {
+      "label": "formatBytes()",
+      "file_type": "code",
+      "source_file": "src/pages/app/ContainerDetailPage.tsx",
+      "source_location": "L83",
+      "id": "app_containerdetailpage_formatbytes",
+      "community": 0,
+      "norm_label": "formatbytes()"
+    },
+    {
+      "label": "formatCount()",
+      "file_type": "code",
+      "source_file": "src/pages/app/ContainerDetailPage.tsx",
+      "source_location": "L91",
+      "id": "app_containerdetailpage_formatcount",
+      "community": 0,
+      "norm_label": "formatcount()"
+    },
+    {
+      "label": "calcCpuPercent()",
+      "file_type": "code",
+      "source_file": "src/pages/app/ContainerDetailPage.tsx",
+      "source_location": "L96",
+      "id": "app_containerdetailpage_calccpupercent",
+      "community": 0,
+      "norm_label": "calccpupercent()"
+    },
+    {
+      "label": "calcNetworkIo()",
+      "file_type": "code",
+      "source_file": "src/pages/app/ContainerDetailPage.tsx",
+      "source_location": "L104",
+      "id": "app_containerdetailpage_calcnetworkio",
+      "community": 0,
+      "norm_label": "calcnetworkio()"
+    },
+    {
+      "label": "calcBlkioTotal()",
+      "file_type": "code",
+      "source_file": "src/pages/app/ContainerDetailPage.tsx",
+      "source_location": "L120",
+      "id": "app_containerdetailpage_calcblkiototal",
+      "community": 0,
+      "norm_label": "calcblkiototal()"
+    },
+    {
+      "label": "getPrimaryIp()",
+      "file_type": "code",
+      "source_file": "src/pages/app/ContainerDetailPage.tsx",
+      "source_location": "L132",
+      "id": "app_containerdetailpage_getprimaryip",
+      "community": 0,
+      "norm_label": "getprimaryip()"
+    },
+    {
+      "label": "getContainerHealth()",
+      "file_type": "code",
+      "source_file": "src/pages/app/ContainerDetailPage.tsx",
+      "source_location": "L145",
+      "id": "app_containerdetailpage_getcontainerhealth",
+      "community": 0,
+      "norm_label": "getcontainerhealth()"
+    },
+    {
+      "label": "formatContainerUptime()",
+      "file_type": "code",
+      "source_file": "src/pages/app/ContainerDetailPage.tsx",
+      "source_location": "L154",
+      "id": "app_containerdetailpage_formatcontaineruptime",
+      "community": 0,
+      "norm_label": "formatcontaineruptime()"
+    },
+    {
+      "label": "DetailStatCard()",
+      "file_type": "code",
+      "source_file": "src/pages/app/ContainerDetailPage.tsx",
+      "source_location": "L161",
+      "id": "app_containerdetailpage_detailstatcard",
+      "community": 0,
+      "norm_label": "detailstatcard()"
+    },
+    {
+      "label": "MiniSummaryCard()",
+      "file_type": "code",
+      "source_file": "src/pages/app/ContainerDetailPage.tsx",
+      "source_location": "L210",
+      "id": "app_containerdetailpage_minisummarycard",
+      "community": 0,
+      "norm_label": "minisummarycard()"
+    },
+    {
+      "label": "ConfigRow()",
+      "file_type": "code",
+      "source_file": "src/pages/app/ContainerDetailPage.tsx",
+      "source_location": "L225",
+      "id": "app_containerdetailpage_configrow",
+      "community": 0,
+      "norm_label": "configrow()"
+    },
+    {
+      "label": "ContainerAction",
+      "file_type": "code",
+      "source_file": "src/pages/app/ContainerDetailPage.tsx",
+      "source_location": "L234",
+      "id": "app_containerdetailpage_containeraction",
+      "community": 0,
+      "norm_label": "containeraction"
+    },
+    {
+      "label": "getContainerActionFn()",
+      "file_type": "code",
+      "source_file": "src/pages/app/ContainerDetailPage.tsx",
+      "source_location": "L236",
+      "id": "app_containerdetailpage_getcontaineractionfn",
+      "community": 0,
+      "norm_label": "getcontaineractionfn()"
+    },
+    {
+      "label": "getHealthStatusTone()",
+      "file_type": "code",
+      "source_file": "src/pages/app/ContainerDetailPage.tsx",
+      "source_location": "L242",
+      "id": "app_containerdetailpage_gethealthstatustone",
+      "community": 0,
+      "norm_label": "gethealthstatustone()"
+    },
+    {
+      "label": "HostAccessRestrictedView()",
+      "file_type": "code",
+      "source_file": "src/pages/app/ContainerDetailPage.tsx",
+      "source_location": "L252",
+      "id": "app_containerdetailpage_hostaccessrestrictedview",
+      "community": 0,
+      "norm_label": "hostaccessrestrictedview()"
+    },
+    {
+      "label": "ContainerDetailPage()",
+      "file_type": "code",
+      "source_file": "src/pages/app/ContainerDetailPage.tsx",
+      "source_location": "L290",
+      "id": "app_containerdetailpage_containerdetailpage",
+      "community": 0,
+      "norm_label": "containerdetailpage()"
+    },
+    {
+      "label": "ContainersPage.tsx",
+      "file_type": "code",
+      "source_file": "src/pages/app/ContainersPage.tsx",
+      "source_location": "L1",
+      "id": "src_pages_app_containerspage_tsx",
+      "community": 1,
+      "norm_label": "containerspage.tsx"
+    },
+    {
+      "label": "BadgeStatus",
+      "file_type": "code",
+      "source_file": "src/pages/app/ContainersPage.tsx",
+      "source_location": "L33",
+      "id": "app_containerspage_badgestatus",
+      "community": 1,
+      "norm_label": "badgestatus"
+    },
+    {
+      "label": "ContainerListItem",
+      "file_type": "code",
+      "source_file": "src/pages/app/ContainersPage.tsx",
+      "source_location": "L35",
+      "id": "app_containerspage_containerlistitem",
+      "community": 1,
+      "norm_label": "containerlistitem"
+    },
+    {
+      "label": "ContainerStatsItem",
+      "file_type": "code",
+      "source_file": "src/pages/app/ContainersPage.tsx",
+      "source_location": "L48",
+      "id": "app_containerspage_containerstatsitem",
+      "community": 1,
+      "norm_label": "containerstatsitem"
+    },
+    {
+      "label": "STATE_TABS",
+      "file_type": "code",
+      "source_file": "src/pages/app/ContainersPage.tsx",
+      "source_location": "L57",
+      "id": "app_containerspage_state_tabs",
+      "community": 1,
+      "norm_label": "state_tabs"
+    },
+    {
+      "label": "relativeAge()",
+      "file_type": "code",
+      "source_file": "src/pages/app/ContainersPage.tsx",
+      "source_location": "L65",
+      "id": "app_containerspage_relativeage",
+      "community": 1,
+      "norm_label": "relativeage()"
+    },
+    {
+      "label": "shortenImage()",
+      "file_type": "code",
+      "source_file": "src/pages/app/ContainersPage.tsx",
+      "source_location": "L78",
+      "id": "app_containerspage_shortenimage",
+      "community": 1,
+      "norm_label": "shortenimage()"
+    },
+    {
+      "label": "formatBytes()",
+      "file_type": "code",
+      "source_file": "src/pages/app/ContainersPage.tsx",
+      "source_location": "L84",
+      "id": "app_containerspage_formatbytes",
+      "community": 1,
+      "norm_label": "formatbytes()"
+    },
+    {
+      "label": "formatNetIO()",
+      "file_type": "code",
+      "source_file": "src/pages/app/ContainersPage.tsx",
+      "source_location": "L91",
+      "id": "app_containerspage_formatnetio",
+      "community": 1,
+      "norm_label": "formatnetio()"
+    },
+    {
+      "label": "formatPercent()",
+      "file_type": "code",
+      "source_file": "src/pages/app/ContainersPage.tsx",
+      "source_location": "L95",
+      "id": "app_containerspage_formatpercent",
+      "community": 1,
+      "norm_label": "formatpercent()"
+    },
+    {
+      "label": "mapState()",
+      "file_type": "code",
+      "source_file": "src/pages/app/ContainersPage.tsx",
+      "source_location": "L99",
+      "id": "app_containerspage_mapstate",
+      "community": 1,
+      "norm_label": "mapstate()"
+    },
+    {
+      "label": "severityBorderClass()",
+      "file_type": "code",
+      "source_file": "src/pages/app/ContainersPage.tsx",
+      "source_location": "L108",
+      "id": "app_containerspage_severityborderclass",
+      "community": 1,
+      "norm_label": "severityborderclass()"
+    },
+    {
+      "label": "metricTone()",
+      "file_type": "code",
+      "source_file": "src/pages/app/ContainersPage.tsx",
+      "source_location": "L114",
+      "id": "app_containerspage_metrictone",
+      "community": 1,
+      "norm_label": "metrictone()"
+    },
+    {
+      "label": "TelemetryBadge()",
+      "file_type": "code",
+      "source_file": "src/pages/app/ContainersPage.tsx",
+      "source_location": "L121",
+      "id": "app_containerspage_telemetrybadge",
+      "community": 1,
+      "norm_label": "telemetrybadge()"
+    },
+    {
+      "label": "FleetSignalCard()",
+      "file_type": "code",
+      "source_file": "src/pages/app/ContainersPage.tsx",
+      "source_location": "L153",
+      "id": "app_containerspage_fleetsignalcard",
+      "community": 1,
+      "norm_label": "fleetsignalcard()"
+    },
+    {
+      "label": "ContainersPage()",
+      "file_type": "code",
+      "source_file": "src/pages/app/ContainersPage.tsx",
+      "source_location": "L190",
+      "id": "app_containerspage_containerspage",
+      "community": 1,
+      "norm_label": "containerspage()"
+    },
+    {
+      "label": "DashboardPage.tsx",
+      "file_type": "code",
+      "source_file": "DashboardPage.tsx",
+      "source_location": "L1",
+      "id": "c_code_docker_watchtower_dash_src_pages_app_dashboardpage_tsx",
+      "community": 15,
+      "norm_label": "dashboardpage.tsx"
+    },
+    {
+      "label": "DashboardPage()",
+      "file_type": "code",
+      "source_file": "DashboardPage.tsx",
+      "source_location": "L12",
+      "id": "app_dashboardpage_dashboardpage",
+      "community": 15,
+      "norm_label": "dashboardpage()"
+    },
+    {
+      "label": "DedicatedDeploymentPage.tsx",
+      "file_type": "code",
+      "source_file": "DedicatedDeploymentPage.tsx",
+      "source_location": "L1",
+      "id": "c_code_docker_watchtower_dash_src_pages_app_dedicateddeploymentpage_tsx",
+      "community": 8,
+      "norm_label": "dedicateddeploymentpage.tsx"
+    },
+    {
+      "label": "STATUS_ORDER",
+      "file_type": "code",
+      "source_file": "DedicatedDeploymentPage.tsx",
+      "source_location": "L10",
+      "id": "app_dedicateddeploymentpage_status_order",
+      "community": 8,
+      "norm_label": "status_order"
+    },
+    {
+      "label": "STATUS_COPY",
+      "file_type": "code",
+      "source_file": "DedicatedDeploymentPage.tsx",
+      "source_location": "L18",
+      "id": "app_dedicateddeploymentpage_status_copy",
+      "community": 8,
+      "norm_label": "status_copy"
+    },
+    {
+      "label": "DedicatedDeploymentPage()",
+      "file_type": "code",
+      "source_file": "DedicatedDeploymentPage.tsx",
+      "source_location": "L48",
+      "id": "app_dedicateddeploymentpage_dedicateddeploymentpage",
+      "community": 8,
+      "norm_label": "dedicateddeploymentpage()"
+    },
+    {
+      "label": "DeploymentsPage.tsx",
+      "file_type": "code",
+      "source_file": "DeploymentsPage.tsx",
+      "source_location": "L1",
+      "id": "c_code_docker_watchtower_dash_src_pages_app_deploymentspage_tsx",
+      "community": 4,
+      "norm_label": "deploymentspage.tsx"
+    },
+    {
+      "label": "upcomingFeatures",
+      "file_type": "code",
+      "source_file": "DeploymentsPage.tsx",
+      "source_location": "L7",
+      "id": "app_deploymentspage_upcomingfeatures",
+      "community": 4,
+      "norm_label": "upcomingfeatures"
+    },
+    {
+      "label": "rolloutSteps",
+      "file_type": "code",
+      "source_file": "DeploymentsPage.tsx",
+      "source_location": "L14",
+      "id": "app_deploymentspage_rolloutsteps",
+      "community": 4,
+      "norm_label": "rolloutsteps"
+    },
+    {
+      "label": "sampleReleases",
+      "file_type": "code",
+      "source_file": "DeploymentsPage.tsx",
+      "source_location": "L32",
+      "id": "app_deploymentspage_samplereleases",
+      "community": 4,
+      "norm_label": "samplereleases"
+    },
+    {
+      "label": "DeploymentsPage()",
+      "file_type": "code",
+      "source_file": "DeploymentsPage.tsx",
+      "source_location": "L38",
+      "id": "app_deploymentspage_deploymentspage",
+      "community": 4,
+      "norm_label": "deploymentspage()"
+    },
+    {
+      "label": "FileManagerPage.tsx",
+      "file_type": "code",
+      "source_file": "src/pages/app/FileManagerPage.tsx",
+      "source_location": "L1",
+      "id": "src_pages_app_filemanagerpage_tsx",
+      "community": 2,
+      "norm_label": "filemanagerpage.tsx"
+    },
+    {
+      "label": "ContainerListItem",
+      "file_type": "code",
+      "source_file": "src/pages/app/FileManagerPage.tsx",
+      "source_location": "L32",
+      "id": "app_filemanagerpage_containerlistitem",
+      "community": 2,
+      "norm_label": "containerlistitem"
+    },
+    {
+      "label": "getFileIcon()",
+      "file_type": "code",
+      "source_file": "src/pages/app/FileManagerPage.tsx",
+      "source_location": "L43",
+      "id": "app_filemanagerpage_getfileicon",
+      "community": 2,
+      "norm_label": "getfileicon()"
+    },
+    {
+      "label": "formatFileSize()",
+      "file_type": "code",
+      "source_file": "src/pages/app/FileManagerPage.tsx",
+      "source_location": "L53",
+      "id": "app_filemanagerpage_formatfilesize",
+      "community": 2,
+      "norm_label": "formatfilesize()"
+    },
+    {
+      "label": "getLanguageFromPath()",
+      "file_type": "code",
+      "source_file": "src/pages/app/FileManagerPage.tsx",
+      "source_location": "L61",
+      "id": "app_filemanagerpage_getlanguagefrompath",
+      "community": 2,
+      "norm_label": "getlanguagefrompath()"
+    },
+    {
+      "label": "PathBreadcrumb()",
+      "file_type": "code",
+      "source_file": "src/pages/app/FileManagerPage.tsx",
+      "source_location": "L78",
+      "id": "app_filemanagerpage_pathbreadcrumb",
+      "community": 2,
+      "norm_label": "pathbreadcrumb()"
+    },
+    {
+      "label": "ContainerSelector()",
+      "file_type": "code",
+      "source_file": "src/pages/app/FileManagerPage.tsx",
+      "source_location": "L124",
+      "id": "app_filemanagerpage_containerselector",
+      "community": 2,
+      "norm_label": "containerselector()"
+    },
+    {
+      "label": "FileViewer()",
+      "file_type": "code",
+      "source_file": "src/pages/app/FileManagerPage.tsx",
+      "source_location": "L212",
+      "id": "app_filemanagerpage_fileviewer",
+      "community": 2,
+      "norm_label": "fileviewer()"
+    },
+    {
+      "label": "FileManagerPage()",
+      "file_type": "code",
+      "source_file": "src/pages/app/FileManagerPage.tsx",
+      "source_location": "L301",
+      "id": "app_filemanagerpage_filemanagerpage",
+      "community": 2,
+      "norm_label": "filemanagerpage()"
+    },
+    {
+      "label": "HelpPage.tsx",
+      "file_type": "code",
+      "source_file": "HelpPage.tsx",
+      "source_location": "L1",
+      "id": "c_code_docker_watchtower_dash_src_pages_app_helppage_tsx",
+      "community": 10,
+      "norm_label": "helppage.tsx"
+    },
+    {
+      "label": "resources",
+      "file_type": "code",
+      "source_file": "HelpPage.tsx",
+      "source_location": "L5",
+      "id": "app_helppage_resources",
+      "community": 10,
+      "norm_label": "resources"
+    },
+    {
+      "label": "HelpPage()",
+      "file_type": "code",
+      "source_file": "HelpPage.tsx",
+      "source_location": "L11",
+      "id": "app_helppage_helppage",
+      "community": 10,
+      "norm_label": "helppage()"
+    },
+    {
+      "label": "HostDetailPage.tsx",
+      "file_type": "code",
+      "source_file": "HostDetailPage.tsx",
+      "source_location": "L1",
+      "id": "c_code_docker_watchtower_dash_src_pages_app_hostdetailpage_tsx",
+      "community": 16,
+      "norm_label": "hostdetailpage.tsx"
+    },
+    {
+      "label": "HostDetailPage()",
+      "file_type": "code",
+      "source_file": "HostDetailPage.tsx",
+      "source_location": "L3",
+      "id": "app_hostdetailpage_hostdetailpage",
+      "community": 16,
+      "norm_label": "hostdetailpage()"
+    },
+    {
+      "label": "HostsPage.tsx",
+      "file_type": "code",
+      "source_file": "HostsPage.tsx",
+      "source_location": "L1",
+      "id": "c_code_docker_watchtower_dash_src_pages_app_hostspage_tsx",
+      "community": 17,
+      "norm_label": "hostspage.tsx"
+    },
+    {
+      "label": "HostsPage()",
+      "file_type": "code",
+      "source_file": "HostsPage.tsx",
+      "source_location": "L3",
+      "id": "app_hostspage_hostspage",
+      "community": 17,
+      "norm_label": "hostspage()"
+    },
+    {
+      "label": "IncidentsPage.tsx",
+      "file_type": "code",
+      "source_file": "IncidentsPage.tsx",
+      "source_location": "L1",
+      "id": "c_code_docker_watchtower_dash_src_pages_app_incidentspage_tsx",
+      "community": 5,
+      "norm_label": "incidentspage.tsx"
+    },
+    {
+      "label": "previewHighlights",
+      "file_type": "code",
+      "source_file": "IncidentsPage.tsx",
+      "source_location": "L7",
+      "id": "app_incidentspage_previewhighlights",
+      "community": 5,
+      "norm_label": "previewhighlights"
+    },
+    {
+      "label": "readinessSteps",
+      "file_type": "code",
+      "source_file": "IncidentsPage.tsx",
+      "source_location": "L14",
+      "id": "app_incidentspage_readinesssteps",
+      "community": 5,
+      "norm_label": "readinesssteps"
+    },
+    {
+      "label": "sampleTimeline",
+      "file_type": "code",
+      "source_file": "IncidentsPage.tsx",
+      "source_location": "L32",
+      "id": "app_incidentspage_sampletimeline",
+      "community": 5,
+      "norm_label": "sampletimeline"
+    },
+    {
+      "label": "IncidentsPage()",
+      "file_type": "code",
+      "source_file": "IncidentsPage.tsx",
+      "source_location": "L39",
+      "id": "app_incidentspage_incidentspage",
+      "community": 5,
+      "norm_label": "incidentspage()"
+    },
+    {
+      "label": "LogsPage.tsx",
+      "file_type": "code",
+      "source_file": "src/pages/app/LogsPage.tsx",
+      "source_location": "L1",
+      "id": "src_pages_app_logspage_tsx",
+      "community": 11,
+      "norm_label": "logspage.tsx"
+    },
+    {
+      "label": "ContainerListItem",
+      "file_type": "code",
+      "source_file": "src/pages/app/LogsPage.tsx",
+      "source_location": "L13",
+      "id": "app_logspage_containerlistitem",
+      "community": 11,
+      "norm_label": "containerlistitem"
+    },
+    {
+      "label": "LogsPage()",
+      "file_type": "code",
+      "source_file": "src/pages/app/LogsPage.tsx",
+      "source_location": "L19",
+      "id": "app_logspage_logspage",
+      "community": 11,
+      "norm_label": "logspage()"
+    },
+    {
+      "label": "MonitoringPage.tsx",
+      "file_type": "code",
+      "source_file": "MonitoringPage.tsx",
+      "source_location": "L1",
+      "id": "c_code_docker_watchtower_dash_src_pages_app_monitoringpage_tsx",
+      "community": 3,
+      "norm_label": "monitoringpage.tsx"
+    },
+    {
+      "label": "MetricTone",
+      "file_type": "code",
+      "source_file": "MonitoringPage.tsx",
+      "source_location": "L11",
+      "id": "app_monitoringpage_metrictone",
+      "community": 3,
+      "norm_label": "metrictone"
+    },
+    {
+      "label": "upcomingFeatures",
+      "file_type": "code",
+      "source_file": "MonitoringPage.tsx",
+      "source_location": "L13",
+      "id": "app_monitoringpage_upcomingfeatures",
+      "community": 3,
+      "norm_label": "upcomingfeatures"
+    },
+    {
+      "label": "formatBytes()",
+      "file_type": "code",
+      "source_file": "MonitoringPage.tsx",
+      "source_location": "L20",
+      "id": "app_monitoringpage_formatbytes",
+      "community": 3,
+      "norm_label": "formatbytes()"
+    },
+    {
+      "label": "formatSpeed()",
+      "file_type": "code",
+      "source_file": "MonitoringPage.tsx",
+      "source_location": "L28",
+      "id": "app_monitoringpage_formatspeed",
+      "community": 3,
+      "norm_label": "formatspeed()"
+    },
+    {
+      "label": "formatPercent()",
+      "file_type": "code",
+      "source_file": "MonitoringPage.tsx",
+      "source_location": "L39",
+      "id": "app_monitoringpage_formatpercent",
+      "community": 3,
+      "norm_label": "formatpercent()"
+    },
+    {
+      "label": "SignalCard()",
+      "file_type": "code",
+      "source_file": "MonitoringPage.tsx",
+      "source_location": "L51",
+      "id": "app_monitoringpage_signalcard",
+      "community": 3,
+      "norm_label": "signalcard()"
+    },
+    {
+      "label": "MonitoringPage()",
+      "file_type": "code",
+      "source_file": "MonitoringPage.tsx",
+      "source_location": "L85",
+      "id": "app_monitoringpage_monitoringpage",
+      "community": 3,
+      "norm_label": "monitoringpage()"
+    },
+    {
+      "label": "OrganizationsPage.tsx",
+      "file_type": "code",
+      "source_file": "src/pages/app/OrganizationsPage.tsx",
+      "source_location": "L1",
+      "id": "src_pages_app_organizationspage_tsx",
+      "community": 12,
+      "norm_label": "organizationspage.tsx"
+    },
+    {
+      "label": "OrganizationsPage()",
+      "file_type": "code",
+      "source_file": "src/pages/app/OrganizationsPage.tsx",
+      "source_location": "L11",
+      "id": "app_organizationspage_organizationspage",
+      "community": 12,
+      "norm_label": "organizationspage()"
+    },
+    {
+      "label": "OrgCard()",
+      "file_type": "code",
+      "source_file": "src/pages/app/OrganizationsPage.tsx",
+      "source_location": "L177",
+      "id": "app_organizationspage_orgcard",
+      "community": 12,
+      "norm_label": "orgcard()"
+    },
+    {
+      "label": "SettingsPage.tsx",
+      "file_type": "code",
+      "source_file": "SettingsPage.tsx",
+      "source_location": "L1",
+      "id": "c_code_docker_watchtower_dash_src_pages_app_settingspage_tsx",
+      "community": 9,
+      "norm_label": "settingspage.tsx"
+    },
+    {
+      "label": "ALL_TABS",
+      "file_type": "code",
+      "source_file": "SettingsPage.tsx",
+      "source_location": "L16",
+      "id": "app_settingspage_all_tabs",
+      "community": 9,
+      "norm_label": "all_tabs"
+    },
+    {
+      "label": "useTabSync()",
+      "file_type": "code",
+      "source_file": "SettingsPage.tsx",
+      "source_location": "L21",
+      "id": "app_settingspage_usetabsync",
+      "community": 9,
+      "norm_label": "usetabsync()"
+    },
+    {
+      "label": "SettingsPage()",
+      "file_type": "code",
+      "source_file": "SettingsPage.tsx",
+      "source_location": "L54",
+      "id": "app_settingspage_settingspage",
+      "community": 9,
+      "norm_label": "settingspage()"
+    },
+    {
+      "label": "SetupGuidePage.tsx",
+      "file_type": "code",
+      "source_file": "SetupGuidePage.tsx",
+      "source_location": "L1",
+      "id": "c_code_docker_watchtower_dash_src_pages_app_setupguidepage_tsx",
+      "community": 6,
+      "norm_label": "setupguidepage.tsx"
+    },
+    {
+      "label": "CopyBlock()",
+      "file_type": "code",
+      "source_file": "SetupGuidePage.tsx",
+      "source_location": "L26",
+      "id": "app_setupguidepage_copyblock",
+      "community": 6,
+      "norm_label": "copyblock()"
+    },
+    {
+      "label": "StepCard()",
+      "file_type": "code",
+      "source_file": "SetupGuidePage.tsx",
+      "source_location": "L53",
+      "id": "app_setupguidepage_stepcard",
+      "community": 6,
+      "norm_label": "stepcard()"
+    },
+    {
+      "label": "InfoBox()",
+      "file_type": "code",
+      "source_file": "SetupGuidePage.tsx",
+      "source_location": "L70",
+      "id": "app_setupguidepage_infobox",
+      "community": 6,
+      "norm_label": "infobox()"
+    },
+    {
+      "label": "SetupGuidePage()",
+      "file_type": "code",
+      "source_file": "SetupGuidePage.tsx",
+      "source_location": "L91",
+      "id": "app_setupguidepage_setupguidepage",
+      "community": 6,
+      "norm_label": "setupguidepage()"
+    }
+  ],
+  "links": [
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/pages/app/AdminPage.tsx",
+      "source_location": "L19",
+      "weight": 1.0,
+      "source": "src_pages_app_adminpage_tsx",
+      "target": "app_adminpage_tabs",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/pages/app/AdminPage.tsx",
+      "source_location": "L20",
+      "weight": 1.0,
+      "source": "src_pages_app_adminpage_tsx",
+      "target": "app_adminpage_admintab",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/pages/app/AdminPage.tsx",
+      "source_location": "L22",
+      "weight": 1.0,
+      "source": "src_pages_app_adminpage_tsx",
+      "target": "app_adminpage_adminpage",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "AlertsPage.tsx",
+      "source_location": "L25",
+      "weight": 1.0,
+      "source": "c_code_docker_watchtower_dash_src_pages_app_alertspage_tsx",
+      "target": "app_alertspage_alertspage",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "BillingPage.tsx",
+      "source_location": "L14",
+      "weight": 1.0,
+      "source": "c_code_docker_watchtower_dash_src_pages_app_billingpage_tsx",
+      "target": "app_billingpage_billingpage",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/pages/app/ContainerDetailPage.tsx",
+      "source_location": "L43",
+      "weight": 1.0,
+      "source": "src_pages_app_containerdetailpage_tsx",
+      "target": "app_containerdetailpage_dockercontainerstats",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/pages/app/ContainerDetailPage.tsx",
+      "source_location": "L58",
+      "weight": 1.0,
+      "source": "src_pages_app_containerdetailpage_tsx",
+      "target": "app_containerdetailpage_dockercontainerinspect",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/pages/app/ContainerDetailPage.tsx",
+      "source_location": "L78",
+      "weight": 1.0,
+      "source": "src_pages_app_containerdetailpage_tsx",
+      "target": "app_containerdetailpage_dockerportbinding",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/pages/app/ContainerDetailPage.tsx",
+      "source_location": "L83",
+      "weight": 1.0,
+      "source": "src_pages_app_containerdetailpage_tsx",
+      "target": "app_containerdetailpage_formatbytes",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/pages/app/ContainerDetailPage.tsx",
+      "source_location": "L91",
+      "weight": 1.0,
+      "source": "src_pages_app_containerdetailpage_tsx",
+      "target": "app_containerdetailpage_formatcount",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/pages/app/ContainerDetailPage.tsx",
+      "source_location": "L96",
+      "weight": 1.0,
+      "source": "src_pages_app_containerdetailpage_tsx",
+      "target": "app_containerdetailpage_calccpupercent",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/pages/app/ContainerDetailPage.tsx",
+      "source_location": "L104",
+      "weight": 1.0,
+      "source": "src_pages_app_containerdetailpage_tsx",
+      "target": "app_containerdetailpage_calcnetworkio",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/pages/app/ContainerDetailPage.tsx",
+      "source_location": "L120",
+      "weight": 1.0,
+      "source": "src_pages_app_containerdetailpage_tsx",
+      "target": "app_containerdetailpage_calcblkiototal",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/pages/app/ContainerDetailPage.tsx",
+      "source_location": "L132",
+      "weight": 1.0,
+      "source": "src_pages_app_containerdetailpage_tsx",
+      "target": "app_containerdetailpage_getprimaryip",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/pages/app/ContainerDetailPage.tsx",
+      "source_location": "L145",
+      "weight": 1.0,
+      "source": "src_pages_app_containerdetailpage_tsx",
+      "target": "app_containerdetailpage_getcontainerhealth",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/pages/app/ContainerDetailPage.tsx",
+      "source_location": "L154",
+      "weight": 1.0,
+      "source": "src_pages_app_containerdetailpage_tsx",
+      "target": "app_containerdetailpage_formatcontaineruptime",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/pages/app/ContainerDetailPage.tsx",
+      "source_location": "L161",
+      "weight": 1.0,
+      "source": "src_pages_app_containerdetailpage_tsx",
+      "target": "app_containerdetailpage_detailstatcard",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/pages/app/ContainerDetailPage.tsx",
+      "source_location": "L210",
+      "weight": 1.0,
+      "source": "src_pages_app_containerdetailpage_tsx",
+      "target": "app_containerdetailpage_minisummarycard",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/pages/app/ContainerDetailPage.tsx",
+      "source_location": "L225",
+      "weight": 1.0,
+      "source": "src_pages_app_containerdetailpage_tsx",
+      "target": "app_containerdetailpage_configrow",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/pages/app/ContainerDetailPage.tsx",
+      "source_location": "L234",
+      "weight": 1.0,
+      "source": "src_pages_app_containerdetailpage_tsx",
+      "target": "app_containerdetailpage_containeraction",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/pages/app/ContainerDetailPage.tsx",
+      "source_location": "L236",
+      "weight": 1.0,
+      "source": "src_pages_app_containerdetailpage_tsx",
+      "target": "app_containerdetailpage_getcontaineractionfn",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/pages/app/ContainerDetailPage.tsx",
+      "source_location": "L242",
+      "weight": 1.0,
+      "source": "src_pages_app_containerdetailpage_tsx",
+      "target": "app_containerdetailpage_gethealthstatustone",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/pages/app/ContainerDetailPage.tsx",
+      "source_location": "L252",
+      "weight": 1.0,
+      "source": "src_pages_app_containerdetailpage_tsx",
+      "target": "app_containerdetailpage_hostaccessrestrictedview",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/pages/app/ContainerDetailPage.tsx",
+      "source_location": "L290",
+      "weight": 1.0,
+      "source": "src_pages_app_containerdetailpage_tsx",
+      "target": "app_containerdetailpage_containerdetailpage",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/pages/app/ContainerDetailPage.tsx",
+      "source_location": "L590",
+      "weight": 1.0,
+      "source": "app_containerdetailpage_containerdetailpage",
+      "target": "app_containerdetailpage_formatbytes",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/pages/app/ContainerDetailPage.tsx",
+      "source_location": "L437",
+      "weight": 1.0,
+      "source": "app_containerdetailpage_containerdetailpage",
+      "target": "app_containerdetailpage_formatcount",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/pages/app/ContainerDetailPage.tsx",
+      "source_location": "L376",
+      "weight": 1.0,
+      "source": "app_containerdetailpage_containerdetailpage",
+      "target": "app_containerdetailpage_calccpupercent",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/pages/app/ContainerDetailPage.tsx",
+      "source_location": "L385",
+      "weight": 1.0,
+      "source": "app_containerdetailpage_containerdetailpage",
+      "target": "app_containerdetailpage_calcnetworkio",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/pages/app/ContainerDetailPage.tsx",
+      "source_location": "L386",
+      "weight": 1.0,
+      "source": "app_containerdetailpage_containerdetailpage",
+      "target": "app_containerdetailpage_calcblkiototal",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/pages/app/ContainerDetailPage.tsx",
+      "source_location": "L383",
+      "weight": 1.0,
+      "source": "app_containerdetailpage_containerdetailpage",
+      "target": "app_containerdetailpage_getprimaryip",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/pages/app/ContainerDetailPage.tsx",
+      "source_location": "L384",
+      "weight": 1.0,
+      "source": "app_containerdetailpage_containerdetailpage",
+      "target": "app_containerdetailpage_getcontainerhealth",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/pages/app/ContainerDetailPage.tsx",
+      "source_location": "L381",
+      "weight": 1.0,
+      "source": "app_containerdetailpage_containerdetailpage",
+      "target": "app_containerdetailpage_formatcontaineruptime",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/pages/app/ContainerDetailPage.tsx",
+      "source_location": "L387",
+      "weight": 1.0,
+      "source": "app_containerdetailpage_containerdetailpage",
+      "target": "app_containerdetailpage_gethealthstatustone",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/pages/app/ContainersPage.tsx",
+      "source_location": "L33",
+      "weight": 1.0,
+      "source": "src_pages_app_containerspage_tsx",
+      "target": "app_containerspage_badgestatus",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/pages/app/ContainersPage.tsx",
+      "source_location": "L35",
+      "weight": 1.0,
+      "source": "src_pages_app_containerspage_tsx",
+      "target": "app_containerspage_containerlistitem",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/pages/app/ContainersPage.tsx",
+      "source_location": "L48",
+      "weight": 1.0,
+      "source": "src_pages_app_containerspage_tsx",
+      "target": "app_containerspage_containerstatsitem",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/pages/app/ContainersPage.tsx",
+      "source_location": "L57",
+      "weight": 1.0,
+      "source": "src_pages_app_containerspage_tsx",
+      "target": "app_containerspage_state_tabs",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/pages/app/ContainersPage.tsx",
+      "source_location": "L65",
+      "weight": 1.0,
+      "source": "src_pages_app_containerspage_tsx",
+      "target": "app_containerspage_relativeage",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/pages/app/ContainersPage.tsx",
+      "source_location": "L78",
+      "weight": 1.0,
+      "source": "src_pages_app_containerspage_tsx",
+      "target": "app_containerspage_shortenimage",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/pages/app/ContainersPage.tsx",
+      "source_location": "L84",
+      "weight": 1.0,
+      "source": "src_pages_app_containerspage_tsx",
+      "target": "app_containerspage_formatbytes",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/pages/app/ContainersPage.tsx",
+      "source_location": "L91",
+      "weight": 1.0,
+      "source": "src_pages_app_containerspage_tsx",
+      "target": "app_containerspage_formatnetio",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/pages/app/ContainersPage.tsx",
+      "source_location": "L95",
+      "weight": 1.0,
+      "source": "src_pages_app_containerspage_tsx",
+      "target": "app_containerspage_formatpercent",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/pages/app/ContainersPage.tsx",
+      "source_location": "L99",
+      "weight": 1.0,
+      "source": "src_pages_app_containerspage_tsx",
+      "target": "app_containerspage_mapstate",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/pages/app/ContainersPage.tsx",
+      "source_location": "L108",
+      "weight": 1.0,
+      "source": "src_pages_app_containerspage_tsx",
+      "target": "app_containerspage_severityborderclass",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/pages/app/ContainersPage.tsx",
+      "source_location": "L114",
+      "weight": 1.0,
+      "source": "src_pages_app_containerspage_tsx",
+      "target": "app_containerspage_metrictone",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/pages/app/ContainersPage.tsx",
+      "source_location": "L121",
+      "weight": 1.0,
+      "source": "src_pages_app_containerspage_tsx",
+      "target": "app_containerspage_telemetrybadge",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/pages/app/ContainersPage.tsx",
+      "source_location": "L153",
+      "weight": 1.0,
+      "source": "src_pages_app_containerspage_tsx",
+      "target": "app_containerspage_fleetsignalcard",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/pages/app/ContainersPage.tsx",
+      "source_location": "L190",
+      "weight": 1.0,
+      "source": "src_pages_app_containerspage_tsx",
+      "target": "app_containerspage_containerspage",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/pages/app/ContainersPage.tsx",
+      "source_location": "L470",
+      "weight": 1.0,
+      "source": "app_containerspage_containerspage",
+      "target": "app_containerspage_shortenimage",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/pages/app/ContainersPage.tsx",
+      "source_location": "L92",
+      "weight": 1.0,
+      "source": "app_containerspage_formatnetio",
+      "target": "app_containerspage_formatbytes",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "DashboardPage.tsx",
+      "source_location": "L12",
+      "weight": 1.0,
+      "source": "c_code_docker_watchtower_dash_src_pages_app_dashboardpage_tsx",
+      "target": "app_dashboardpage_dashboardpage",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "DedicatedDeploymentPage.tsx",
+      "source_location": "L10",
+      "weight": 1.0,
+      "source": "c_code_docker_watchtower_dash_src_pages_app_dedicateddeploymentpage_tsx",
+      "target": "app_dedicateddeploymentpage_status_order",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "DedicatedDeploymentPage.tsx",
+      "source_location": "L18",
+      "weight": 1.0,
+      "source": "c_code_docker_watchtower_dash_src_pages_app_dedicateddeploymentpage_tsx",
+      "target": "app_dedicateddeploymentpage_status_copy",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "DedicatedDeploymentPage.tsx",
+      "source_location": "L48",
+      "weight": 1.0,
+      "source": "c_code_docker_watchtower_dash_src_pages_app_dedicateddeploymentpage_tsx",
+      "target": "app_dedicateddeploymentpage_dedicateddeploymentpage",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "DeploymentsPage.tsx",
+      "source_location": "L7",
+      "weight": 1.0,
+      "source": "c_code_docker_watchtower_dash_src_pages_app_deploymentspage_tsx",
+      "target": "app_deploymentspage_upcomingfeatures",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "DeploymentsPage.tsx",
+      "source_location": "L14",
+      "weight": 1.0,
+      "source": "c_code_docker_watchtower_dash_src_pages_app_deploymentspage_tsx",
+      "target": "app_deploymentspage_rolloutsteps",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "DeploymentsPage.tsx",
+      "source_location": "L32",
+      "weight": 1.0,
+      "source": "c_code_docker_watchtower_dash_src_pages_app_deploymentspage_tsx",
+      "target": "app_deploymentspage_samplereleases",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "DeploymentsPage.tsx",
+      "source_location": "L38",
+      "weight": 1.0,
+      "source": "c_code_docker_watchtower_dash_src_pages_app_deploymentspage_tsx",
+      "target": "app_deploymentspage_deploymentspage",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/pages/app/FileManagerPage.tsx",
+      "source_location": "L32",
+      "weight": 1.0,
+      "source": "src_pages_app_filemanagerpage_tsx",
+      "target": "app_filemanagerpage_containerlistitem",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/pages/app/FileManagerPage.tsx",
+      "source_location": "L43",
+      "weight": 1.0,
+      "source": "src_pages_app_filemanagerpage_tsx",
+      "target": "app_filemanagerpage_getfileicon",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/pages/app/FileManagerPage.tsx",
+      "source_location": "L53",
+      "weight": 1.0,
+      "source": "src_pages_app_filemanagerpage_tsx",
+      "target": "app_filemanagerpage_formatfilesize",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/pages/app/FileManagerPage.tsx",
+      "source_location": "L61",
+      "weight": 1.0,
+      "source": "src_pages_app_filemanagerpage_tsx",
+      "target": "app_filemanagerpage_getlanguagefrompath",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/pages/app/FileManagerPage.tsx",
+      "source_location": "L78",
+      "weight": 1.0,
+      "source": "src_pages_app_filemanagerpage_tsx",
+      "target": "app_filemanagerpage_pathbreadcrumb",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/pages/app/FileManagerPage.tsx",
+      "source_location": "L124",
+      "weight": 1.0,
+      "source": "src_pages_app_filemanagerpage_tsx",
+      "target": "app_filemanagerpage_containerselector",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/pages/app/FileManagerPage.tsx",
+      "source_location": "L212",
+      "weight": 1.0,
+      "source": "src_pages_app_filemanagerpage_tsx",
+      "target": "app_filemanagerpage_fileviewer",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/pages/app/FileManagerPage.tsx",
+      "source_location": "L301",
+      "weight": 1.0,
+      "source": "src_pages_app_filemanagerpage_tsx",
+      "target": "app_filemanagerpage_filemanagerpage",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/pages/app/FileManagerPage.tsx",
+      "source_location": "L274",
+      "weight": 1.0,
+      "source": "app_filemanagerpage_fileviewer",
+      "target": "app_filemanagerpage_formatfilesize",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/pages/app/FileManagerPage.tsx",
+      "source_location": "L232",
+      "weight": 1.0,
+      "source": "app_filemanagerpage_fileviewer",
+      "target": "app_filemanagerpage_getlanguagefrompath",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "HelpPage.tsx",
+      "source_location": "L5",
+      "weight": 1.0,
+      "source": "c_code_docker_watchtower_dash_src_pages_app_helppage_tsx",
+      "target": "app_helppage_resources",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "HelpPage.tsx",
+      "source_location": "L11",
+      "weight": 1.0,
+      "source": "c_code_docker_watchtower_dash_src_pages_app_helppage_tsx",
+      "target": "app_helppage_helppage",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "HostDetailPage.tsx",
+      "source_location": "L3",
+      "weight": 1.0,
+      "source": "c_code_docker_watchtower_dash_src_pages_app_hostdetailpage_tsx",
+      "target": "app_hostdetailpage_hostdetailpage",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "HostsPage.tsx",
+      "source_location": "L3",
+      "weight": 1.0,
+      "source": "c_code_docker_watchtower_dash_src_pages_app_hostspage_tsx",
+      "target": "app_hostspage_hostspage",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "IncidentsPage.tsx",
+      "source_location": "L7",
+      "weight": 1.0,
+      "source": "c_code_docker_watchtower_dash_src_pages_app_incidentspage_tsx",
+      "target": "app_incidentspage_previewhighlights",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "IncidentsPage.tsx",
+      "source_location": "L14",
+      "weight": 1.0,
+      "source": "c_code_docker_watchtower_dash_src_pages_app_incidentspage_tsx",
+      "target": "app_incidentspage_readinesssteps",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "IncidentsPage.tsx",
+      "source_location": "L32",
+      "weight": 1.0,
+      "source": "c_code_docker_watchtower_dash_src_pages_app_incidentspage_tsx",
+      "target": "app_incidentspage_sampletimeline",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "IncidentsPage.tsx",
+      "source_location": "L39",
+      "weight": 1.0,
+      "source": "c_code_docker_watchtower_dash_src_pages_app_incidentspage_tsx",
+      "target": "app_incidentspage_incidentspage",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/pages/app/LogsPage.tsx",
+      "source_location": "L13",
+      "weight": 1.0,
+      "source": "src_pages_app_logspage_tsx",
+      "target": "app_logspage_containerlistitem",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/pages/app/LogsPage.tsx",
+      "source_location": "L19",
+      "weight": 1.0,
+      "source": "src_pages_app_logspage_tsx",
+      "target": "app_logspage_logspage",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "MonitoringPage.tsx",
+      "source_location": "L44",
+      "weight": 1.0,
+      "source": "c_code_docker_watchtower_dash_src_pages_app_monitoringpage_tsx",
+      "target": "app_monitoringpage_metrictone",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "MonitoringPage.tsx",
+      "source_location": "L13",
+      "weight": 1.0,
+      "source": "c_code_docker_watchtower_dash_src_pages_app_monitoringpage_tsx",
+      "target": "app_monitoringpage_upcomingfeatures",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "MonitoringPage.tsx",
+      "source_location": "L20",
+      "weight": 1.0,
+      "source": "c_code_docker_watchtower_dash_src_pages_app_monitoringpage_tsx",
+      "target": "app_monitoringpage_formatbytes",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "MonitoringPage.tsx",
+      "source_location": "L28",
+      "weight": 1.0,
+      "source": "c_code_docker_watchtower_dash_src_pages_app_monitoringpage_tsx",
+      "target": "app_monitoringpage_formatspeed",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "MonitoringPage.tsx",
+      "source_location": "L39",
+      "weight": 1.0,
+      "source": "c_code_docker_watchtower_dash_src_pages_app_monitoringpage_tsx",
+      "target": "app_monitoringpage_formatpercent",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "MonitoringPage.tsx",
+      "source_location": "L51",
+      "weight": 1.0,
+      "source": "c_code_docker_watchtower_dash_src_pages_app_monitoringpage_tsx",
+      "target": "app_monitoringpage_signalcard",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "MonitoringPage.tsx",
+      "source_location": "L85",
+      "weight": 1.0,
+      "source": "c_code_docker_watchtower_dash_src_pages_app_monitoringpage_tsx",
+      "target": "app_monitoringpage_monitoringpage",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "MonitoringPage.tsx",
+      "source_location": "L190",
+      "weight": 1.0,
+      "source": "app_monitoringpage_monitoringpage",
+      "target": "app_monitoringpage_metrictone",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "MonitoringPage.tsx",
+      "source_location": "L127",
+      "weight": 1.0,
+      "source": "app_monitoringpage_monitoringpage",
+      "target": "app_monitoringpage_formatbytes",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "MonitoringPage.tsx",
+      "source_location": "L131",
+      "weight": 1.0,
+      "source": "app_monitoringpage_monitoringpage",
+      "target": "app_monitoringpage_formatspeed",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "MonitoringPage.tsx",
+      "source_location": "L120",
+      "weight": 1.0,
+      "source": "app_monitoringpage_monitoringpage",
+      "target": "app_monitoringpage_formatpercent",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/pages/app/OrganizationsPage.tsx",
+      "source_location": "L11",
+      "weight": 1.0,
+      "source": "src_pages_app_organizationspage_tsx",
+      "target": "app_organizationspage_organizationspage",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/pages/app/OrganizationsPage.tsx",
+      "source_location": "L177",
+      "weight": 1.0,
+      "source": "src_pages_app_organizationspage_tsx",
+      "target": "app_organizationspage_orgcard",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "SettingsPage.tsx",
+      "source_location": "L16",
+      "weight": 1.0,
+      "source": "c_code_docker_watchtower_dash_src_pages_app_settingspage_tsx",
+      "target": "app_settingspage_all_tabs",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "SettingsPage.tsx",
+      "source_location": "L21",
+      "weight": 1.0,
+      "source": "c_code_docker_watchtower_dash_src_pages_app_settingspage_tsx",
+      "target": "app_settingspage_usetabsync",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "SettingsPage.tsx",
+      "source_location": "L54",
+      "weight": 1.0,
+      "source": "c_code_docker_watchtower_dash_src_pages_app_settingspage_tsx",
+      "target": "app_settingspage_settingspage",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "SettingsPage.tsx",
+      "source_location": "L59",
+      "weight": 1.0,
+      "source": "app_settingspage_settingspage",
+      "target": "app_settingspage_usetabsync",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "SetupGuidePage.tsx",
+      "source_location": "L26",
+      "weight": 1.0,
+      "source": "c_code_docker_watchtower_dash_src_pages_app_setupguidepage_tsx",
+      "target": "app_setupguidepage_copyblock",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "SetupGuidePage.tsx",
+      "source_location": "L53",
+      "weight": 1.0,
+      "source": "c_code_docker_watchtower_dash_src_pages_app_setupguidepage_tsx",
+      "target": "app_setupguidepage_stepcard",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "SetupGuidePage.tsx",
+      "source_location": "L70",
+      "weight": 1.0,
+      "source": "c_code_docker_watchtower_dash_src_pages_app_setupguidepage_tsx",
+      "target": "app_setupguidepage_infobox",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "SetupGuidePage.tsx",
+      "source_location": "L91",
+      "weight": 1.0,
+      "source": "c_code_docker_watchtower_dash_src_pages_app_setupguidepage_tsx",
+      "target": "app_setupguidepage_setupguidepage",
+      "confidence_score": 1.0
+    }
+  ],
+  "hyperedges": [],
+  "built_at_commit": "ed28244c211be7b6c2b23ccf8ca4f5a7352c3e35"
+}

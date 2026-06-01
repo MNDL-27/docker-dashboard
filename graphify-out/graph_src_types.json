@@ -1,0 +1,1509 @@
+{
+  "directed": false,
+  "multigraph": false,
+  "graph": {},
+  "nodes": [
+    {
+      "label": "admin.ts",
+      "file_type": "code",
+      "source_file": "admin.ts",
+      "source_location": "L1",
+      "id": "c_code_docker_watchtower_dash_src_types_admin_ts",
+      "community": 2,
+      "norm_label": "admin.ts"
+    },
+    {
+      "label": "AdminOverview",
+      "file_type": "code",
+      "source_file": "admin.ts",
+      "source_location": "L1",
+      "id": "types_admin_adminoverview",
+      "community": 2,
+      "norm_label": "adminoverview"
+    },
+    {
+      "label": "AdminUserRow",
+      "file_type": "code",
+      "source_file": "admin.ts",
+      "source_location": "L13",
+      "id": "types_admin_adminuserrow",
+      "community": 2,
+      "norm_label": "adminuserrow"
+    },
+    {
+      "label": "AdminUserDetail",
+      "file_type": "code",
+      "source_file": "admin.ts",
+      "source_location": "L27",
+      "id": "types_admin_adminuserdetail",
+      "community": 2,
+      "norm_label": "adminuserdetail"
+    },
+    {
+      "label": "AdminOrganizationRow",
+      "file_type": "code",
+      "source_file": "admin.ts",
+      "source_location": "L42",
+      "id": "types_admin_adminorganizationrow",
+      "community": 2,
+      "norm_label": "adminorganizationrow"
+    },
+    {
+      "label": "AdminOrganizationDetail",
+      "file_type": "code",
+      "source_file": "admin.ts",
+      "source_location": "L66",
+      "id": "types_admin_adminorganizationdetail",
+      "community": 2,
+      "norm_label": "adminorganizationdetail"
+    },
+    {
+      "label": "AdminHostRow",
+      "file_type": "code",
+      "source_file": "admin.ts",
+      "source_location": "L92",
+      "id": "types_admin_adminhostrow",
+      "community": 2,
+      "norm_label": "adminhostrow"
+    },
+    {
+      "label": "AdminAuditEntry",
+      "file_type": "code",
+      "source_file": "admin.ts",
+      "source_location": "L106",
+      "id": "types_admin_adminauditentry",
+      "community": 2,
+      "norm_label": "adminauditentry"
+    },
+    {
+      "label": "AdminOperationRun",
+      "file_type": "code",
+      "source_file": "admin.ts",
+      "source_location": "L120",
+      "id": "types_admin_adminoperationrun",
+      "community": 2,
+      "norm_label": "adminoperationrun"
+    },
+    {
+      "label": "AdminBillingUpdate",
+      "file_type": "code",
+      "source_file": "admin.ts",
+      "source_location": "L133",
+      "id": "types_admin_adminbillingupdate",
+      "community": 2,
+      "norm_label": "adminbillingupdate"
+    },
+    {
+      "label": "AdminBillingEvent",
+      "file_type": "code",
+      "source_file": "admin.ts",
+      "source_location": "L141",
+      "id": "types_admin_adminbillingevent",
+      "community": 2,
+      "norm_label": "adminbillingevent"
+    },
+    {
+      "label": "AdminDonorEmailDelivery",
+      "file_type": "code",
+      "source_file": "admin.ts",
+      "source_location": "L159",
+      "id": "types_admin_admindonoremaildelivery",
+      "community": 2,
+      "norm_label": "admindonoremaildelivery"
+    },
+    {
+      "label": "alerts.ts",
+      "file_type": "code",
+      "source_file": "alerts.ts",
+      "source_location": "L1",
+      "id": "c_code_docker_watchtower_dash_src_types_alerts_ts",
+      "community": 4,
+      "norm_label": "alerts.ts"
+    },
+    {
+      "label": "AlertSeverity",
+      "file_type": "code",
+      "source_file": "alerts.ts",
+      "source_location": "L1",
+      "id": "types_alerts_alertseverity",
+      "community": 4,
+      "norm_label": "alertseverity"
+    },
+    {
+      "label": "AlertStatus",
+      "file_type": "code",
+      "source_file": "alerts.ts",
+      "source_location": "L2",
+      "id": "types_alerts_alertstatus",
+      "community": 4,
+      "norm_label": "alertstatus"
+    },
+    {
+      "label": "IncidentStatus",
+      "file_type": "code",
+      "source_file": "alerts.ts",
+      "source_location": "L3",
+      "id": "types_alerts_incidentstatus",
+      "community": 4,
+      "norm_label": "incidentstatus"
+    },
+    {
+      "label": "AlertConditionType",
+      "file_type": "code",
+      "source_file": "alerts.ts",
+      "source_location": "L4",
+      "id": "types_alerts_alertconditiontype",
+      "community": 4,
+      "norm_label": "alertconditiontype"
+    },
+    {
+      "label": "AlertRuleFormValues",
+      "file_type": "code",
+      "source_file": "alerts.ts",
+      "source_location": "L11",
+      "id": "types_alerts_alertruleformvalues",
+      "community": 4,
+      "norm_label": "alertruleformvalues"
+    },
+    {
+      "label": "WebhookDestinationFormValues",
+      "file_type": "code",
+      "source_file": "alerts.ts",
+      "source_location": "L21",
+      "id": "types_alerts_webhookdestinationformvalues",
+      "community": 4,
+      "norm_label": "webhookdestinationformvalues"
+    },
+    {
+      "label": "SlackDestinationFormValues",
+      "file_type": "code",
+      "source_file": "alerts.ts",
+      "source_location": "L27",
+      "id": "types_alerts_slackdestinationformvalues",
+      "community": 4,
+      "norm_label": "slackdestinationformvalues"
+    },
+    {
+      "label": "database-updated.ts",
+      "file_type": "code",
+      "source_file": "src/types/database-updated.ts",
+      "source_location": "L1",
+      "id": "src_types_database_updated_ts",
+      "community": 1,
+      "norm_label": "database-updated.ts"
+    },
+    {
+      "label": "Organization",
+      "file_type": "code",
+      "source_file": "src/types/database-updated.ts",
+      "source_location": "L3",
+      "id": "types_database_updated_organization",
+      "community": 1,
+      "norm_label": "organization"
+    },
+    {
+      "label": "BillingEvent",
+      "file_type": "code",
+      "source_file": "src/types/database-updated.ts",
+      "source_location": "L25",
+      "id": "types_database_updated_billingevent",
+      "community": 1,
+      "norm_label": "billingevent"
+    },
+    {
+      "label": "OrganizationMember",
+      "file_type": "code",
+      "source_file": "src/types/database-updated.ts",
+      "source_location": "L43",
+      "id": "types_database_updated_organizationmember",
+      "community": 1,
+      "norm_label": "organizationmember"
+    },
+    {
+      "label": "ConnectionMode",
+      "file_type": "code",
+      "source_file": "src/types/database-updated.ts",
+      "source_location": "L51",
+      "id": "types_database_updated_connectionmode",
+      "community": 1,
+      "norm_label": "connectionmode"
+    },
+    {
+      "label": "ContainerRuntime",
+      "file_type": "code",
+      "source_file": "src/types/database-updated.ts",
+      "source_location": "L53",
+      "id": "types_database_updated_containerruntime",
+      "community": 1,
+      "norm_label": "containerruntime"
+    },
+    {
+      "label": "DockerHost",
+      "file_type": "code",
+      "source_file": "src/types/database-updated.ts",
+      "source_location": "L55",
+      "id": "types_database_updated_dockerhost",
+      "community": 1,
+      "norm_label": "dockerhost"
+    },
+    {
+      "label": "OrgMemberProfile",
+      "file_type": "code",
+      "source_file": "src/types/database-updated.ts",
+      "source_location": "L75",
+      "id": "types_database_updated_orgmemberprofile",
+      "community": 1,
+      "norm_label": "orgmemberprofile"
+    },
+    {
+      "label": "AlertSeverity",
+      "file_type": "code",
+      "source_file": "src/types/database-updated.ts",
+      "source_location": "L83",
+      "id": "types_database_updated_alertseverity",
+      "community": 1,
+      "norm_label": "alertseverity"
+    },
+    {
+      "label": "AlertStatus",
+      "file_type": "code",
+      "source_file": "src/types/database-updated.ts",
+      "source_location": "L84",
+      "id": "types_database_updated_alertstatus",
+      "community": 1,
+      "norm_label": "alertstatus"
+    },
+    {
+      "label": "IncidentStatus",
+      "file_type": "code",
+      "source_file": "src/types/database-updated.ts",
+      "source_location": "L85",
+      "id": "types_database_updated_incidentstatus",
+      "community": 1,
+      "norm_label": "incidentstatus"
+    },
+    {
+      "label": "AlertConditionType",
+      "file_type": "code",
+      "source_file": "src/types/database-updated.ts",
+      "source_location": "L86",
+      "id": "types_database_updated_alertconditiontype",
+      "community": 1,
+      "norm_label": "alertconditiontype"
+    },
+    {
+      "label": "AlertRule",
+      "file_type": "code",
+      "source_file": "src/types/database-updated.ts",
+      "source_location": "L88",
+      "id": "types_database_updated_alertrule",
+      "community": 1,
+      "norm_label": "alertrule"
+    },
+    {
+      "label": "AgentEnrollmentSessionStatus",
+      "file_type": "code",
+      "source_file": "src/types/database-updated.ts",
+      "source_location": "L104",
+      "id": "types_database_updated_agentenrollmentsessionstatus",
+      "community": 1,
+      "norm_label": "agentenrollmentsessionstatus"
+    },
+    {
+      "label": "AgentEnrollmentSession",
+      "file_type": "code",
+      "source_file": "src/types/database-updated.ts",
+      "source_location": "L111",
+      "id": "types_database_updated_agentenrollmentsession",
+      "community": 1,
+      "norm_label": "agentenrollmentsession"
+    },
+    {
+      "label": "AlertEvent",
+      "file_type": "code",
+      "source_file": "src/types/database-updated.ts",
+      "source_location": "L129",
+      "id": "types_database_updated_alertevent",
+      "community": 1,
+      "norm_label": "alertevent"
+    },
+    {
+      "label": "Incident",
+      "file_type": "code",
+      "source_file": "src/types/database-updated.ts",
+      "source_location": "L152",
+      "id": "types_database_updated_incident",
+      "community": 1,
+      "norm_label": "incident"
+    },
+    {
+      "label": "AlertDeliveryKind",
+      "file_type": "code",
+      "source_file": "src/types/database-updated.ts",
+      "source_location": "L168",
+      "id": "types_database_updated_alertdeliverykind",
+      "community": 1,
+      "norm_label": "alertdeliverykind"
+    },
+    {
+      "label": "AlertDeliveryAttempt",
+      "file_type": "code",
+      "source_file": "src/types/database-updated.ts",
+      "source_location": "L170",
+      "id": "types_database_updated_alertdeliveryattempt",
+      "community": 1,
+      "norm_label": "alertdeliveryattempt"
+    },
+    {
+      "label": "WebhookDestination",
+      "file_type": "code",
+      "source_file": "src/types/database-updated.ts",
+      "source_location": "L185",
+      "id": "types_database_updated_webhookdestination",
+      "community": 1,
+      "norm_label": "webhookdestination"
+    },
+    {
+      "label": "SlackDestination",
+      "file_type": "code",
+      "source_file": "src/types/database-updated.ts",
+      "source_location": "L198",
+      "id": "types_database_updated_slackdestination",
+      "community": 1,
+      "norm_label": "slackdestination"
+    },
+    {
+      "label": "database.ts",
+      "file_type": "code",
+      "source_file": "database.ts",
+      "source_location": "L1",
+      "id": "c_code_docker_watchtower_dash_src_types_database_ts",
+      "community": 0,
+      "norm_label": "database.ts"
+    },
+    {
+      "label": "Organization",
+      "file_type": "code",
+      "source_file": "database.ts",
+      "source_location": "L3",
+      "id": "types_database_organization",
+      "community": 0,
+      "norm_label": "organization"
+    },
+    {
+      "label": "BillingEvent",
+      "file_type": "code",
+      "source_file": "database.ts",
+      "source_location": "L25",
+      "id": "types_database_billingevent",
+      "community": 0,
+      "norm_label": "billingevent"
+    },
+    {
+      "label": "OrganizationMember",
+      "file_type": "code",
+      "source_file": "database.ts",
+      "source_location": "L43",
+      "id": "types_database_organizationmember",
+      "community": 0,
+      "norm_label": "organizationmember"
+    },
+    {
+      "label": "ConnectionMode",
+      "file_type": "code",
+      "source_file": "database.ts",
+      "source_location": "L51",
+      "id": "types_database_connectionmode",
+      "community": 0,
+      "norm_label": "connectionmode"
+    },
+    {
+      "label": "ContainerRuntime",
+      "file_type": "code",
+      "source_file": "database.ts",
+      "source_location": "L53",
+      "id": "types_database_containerruntime",
+      "community": 0,
+      "norm_label": "containerruntime"
+    },
+    {
+      "label": "DockerHost",
+      "file_type": "code",
+      "source_file": "database.ts",
+      "source_location": "L55",
+      "id": "types_database_dockerhost",
+      "community": 0,
+      "norm_label": "dockerhost"
+    },
+    {
+      "label": "OrgMemberProfile",
+      "file_type": "code",
+      "source_file": "database.ts",
+      "source_location": "L74",
+      "id": "types_database_orgmemberprofile",
+      "community": 0,
+      "norm_label": "orgmemberprofile"
+    },
+    {
+      "label": "AlertSeverity",
+      "file_type": "code",
+      "source_file": "database.ts",
+      "source_location": "L82",
+      "id": "types_database_alertseverity",
+      "community": 0,
+      "norm_label": "alertseverity"
+    },
+    {
+      "label": "AlertStatus",
+      "file_type": "code",
+      "source_file": "database.ts",
+      "source_location": "L83",
+      "id": "types_database_alertstatus",
+      "community": 0,
+      "norm_label": "alertstatus"
+    },
+    {
+      "label": "IncidentStatus",
+      "file_type": "code",
+      "source_file": "database.ts",
+      "source_location": "L84",
+      "id": "types_database_incidentstatus",
+      "community": 0,
+      "norm_label": "incidentstatus"
+    },
+    {
+      "label": "AlertConditionType",
+      "file_type": "code",
+      "source_file": "database.ts",
+      "source_location": "L85",
+      "id": "types_database_alertconditiontype",
+      "community": 0,
+      "norm_label": "alertconditiontype"
+    },
+    {
+      "label": "AlertRule",
+      "file_type": "code",
+      "source_file": "database.ts",
+      "source_location": "L87",
+      "id": "types_database_alertrule",
+      "community": 0,
+      "norm_label": "alertrule"
+    },
+    {
+      "label": "AgentEnrollmentSessionStatus",
+      "file_type": "code",
+      "source_file": "database.ts",
+      "source_location": "L103",
+      "id": "types_database_agentenrollmentsessionstatus",
+      "community": 0,
+      "norm_label": "agentenrollmentsessionstatus"
+    },
+    {
+      "label": "AgentEnrollmentSession",
+      "file_type": "code",
+      "source_file": "database.ts",
+      "source_location": "L110",
+      "id": "types_database_agentenrollmentsession",
+      "community": 0,
+      "norm_label": "agentenrollmentsession"
+    },
+    {
+      "label": "AlertEvent",
+      "file_type": "code",
+      "source_file": "database.ts",
+      "source_location": "L128",
+      "id": "types_database_alertevent",
+      "community": 0,
+      "norm_label": "alertevent"
+    },
+    {
+      "label": "Incident",
+      "file_type": "code",
+      "source_file": "database.ts",
+      "source_location": "L151",
+      "id": "types_database_incident",
+      "community": 0,
+      "norm_label": "incident"
+    },
+    {
+      "label": "AlertDeliveryKind",
+      "file_type": "code",
+      "source_file": "database.ts",
+      "source_location": "L167",
+      "id": "types_database_alertdeliverykind",
+      "community": 0,
+      "norm_label": "alertdeliverykind"
+    },
+    {
+      "label": "AlertDeliveryAttempt",
+      "file_type": "code",
+      "source_file": "database.ts",
+      "source_location": "L169",
+      "id": "types_database_alertdeliveryattempt",
+      "community": 0,
+      "norm_label": "alertdeliveryattempt"
+    },
+    {
+      "label": "WebhookDestination",
+      "file_type": "code",
+      "source_file": "database.ts",
+      "source_location": "L184",
+      "id": "types_database_webhookdestination",
+      "community": 0,
+      "norm_label": "webhookdestination"
+    },
+    {
+      "label": "SlackDestination",
+      "file_type": "code",
+      "source_file": "database.ts",
+      "source_location": "L197",
+      "id": "types_database_slackdestination",
+      "community": 0,
+      "norm_label": "slackdestination"
+    },
+    {
+      "label": "Notification",
+      "file_type": "code",
+      "source_file": "database.ts",
+      "source_location": "L209",
+      "id": "types_database_notification",
+      "community": 0,
+      "norm_label": "notification"
+    },
+    {
+      "label": "NotificationDismissal",
+      "file_type": "code",
+      "source_file": "database.ts",
+      "source_location": "L222",
+      "id": "types_database_notificationdismissal",
+      "community": 0,
+      "norm_label": "notificationdismissal"
+    },
+    {
+      "label": "dedicated.ts",
+      "file_type": "code",
+      "source_file": "dedicated.ts",
+      "source_location": "L1",
+      "id": "c_code_docker_watchtower_dash_src_types_dedicated_ts",
+      "community": 3,
+      "norm_label": "dedicated.ts"
+    },
+    {
+      "label": "DedicatedRegion",
+      "file_type": "code",
+      "source_file": "dedicated.ts",
+      "source_location": "L1",
+      "id": "types_dedicated_dedicatedregion",
+      "community": 3,
+      "norm_label": "dedicatedregion"
+    },
+    {
+      "label": "ComplianceNeed",
+      "file_type": "code",
+      "source_file": "dedicated.ts",
+      "source_location": "L9",
+      "id": "types_dedicated_complianceneed",
+      "community": 3,
+      "norm_label": "complianceneed"
+    },
+    {
+      "label": "IntegrationNeed",
+      "file_type": "code",
+      "source_file": "dedicated.ts",
+      "source_location": "L16",
+      "id": "types_dedicated_integrationneed",
+      "community": 3,
+      "norm_label": "integrationneed"
+    },
+    {
+      "label": "DedicatedIntakeStep",
+      "file_type": "code",
+      "source_file": "dedicated.ts",
+      "source_location": "L25",
+      "id": "types_dedicated_dedicatedintakestep",
+      "community": 3,
+      "norm_label": "dedicatedintakestep"
+    },
+    {
+      "label": "DedicatedDeploymentStatus",
+      "file_type": "code",
+      "source_file": "dedicated.ts",
+      "source_location": "L34",
+      "id": "types_dedicated_dedicateddeploymentstatus",
+      "community": 3,
+      "norm_label": "dedicateddeploymentstatus"
+    },
+    {
+      "label": "DedicatedDeploymentIntake",
+      "file_type": "code",
+      "source_file": "dedicated.ts",
+      "source_location": "L42",
+      "id": "types_dedicated_dedicateddeploymentintake",
+      "community": 3,
+      "norm_label": "dedicateddeploymentintake"
+    },
+    {
+      "label": "DedicatedIntakeState",
+      "file_type": "code",
+      "source_file": "dedicated.ts",
+      "source_location": "L66",
+      "id": "types_dedicated_dedicatedintakestate",
+      "community": 3,
+      "norm_label": "dedicatedintakestate"
+    },
+    {
+      "label": "DedicatedDeploymentChecklistItem",
+      "file_type": "code",
+      "source_file": "dedicated.ts",
+      "source_location": "L75",
+      "id": "types_dedicated_dedicateddeploymentchecklistitem",
+      "community": 3,
+      "norm_label": "dedicateddeploymentchecklistitem"
+    },
+    {
+      "label": "DedicatedDeploymentRecord",
+      "file_type": "code",
+      "source_file": "dedicated.ts",
+      "source_location": "L81",
+      "id": "types_dedicated_dedicateddeploymentrecord",
+      "community": 3,
+      "norm_label": "dedicateddeploymentrecord"
+    },
+    {
+      "label": "organization-access.ts",
+      "file_type": "code",
+      "source_file": "organization-access.ts",
+      "source_location": "L1",
+      "id": "c_code_docker_watchtower_dash_src_types_organization_access_ts",
+      "community": 5,
+      "norm_label": "organization-access.ts"
+    },
+    {
+      "label": "OrganizationMemberRole",
+      "file_type": "code",
+      "source_file": "organization-access.ts",
+      "source_location": "L1",
+      "id": "types_organization_access_organizationmemberrole",
+      "community": 5,
+      "norm_label": "organizationmemberrole"
+    },
+    {
+      "label": "OrganizationAccessStatus",
+      "file_type": "code",
+      "source_file": "organization-access.ts",
+      "source_location": "L2",
+      "id": "types_organization_access_organizationaccessstatus",
+      "community": 5,
+      "norm_label": "organizationaccessstatus"
+    },
+    {
+      "label": "OrganizationAccessSummary",
+      "file_type": "code",
+      "source_file": "organization-access.ts",
+      "source_location": "L4",
+      "id": "types_organization_access_organizationaccesssummary",
+      "community": 5,
+      "norm_label": "organizationaccesssummary"
+    },
+    {
+      "label": "OrganizationAccessMember",
+      "file_type": "code",
+      "source_file": "organization-access.ts",
+      "source_location": "L10",
+      "id": "types_organization_access_organizationaccessmember",
+      "community": 5,
+      "norm_label": "organizationaccessmember"
+    },
+    {
+      "label": "OrganizationAccessInvitation",
+      "file_type": "code",
+      "source_file": "organization-access.ts",
+      "source_location": "L20",
+      "id": "types_organization_access_organizationaccessinvitation",
+      "community": 5,
+      "norm_label": "organizationaccessinvitation"
+    },
+    {
+      "label": "OrganizationAccessResponse",
+      "file_type": "code",
+      "source_file": "organization-access.ts",
+      "source_location": "L29",
+      "id": "types_organization_access_organizationaccessresponse",
+      "community": 5,
+      "norm_label": "organizationaccessresponse"
+    },
+    {
+      "label": "OrganizationInvitationFormValues",
+      "file_type": "code",
+      "source_file": "organization-access.ts",
+      "source_location": "L37",
+      "id": "types_organization_access_organizationinvitationformvalues",
+      "community": 5,
+      "norm_label": "organizationinvitationformvalues"
+    }
+  ],
+  "links": [
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "admin.ts",
+      "source_location": "L1",
+      "weight": 1.0,
+      "source": "c_code_docker_watchtower_dash_src_types_admin_ts",
+      "target": "types_admin_adminoverview",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "admin.ts",
+      "source_location": "L13",
+      "weight": 1.0,
+      "source": "c_code_docker_watchtower_dash_src_types_admin_ts",
+      "target": "types_admin_adminuserrow",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "admin.ts",
+      "source_location": "L27",
+      "weight": 1.0,
+      "source": "c_code_docker_watchtower_dash_src_types_admin_ts",
+      "target": "types_admin_adminuserdetail",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "admin.ts",
+      "source_location": "L42",
+      "weight": 1.0,
+      "source": "c_code_docker_watchtower_dash_src_types_admin_ts",
+      "target": "types_admin_adminorganizationrow",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "admin.ts",
+      "source_location": "L66",
+      "weight": 1.0,
+      "source": "c_code_docker_watchtower_dash_src_types_admin_ts",
+      "target": "types_admin_adminorganizationdetail",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "admin.ts",
+      "source_location": "L92",
+      "weight": 1.0,
+      "source": "c_code_docker_watchtower_dash_src_types_admin_ts",
+      "target": "types_admin_adminhostrow",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "admin.ts",
+      "source_location": "L106",
+      "weight": 1.0,
+      "source": "c_code_docker_watchtower_dash_src_types_admin_ts",
+      "target": "types_admin_adminauditentry",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "admin.ts",
+      "source_location": "L120",
+      "weight": 1.0,
+      "source": "c_code_docker_watchtower_dash_src_types_admin_ts",
+      "target": "types_admin_adminoperationrun",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "admin.ts",
+      "source_location": "L133",
+      "weight": 1.0,
+      "source": "c_code_docker_watchtower_dash_src_types_admin_ts",
+      "target": "types_admin_adminbillingupdate",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "admin.ts",
+      "source_location": "L141",
+      "weight": 1.0,
+      "source": "c_code_docker_watchtower_dash_src_types_admin_ts",
+      "target": "types_admin_adminbillingevent",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "admin.ts",
+      "source_location": "L159",
+      "weight": 1.0,
+      "source": "c_code_docker_watchtower_dash_src_types_admin_ts",
+      "target": "types_admin_admindonoremaildelivery",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "alerts.ts",
+      "source_location": "L1",
+      "weight": 1.0,
+      "source": "c_code_docker_watchtower_dash_src_types_alerts_ts",
+      "target": "types_alerts_alertseverity",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "alerts.ts",
+      "source_location": "L2",
+      "weight": 1.0,
+      "source": "c_code_docker_watchtower_dash_src_types_alerts_ts",
+      "target": "types_alerts_alertstatus",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "alerts.ts",
+      "source_location": "L3",
+      "weight": 1.0,
+      "source": "c_code_docker_watchtower_dash_src_types_alerts_ts",
+      "target": "types_alerts_incidentstatus",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "alerts.ts",
+      "source_location": "L4",
+      "weight": 1.0,
+      "source": "c_code_docker_watchtower_dash_src_types_alerts_ts",
+      "target": "types_alerts_alertconditiontype",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "alerts.ts",
+      "source_location": "L11",
+      "weight": 1.0,
+      "source": "c_code_docker_watchtower_dash_src_types_alerts_ts",
+      "target": "types_alerts_alertruleformvalues",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "alerts.ts",
+      "source_location": "L21",
+      "weight": 1.0,
+      "source": "c_code_docker_watchtower_dash_src_types_alerts_ts",
+      "target": "types_alerts_webhookdestinationformvalues",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "alerts.ts",
+      "source_location": "L27",
+      "weight": 1.0,
+      "source": "c_code_docker_watchtower_dash_src_types_alerts_ts",
+      "target": "types_alerts_slackdestinationformvalues",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/types/database-updated.ts",
+      "source_location": "L3",
+      "weight": 1.0,
+      "source": "src_types_database_updated_ts",
+      "target": "types_database_updated_organization",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/types/database-updated.ts",
+      "source_location": "L25",
+      "weight": 1.0,
+      "source": "src_types_database_updated_ts",
+      "target": "types_database_updated_billingevent",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/types/database-updated.ts",
+      "source_location": "L43",
+      "weight": 1.0,
+      "source": "src_types_database_updated_ts",
+      "target": "types_database_updated_organizationmember",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/types/database-updated.ts",
+      "source_location": "L51",
+      "weight": 1.0,
+      "source": "src_types_database_updated_ts",
+      "target": "types_database_updated_connectionmode",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/types/database-updated.ts",
+      "source_location": "L53",
+      "weight": 1.0,
+      "source": "src_types_database_updated_ts",
+      "target": "types_database_updated_containerruntime",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/types/database-updated.ts",
+      "source_location": "L55",
+      "weight": 1.0,
+      "source": "src_types_database_updated_ts",
+      "target": "types_database_updated_dockerhost",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/types/database-updated.ts",
+      "source_location": "L75",
+      "weight": 1.0,
+      "source": "src_types_database_updated_ts",
+      "target": "types_database_updated_orgmemberprofile",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/types/database-updated.ts",
+      "source_location": "L83",
+      "weight": 1.0,
+      "source": "src_types_database_updated_ts",
+      "target": "types_database_updated_alertseverity",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/types/database-updated.ts",
+      "source_location": "L84",
+      "weight": 1.0,
+      "source": "src_types_database_updated_ts",
+      "target": "types_database_updated_alertstatus",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/types/database-updated.ts",
+      "source_location": "L85",
+      "weight": 1.0,
+      "source": "src_types_database_updated_ts",
+      "target": "types_database_updated_incidentstatus",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/types/database-updated.ts",
+      "source_location": "L86",
+      "weight": 1.0,
+      "source": "src_types_database_updated_ts",
+      "target": "types_database_updated_alertconditiontype",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/types/database-updated.ts",
+      "source_location": "L88",
+      "weight": 1.0,
+      "source": "src_types_database_updated_ts",
+      "target": "types_database_updated_alertrule",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/types/database-updated.ts",
+      "source_location": "L104",
+      "weight": 1.0,
+      "source": "src_types_database_updated_ts",
+      "target": "types_database_updated_agentenrollmentsessionstatus",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/types/database-updated.ts",
+      "source_location": "L111",
+      "weight": 1.0,
+      "source": "src_types_database_updated_ts",
+      "target": "types_database_updated_agentenrollmentsession",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/types/database-updated.ts",
+      "source_location": "L129",
+      "weight": 1.0,
+      "source": "src_types_database_updated_ts",
+      "target": "types_database_updated_alertevent",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/types/database-updated.ts",
+      "source_location": "L152",
+      "weight": 1.0,
+      "source": "src_types_database_updated_ts",
+      "target": "types_database_updated_incident",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/types/database-updated.ts",
+      "source_location": "L168",
+      "weight": 1.0,
+      "source": "src_types_database_updated_ts",
+      "target": "types_database_updated_alertdeliverykind",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/types/database-updated.ts",
+      "source_location": "L170",
+      "weight": 1.0,
+      "source": "src_types_database_updated_ts",
+      "target": "types_database_updated_alertdeliveryattempt",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/types/database-updated.ts",
+      "source_location": "L185",
+      "weight": 1.0,
+      "source": "src_types_database_updated_ts",
+      "target": "types_database_updated_webhookdestination",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/types/database-updated.ts",
+      "source_location": "L198",
+      "weight": 1.0,
+      "source": "src_types_database_updated_ts",
+      "target": "types_database_updated_slackdestination",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "database.ts",
+      "source_location": "L3",
+      "weight": 1.0,
+      "source": "c_code_docker_watchtower_dash_src_types_database_ts",
+      "target": "types_database_organization",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "database.ts",
+      "source_location": "L25",
+      "weight": 1.0,
+      "source": "c_code_docker_watchtower_dash_src_types_database_ts",
+      "target": "types_database_billingevent",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "database.ts",
+      "source_location": "L43",
+      "weight": 1.0,
+      "source": "c_code_docker_watchtower_dash_src_types_database_ts",
+      "target": "types_database_organizationmember",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "database.ts",
+      "source_location": "L51",
+      "weight": 1.0,
+      "source": "c_code_docker_watchtower_dash_src_types_database_ts",
+      "target": "types_database_connectionmode",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "database.ts",
+      "source_location": "L53",
+      "weight": 1.0,
+      "source": "c_code_docker_watchtower_dash_src_types_database_ts",
+      "target": "types_database_containerruntime",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "database.ts",
+      "source_location": "L55",
+      "weight": 1.0,
+      "source": "c_code_docker_watchtower_dash_src_types_database_ts",
+      "target": "types_database_dockerhost",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "database.ts",
+      "source_location": "L74",
+      "weight": 1.0,
+      "source": "c_code_docker_watchtower_dash_src_types_database_ts",
+      "target": "types_database_orgmemberprofile",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "database.ts",
+      "source_location": "L82",
+      "weight": 1.0,
+      "source": "c_code_docker_watchtower_dash_src_types_database_ts",
+      "target": "types_database_alertseverity",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "database.ts",
+      "source_location": "L83",
+      "weight": 1.0,
+      "source": "c_code_docker_watchtower_dash_src_types_database_ts",
+      "target": "types_database_alertstatus",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "database.ts",
+      "source_location": "L84",
+      "weight": 1.0,
+      "source": "c_code_docker_watchtower_dash_src_types_database_ts",
+      "target": "types_database_incidentstatus",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "database.ts",
+      "source_location": "L85",
+      "weight": 1.0,
+      "source": "c_code_docker_watchtower_dash_src_types_database_ts",
+      "target": "types_database_alertconditiontype",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "database.ts",
+      "source_location": "L87",
+      "weight": 1.0,
+      "source": "c_code_docker_watchtower_dash_src_types_database_ts",
+      "target": "types_database_alertrule",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "database.ts",
+      "source_location": "L103",
+      "weight": 1.0,
+      "source": "c_code_docker_watchtower_dash_src_types_database_ts",
+      "target": "types_database_agentenrollmentsessionstatus",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "database.ts",
+      "source_location": "L110",
+      "weight": 1.0,
+      "source": "c_code_docker_watchtower_dash_src_types_database_ts",
+      "target": "types_database_agentenrollmentsession",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "database.ts",
+      "source_location": "L128",
+      "weight": 1.0,
+      "source": "c_code_docker_watchtower_dash_src_types_database_ts",
+      "target": "types_database_alertevent",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "database.ts",
+      "source_location": "L151",
+      "weight": 1.0,
+      "source": "c_code_docker_watchtower_dash_src_types_database_ts",
+      "target": "types_database_incident",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "database.ts",
+      "source_location": "L167",
+      "weight": 1.0,
+      "source": "c_code_docker_watchtower_dash_src_types_database_ts",
+      "target": "types_database_alertdeliverykind",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "database.ts",
+      "source_location": "L169",
+      "weight": 1.0,
+      "source": "c_code_docker_watchtower_dash_src_types_database_ts",
+      "target": "types_database_alertdeliveryattempt",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "database.ts",
+      "source_location": "L184",
+      "weight": 1.0,
+      "source": "c_code_docker_watchtower_dash_src_types_database_ts",
+      "target": "types_database_webhookdestination",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "database.ts",
+      "source_location": "L197",
+      "weight": 1.0,
+      "source": "c_code_docker_watchtower_dash_src_types_database_ts",
+      "target": "types_database_slackdestination",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "database.ts",
+      "source_location": "L209",
+      "weight": 1.0,
+      "source": "c_code_docker_watchtower_dash_src_types_database_ts",
+      "target": "types_database_notification",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "database.ts",
+      "source_location": "L222",
+      "weight": 1.0,
+      "source": "c_code_docker_watchtower_dash_src_types_database_ts",
+      "target": "types_database_notificationdismissal",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "dedicated.ts",
+      "source_location": "L1",
+      "weight": 1.0,
+      "source": "c_code_docker_watchtower_dash_src_types_dedicated_ts",
+      "target": "types_dedicated_dedicatedregion",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "dedicated.ts",
+      "source_location": "L9",
+      "weight": 1.0,
+      "source": "c_code_docker_watchtower_dash_src_types_dedicated_ts",
+      "target": "types_dedicated_complianceneed",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "dedicated.ts",
+      "source_location": "L16",
+      "weight": 1.0,
+      "source": "c_code_docker_watchtower_dash_src_types_dedicated_ts",
+      "target": "types_dedicated_integrationneed",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "dedicated.ts",
+      "source_location": "L25",
+      "weight": 1.0,
+      "source": "c_code_docker_watchtower_dash_src_types_dedicated_ts",
+      "target": "types_dedicated_dedicatedintakestep",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "dedicated.ts",
+      "source_location": "L34",
+      "weight": 1.0,
+      "source": "c_code_docker_watchtower_dash_src_types_dedicated_ts",
+      "target": "types_dedicated_dedicateddeploymentstatus",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "dedicated.ts",
+      "source_location": "L42",
+      "weight": 1.0,
+      "source": "c_code_docker_watchtower_dash_src_types_dedicated_ts",
+      "target": "types_dedicated_dedicateddeploymentintake",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "dedicated.ts",
+      "source_location": "L66",
+      "weight": 1.0,
+      "source": "c_code_docker_watchtower_dash_src_types_dedicated_ts",
+      "target": "types_dedicated_dedicatedintakestate",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "dedicated.ts",
+      "source_location": "L75",
+      "weight": 1.0,
+      "source": "c_code_docker_watchtower_dash_src_types_dedicated_ts",
+      "target": "types_dedicated_dedicateddeploymentchecklistitem",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "dedicated.ts",
+      "source_location": "L81",
+      "weight": 1.0,
+      "source": "c_code_docker_watchtower_dash_src_types_dedicated_ts",
+      "target": "types_dedicated_dedicateddeploymentrecord",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "organization-access.ts",
+      "source_location": "L1",
+      "weight": 1.0,
+      "source": "c_code_docker_watchtower_dash_src_types_organization_access_ts",
+      "target": "types_organization_access_organizationmemberrole",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "organization-access.ts",
+      "source_location": "L2",
+      "weight": 1.0,
+      "source": "c_code_docker_watchtower_dash_src_types_organization_access_ts",
+      "target": "types_organization_access_organizationaccessstatus",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "organization-access.ts",
+      "source_location": "L4",
+      "weight": 1.0,
+      "source": "c_code_docker_watchtower_dash_src_types_organization_access_ts",
+      "target": "types_organization_access_organizationaccesssummary",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "organization-access.ts",
+      "source_location": "L10",
+      "weight": 1.0,
+      "source": "c_code_docker_watchtower_dash_src_types_organization_access_ts",
+      "target": "types_organization_access_organizationaccessmember",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "organization-access.ts",
+      "source_location": "L20",
+      "weight": 1.0,
+      "source": "c_code_docker_watchtower_dash_src_types_organization_access_ts",
+      "target": "types_organization_access_organizationaccessinvitation",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "organization-access.ts",
+      "source_location": "L29",
+      "weight": 1.0,
+      "source": "c_code_docker_watchtower_dash_src_types_organization_access_ts",
+      "target": "types_organization_access_organizationaccessresponse",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "organization-access.ts",
+      "source_location": "L37",
+      "weight": 1.0,
+      "source": "c_code_docker_watchtower_dash_src_types_organization_access_ts",
+      "target": "types_organization_access_organizationinvitationformvalues",
+      "confidence_score": 1.0
+    }
+  ],
+  "hyperedges": [],
+  "built_at_commit": "ed28244c211be7b6c2b23ccf8ca4f5a7352c3e35"
+}

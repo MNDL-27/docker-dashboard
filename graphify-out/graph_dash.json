@@ -1,0 +1,870 @@
+{
+  "directed": false,
+  "multigraph": false,
+  "graph": {},
+  "nodes": [
+    {
+      "label": "ContainersTable.tsx",
+      "file_type": "code",
+      "source_file": "ContainersTable.tsx",
+      "source_location": "L1",
+      "id": "c_code_docker_watchtower_dash_src_components_dashboard_containerstable_tsx",
+      "community": 0,
+      "norm_label": "containerstable.tsx"
+    },
+    {
+      "label": "ContainersTableProps",
+      "file_type": "code",
+      "source_file": "ContainersTable.tsx",
+      "source_location": "L7",
+      "id": "dashboard_containerstable_containerstableprops",
+      "community": 0,
+      "norm_label": "containerstableprops"
+    },
+    {
+      "label": "ContainersTable()",
+      "file_type": "code",
+      "source_file": "ContainersTable.tsx",
+      "source_location": "L13",
+      "id": "dashboard_containerstable_containerstable",
+      "community": 0,
+      "norm_label": "containerstable()"
+    },
+    {
+      "label": "dashboard-types.ts",
+      "file_type": "code",
+      "source_file": "dashboard-types.ts",
+      "source_location": "L1",
+      "id": "c_code_docker_watchtower_dash_src_components_dashboard_dashboard_types_ts",
+      "community": 0,
+      "norm_label": "dashboard-types.ts"
+    },
+    {
+      "label": "AlertItem",
+      "file_type": "code",
+      "source_file": "dashboard-types.ts",
+      "source_location": "L1",
+      "id": "dashboard_dashboard_types_alertitem",
+      "community": 0,
+      "norm_label": "alertitem"
+    },
+    {
+      "label": "DashboardContainerSummary",
+      "file_type": "code",
+      "source_file": "dashboard-types.ts",
+      "source_location": "L11",
+      "id": "dashboard_dashboard_types_dashboardcontainersummary",
+      "community": 0,
+      "norm_label": "dashboardcontainersummary"
+    },
+    {
+      "label": "DashboardAlerts.tsx",
+      "file_type": "code",
+      "source_file": "DashboardAlerts.tsx",
+      "source_location": "L1",
+      "id": "c_code_docker_watchtower_dash_src_components_dashboard_dashboardalerts_tsx",
+      "community": 0,
+      "norm_label": "dashboardalerts.tsx"
+    },
+    {
+      "label": "DashboardAlertsProps",
+      "file_type": "code",
+      "source_file": "DashboardAlerts.tsx",
+      "source_location": "L8",
+      "id": "dashboard_dashboardalerts_dashboardalertsprops",
+      "community": 0,
+      "norm_label": "dashboardalertsprops"
+    },
+    {
+      "label": "DashboardAlerts()",
+      "file_type": "code",
+      "source_file": "DashboardAlerts.tsx",
+      "source_location": "L13",
+      "id": "dashboard_dashboardalerts_dashboardalerts",
+      "community": 0,
+      "norm_label": "dashboardalerts()"
+    },
+    {
+      "label": "DashboardEmptyHostsState.tsx",
+      "file_type": "code",
+      "source_file": "DashboardEmptyHostsState.tsx",
+      "source_location": "L1",
+      "id": "c_code_docker_watchtower_dash_src_components_dashboard_dashboardemptyhostsstate_tsx",
+      "community": 3,
+      "norm_label": "dashboardemptyhostsstate.tsx"
+    },
+    {
+      "label": "DashboardEmptyHostsStateProps",
+      "file_type": "code",
+      "source_file": "DashboardEmptyHostsState.tsx",
+      "source_location": "L6",
+      "id": "dashboard_dashboardemptyhostsstate_dashboardemptyhostsstateprops",
+      "community": 3,
+      "norm_label": "dashboardemptyhostsstateprops"
+    },
+    {
+      "label": "DashboardEmptyHostsState()",
+      "file_type": "code",
+      "source_file": "DashboardEmptyHostsState.tsx",
+      "source_location": "L10",
+      "id": "dashboard_dashboardemptyhostsstate_dashboardemptyhostsstate",
+      "community": 3,
+      "norm_label": "dashboardemptyhostsstate()"
+    },
+    {
+      "label": "DashboardLoadingState.tsx",
+      "file_type": "code",
+      "source_file": "DashboardLoadingState.tsx",
+      "source_location": "L1",
+      "id": "c_code_docker_watchtower_dash_src_components_dashboard_dashboardloadingstate_tsx",
+      "community": 4,
+      "norm_label": "dashboardloadingstate.tsx"
+    },
+    {
+      "label": "DashboardLoadingStateProps",
+      "file_type": "code",
+      "source_file": "DashboardLoadingState.tsx",
+      "source_location": "L3",
+      "id": "dashboard_dashboardloadingstate_dashboardloadingstateprops",
+      "community": 4,
+      "norm_label": "dashboardloadingstateprops"
+    },
+    {
+      "label": "DashboardLoadingState()",
+      "file_type": "code",
+      "source_file": "DashboardLoadingState.tsx",
+      "source_location": "L7",
+      "id": "dashboard_dashboardloadingstate_dashboardloadingstate",
+      "community": 4,
+      "norm_label": "dashboardloadingstate()"
+    },
+    {
+      "label": "DashboardNoOrganizationState.tsx",
+      "file_type": "code",
+      "source_file": "DashboardNoOrganizationState.tsx",
+      "source_location": "L1",
+      "id": "c_code_docker_watchtower_dash_src_components_dashboard_dashboardnoorganizationstate_tsx",
+      "community": 8,
+      "norm_label": "dashboardnoorganizationstate.tsx"
+    },
+    {
+      "label": "DashboardNoOrganizationState()",
+      "file_type": "code",
+      "source_file": "DashboardNoOrganizationState.tsx",
+      "source_location": "L6",
+      "id": "dashboard_dashboardnoorganizationstate_dashboardnoorganizationstate",
+      "community": 8,
+      "norm_label": "dashboardnoorganizationstate()"
+    },
+    {
+      "label": "DashboardOverview.tsx",
+      "file_type": "code",
+      "source_file": "DashboardOverview.tsx",
+      "source_location": "L1",
+      "id": "c_code_docker_watchtower_dash_src_components_dashboard_dashboardoverview_tsx",
+      "community": 6,
+      "norm_label": "dashboardoverview.tsx"
+    },
+    {
+      "label": "DashboardOverviewProps",
+      "file_type": "code",
+      "source_file": "DashboardOverview.tsx",
+      "source_location": "L11",
+      "id": "dashboard_dashboardoverview_dashboardoverviewprops",
+      "community": 6,
+      "norm_label": "dashboardoverviewprops"
+    },
+    {
+      "label": "DashboardOverview()",
+      "file_type": "code",
+      "source_file": "DashboardOverview.tsx",
+      "source_location": "L21",
+      "id": "dashboard_dashboardoverview_dashboardoverview",
+      "community": 6,
+      "norm_label": "dashboardoverview()"
+    },
+    {
+      "label": "fleet-resource-helpers.ts",
+      "file_type": "code",
+      "source_file": "src/components/dashboard/fleet-resource-helpers.ts",
+      "source_location": "L1",
+      "id": "src_components_dashboard_fleet_resource_helpers_ts",
+      "community": 1,
+      "norm_label": "fleet-resource-helpers.ts"
+    },
+    {
+      "label": "buildInitialFleetData()",
+      "file_type": "code",
+      "source_file": "src/components/dashboard/fleet-resource-helpers.ts",
+      "source_location": "L6",
+      "id": "dashboard_fleet_resource_helpers_buildinitialfleetdata",
+      "community": 1,
+      "norm_label": "buildinitialfleetdata()"
+    },
+    {
+      "label": "FleetResourceChart.tsx",
+      "file_type": "code",
+      "source_file": "src/components/dashboard/FleetResourceChart.tsx",
+      "source_location": "L1",
+      "id": "src_components_dashboard_fleetresourcechart_tsx",
+      "community": 1,
+      "norm_label": "fleetresourcechart.tsx"
+    },
+    {
+      "label": "FleetResourceChartProps",
+      "file_type": "code",
+      "source_file": "src/components/dashboard/FleetResourceChart.tsx",
+      "source_location": "L8",
+      "id": "dashboard_fleetresourcechart_fleetresourcechartprops",
+      "community": 1,
+      "norm_label": "fleetresourcechartprops"
+    },
+    {
+      "label": "formatBytes()",
+      "file_type": "code",
+      "source_file": "src/components/dashboard/FleetResourceChart.tsx",
+      "source_location": "L17",
+      "id": "dashboard_fleetresourcechart_formatbytes",
+      "community": 5,
+      "norm_label": "formatbytes()"
+    },
+    {
+      "label": "formatPercentage()",
+      "file_type": "code",
+      "source_file": "src/components/dashboard/FleetResourceChart.tsx",
+      "source_location": "L25",
+      "id": "dashboard_fleetresourcechart_formatpercentage",
+      "community": 5,
+      "norm_label": "formatpercentage()"
+    },
+    {
+      "label": "formatSpeed()",
+      "file_type": "code",
+      "source_file": "src/components/dashboard/FleetResourceChart.tsx",
+      "source_location": "L29",
+      "id": "dashboard_fleetresourcechart_formatspeed",
+      "community": 9,
+      "norm_label": "formatspeed()"
+    },
+    {
+      "label": "FleetResourceTooltipProps",
+      "file_type": "code",
+      "source_file": "src/components/dashboard/FleetResourceChart.tsx",
+      "source_location": "L44",
+      "id": "dashboard_fleetresourcechart_fleetresourcetooltipprops",
+      "community": 1,
+      "norm_label": "fleetresourcetooltipprops"
+    },
+    {
+      "label": "FleetResourceTooltip()",
+      "file_type": "code",
+      "source_file": "src/components/dashboard/FleetResourceChart.tsx",
+      "source_location": "L54",
+      "id": "dashboard_fleetresourcechart_fleetresourcetooltip",
+      "community": 5,
+      "norm_label": "fleetresourcetooltip()"
+    },
+    {
+      "label": "CompactMetricProps",
+      "file_type": "code",
+      "source_file": "src/components/dashboard/FleetResourceChart.tsx",
+      "source_location": "L127",
+      "id": "dashboard_fleetresourcechart_compactmetricprops",
+      "community": 1,
+      "norm_label": "compactmetricprops"
+    },
+    {
+      "label": "CompactMetric()",
+      "file_type": "code",
+      "source_file": "src/components/dashboard/FleetResourceChart.tsx",
+      "source_location": "L132",
+      "id": "dashboard_fleetresourcechart_compactmetric",
+      "community": 1,
+      "norm_label": "compactmetric()"
+    },
+    {
+      "label": "FleetResourceChart()",
+      "file_type": "code",
+      "source_file": "src/components/dashboard/FleetResourceChart.tsx",
+      "source_location": "L141",
+      "id": "dashboard_fleetresourcechart_fleetresourcechart",
+      "community": 9,
+      "norm_label": "fleetresourcechart()"
+    },
+    {
+      "label": "HostHealthGrid.tsx",
+      "file_type": "code",
+      "source_file": "HostHealthGrid.tsx",
+      "source_location": "L1",
+      "id": "c_code_docker_watchtower_dash_src_components_dashboard_hosthealthgrid_tsx",
+      "community": 2,
+      "norm_label": "hosthealthgrid.tsx"
+    },
+    {
+      "label": "STATUS_LABEL",
+      "file_type": "code",
+      "source_file": "HostHealthGrid.tsx",
+      "source_location": "L7",
+      "id": "dashboard_hosthealthgrid_status_label",
+      "community": 2,
+      "norm_label": "status_label"
+    },
+    {
+      "label": "statusColor()",
+      "file_type": "code",
+      "source_file": "HostHealthGrid.tsx",
+      "source_location": "L17",
+      "id": "dashboard_hosthealthgrid_statuscolor",
+      "community": 2,
+      "norm_label": "statuscolor()"
+    },
+    {
+      "label": "HostHealthGridProps",
+      "file_type": "code",
+      "source_file": "HostHealthGrid.tsx",
+      "source_location": "L29",
+      "id": "dashboard_hosthealthgrid_hosthealthgridprops",
+      "community": 2,
+      "norm_label": "hosthealthgridprops"
+    },
+    {
+      "label": "HostHealthGrid()",
+      "file_type": "code",
+      "source_file": "HostHealthGrid.tsx",
+      "source_location": "L34",
+      "id": "dashboard_hosthealthgrid_hosthealthgrid",
+      "community": 2,
+      "norm_label": "hosthealthgrid()"
+    },
+    {
+      "label": "KPICard.tsx",
+      "file_type": "code",
+      "source_file": "KPICard.tsx",
+      "source_location": "L1",
+      "id": "c_code_docker_watchtower_dash_src_components_dashboard_kpicard_tsx",
+      "community": 7,
+      "norm_label": "kpicard.tsx"
+    },
+    {
+      "label": "KPICardProps",
+      "file_type": "code",
+      "source_file": "KPICard.tsx",
+      "source_location": "L4",
+      "id": "dashboard_kpicard_kpicardprops",
+      "community": 7,
+      "norm_label": "kpicardprops"
+    },
+    {
+      "label": "KPICard()",
+      "file_type": "code",
+      "source_file": "KPICard.tsx",
+      "source_location": "L17",
+      "id": "dashboard_kpicard_kpicard",
+      "community": 7,
+      "norm_label": "kpicard()"
+    }
+  ],
+  "links": [
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "ContainersTable.tsx",
+      "source_location": "L5",
+      "weight": 1.0,
+      "source": "c_code_docker_watchtower_dash_src_components_dashboard_containerstable_tsx",
+      "target": "c_code_docker_watchtower_dash_src_components_dashboard_dashboard_types_ts",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "ContainersTable.tsx",
+      "source_location": "L5",
+      "weight": 1.0,
+      "source": "c_code_docker_watchtower_dash_src_components_dashboard_containerstable_tsx",
+      "target": "dashboard_dashboard_types_dashboardcontainersummary",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "ContainersTable.tsx",
+      "source_location": "L7",
+      "weight": 1.0,
+      "source": "c_code_docker_watchtower_dash_src_components_dashboard_containerstable_tsx",
+      "target": "dashboard_containerstable_containerstableprops",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "ContainersTable.tsx",
+      "source_location": "L13",
+      "weight": 1.0,
+      "source": "c_code_docker_watchtower_dash_src_components_dashboard_containerstable_tsx",
+      "target": "dashboard_containerstable_containerstable",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "DashboardOverview.tsx",
+      "source_location": "L5",
+      "weight": 1.0,
+      "source": "c_code_docker_watchtower_dash_src_components_dashboard_dashboardoverview_tsx",
+      "target": "c_code_docker_watchtower_dash_src_components_dashboard_containerstable_tsx",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "DashboardOverview.tsx",
+      "source_location": "L5",
+      "weight": 1.0,
+      "source": "c_code_docker_watchtower_dash_src_components_dashboard_dashboardoverview_tsx",
+      "target": "dashboard_containerstable_containerstable",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "dashboard-types.ts",
+      "source_location": "L1",
+      "weight": 1.0,
+      "source": "c_code_docker_watchtower_dash_src_components_dashboard_dashboard_types_ts",
+      "target": "dashboard_dashboard_types_alertitem",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "dashboard-types.ts",
+      "source_location": "L11",
+      "weight": 1.0,
+      "source": "c_code_docker_watchtower_dash_src_components_dashboard_dashboard_types_ts",
+      "target": "dashboard_dashboard_types_dashboardcontainersummary",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "DashboardAlerts.tsx",
+      "source_location": "L5",
+      "weight": 1.0,
+      "source": "c_code_docker_watchtower_dash_src_components_dashboard_dashboardalerts_tsx",
+      "target": "c_code_docker_watchtower_dash_src_components_dashboard_dashboard_types_ts",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "DashboardAlerts.tsx",
+      "source_location": "L5",
+      "weight": 1.0,
+      "source": "c_code_docker_watchtower_dash_src_components_dashboard_dashboardalerts_tsx",
+      "target": "dashboard_dashboard_types_alertitem",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "DashboardAlerts.tsx",
+      "source_location": "L8",
+      "weight": 1.0,
+      "source": "c_code_docker_watchtower_dash_src_components_dashboard_dashboardalerts_tsx",
+      "target": "dashboard_dashboardalerts_dashboardalertsprops",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "DashboardAlerts.tsx",
+      "source_location": "L13",
+      "weight": 1.0,
+      "source": "c_code_docker_watchtower_dash_src_components_dashboard_dashboardalerts_tsx",
+      "target": "dashboard_dashboardalerts_dashboardalerts",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "DashboardOverview.tsx",
+      "source_location": "L6",
+      "weight": 1.0,
+      "source": "c_code_docker_watchtower_dash_src_components_dashboard_dashboardoverview_tsx",
+      "target": "c_code_docker_watchtower_dash_src_components_dashboard_dashboardalerts_tsx",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "DashboardOverview.tsx",
+      "source_location": "L6",
+      "weight": 1.0,
+      "source": "c_code_docker_watchtower_dash_src_components_dashboard_dashboardoverview_tsx",
+      "target": "dashboard_dashboardalerts_dashboardalerts",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "DashboardEmptyHostsState.tsx",
+      "source_location": "L6",
+      "weight": 1.0,
+      "source": "c_code_docker_watchtower_dash_src_components_dashboard_dashboardemptyhostsstate_tsx",
+      "target": "dashboard_dashboardemptyhostsstate_dashboardemptyhostsstateprops",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "DashboardEmptyHostsState.tsx",
+      "source_location": "L10",
+      "weight": 1.0,
+      "source": "c_code_docker_watchtower_dash_src_components_dashboard_dashboardemptyhostsstate_tsx",
+      "target": "dashboard_dashboardemptyhostsstate_dashboardemptyhostsstate",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "DashboardLoadingState.tsx",
+      "source_location": "L3",
+      "weight": 1.0,
+      "source": "c_code_docker_watchtower_dash_src_components_dashboard_dashboardloadingstate_tsx",
+      "target": "dashboard_dashboardloadingstate_dashboardloadingstateprops",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "DashboardLoadingState.tsx",
+      "source_location": "L7",
+      "weight": 1.0,
+      "source": "c_code_docker_watchtower_dash_src_components_dashboard_dashboardloadingstate_tsx",
+      "target": "dashboard_dashboardloadingstate_dashboardloadingstate",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "DashboardNoOrganizationState.tsx",
+      "source_location": "L6",
+      "weight": 1.0,
+      "source": "c_code_docker_watchtower_dash_src_components_dashboard_dashboardnoorganizationstate_tsx",
+      "target": "dashboard_dashboardnoorganizationstate_dashboardnoorganizationstate",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "DashboardOverview.tsx",
+      "source_location": "L2",
+      "weight": 1.0,
+      "source": "c_code_docker_watchtower_dash_src_components_dashboard_dashboardoverview_tsx",
+      "target": "c_code_docker_watchtower_dash_src_components_dashboard_kpicard_tsx",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "DashboardOverview.tsx",
+      "source_location": "L2",
+      "weight": 1.0,
+      "source": "c_code_docker_watchtower_dash_src_components_dashboard_dashboardoverview_tsx",
+      "target": "dashboard_kpicard_kpicard",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "DashboardOverview.tsx",
+      "source_location": "L3",
+      "weight": 1.0,
+      "source": "c_code_docker_watchtower_dash_src_components_dashboard_dashboardoverview_tsx",
+      "target": "c_code_docker_watchtower_dash_src_components_dashboard_hosthealthgrid_tsx",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "DashboardOverview.tsx",
+      "source_location": "L3",
+      "weight": 1.0,
+      "source": "c_code_docker_watchtower_dash_src_components_dashboard_dashboardoverview_tsx",
+      "target": "dashboard_hosthealthgrid_hosthealthgrid",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "DashboardOverview.tsx",
+      "source_location": "L4",
+      "weight": 1.0,
+      "source": "c_code_docker_watchtower_dash_src_components_dashboard_dashboardoverview_tsx",
+      "target": "dashboard_fleetresourcechart_fleetresourcechart",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "DashboardOverview.tsx",
+      "source_location": "L11",
+      "weight": 1.0,
+      "source": "c_code_docker_watchtower_dash_src_components_dashboard_dashboardoverview_tsx",
+      "target": "dashboard_dashboardoverview_dashboardoverviewprops",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "DashboardOverview.tsx",
+      "source_location": "L21",
+      "weight": 1.0,
+      "source": "c_code_docker_watchtower_dash_src_components_dashboard_dashboardoverview_tsx",
+      "target": "dashboard_dashboardoverview_dashboardoverview",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/components/dashboard/fleet-resource-helpers.ts",
+      "source_location": "L6",
+      "weight": 1.0,
+      "source": "src_components_dashboard_fleet_resource_helpers_ts",
+      "target": "dashboard_fleet_resource_helpers_buildinitialfleetdata",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/components/dashboard/FleetResourceChart.tsx",
+      "source_location": "L6",
+      "weight": 1.0,
+      "source": "src_components_dashboard_fleetresourcechart_tsx",
+      "target": "src_components_dashboard_fleet_resource_helpers_ts",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/components/dashboard/FleetResourceChart.tsx",
+      "source_location": "L6",
+      "weight": 1.0,
+      "source": "src_components_dashboard_fleetresourcechart_tsx",
+      "target": "dashboard_fleet_resource_helpers_buildinitialfleetdata",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/components/dashboard/FleetResourceChart.tsx",
+      "source_location": "L8",
+      "weight": 1.0,
+      "source": "src_components_dashboard_fleetresourcechart_tsx",
+      "target": "dashboard_fleetresourcechart_fleetresourcechartprops",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/components/dashboard/FleetResourceChart.tsx",
+      "source_location": "L17",
+      "weight": 1.0,
+      "source": "src_components_dashboard_fleetresourcechart_tsx",
+      "target": "dashboard_fleetresourcechart_formatbytes",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/components/dashboard/FleetResourceChart.tsx",
+      "source_location": "L25",
+      "weight": 1.0,
+      "source": "src_components_dashboard_fleetresourcechart_tsx",
+      "target": "dashboard_fleetresourcechart_formatpercentage",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/components/dashboard/FleetResourceChart.tsx",
+      "source_location": "L29",
+      "weight": 1.0,
+      "source": "src_components_dashboard_fleetresourcechart_tsx",
+      "target": "dashboard_fleetresourcechart_formatspeed",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/components/dashboard/FleetResourceChart.tsx",
+      "source_location": "L44",
+      "weight": 1.0,
+      "source": "src_components_dashboard_fleetresourcechart_tsx",
+      "target": "dashboard_fleetresourcechart_fleetresourcetooltipprops",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/components/dashboard/FleetResourceChart.tsx",
+      "source_location": "L54",
+      "weight": 1.0,
+      "source": "src_components_dashboard_fleetresourcechart_tsx",
+      "target": "dashboard_fleetresourcechart_fleetresourcetooltip",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/components/dashboard/FleetResourceChart.tsx",
+      "source_location": "L127",
+      "weight": 1.0,
+      "source": "src_components_dashboard_fleetresourcechart_tsx",
+      "target": "dashboard_fleetresourcechart_compactmetricprops",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/components/dashboard/FleetResourceChart.tsx",
+      "source_location": "L132",
+      "weight": 1.0,
+      "source": "src_components_dashboard_fleetresourcechart_tsx",
+      "target": "dashboard_fleetresourcechart_compactmetric",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/components/dashboard/FleetResourceChart.tsx",
+      "source_location": "L141",
+      "weight": 1.0,
+      "source": "src_components_dashboard_fleetresourcechart_tsx",
+      "target": "dashboard_fleetresourcechart_fleetresourcechart",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/components/dashboard/FleetResourceChart.tsx",
+      "source_location": "L99",
+      "weight": 1.0,
+      "source": "dashboard_fleetresourcechart_fleetresourcetooltip",
+      "target": "dashboard_fleetresourcechart_formatbytes",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/components/dashboard/FleetResourceChart.tsx",
+      "source_location": "L92",
+      "weight": 1.0,
+      "source": "dashboard_fleetresourcechart_fleetresourcetooltip",
+      "target": "dashboard_fleetresourcechart_formatpercentage",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/components/dashboard/FleetResourceChart.tsx",
+      "source_location": "L105",
+      "weight": 1.0,
+      "source": "dashboard_fleetresourcechart_fleetresourcetooltip",
+      "target": "dashboard_fleetresourcechart_formatspeed",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/components/dashboard/FleetResourceChart.tsx",
+      "source_location": "L259",
+      "weight": 1.0,
+      "source": "dashboard_fleetresourcechart_fleetresourcechart",
+      "target": "dashboard_fleetresourcechart_formatspeed",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "HostHealthGrid.tsx",
+      "source_location": "L7",
+      "weight": 1.0,
+      "source": "c_code_docker_watchtower_dash_src_components_dashboard_hosthealthgrid_tsx",
+      "target": "dashboard_hosthealthgrid_status_label",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "HostHealthGrid.tsx",
+      "source_location": "L17",
+      "weight": 1.0,
+      "source": "c_code_docker_watchtower_dash_src_components_dashboard_hosthealthgrid_tsx",
+      "target": "dashboard_hosthealthgrid_statuscolor",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "HostHealthGrid.tsx",
+      "source_location": "L29",
+      "weight": 1.0,
+      "source": "c_code_docker_watchtower_dash_src_components_dashboard_hosthealthgrid_tsx",
+      "target": "dashboard_hosthealthgrid_hosthealthgridprops",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "HostHealthGrid.tsx",
+      "source_location": "L34",
+      "weight": 1.0,
+      "source": "c_code_docker_watchtower_dash_src_components_dashboard_hosthealthgrid_tsx",
+      "target": "dashboard_hosthealthgrid_hosthealthgrid",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "KPICard.tsx",
+      "source_location": "L4",
+      "weight": 1.0,
+      "source": "c_code_docker_watchtower_dash_src_components_dashboard_kpicard_tsx",
+      "target": "dashboard_kpicard_kpicardprops",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "KPICard.tsx",
+      "source_location": "L17",
+      "weight": 1.0,
+      "source": "c_code_docker_watchtower_dash_src_components_dashboard_kpicard_tsx",
+      "target": "dashboard_kpicard_kpicard",
+      "confidence_score": 1.0
+    }
+  ],
+  "hyperedges": [],
+  "built_at_commit": "ed28244c211be7b6c2b23ccf8ca4f5a7352c3e35"
+}

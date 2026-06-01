@@ -1,4 +1,4 @@
-import { Loader2, Building2, Users, Server, UserX, Lock, AlertTriangle } from "lucide-react";
+import { Loader2, Building2, Users, Server, Activity, UserX, Lock, AlertTriangle } from "lucide-react";
 import { MetricCard } from "@/components/shared/MetricCard";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useAdminOverview } from "@/hooks/useAdmin";
@@ -18,7 +18,8 @@ export function AdminOverview() {
 
   return (
     <div className="space-y-4">
-      <div className="grid gap-3 md:grid-cols-3 xl:grid-cols-6">
+      <div className="grid gap-3 md:grid-cols-4 xl:grid-cols-7">
+        <MetricCard label="Active Now" value={overviewQuery.data?.metrics.active_users ?? 0} icon={Activity} />
         <MetricCard label="Organizations" value={overviewQuery.data?.metrics.total_organizations ?? 0} icon={Building2} />
         <MetricCard label="Users" value={overviewQuery.data?.metrics.total_users ?? 0} icon={Users} />
         <MetricCard label="Active Hosts" value={overviewQuery.data?.metrics.active_hosts ?? 0} icon={Server} />
