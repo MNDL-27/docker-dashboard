@@ -1,5 +1,6 @@
 import { sql } from "./db.mjs";
 import { ensureAdminSchema } from "./ensure-admin-schema.mjs";
+import { ensureNotificationsSchema } from "./ensure-notifications-schema.mjs";
 import { isDonorPremiumActive } from "./donor-billing.mjs";
 import {
   PLAN_POLICY_BY_PLAN,
@@ -66,6 +67,61 @@ type OrganizationFeature =
 
 const HOST_LIMIT_EXCEEDED_ERROR =
   "Host is inactive because your current plan limit has been exceeded. Remove extra hosts or upgrade to re-enable this host.";
+
+/**
+ * Insert an in-app notification for the organization so users see a bell
+ * indicator and toast explaining that some hosts were locked.
+ */
+async function createHostLimitNotification({
+  organizationId,
+  blockedCount,
+  nodeLimit,
+}: {
+  organizationId: string;
+  blockedCount: number;
+  nodeLimit: number;
+}) {
+  await ensureNotificationsSchema();
+
+  // Dedup: only create one notification per downgrade event — skip if a
+  // plan_downgrade notification already exists and hasn't expired yet.
+  const [existing] = await sql`
+    SELECT id FROM public.notifications
+    WHERE organization_id = ${organizationId}
+      AND metadata @> ${JSON.stringify({ source: 'plan_downgrade' })}::jsonb
+      AND expires_at > now()
+    LIMIT 1
+  `;
+  if (existing) return;
+
+  const hostLabel = blockedCount === 1 ? "host was" : "hosts were";
+  const limitLabel = nodeLimit === 1 ? "1 host" : `${nodeLimit} hosts`;
+
+  await sql`
+    INSERT INTO public.notifications (
+      organization_id,
+      title,
+      message,
+      type,
+      link,
+      metadata,
+      expires_at
+    )
+    VALUES (
+      ${organizationId},
+      ${`${blockedCount} ${hostLabel} deactivated`},
+      ${`Your plan allows ${limitLabel}. ${blockedCount} of ${blockedCount + nodeLimit} host(s) were deactivated. Upgrade your plan or remove extra hosts to regain access.`},
+      'warning',
+      '/pricing',
+      ${JSON.stringify({
+        blocked_count: blockedCount,
+        node_limit: nodeLimit,
+        source: 'plan_downgrade',
+      })}::jsonb,
+      now() + interval '30 days'
+    )
+  `;
+}
 
 /**
  * Compute entitlements purely from the organization's plan.
@@ -272,6 +328,15 @@ export async function enforceOrganizationNodeLimit({
         consecutive_failures = GREATEST(COALESCE(consecutive_failures, 0), 1)
       WHERE id = ANY(${blockedHostIds})
     `;
+
+    // Notify users via in-app notification so they see a bell indicator
+    // explaining why hosts were deactivated. Dedup is handled inside
+    // createHostLimitNotification to avoid duplicates per downgrade event.
+    await createHostLimitNotification({
+      organizationId,
+      blockedCount: blockedHostIds.length,
+      nodeLimit: entitlements.nodeLimit!,
+    });
   }
 
   if (allowedHostIds.length > 0) {
