@@ -1,0 +1,359 @@
+{
+  "directed": false,
+  "multigraph": false,
+  "graph": {},
+  "nodes": [
+    {
+      "label": "EmptyState.tsx",
+      "file_type": "code",
+      "source_file": "EmptyState.tsx",
+      "source_location": "L1",
+      "id": "c_code_docker_watchtower_dash_src_components_shared_emptystate_tsx",
+      "community": 1,
+      "norm_label": "emptystate.tsx"
+    },
+    {
+      "label": "EmptyStateProps",
+      "file_type": "code",
+      "source_file": "EmptyState.tsx",
+      "source_location": "L4",
+      "id": "shared_emptystate_emptystateprops",
+      "community": 1,
+      "norm_label": "emptystateprops"
+    },
+    {
+      "label": "EmptyState()",
+      "file_type": "code",
+      "source_file": "EmptyState.tsx",
+      "source_location": "L12",
+      "id": "shared_emptystate_emptystate",
+      "community": 1,
+      "norm_label": "emptystate()"
+    },
+    {
+      "label": "LogoLink.tsx",
+      "file_type": "code",
+      "source_file": "LogoLink.tsx",
+      "source_location": "L1",
+      "id": "c_code_docker_watchtower_dash_src_components_shared_logolink_tsx",
+      "community": 6,
+      "norm_label": "logolink.tsx"
+    },
+    {
+      "label": "LogoLink()",
+      "file_type": "code",
+      "source_file": "LogoLink.tsx",
+      "source_location": "L15",
+      "id": "shared_logolink_logolink",
+      "community": 6,
+      "norm_label": "logolink()"
+    },
+    {
+      "label": "MetricCard.tsx",
+      "file_type": "code",
+      "source_file": "MetricCard.tsx",
+      "source_location": "L1",
+      "id": "c_code_docker_watchtower_dash_src_components_shared_metriccard_tsx",
+      "community": 2,
+      "norm_label": "metriccard.tsx"
+    },
+    {
+      "label": "MetricCardProps",
+      "file_type": "code",
+      "source_file": "MetricCard.tsx",
+      "source_location": "L4",
+      "id": "shared_metriccard_metriccardprops",
+      "community": 2,
+      "norm_label": "metriccardprops"
+    },
+    {
+      "label": "MetricCard()",
+      "file_type": "code",
+      "source_file": "MetricCard.tsx",
+      "source_location": "L13",
+      "id": "shared_metriccard_metriccard",
+      "community": 2,
+      "norm_label": "metriccard()"
+    },
+    {
+      "label": "PageHeader.tsx",
+      "file_type": "code",
+      "source_file": "PageHeader.tsx",
+      "source_location": "L1",
+      "id": "c_code_docker_watchtower_dash_src_components_shared_pageheader_tsx",
+      "community": 3,
+      "norm_label": "pageheader.tsx"
+    },
+    {
+      "label": "PageHeaderProps",
+      "file_type": "code",
+      "source_file": "PageHeader.tsx",
+      "source_location": "L3",
+      "id": "shared_pageheader_pageheaderprops",
+      "community": 3,
+      "norm_label": "pageheaderprops"
+    },
+    {
+      "label": "PageHeader()",
+      "file_type": "code",
+      "source_file": "PageHeader.tsx",
+      "source_location": "L10",
+      "id": "shared_pageheader_pageheader",
+      "community": 3,
+      "norm_label": "pageheader()"
+    },
+    {
+      "label": "PremiumFeatureBlock.tsx",
+      "file_type": "code",
+      "source_file": "PremiumFeatureBlock.tsx",
+      "source_location": "L1",
+      "id": "c_code_docker_watchtower_dash_src_components_shared_premiumfeatureblock_tsx",
+      "community": 4,
+      "norm_label": "premiumfeatureblock.tsx"
+    },
+    {
+      "label": "PremiumFeatureBlockProps",
+      "file_type": "code",
+      "source_file": "PremiumFeatureBlock.tsx",
+      "source_location": "L5",
+      "id": "shared_premiumfeatureblock_premiumfeatureblockprops",
+      "community": 4,
+      "norm_label": "premiumfeatureblockprops"
+    },
+    {
+      "label": "PremiumFeatureBlock()",
+      "file_type": "code",
+      "source_file": "PremiumFeatureBlock.tsx",
+      "source_location": "L13",
+      "id": "shared_premiumfeatureblock_premiumfeatureblock",
+      "community": 4,
+      "norm_label": "premiumfeatureblock()"
+    },
+    {
+      "label": "SEO.tsx",
+      "file_type": "code",
+      "source_file": "SEO.tsx",
+      "source_location": "L1",
+      "id": "c_code_docker_watchtower_dash_src_components_shared_seo_tsx",
+      "community": 5,
+      "norm_label": "seo.tsx"
+    },
+    {
+      "label": "SEOProps",
+      "file_type": "code",
+      "source_file": "SEO.tsx",
+      "source_location": "L3",
+      "id": "shared_seo_seoprops",
+      "community": 5,
+      "norm_label": "seoprops"
+    },
+    {
+      "label": "SEO()",
+      "file_type": "code",
+      "source_file": "SEO.tsx",
+      "source_location": "L12",
+      "id": "shared_seo_seo",
+      "community": 5,
+      "norm_label": "seo()"
+    },
+    {
+      "label": "StatusBadge.tsx",
+      "file_type": "code",
+      "source_file": "StatusBadge.tsx",
+      "source_location": "L1",
+      "id": "c_code_docker_watchtower_dash_src_components_shared_statusbadge_tsx",
+      "community": 0,
+      "norm_label": "statusbadge.tsx"
+    },
+    {
+      "label": "StatusType",
+      "file_type": "code",
+      "source_file": "StatusBadge.tsx",
+      "source_location": "L3",
+      "id": "shared_statusbadge_statustype",
+      "community": 0,
+      "norm_label": "statustype"
+    },
+    {
+      "label": "statusStyles",
+      "file_type": "code",
+      "source_file": "StatusBadge.tsx",
+      "source_location": "L10",
+      "id": "shared_statusbadge_statusstyles",
+      "community": 0,
+      "norm_label": "statusstyles"
+    },
+    {
+      "label": "hasDot",
+      "file_type": "code",
+      "source_file": "StatusBadge.tsx",
+      "source_location": "L48",
+      "id": "shared_statusbadge_hasdot",
+      "community": 0,
+      "norm_label": "hasdot"
+    },
+    {
+      "label": "StatusBadge()",
+      "file_type": "code",
+      "source_file": "StatusBadge.tsx",
+      "source_location": "L50",
+      "id": "shared_statusbadge_statusbadge",
+      "community": 0,
+      "norm_label": "statusbadge()"
+    }
+  ],
+  "links": [
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "EmptyState.tsx",
+      "source_location": "L4",
+      "weight": 1.0,
+      "source": "c_code_docker_watchtower_dash_src_components_shared_emptystate_tsx",
+      "target": "shared_emptystate_emptystateprops",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "EmptyState.tsx",
+      "source_location": "L12",
+      "weight": 1.0,
+      "source": "c_code_docker_watchtower_dash_src_components_shared_emptystate_tsx",
+      "target": "shared_emptystate_emptystate",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "LogoLink.tsx",
+      "source_location": "L15",
+      "weight": 1.0,
+      "source": "c_code_docker_watchtower_dash_src_components_shared_logolink_tsx",
+      "target": "shared_logolink_logolink",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "MetricCard.tsx",
+      "source_location": "L4",
+      "weight": 1.0,
+      "source": "c_code_docker_watchtower_dash_src_components_shared_metriccard_tsx",
+      "target": "shared_metriccard_metriccardprops",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "MetricCard.tsx",
+      "source_location": "L13",
+      "weight": 1.0,
+      "source": "c_code_docker_watchtower_dash_src_components_shared_metriccard_tsx",
+      "target": "shared_metriccard_metriccard",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "PageHeader.tsx",
+      "source_location": "L3",
+      "weight": 1.0,
+      "source": "c_code_docker_watchtower_dash_src_components_shared_pageheader_tsx",
+      "target": "shared_pageheader_pageheaderprops",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "PageHeader.tsx",
+      "source_location": "L10",
+      "weight": 1.0,
+      "source": "c_code_docker_watchtower_dash_src_components_shared_pageheader_tsx",
+      "target": "shared_pageheader_pageheader",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "PremiumFeatureBlock.tsx",
+      "source_location": "L5",
+      "weight": 1.0,
+      "source": "c_code_docker_watchtower_dash_src_components_shared_premiumfeatureblock_tsx",
+      "target": "shared_premiumfeatureblock_premiumfeatureblockprops",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "PremiumFeatureBlock.tsx",
+      "source_location": "L13",
+      "weight": 1.0,
+      "source": "c_code_docker_watchtower_dash_src_components_shared_premiumfeatureblock_tsx",
+      "target": "shared_premiumfeatureblock_premiumfeatureblock",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "SEO.tsx",
+      "source_location": "L3",
+      "weight": 1.0,
+      "source": "c_code_docker_watchtower_dash_src_components_shared_seo_tsx",
+      "target": "shared_seo_seoprops",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "SEO.tsx",
+      "source_location": "L12",
+      "weight": 1.0,
+      "source": "c_code_docker_watchtower_dash_src_components_shared_seo_tsx",
+      "target": "shared_seo_seo",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "StatusBadge.tsx",
+      "source_location": "L3",
+      "weight": 1.0,
+      "source": "c_code_docker_watchtower_dash_src_components_shared_statusbadge_tsx",
+      "target": "shared_statusbadge_statustype",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "StatusBadge.tsx",
+      "source_location": "L10",
+      "weight": 1.0,
+      "source": "c_code_docker_watchtower_dash_src_components_shared_statusbadge_tsx",
+      "target": "shared_statusbadge_statusstyles",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "StatusBadge.tsx",
+      "source_location": "L48",
+      "weight": 1.0,
+      "source": "c_code_docker_watchtower_dash_src_components_shared_statusbadge_tsx",
+      "target": "shared_statusbadge_hasdot",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "StatusBadge.tsx",
+      "source_location": "L50",
+      "weight": 1.0,
+      "source": "c_code_docker_watchtower_dash_src_components_shared_statusbadge_tsx",
+      "target": "shared_statusbadge_statusbadge",
+      "confidence_score": 1.0
+    }
+  ],
+  "hyperedges": [],
+  "built_at_commit": "ed28244c211be7b6c2b23ccf8ca4f5a7352c3e35"
+}

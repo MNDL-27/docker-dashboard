@@ -1,0 +1,461 @@
+{
+  "directed": false,
+  "multigraph": false,
+  "graph": {},
+  "nodes": [
+    {
+      "label": "api.ts",
+      "file_type": "code",
+      "source_file": "api.ts",
+      "source_location": "L1",
+      "id": "c_code_docker_watchtower_dash_shared_schema_api_ts",
+      "community": 1,
+      "norm_label": "api.ts"
+    },
+    {
+      "label": "registry",
+      "file_type": "code",
+      "source_file": "api.ts",
+      "source_location": "L5",
+      "id": "schema_api_registry",
+      "community": 1,
+      "norm_label": "registry"
+    },
+    {
+      "label": "generateOpenAPI()",
+      "file_type": "code",
+      "source_file": "api.ts",
+      "source_location": "L83",
+      "id": "schema_api_generateopenapi",
+      "community": 1,
+      "norm_label": "generateopenapi()"
+    },
+    {
+      "label": "error.ts",
+      "file_type": "code",
+      "source_file": "error.ts",
+      "source_location": "L1",
+      "id": "c_code_docker_watchtower_dash_shared_schema_error_ts",
+      "community": 2,
+      "norm_label": "error.ts"
+    },
+    {
+      "label": "ProblemDetailsSchema",
+      "file_type": "code",
+      "source_file": "error.ts",
+      "source_location": "L6",
+      "id": "schema_error_problemdetailsschema",
+      "community": 2,
+      "norm_label": "problemdetailsschema"
+    },
+    {
+      "label": "createProblemResponse()",
+      "file_type": "code",
+      "source_file": "error.ts",
+      "source_location": "L29",
+      "id": "schema_error_createproblemresponse",
+      "community": 2,
+      "norm_label": "createproblemresponse()"
+    },
+    {
+      "label": "plan-policy.ts",
+      "file_type": "code",
+      "source_file": "plan-policy.ts",
+      "source_location": "L1",
+      "id": "c_code_docker_watchtower_dash_shared_schema_plan_policy_ts",
+      "community": 0,
+      "norm_label": "plan-policy.ts"
+    },
+    {
+      "label": "PlanId",
+      "file_type": "code",
+      "source_file": "plan-policy.ts",
+      "source_location": "L1",
+      "id": "schema_plan_policy_planid",
+      "community": 0,
+      "norm_label": "planid"
+    },
+    {
+      "label": "SubscriptionStatus",
+      "file_type": "code",
+      "source_file": "plan-policy.ts",
+      "source_location": "L3",
+      "id": "schema_plan_policy_subscriptionstatus",
+      "community": 0,
+      "norm_label": "subscriptionstatus"
+    },
+    {
+      "label": "PlanPolicy",
+      "file_type": "code",
+      "source_file": "plan-policy.ts",
+      "source_location": "L5",
+      "id": "schema_plan_policy_planpolicy",
+      "community": 0,
+      "norm_label": "planpolicy"
+    },
+    {
+      "label": "PLAN_POLICY_BY_PLAN",
+      "file_type": "code",
+      "source_file": "plan-policy.ts",
+      "source_location": "L18",
+      "id": "schema_plan_policy_plan_policy_by_plan",
+      "community": 0,
+      "norm_label": "plan_policy_by_plan"
+    },
+    {
+      "label": "normalizePlan()",
+      "file_type": "code",
+      "source_file": "plan-policy.ts",
+      "source_location": "L69",
+      "id": "schema_plan_policy_normalizeplan",
+      "community": 0,
+      "norm_label": "normalizeplan()"
+    },
+    {
+      "label": "normalizeSubscriptionStatus()",
+      "file_type": "code",
+      "source_file": "plan-policy.ts",
+      "source_location": "L77",
+      "id": "schema_plan_policy_normalizesubscriptionstatus",
+      "community": 0,
+      "norm_label": "normalizesubscriptionstatus()"
+    },
+    {
+      "label": "isPaidSubscriptionStatus()",
+      "file_type": "code",
+      "source_file": "plan-policy.ts",
+      "source_location": "L85",
+      "id": "schema_plan_policy_ispaidsubscriptionstatus",
+      "community": 0,
+      "norm_label": "ispaidsubscriptionstatus()"
+    },
+    {
+      "label": "getEffectivePlanForEnforcement()",
+      "file_type": "code",
+      "source_file": "plan-policy.ts",
+      "source_location": "L89",
+      "id": "schema_plan_policy_geteffectiveplanforenforcement",
+      "community": 0,
+      "norm_label": "geteffectiveplanforenforcement()"
+    },
+    {
+      "label": "proxy.ts",
+      "file_type": "code",
+      "source_file": "proxy.ts",
+      "source_location": "L1",
+      "id": "c_code_docker_watchtower_dash_shared_schema_proxy_ts",
+      "community": 1,
+      "norm_label": "proxy.ts"
+    },
+    {
+      "label": "ProxyActionSchema",
+      "file_type": "code",
+      "source_file": "proxy.ts",
+      "source_location": "L6",
+      "id": "schema_proxy_proxyactionschema",
+      "community": 1,
+      "norm_label": "proxyactionschema"
+    },
+    {
+      "label": "ProxyRequestParamsSchema",
+      "file_type": "code",
+      "source_file": "proxy.ts",
+      "source_location": "L14",
+      "id": "schema_proxy_proxyrequestparamsschema",
+      "community": 1,
+      "norm_label": "proxyrequestparamsschema"
+    },
+    {
+      "label": "LogQueryParamsSchema",
+      "file_type": "code",
+      "source_file": "proxy.ts",
+      "source_location": "L21",
+      "id": "schema_proxy_logqueryparamsschema",
+      "community": 1,
+      "norm_label": "logqueryparamsschema"
+    },
+    {
+      "label": "IdempotencyHeaderSchema",
+      "file_type": "code",
+      "source_file": "proxy.ts",
+      "source_location": "L27",
+      "id": "schema_proxy_idempotencyheaderschema",
+      "community": 1,
+      "norm_label": "idempotencyheaderschema"
+    }
+  ],
+  "links": [
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "api.ts",
+      "source_location": "L2",
+      "weight": 1.0,
+      "source": "c_code_docker_watchtower_dash_shared_schema_api_ts",
+      "target": "c_code_docker_watchtower_dash_shared_schema_proxy_ts",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "api.ts",
+      "source_location": "L2",
+      "weight": 1.0,
+      "source": "c_code_docker_watchtower_dash_shared_schema_api_ts",
+      "target": "schema_proxy_proxyrequestparamsschema",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "api.ts",
+      "source_location": "L2",
+      "weight": 1.0,
+      "source": "c_code_docker_watchtower_dash_shared_schema_api_ts",
+      "target": "schema_proxy_proxyactionschema",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "api.ts",
+      "source_location": "L2",
+      "weight": 1.0,
+      "source": "c_code_docker_watchtower_dash_shared_schema_api_ts",
+      "target": "schema_proxy_logqueryparamsschema",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "api.ts",
+      "source_location": "L2",
+      "weight": 1.0,
+      "source": "c_code_docker_watchtower_dash_shared_schema_api_ts",
+      "target": "schema_proxy_idempotencyheaderschema",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "api.ts",
+      "source_location": "L3",
+      "weight": 1.0,
+      "source": "c_code_docker_watchtower_dash_shared_schema_api_ts",
+      "target": "c_code_docker_watchtower_dash_shared_schema_error_ts",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "api.ts",
+      "source_location": "L3",
+      "weight": 1.0,
+      "source": "c_code_docker_watchtower_dash_shared_schema_api_ts",
+      "target": "schema_error_problemdetailsschema",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "api.ts",
+      "source_location": "L5",
+      "weight": 1.0,
+      "source": "c_code_docker_watchtower_dash_shared_schema_api_ts",
+      "target": "schema_api_registry",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "api.ts",
+      "source_location": "L83",
+      "weight": 1.0,
+      "source": "c_code_docker_watchtower_dash_shared_schema_api_ts",
+      "target": "schema_api_generateopenapi",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "error.ts",
+      "source_location": "L6",
+      "weight": 1.0,
+      "source": "c_code_docker_watchtower_dash_shared_schema_error_ts",
+      "target": "schema_error_problemdetailsschema",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "error.ts",
+      "source_location": "L29",
+      "weight": 1.0,
+      "source": "c_code_docker_watchtower_dash_shared_schema_error_ts",
+      "target": "schema_error_createproblemresponse",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "plan-policy.ts",
+      "source_location": "L1",
+      "weight": 1.0,
+      "source": "c_code_docker_watchtower_dash_shared_schema_plan_policy_ts",
+      "target": "schema_plan_policy_planid",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "plan-policy.ts",
+      "source_location": "L3",
+      "weight": 1.0,
+      "source": "c_code_docker_watchtower_dash_shared_schema_plan_policy_ts",
+      "target": "schema_plan_policy_subscriptionstatus",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "plan-policy.ts",
+      "source_location": "L5",
+      "weight": 1.0,
+      "source": "c_code_docker_watchtower_dash_shared_schema_plan_policy_ts",
+      "target": "schema_plan_policy_planpolicy",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "plan-policy.ts",
+      "source_location": "L18",
+      "weight": 1.0,
+      "source": "c_code_docker_watchtower_dash_shared_schema_plan_policy_ts",
+      "target": "schema_plan_policy_plan_policy_by_plan",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "plan-policy.ts",
+      "source_location": "L69",
+      "weight": 1.0,
+      "source": "c_code_docker_watchtower_dash_shared_schema_plan_policy_ts",
+      "target": "schema_plan_policy_normalizeplan",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "plan-policy.ts",
+      "source_location": "L77",
+      "weight": 1.0,
+      "source": "c_code_docker_watchtower_dash_shared_schema_plan_policy_ts",
+      "target": "schema_plan_policy_normalizesubscriptionstatus",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "plan-policy.ts",
+      "source_location": "L85",
+      "weight": 1.0,
+      "source": "c_code_docker_watchtower_dash_shared_schema_plan_policy_ts",
+      "target": "schema_plan_policy_ispaidsubscriptionstatus",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "plan-policy.ts",
+      "source_location": "L89",
+      "weight": 1.0,
+      "source": "c_code_docker_watchtower_dash_shared_schema_plan_policy_ts",
+      "target": "schema_plan_policy_geteffectiveplanforenforcement",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "plan-policy.ts",
+      "source_location": "L98",
+      "weight": 1.0,
+      "source": "schema_plan_policy_geteffectiveplanforenforcement",
+      "target": "schema_plan_policy_normalizeplan",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "plan-policy.ts",
+      "source_location": "L99",
+      "weight": 1.0,
+      "source": "schema_plan_policy_geteffectiveplanforenforcement",
+      "target": "schema_plan_policy_normalizesubscriptionstatus",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "plan-policy.ts",
+      "source_location": "L101",
+      "weight": 1.0,
+      "source": "schema_plan_policy_geteffectiveplanforenforcement",
+      "target": "schema_plan_policy_ispaidsubscriptionstatus",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "proxy.ts",
+      "source_location": "L6",
+      "weight": 1.0,
+      "source": "c_code_docker_watchtower_dash_shared_schema_proxy_ts",
+      "target": "schema_proxy_proxyactionschema",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "proxy.ts",
+      "source_location": "L14",
+      "weight": 1.0,
+      "source": "c_code_docker_watchtower_dash_shared_schema_proxy_ts",
+      "target": "schema_proxy_proxyrequestparamsschema",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "proxy.ts",
+      "source_location": "L21",
+      "weight": 1.0,
+      "source": "c_code_docker_watchtower_dash_shared_schema_proxy_ts",
+      "target": "schema_proxy_logqueryparamsschema",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "proxy.ts",
+      "source_location": "L27",
+      "weight": 1.0,
+      "source": "c_code_docker_watchtower_dash_shared_schema_proxy_ts",
+      "target": "schema_proxy_idempotencyheaderschema",
+      "confidence_score": 1.0
+    }
+  ],
+  "hyperedges": [],
+  "built_at_commit": "ed28244c211be7b6c2b23ccf8ca4f5a7352c3e35"
+}

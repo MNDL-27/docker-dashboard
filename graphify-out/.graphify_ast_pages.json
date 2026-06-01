@@ -1,0 +1,3801 @@
+{
+  "nodes": [
+    {
+      "id": "contactpage_tsx",
+      "label": "ContactPage.tsx",
+      "file_type": "code",
+      "source_file": "ContactPage.tsx",
+      "source_location": "L1"
+    },
+    {
+      "id": "pages_contactpage_contactpage",
+      "label": "ContactPage()",
+      "file_type": "code",
+      "source_file": "ContactPage.tsx",
+      "source_location": "L8"
+    },
+    {
+      "id": "createorgpage_tsx",
+      "label": "CreateOrgPage.tsx",
+      "file_type": "code",
+      "source_file": "CreateOrgPage.tsx",
+      "source_location": "L1"
+    },
+    {
+      "id": "pages_createorgpage_createorgpage",
+      "label": "CreateOrgPage()",
+      "file_type": "code",
+      "source_file": "CreateOrgPage.tsx",
+      "source_location": "L3"
+    },
+    {
+      "id": "dedicatedintakepage_tsx",
+      "label": "DedicatedIntakePage.tsx",
+      "file_type": "code",
+      "source_file": "DedicatedIntakePage.tsx",
+      "source_location": "L1"
+    },
+    {
+      "id": "pages_dedicatedintakepage_region_options",
+      "label": "REGION_OPTIONS",
+      "file_type": "code",
+      "source_file": "DedicatedIntakePage.tsx",
+      "source_location": "L15"
+    },
+    {
+      "id": "pages_dedicatedintakepage_compliance_options",
+      "label": "COMPLIANCE_OPTIONS",
+      "file_type": "code",
+      "source_file": "DedicatedIntakePage.tsx",
+      "source_location": "L24"
+    },
+    {
+      "id": "pages_dedicatedintakepage_integration_options",
+      "label": "INTEGRATION_OPTIONS",
+      "file_type": "code",
+      "source_file": "DedicatedIntakePage.tsx",
+      "source_location": "L31"
+    },
+    {
+      "id": "pages_dedicatedintakepage_step_labels",
+      "label": "STEP_LABELS",
+      "file_type": "code",
+      "source_file": "DedicatedIntakePage.tsx",
+      "source_location": "L41"
+    },
+    {
+      "id": "pages_dedicatedintakepage_stepshell",
+      "label": "StepShell()",
+      "file_type": "code",
+      "source_file": "DedicatedIntakePage.tsx",
+      "source_location": "L50"
+    },
+    {
+      "id": "pages_dedicatedintakepage_fieldset",
+      "label": "Fieldset()",
+      "file_type": "code",
+      "source_file": "DedicatedIntakePage.tsx",
+      "source_location": "L77"
+    },
+    {
+      "id": "pages_dedicatedintakepage_dedicatedintakepage",
+      "label": "DedicatedIntakePage()",
+      "file_type": "code",
+      "source_file": "DedicatedIntakePage.tsx",
+      "source_location": "L95"
+    },
+    {
+      "id": "dedicatedstartpage_tsx",
+      "label": "DedicatedStartPage.tsx",
+      "file_type": "code",
+      "source_file": "DedicatedStartPage.tsx",
+      "source_location": "L1"
+    },
+    {
+      "id": "pages_dedicatedstartpage_enterpriseplan",
+      "label": "enterprisePlan",
+      "file_type": "code",
+      "source_file": "DedicatedStartPage.tsx",
+      "source_location": "L18"
+    },
+    {
+      "id": "pages_dedicatedstartpage_deploymentmilestones",
+      "label": "deploymentMilestones",
+      "file_type": "code",
+      "source_file": "DedicatedStartPage.tsx",
+      "source_location": "L20"
+    },
+    {
+      "id": "pages_dedicatedstartpage_trustpoints",
+      "label": "trustPoints",
+      "file_type": "code",
+      "source_file": "DedicatedStartPage.tsx",
+      "source_location": "L27"
+    },
+    {
+      "id": "pages_dedicatedstartpage_dedicatedstartpage",
+      "label": "DedicatedStartPage()",
+      "file_type": "code",
+      "source_file": "DedicatedStartPage.tsx",
+      "source_location": "L34"
+    },
+    {
+      "id": "docspage_tsx",
+      "label": "DocsPage.tsx",
+      "file_type": "code",
+      "source_file": "DocsPage.tsx",
+      "source_location": "L1"
+    },
+    {
+      "id": "pages_docspage_toc",
+      "label": "TOC",
+      "file_type": "code",
+      "source_file": "DocsPage.tsx",
+      "source_location": "L47"
+    },
+    {
+      "id": "pages_docspage_callout",
+      "label": "Callout()",
+      "file_type": "code",
+      "source_file": "DocsPage.tsx",
+      "source_location": "L60"
+    },
+    {
+      "id": "pages_docspage_step",
+      "label": "Step()",
+      "file_type": "code",
+      "source_file": "DocsPage.tsx",
+      "source_location": "L91"
+    },
+    {
+      "id": "pages_docspage_section",
+      "label": "Section()",
+      "file_type": "code",
+      "source_file": "DocsPage.tsx",
+      "source_location": "L109"
+    },
+    {
+      "id": "pages_docspage_troubleshootrow",
+      "label": "TroubleshootRow()",
+      "file_type": "code",
+      "source_file": "DocsPage.tsx",
+      "source_location": "L134"
+    },
+    {
+      "id": "pages_docspage_docspage",
+      "label": "DocsPage()",
+      "file_type": "code",
+      "source_file": "DocsPage.tsx",
+      "source_location": "L170"
+    },
+    {
+      "id": "featurespage_tsx",
+      "label": "FeaturesPage.tsx",
+      "file_type": "code",
+      "source_file": "FeaturesPage.tsx",
+      "source_location": "L1"
+    },
+    {
+      "id": "pages_featurespage_features",
+      "label": "features",
+      "file_type": "code",
+      "source_file": "FeaturesPage.tsx",
+      "source_location": "L9"
+    },
+    {
+      "id": "pages_featurespage_featurespage",
+      "label": "FeaturesPage()",
+      "file_type": "code",
+      "source_file": "FeaturesPage.tsx",
+      "source_location": "L18"
+    },
+    {
+      "id": "index_tsx",
+      "label": "Index.tsx",
+      "file_type": "code",
+      "source_file": "Index.tsx",
+      "source_location": "L1"
+    },
+    {
+      "id": "pages_index_index",
+      "label": "Index()",
+      "file_type": "code",
+      "source_file": "Index.tsx",
+      "source_location": "L3"
+    },
+    {
+      "id": "landingpage_tsx",
+      "label": "LandingPage.tsx",
+      "file_type": "code",
+      "source_file": "LandingPage.tsx",
+      "source_location": "L1"
+    },
+    {
+      "id": "pages_landingpage_terminaldemo",
+      "label": "TerminalDemo()",
+      "file_type": "code",
+      "source_file": "LandingPage.tsx",
+      "source_location": "L9"
+    },
+    {
+      "id": "pages_landingpage_statblock",
+      "label": "StatBlock()",
+      "file_type": "code",
+      "source_file": "LandingPage.tsx",
+      "source_location": "L31"
+    },
+    {
+      "id": "pages_landingpage_landingpage",
+      "label": "LandingPage()",
+      "file_type": "code",
+      "source_file": "LandingPage.tsx",
+      "source_location": "L40"
+    },
+    {
+      "id": "loginpage_tsx",
+      "label": "LoginPage.tsx",
+      "file_type": "code",
+      "source_file": "LoginPage.tsx",
+      "source_location": "L1"
+    },
+    {
+      "id": "pages_loginpage_features",
+      "label": "features",
+      "file_type": "code",
+      "source_file": "LoginPage.tsx",
+      "source_location": "L10"
+    },
+    {
+      "id": "pages_loginpage_loginpage",
+      "label": "LoginPage()",
+      "file_type": "code",
+      "source_file": "LoginPage.tsx",
+      "source_location": "L16"
+    },
+    {
+      "id": "notfound_tsx",
+      "label": "NotFound.tsx",
+      "file_type": "code",
+      "source_file": "NotFound.tsx",
+      "source_location": "L1"
+    },
+    {
+      "id": "pages_notfound_notfound",
+      "label": "NotFound()",
+      "file_type": "code",
+      "source_file": "NotFound.tsx",
+      "source_location": "L9"
+    },
+    {
+      "id": "onboardingpage_tsx",
+      "label": "OnboardingPage.tsx",
+      "file_type": "code",
+      "source_file": "OnboardingPage.tsx",
+      "source_location": "L1"
+    },
+    {
+      "id": "pages_onboardingpage_onboardingpage",
+      "label": "OnboardingPage()",
+      "file_type": "code",
+      "source_file": "OnboardingPage.tsx",
+      "source_location": "L9"
+    },
+    {
+      "id": "pages_onboardingpage_onboardingheader",
+      "label": "OnboardingHeader()",
+      "file_type": "code",
+      "source_file": "OnboardingPage.tsx",
+      "source_location": "L26"
+    },
+    {
+      "id": "pages_onboardingpage_onboardingsteprouter",
+      "label": "OnboardingStepRouter()",
+      "file_type": "code",
+      "source_file": "OnboardingPage.tsx",
+      "source_location": "L42"
+    },
+    {
+      "id": "pricingpage_tsx",
+      "label": "PricingPage.tsx",
+      "file_type": "code",
+      "source_file": "PricingPage.tsx",
+      "source_location": "L1"
+    },
+    {
+      "id": "pages_pricingpage_pricingpage",
+      "label": "PricingPage()",
+      "file_type": "code",
+      "source_file": "PricingPage.tsx",
+      "source_location": "L11"
+    },
+    {
+      "id": "privacypage_tsx",
+      "label": "PrivacyPage.tsx",
+      "file_type": "code",
+      "source_file": "PrivacyPage.tsx",
+      "source_location": "L1"
+    },
+    {
+      "id": "pages_privacypage_privacypage",
+      "label": "PrivacyPage()",
+      "file_type": "code",
+      "source_file": "PrivacyPage.tsx",
+      "source_location": "L5"
+    },
+    {
+      "id": "refundspage_tsx",
+      "label": "RefundsPage.tsx",
+      "file_type": "code",
+      "source_file": "RefundsPage.tsx",
+      "source_location": "L1"
+    },
+    {
+      "id": "pages_refundspage_refundspage",
+      "label": "RefundsPage()",
+      "file_type": "code",
+      "source_file": "RefundsPage.tsx",
+      "source_location": "L5"
+    },
+    {
+      "id": "securitypage_tsx",
+      "label": "SecurityPage.tsx",
+      "file_type": "code",
+      "source_file": "SecurityPage.tsx",
+      "source_location": "L1"
+    },
+    {
+      "id": "pages_securitypage_items",
+      "label": "items",
+      "file_type": "code",
+      "source_file": "SecurityPage.tsx",
+      "source_location": "L9"
+    },
+    {
+      "id": "pages_securitypage_securitypage",
+      "label": "SecurityPage()",
+      "file_type": "code",
+      "source_file": "SecurityPage.tsx",
+      "source_location": "L42"
+    },
+    {
+      "id": "signuppage_tsx",
+      "label": "SignupPage.tsx",
+      "file_type": "code",
+      "source_file": "SignupPage.tsx",
+      "source_location": "L1"
+    },
+    {
+      "id": "pages_signuppage_features",
+      "label": "features",
+      "file_type": "code",
+      "source_file": "SignupPage.tsx",
+      "source_location": "L10"
+    },
+    {
+      "id": "pages_signuppage_signuppage",
+      "label": "SignupPage()",
+      "file_type": "code",
+      "source_file": "SignupPage.tsx",
+      "source_location": "L16"
+    },
+    {
+      "id": "termspage_tsx",
+      "label": "TermsPage.tsx",
+      "file_type": "code",
+      "source_file": "TermsPage.tsx",
+      "source_location": "L1"
+    },
+    {
+      "id": "pages_termspage_termspage",
+      "label": "TermsPage()",
+      "file_type": "code",
+      "source_file": "TermsPage.tsx",
+      "source_location": "L5"
+    },
+    {
+      "id": "onboarding_copyblock_tsx",
+      "label": "CopyBlock.tsx",
+      "file_type": "code",
+      "source_file": "onboarding\\CopyBlock.tsx",
+      "source_location": "L1"
+    },
+    {
+      "id": "onboarding_copyblock_copyblock",
+      "label": "CopyBlock()",
+      "file_type": "code",
+      "source_file": "onboarding\\CopyBlock.tsx",
+      "source_location": "L9"
+    },
+    {
+      "id": "onboarding_errorbanner_tsx",
+      "label": "ErrorBanner.tsx",
+      "file_type": "code",
+      "source_file": "onboarding\\ErrorBanner.tsx",
+      "source_location": "L1"
+    },
+    {
+      "id": "onboarding_errorbanner_errorbanner",
+      "label": "ErrorBanner()",
+      "file_type": "code",
+      "source_file": "onboarding\\ErrorBanner.tsx",
+      "source_location": "L4"
+    },
+    {
+      "id": "onboarding_errorbanner_errorbox",
+      "label": "ErrorBox()",
+      "file_type": "code",
+      "source_file": "onboarding\\ErrorBanner.tsx",
+      "source_location": "L14"
+    },
+    {
+      "id": "onboarding_index_ts",
+      "label": "index.ts",
+      "file_type": "code",
+      "source_file": "onboarding\\index.ts",
+      "source_location": "L1"
+    },
+    {
+      "id": "onboarding_loadingcard_tsx",
+      "label": "LoadingCard.tsx",
+      "file_type": "code",
+      "source_file": "onboarding\\LoadingCard.tsx",
+      "source_location": "L1"
+    },
+    {
+      "id": "onboarding_loadingcard_props",
+      "label": "Props",
+      "file_type": "code",
+      "source_file": "onboarding\\LoadingCard.tsx",
+      "source_location": "L3"
+    },
+    {
+      "id": "onboarding_loadingcard_loadingcard",
+      "label": "LoadingCard()",
+      "file_type": "code",
+      "source_file": "onboarding\\LoadingCard.tsx",
+      "source_location": "L9"
+    },
+    {
+      "id": "onboarding_stepcomplete_tsx",
+      "label": "StepComplete.tsx",
+      "file_type": "code",
+      "source_file": "onboarding\\StepComplete.tsx",
+      "source_location": "L1"
+    },
+    {
+      "id": "onboarding_stepcomplete_props",
+      "label": "Props",
+      "file_type": "code",
+      "source_file": "onboarding\\StepComplete.tsx",
+      "source_location": "L4"
+    },
+    {
+      "id": "onboarding_stepcomplete_stepcomplete",
+      "label": "StepComplete()",
+      "file_type": "code",
+      "source_file": "onboarding\\StepComplete.tsx",
+      "source_location": "L9"
+    },
+    {
+      "id": "onboarding_stepcreateorg_tsx",
+      "label": "StepCreateOrg.tsx",
+      "file_type": "code",
+      "source_file": "onboarding\\StepCreateOrg.tsx",
+      "source_location": "L1"
+    },
+    {
+      "id": "onboarding_stepcreateorg_props",
+      "label": "Props",
+      "file_type": "code",
+      "source_file": "onboarding\\StepCreateOrg.tsx",
+      "source_location": "L7"
+    },
+    {
+      "id": "onboarding_stepcreateorg_stepcreateorg",
+      "label": "StepCreateOrg()",
+      "file_type": "code",
+      "source_file": "onboarding\\StepCreateOrg.tsx",
+      "source_location": "L15"
+    },
+    {
+      "id": "onboarding_stephostbasics_tsx",
+      "label": "StepHostBasics.tsx",
+      "file_type": "code",
+      "source_file": "onboarding\\StepHostBasics.tsx",
+      "source_location": "L1"
+    },
+    {
+      "id": "onboarding_stephostbasics_mode_icons",
+      "label": "MODE_ICONS",
+      "file_type": "code",
+      "source_file": "onboarding\\StepHostBasics.tsx",
+      "source_location": "L10"
+    },
+    {
+      "id": "onboarding_stephostbasics_props",
+      "label": "Props",
+      "file_type": "code",
+      "source_file": "onboarding\\StepHostBasics.tsx",
+      "source_location": "L15"
+    },
+    {
+      "id": "onboarding_stephostbasics_stephostbasics",
+      "label": "StepHostBasics()",
+      "file_type": "code",
+      "source_file": "onboarding\\StepHostBasics.tsx",
+      "source_location": "L29"
+    },
+    {
+      "id": "onboarding_stephostbasics_connectionmodeselector",
+      "label": "ConnectionModeSelector()",
+      "file_type": "code",
+      "source_file": "onboarding\\StepHostBasics.tsx",
+      "source_location": "L121"
+    },
+    {
+      "id": "onboarding_stephostcredentials_tsx",
+      "label": "StepHostCredentials.tsx",
+      "file_type": "code",
+      "source_file": "onboarding\\StepHostCredentials.tsx",
+      "source_location": "L1"
+    },
+    {
+      "id": "onboarding_stephostcredentials_props",
+      "label": "Props",
+      "file_type": "code",
+      "source_file": "onboarding\\StepHostCredentials.tsx",
+      "source_location": "L7"
+    },
+    {
+      "id": "onboarding_stephostcredentials_copycommand",
+      "label": "CopyCommand()",
+      "file_type": "code",
+      "source_file": "onboarding\\StepHostCredentials.tsx",
+      "source_location": "L23"
+    },
+    {
+      "id": "onboarding_stephostcredentials_stephostcredentials",
+      "label": "StepHostCredentials()",
+      "file_type": "code",
+      "source_file": "onboarding\\StepHostCredentials.tsx",
+      "source_location": "L67"
+    },
+    {
+      "id": "onboarding_steptestfailed_tsx",
+      "label": "StepTestFailed.tsx",
+      "file_type": "code",
+      "source_file": "onboarding\\StepTestFailed.tsx",
+      "source_location": "L1"
+    },
+    {
+      "id": "onboarding_steptestfailed_props",
+      "label": "Props",
+      "file_type": "code",
+      "source_file": "onboarding\\StepTestFailed.tsx",
+      "source_location": "L4"
+    },
+    {
+      "id": "onboarding_steptestfailed_steptestfailed",
+      "label": "StepTestFailed()",
+      "file_type": "code",
+      "source_file": "onboarding\\StepTestFailed.tsx",
+      "source_location": "L12"
+    },
+    {
+      "id": "onboarding_useonboardingstate_ts",
+      "label": "useOnboardingState.ts",
+      "file_type": "code",
+      "source_file": "onboarding\\useOnboardingState.ts",
+      "source_location": "L1"
+    },
+    {
+      "id": "onboarding_useonboardingstate_onboardingstep",
+      "label": "OnboardingStep",
+      "file_type": "code",
+      "source_file": "onboarding\\useOnboardingState.ts",
+      "source_location": "L9"
+    },
+    {
+      "id": "onboarding_useonboardingstate_steps",
+      "label": "STEPS",
+      "file_type": "code",
+      "source_file": "onboarding\\useOnboardingState.ts",
+      "source_location": "L20"
+    },
+    {
+      "id": "onboarding_useonboardingstate_connection_modes",
+      "label": "CONNECTION_MODES",
+      "file_type": "code",
+      "source_file": "onboarding\\useOnboardingState.ts",
+      "source_location": "L22"
+    },
+    {
+      "id": "onboarding_useonboardingstate_isstep0submitting",
+      "label": "isStep0Submitting()",
+      "file_type": "code",
+      "source_file": "onboarding\\useOnboardingState.ts",
+      "source_location": "L27"
+    },
+    {
+      "id": "onboarding_useonboardingstate_isstep1loading",
+      "label": "isStep1Loading()",
+      "file_type": "code",
+      "source_file": "onboarding\\useOnboardingState.ts",
+      "source_location": "L31"
+    },
+    {
+      "id": "onboarding_useonboardingstate_getprogresswidth",
+      "label": "getProgressWidth()",
+      "file_type": "code",
+      "source_file": "onboarding\\useOnboardingState.ts",
+      "source_location": "L35"
+    },
+    {
+      "id": "onboarding_useonboardingstate_markonboardingstatus",
+      "label": "markOnboardingStatus()",
+      "file_type": "code",
+      "source_file": "onboarding\\useOnboardingState.ts",
+      "source_location": "L43"
+    },
+    {
+      "id": "onboarding_useonboardingstate_authsyncstatus",
+      "label": "AuthSyncStatus",
+      "file_type": "code",
+      "source_file": "onboarding\\useOnboardingState.ts",
+      "source_location": "L94"
+    },
+    {
+      "id": "onboarding_useonboardingstate_checkauthsyncstatus",
+      "label": "checkAuthSyncStatus()",
+      "file_type": "code",
+      "source_file": "onboarding\\useOnboardingState.ts",
+      "source_location": "L99"
+    },
+    {
+      "id": "onboarding_useonboardingstate_syncpollingresult",
+      "label": "SyncPollingResult",
+      "file_type": "code",
+      "source_file": "onboarding\\useOnboardingState.ts",
+      "source_location": "L128"
+    },
+    {
+      "id": "onboarding_useonboardingstate_pollfororganizationsync",
+      "label": "pollForOrganizationSync()",
+      "file_type": "code",
+      "source_file": "onboarding\\useOnboardingState.ts",
+      "source_location": "L134"
+    },
+    {
+      "id": "onboarding_useonboardingstate_useorganizationsynceffect",
+      "label": "useOrganizationSyncEffect()",
+      "file_type": "code",
+      "source_file": "onboarding\\useOnboardingState.ts",
+      "source_location": "L159"
+    },
+    {
+      "id": "onboarding_useonboardingstate_useonboardingstate",
+      "label": "useOnboardingState()",
+      "file_type": "code",
+      "source_file": "onboarding\\useOnboardingState.ts",
+      "source_location": "L201"
+    }
+  ],
+  "edges": [
+    {
+      "source": "contactpage_tsx",
+      "target": "react_router_dom",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "ContactPage.tsx",
+      "source_location": "L1",
+      "weight": 1.0
+    },
+    {
+      "source": "contactpage_tsx",
+      "target": "c_code_docker_watchtower_dash_src_components_ui_button_tsx",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "ContactPage.tsx",
+      "source_location": "L2",
+      "weight": 1.0
+    },
+    {
+      "source": "contactpage_tsx",
+      "target": "ui_button_button",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "ContactPage.tsx",
+      "source_location": "L2",
+      "weight": 1.0
+    },
+    {
+      "source": "contactpage_tsx",
+      "target": "lucide_react",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "ContactPage.tsx",
+      "source_location": "L3",
+      "weight": 1.0
+    },
+    {
+      "source": "contactpage_tsx",
+      "target": "c_code_docker_watchtower_dash_src_components_layout_publicnavbar_tsx",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "ContactPage.tsx",
+      "source_location": "L4",
+      "weight": 1.0
+    },
+    {
+      "source": "contactpage_tsx",
+      "target": "layout_publicnavbar_publicnavbar",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "ContactPage.tsx",
+      "source_location": "L4",
+      "weight": 1.0
+    },
+    {
+      "source": "contactpage_tsx",
+      "target": "c_code_docker_watchtower_dash_src_components_layout_publicfooter_tsx",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "ContactPage.tsx",
+      "source_location": "L5",
+      "weight": 1.0
+    },
+    {
+      "source": "contactpage_tsx",
+      "target": "layout_publicfooter_publicfooter",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "ContactPage.tsx",
+      "source_location": "L5",
+      "weight": 1.0
+    },
+    {
+      "source": "contactpage_tsx",
+      "target": "c_code_docker_watchtower_dash_src_components_shared_seo_tsx",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "ContactPage.tsx",
+      "source_location": "L6",
+      "weight": 1.0
+    },
+    {
+      "source": "contactpage_tsx",
+      "target": "shared_seo_seo",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "ContactPage.tsx",
+      "source_location": "L6",
+      "weight": 1.0
+    },
+    {
+      "source": "contactpage_tsx",
+      "target": "pages_contactpage_contactpage",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "ContactPage.tsx",
+      "source_location": "L8",
+      "weight": 1.0
+    },
+    {
+      "source": "createorgpage_tsx",
+      "target": "react_router_dom",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "CreateOrgPage.tsx",
+      "source_location": "L1",
+      "weight": 1.0
+    },
+    {
+      "source": "createorgpage_tsx",
+      "target": "pages_createorgpage_createorgpage",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "CreateOrgPage.tsx",
+      "source_location": "L3",
+      "weight": 1.0
+    },
+    {
+      "source": "dedicatedintakepage_tsx",
+      "target": "react",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "DedicatedIntakePage.tsx",
+      "source_location": "L1",
+      "weight": 1.0
+    },
+    {
+      "source": "dedicatedintakepage_tsx",
+      "target": "react_router_dom",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "DedicatedIntakePage.tsx",
+      "source_location": "L2",
+      "weight": 1.0
+    },
+    {
+      "source": "dedicatedintakepage_tsx",
+      "target": "react",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "DedicatedIntakePage.tsx",
+      "source_location": "L3",
+      "weight": 1.0
+    },
+    {
+      "source": "dedicatedintakepage_tsx",
+      "target": "framer_motion",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "DedicatedIntakePage.tsx",
+      "source_location": "L4",
+      "weight": 1.0
+    },
+    {
+      "source": "dedicatedintakepage_tsx",
+      "target": "lucide_react",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "DedicatedIntakePage.tsx",
+      "source_location": "L5",
+      "weight": 1.0
+    },
+    {
+      "source": "dedicatedintakepage_tsx",
+      "target": "c_code_docker_watchtower_dash_src_components_ui_button_tsx",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "DedicatedIntakePage.tsx",
+      "source_location": "L6",
+      "weight": 1.0
+    },
+    {
+      "source": "dedicatedintakepage_tsx",
+      "target": "ui_button_button",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "DedicatedIntakePage.tsx",
+      "source_location": "L6",
+      "weight": 1.0
+    },
+    {
+      "source": "dedicatedintakepage_tsx",
+      "target": "c_code_docker_watchtower_dash_src_components_ui_input_tsx",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "DedicatedIntakePage.tsx",
+      "source_location": "L7",
+      "weight": 1.0
+    },
+    {
+      "source": "dedicatedintakepage_tsx",
+      "target": "ui_input_input",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "DedicatedIntakePage.tsx",
+      "source_location": "L7",
+      "weight": 1.0
+    },
+    {
+      "source": "dedicatedintakepage_tsx",
+      "target": "c_code_docker_watchtower_dash_src_components_ui_label_tsx",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "DedicatedIntakePage.tsx",
+      "source_location": "L8",
+      "weight": 1.0
+    },
+    {
+      "source": "dedicatedintakepage_tsx",
+      "target": "ui_label_label",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "DedicatedIntakePage.tsx",
+      "source_location": "L8",
+      "weight": 1.0
+    },
+    {
+      "source": "dedicatedintakepage_tsx",
+      "target": "c_code_docker_watchtower_dash_src_components_ui_textarea_tsx",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "DedicatedIntakePage.tsx",
+      "source_location": "L9",
+      "weight": 1.0
+    },
+    {
+      "source": "dedicatedintakepage_tsx",
+      "target": "ui_textarea_textarea",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "DedicatedIntakePage.tsx",
+      "source_location": "L9",
+      "weight": 1.0
+    },
+    {
+      "source": "dedicatedintakepage_tsx",
+      "target": "c_code_docker_watchtower_dash_src_components_ui_checkbox_tsx",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "DedicatedIntakePage.tsx",
+      "source_location": "L10",
+      "weight": 1.0
+    },
+    {
+      "source": "dedicatedintakepage_tsx",
+      "target": "ui_checkbox_checkbox",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "DedicatedIntakePage.tsx",
+      "source_location": "L10",
+      "weight": 1.0
+    },
+    {
+      "source": "dedicatedintakepage_tsx",
+      "target": "c_code_docker_watchtower_dash_src_hooks_use_toast_ts",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "DedicatedIntakePage.tsx",
+      "source_location": "L11",
+      "weight": 1.0
+    },
+    {
+      "source": "dedicatedintakepage_tsx",
+      "target": "hooks_use_toast_usetoast",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "DedicatedIntakePage.tsx",
+      "source_location": "L11",
+      "weight": 1.0
+    },
+    {
+      "source": "dedicatedintakepage_tsx",
+      "target": "c_code_docker_watchtower_dash_src_hooks_usededicateddeployment_ts",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "DedicatedIntakePage.tsx",
+      "source_location": "L12",
+      "weight": 1.0
+    },
+    {
+      "source": "dedicatedintakepage_tsx",
+      "target": "hooks_usededicateddeployment_dedicated_steps",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "DedicatedIntakePage.tsx",
+      "source_location": "L12",
+      "weight": 1.0
+    },
+    {
+      "source": "dedicatedintakepage_tsx",
+      "target": "hooks_usededicateddeployment_usededicatedintakestate",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "DedicatedIntakePage.tsx",
+      "source_location": "L12",
+      "weight": 1.0
+    },
+    {
+      "source": "dedicatedintakepage_tsx",
+      "target": "c_code_docker_watchtower_dash_src_types_dedicated_ts",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "DedicatedIntakePage.tsx",
+      "source_location": "L13",
+      "weight": 1.0
+    },
+    {
+      "source": "dedicatedintakepage_tsx",
+      "target": "types_dedicated_complianceneed",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "DedicatedIntakePage.tsx",
+      "source_location": "L13",
+      "weight": 1.0
+    },
+    {
+      "source": "dedicatedintakepage_tsx",
+      "target": "types_dedicated_dedicatedregion",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "DedicatedIntakePage.tsx",
+      "source_location": "L13",
+      "weight": 1.0
+    },
+    {
+      "source": "dedicatedintakepage_tsx",
+      "target": "types_dedicated_integrationneed",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "DedicatedIntakePage.tsx",
+      "source_location": "L13",
+      "weight": 1.0
+    },
+    {
+      "source": "dedicatedintakepage_tsx",
+      "target": "pages_dedicatedintakepage_region_options",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "DedicatedIntakePage.tsx",
+      "source_location": "L15",
+      "weight": 1.0
+    },
+    {
+      "source": "dedicatedintakepage_tsx",
+      "target": "pages_dedicatedintakepage_compliance_options",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "DedicatedIntakePage.tsx",
+      "source_location": "L24",
+      "weight": 1.0
+    },
+    {
+      "source": "dedicatedintakepage_tsx",
+      "target": "pages_dedicatedintakepage_integration_options",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "DedicatedIntakePage.tsx",
+      "source_location": "L31",
+      "weight": 1.0
+    },
+    {
+      "source": "dedicatedintakepage_tsx",
+      "target": "pages_dedicatedintakepage_step_labels",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "DedicatedIntakePage.tsx",
+      "source_location": "L41",
+      "weight": 1.0
+    },
+    {
+      "source": "dedicatedintakepage_tsx",
+      "target": "pages_dedicatedintakepage_stepshell",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "DedicatedIntakePage.tsx",
+      "source_location": "L50",
+      "weight": 1.0
+    },
+    {
+      "source": "dedicatedintakepage_tsx",
+      "target": "pages_dedicatedintakepage_fieldset",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "DedicatedIntakePage.tsx",
+      "source_location": "L77",
+      "weight": 1.0
+    },
+    {
+      "source": "dedicatedintakepage_tsx",
+      "target": "pages_dedicatedintakepage_dedicatedintakepage",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "DedicatedIntakePage.tsx",
+      "source_location": "L95",
+      "weight": 1.0
+    },
+    {
+      "source": "dedicatedstartpage_tsx",
+      "target": "react_router_dom",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "DedicatedStartPage.tsx",
+      "source_location": "L1",
+      "weight": 1.0
+    },
+    {
+      "source": "dedicatedstartpage_tsx",
+      "target": "react",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "DedicatedStartPage.tsx",
+      "source_location": "L2",
+      "weight": 1.0
+    },
+    {
+      "source": "dedicatedstartpage_tsx",
+      "target": "framer_motion",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "DedicatedStartPage.tsx",
+      "source_location": "L3",
+      "weight": 1.0
+    },
+    {
+      "source": "dedicatedstartpage_tsx",
+      "target": "lucide_react",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "DedicatedStartPage.tsx",
+      "source_location": "L4",
+      "weight": 1.0
+    },
+    {
+      "source": "dedicatedstartpage_tsx",
+      "target": "c_code_docker_watchtower_dash_src_components_layout_publicnavbar_tsx",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "DedicatedStartPage.tsx",
+      "source_location": "L13",
+      "weight": 1.0
+    },
+    {
+      "source": "dedicatedstartpage_tsx",
+      "target": "layout_publicnavbar_publicnavbar",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "DedicatedStartPage.tsx",
+      "source_location": "L13",
+      "weight": 1.0
+    },
+    {
+      "source": "dedicatedstartpage_tsx",
+      "target": "c_code_docker_watchtower_dash_src_components_layout_publicfooter_tsx",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "DedicatedStartPage.tsx",
+      "source_location": "L14",
+      "weight": 1.0
+    },
+    {
+      "source": "dedicatedstartpage_tsx",
+      "target": "layout_publicfooter_publicfooter",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "DedicatedStartPage.tsx",
+      "source_location": "L14",
+      "weight": 1.0
+    },
+    {
+      "source": "dedicatedstartpage_tsx",
+      "target": "c_code_docker_watchtower_dash_src_components_ui_button_tsx",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "DedicatedStartPage.tsx",
+      "source_location": "L15",
+      "weight": 1.0
+    },
+    {
+      "source": "dedicatedstartpage_tsx",
+      "target": "ui_button_button",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "DedicatedStartPage.tsx",
+      "source_location": "L15",
+      "weight": 1.0
+    },
+    {
+      "source": "dedicatedstartpage_tsx",
+      "target": "c_code_docker_watchtower_dash_src_lib_pricing_ts",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "DedicatedStartPage.tsx",
+      "source_location": "L16",
+      "weight": 1.0
+    },
+    {
+      "source": "dedicatedstartpage_tsx",
+      "target": "lib_pricing_pricingplans",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "DedicatedStartPage.tsx",
+      "source_location": "L16",
+      "weight": 1.0
+    },
+    {
+      "source": "dedicatedstartpage_tsx",
+      "target": "pages_dedicatedstartpage_enterpriseplan",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "DedicatedStartPage.tsx",
+      "source_location": "L18",
+      "weight": 1.0
+    },
+    {
+      "source": "dedicatedstartpage_tsx",
+      "target": "pages_dedicatedstartpage_deploymentmilestones",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "DedicatedStartPage.tsx",
+      "source_location": "L20",
+      "weight": 1.0
+    },
+    {
+      "source": "dedicatedstartpage_tsx",
+      "target": "pages_dedicatedstartpage_trustpoints",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "DedicatedStartPage.tsx",
+      "source_location": "L27",
+      "weight": 1.0
+    },
+    {
+      "source": "dedicatedstartpage_tsx",
+      "target": "pages_dedicatedstartpage_dedicatedstartpage",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "DedicatedStartPage.tsx",
+      "source_location": "L34",
+      "weight": 1.0
+    },
+    {
+      "source": "docspage_tsx",
+      "target": "react_router_dom",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "DocsPage.tsx",
+      "source_location": "L1",
+      "weight": 1.0
+    },
+    {
+      "source": "docspage_tsx",
+      "target": "c_code_docker_watchtower_dash_src_components_shared_logolink_tsx",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "DocsPage.tsx",
+      "source_location": "L2",
+      "weight": 1.0
+    },
+    {
+      "source": "docspage_tsx",
+      "target": "shared_logolink_logolink",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "DocsPage.tsx",
+      "source_location": "L2",
+      "weight": 1.0
+    },
+    {
+      "source": "docspage_tsx",
+      "target": "c_code_docker_watchtower_dash_src_components_layout_publicnavbar_tsx",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "DocsPage.tsx",
+      "source_location": "L3",
+      "weight": 1.0
+    },
+    {
+      "source": "docspage_tsx",
+      "target": "layout_publicnavbar_publicnavbar",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "DocsPage.tsx",
+      "source_location": "L3",
+      "weight": 1.0
+    },
+    {
+      "source": "docspage_tsx",
+      "target": "c_code_docker_watchtower_dash_src_components_layout_publicfooter_tsx",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "DocsPage.tsx",
+      "source_location": "L4",
+      "weight": 1.0
+    },
+    {
+      "source": "docspage_tsx",
+      "target": "layout_publicfooter_publicfooter",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "DocsPage.tsx",
+      "source_location": "L4",
+      "weight": 1.0
+    },
+    {
+      "source": "docspage_tsx",
+      "target": "c_code_docker_watchtower_dash_src_components_ui_button_tsx",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "DocsPage.tsx",
+      "source_location": "L5",
+      "weight": 1.0
+    },
+    {
+      "source": "docspage_tsx",
+      "target": "ui_button_button",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "DocsPage.tsx",
+      "source_location": "L5",
+      "weight": 1.0
+    },
+    {
+      "source": "docspage_tsx",
+      "target": "lucide_react",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "DocsPage.tsx",
+      "source_location": "L6",
+      "weight": 1.0
+    },
+    {
+      "source": "docspage_tsx",
+      "target": "react",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "DocsPage.tsx",
+      "source_location": "L25",
+      "weight": 1.0
+    },
+    {
+      "source": "docspage_tsx",
+      "target": "c_code_docker_watchtower_dash_src_lib_hostname_ts",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "DocsPage.tsx",
+      "source_location": "L26",
+      "weight": 1.0
+    },
+    {
+      "source": "docspage_tsx",
+      "target": "lib_hostname_ispreviewauthbypassenabled",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "DocsPage.tsx",
+      "source_location": "L26",
+      "weight": 1.0
+    },
+    {
+      "source": "docspage_tsx",
+      "target": "c_code_docker_watchtower_dash_src_components_shared_seo_tsx",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "DocsPage.tsx",
+      "source_location": "L27",
+      "weight": 1.0
+    },
+    {
+      "source": "docspage_tsx",
+      "target": "shared_seo_seo",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "DocsPage.tsx",
+      "source_location": "L27",
+      "weight": 1.0
+    },
+    {
+      "source": "docspage_tsx",
+      "target": "pages_docspage_toc",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "DocsPage.tsx",
+      "source_location": "L47",
+      "weight": 1.0
+    },
+    {
+      "source": "docspage_tsx",
+      "target": "pages_docspage_callout",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "DocsPage.tsx",
+      "source_location": "L60",
+      "weight": 1.0
+    },
+    {
+      "source": "docspage_tsx",
+      "target": "pages_docspage_step",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "DocsPage.tsx",
+      "source_location": "L91",
+      "weight": 1.0
+    },
+    {
+      "source": "docspage_tsx",
+      "target": "pages_docspage_section",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "DocsPage.tsx",
+      "source_location": "L109",
+      "weight": 1.0
+    },
+    {
+      "source": "docspage_tsx",
+      "target": "pages_docspage_troubleshootrow",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "DocsPage.tsx",
+      "source_location": "L134",
+      "weight": 1.0
+    },
+    {
+      "source": "docspage_tsx",
+      "target": "pages_docspage_docspage",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "DocsPage.tsx",
+      "source_location": "L170",
+      "weight": 1.0
+    },
+    {
+      "source": "featurespage_tsx",
+      "target": "react_router_dom",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "FeaturesPage.tsx",
+      "source_location": "L1",
+      "weight": 1.0
+    },
+    {
+      "source": "featurespage_tsx",
+      "target": "c_code_docker_watchtower_dash_src_components_ui_button_tsx",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "FeaturesPage.tsx",
+      "source_location": "L2",
+      "weight": 1.0
+    },
+    {
+      "source": "featurespage_tsx",
+      "target": "ui_button_button",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "FeaturesPage.tsx",
+      "source_location": "L2",
+      "weight": 1.0
+    },
+    {
+      "source": "featurespage_tsx",
+      "target": "lucide_react",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "FeaturesPage.tsx",
+      "source_location": "L3",
+      "weight": 1.0
+    },
+    {
+      "source": "featurespage_tsx",
+      "target": "c_code_docker_watchtower_dash_src_components_layout_publicnavbar_tsx",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "FeaturesPage.tsx",
+      "source_location": "L4",
+      "weight": 1.0
+    },
+    {
+      "source": "featurespage_tsx",
+      "target": "layout_publicnavbar_publicnavbar",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "FeaturesPage.tsx",
+      "source_location": "L4",
+      "weight": 1.0
+    },
+    {
+      "source": "featurespage_tsx",
+      "target": "c_code_docker_watchtower_dash_src_components_layout_publicfooter_tsx",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "FeaturesPage.tsx",
+      "source_location": "L5",
+      "weight": 1.0
+    },
+    {
+      "source": "featurespage_tsx",
+      "target": "layout_publicfooter_publicfooter",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "FeaturesPage.tsx",
+      "source_location": "L5",
+      "weight": 1.0
+    },
+    {
+      "source": "featurespage_tsx",
+      "target": "c_code_docker_watchtower_dash_src_lib_hostname_ts",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "FeaturesPage.tsx",
+      "source_location": "L6",
+      "weight": 1.0
+    },
+    {
+      "source": "featurespage_tsx",
+      "target": "lib_hostname_ispreviewauthbypassenabled",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "FeaturesPage.tsx",
+      "source_location": "L6",
+      "weight": 1.0
+    },
+    {
+      "source": "featurespage_tsx",
+      "target": "c_code_docker_watchtower_dash_src_components_shared_seo_tsx",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "FeaturesPage.tsx",
+      "source_location": "L7",
+      "weight": 1.0
+    },
+    {
+      "source": "featurespage_tsx",
+      "target": "shared_seo_seo",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "FeaturesPage.tsx",
+      "source_location": "L7",
+      "weight": 1.0
+    },
+    {
+      "source": "featurespage_tsx",
+      "target": "pages_featurespage_features",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "FeaturesPage.tsx",
+      "source_location": "L9",
+      "weight": 1.0
+    },
+    {
+      "source": "featurespage_tsx",
+      "target": "pages_featurespage_featurespage",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "FeaturesPage.tsx",
+      "source_location": "L18",
+      "weight": 1.0
+    },
+    {
+      "source": "index_tsx",
+      "target": "pages_index_index",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "Index.tsx",
+      "source_location": "L3",
+      "weight": 1.0
+    },
+    {
+      "source": "landingpage_tsx",
+      "target": "c_code_docker_watchtower_dash_src_components_layout_publicnavbar_tsx",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "LandingPage.tsx",
+      "source_location": "L1",
+      "weight": 1.0
+    },
+    {
+      "source": "landingpage_tsx",
+      "target": "layout_publicnavbar_publicnavbar",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "LandingPage.tsx",
+      "source_location": "L1",
+      "weight": 1.0
+    },
+    {
+      "source": "landingpage_tsx",
+      "target": "c_code_docker_watchtower_dash_src_components_layout_publicfooter_tsx",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "LandingPage.tsx",
+      "source_location": "L2",
+      "weight": 1.0
+    },
+    {
+      "source": "landingpage_tsx",
+      "target": "layout_publicfooter_publicfooter",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "LandingPage.tsx",
+      "source_location": "L2",
+      "weight": 1.0
+    },
+    {
+      "source": "landingpage_tsx",
+      "target": "c_code_docker_watchtower_dash_src_components_ui_button_tsx",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "LandingPage.tsx",
+      "source_location": "L3",
+      "weight": 1.0
+    },
+    {
+      "source": "landingpage_tsx",
+      "target": "ui_button_button",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "LandingPage.tsx",
+      "source_location": "L3",
+      "weight": 1.0
+    },
+    {
+      "source": "landingpage_tsx",
+      "target": "lucide_react",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "LandingPage.tsx",
+      "source_location": "L4",
+      "weight": 1.0
+    },
+    {
+      "source": "landingpage_tsx",
+      "target": "react_router_dom",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "LandingPage.tsx",
+      "source_location": "L5",
+      "weight": 1.0
+    },
+    {
+      "source": "landingpage_tsx",
+      "target": "c_code_docker_watchtower_dash_src_lib_hostname_ts",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "LandingPage.tsx",
+      "source_location": "L6",
+      "weight": 1.0
+    },
+    {
+      "source": "landingpage_tsx",
+      "target": "lib_hostname_ispreviewauthbypassenabled",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "LandingPage.tsx",
+      "source_location": "L6",
+      "weight": 1.0
+    },
+    {
+      "source": "landingpage_tsx",
+      "target": "c_code_docker_watchtower_dash_src_components_shared_seo_tsx",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "LandingPage.tsx",
+      "source_location": "L7",
+      "weight": 1.0
+    },
+    {
+      "source": "landingpage_tsx",
+      "target": "shared_seo_seo",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "LandingPage.tsx",
+      "source_location": "L7",
+      "weight": 1.0
+    },
+    {
+      "source": "landingpage_tsx",
+      "target": "pages_landingpage_terminaldemo",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "LandingPage.tsx",
+      "source_location": "L9",
+      "weight": 1.0
+    },
+    {
+      "source": "landingpage_tsx",
+      "target": "pages_landingpage_statblock",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "LandingPage.tsx",
+      "source_location": "L31",
+      "weight": 1.0
+    },
+    {
+      "source": "landingpage_tsx",
+      "target": "pages_landingpage_landingpage",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "LandingPage.tsx",
+      "source_location": "L40",
+      "weight": 1.0
+    },
+    {
+      "source": "loginpage_tsx",
+      "target": "react",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "LoginPage.tsx",
+      "source_location": "L1",
+      "weight": 1.0
+    },
+    {
+      "source": "loginpage_tsx",
+      "target": "react_router_dom",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "LoginPage.tsx",
+      "source_location": "L2",
+      "weight": 1.0
+    },
+    {
+      "source": "loginpage_tsx",
+      "target": "c_code_docker_watchtower_dash_src_components_shared_logolink_tsx",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "LoginPage.tsx",
+      "source_location": "L3",
+      "weight": 1.0
+    },
+    {
+      "source": "loginpage_tsx",
+      "target": "shared_logolink_logolink",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "LoginPage.tsx",
+      "source_location": "L3",
+      "weight": 1.0
+    },
+    {
+      "source": "loginpage_tsx",
+      "target": "lucide_react",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "LoginPage.tsx",
+      "source_location": "L4",
+      "weight": 1.0
+    },
+    {
+      "source": "loginpage_tsx",
+      "target": "c_code_docker_watchtower_dash_src_components_ui_loginbackground_tsx",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "LoginPage.tsx",
+      "source_location": "L5",
+      "weight": 1.0
+    },
+    {
+      "source": "loginpage_tsx",
+      "target": "ui_loginbackground_loginbackground",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "LoginPage.tsx",
+      "source_location": "L5",
+      "weight": 1.0
+    },
+    {
+      "source": "loginpage_tsx",
+      "target": "c_code_docker_watchtower_dash_src_components_shared_seo_tsx",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "LoginPage.tsx",
+      "source_location": "L6",
+      "weight": 1.0
+    },
+    {
+      "source": "loginpage_tsx",
+      "target": "shared_seo_seo",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "LoginPage.tsx",
+      "source_location": "L6",
+      "weight": 1.0
+    },
+    {
+      "source": "loginpage_tsx",
+      "target": "react",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "LoginPage.tsx",
+      "source_location": "L7",
+      "weight": 1.0
+    },
+    {
+      "source": "loginpage_tsx",
+      "target": "c_code_docker_watchtower_dash_src_lib_auth_redirect_ts",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "LoginPage.tsx",
+      "source_location": "L8",
+      "weight": 1.0
+    },
+    {
+      "source": "loginpage_tsx",
+      "target": "lib_auth_redirect_getsafenextpath",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "LoginPage.tsx",
+      "source_location": "L8",
+      "weight": 1.0
+    },
+    {
+      "source": "loginpage_tsx",
+      "target": "pages_loginpage_features",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "LoginPage.tsx",
+      "source_location": "L10",
+      "weight": 1.0
+    },
+    {
+      "source": "loginpage_tsx",
+      "target": "pages_loginpage_loginpage",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "LoginPage.tsx",
+      "source_location": "L16",
+      "weight": 1.0
+    },
+    {
+      "source": "notfound_tsx",
+      "target": "react_router_dom",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "NotFound.tsx",
+      "source_location": "L1",
+      "weight": 1.0
+    },
+    {
+      "source": "notfound_tsx",
+      "target": "react",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "NotFound.tsx",
+      "source_location": "L2",
+      "weight": 1.0
+    },
+    {
+      "source": "notfound_tsx",
+      "target": "c_code_docker_watchtower_dash_src_components_layout_publicnavbar_tsx",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "NotFound.tsx",
+      "source_location": "L3",
+      "weight": 1.0
+    },
+    {
+      "source": "notfound_tsx",
+      "target": "layout_publicnavbar_publicnavbar",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "NotFound.tsx",
+      "source_location": "L3",
+      "weight": 1.0
+    },
+    {
+      "source": "notfound_tsx",
+      "target": "c_code_docker_watchtower_dash_src_components_layout_publicfooter_tsx",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "NotFound.tsx",
+      "source_location": "L4",
+      "weight": 1.0
+    },
+    {
+      "source": "notfound_tsx",
+      "target": "layout_publicfooter_publicfooter",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "NotFound.tsx",
+      "source_location": "L4",
+      "weight": 1.0
+    },
+    {
+      "source": "notfound_tsx",
+      "target": "c_code_docker_watchtower_dash_src_components_shared_seo_tsx",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "NotFound.tsx",
+      "source_location": "L5",
+      "weight": 1.0
+    },
+    {
+      "source": "notfound_tsx",
+      "target": "shared_seo_seo",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "NotFound.tsx",
+      "source_location": "L5",
+      "weight": 1.0
+    },
+    {
+      "source": "notfound_tsx",
+      "target": "lucide_react",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "NotFound.tsx",
+      "source_location": "L6",
+      "weight": 1.0
+    },
+    {
+      "source": "notfound_tsx",
+      "target": "c_code_docker_watchtower_dash_src_components_ui_button_tsx",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "NotFound.tsx",
+      "source_location": "L7",
+      "weight": 1.0
+    },
+    {
+      "source": "notfound_tsx",
+      "target": "ui_button_button",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "NotFound.tsx",
+      "source_location": "L7",
+      "weight": 1.0
+    },
+    {
+      "source": "notfound_tsx",
+      "target": "pages_notfound_notfound",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "NotFound.tsx",
+      "source_location": "L9",
+      "weight": 1.0
+    },
+    {
+      "source": "onboardingpage_tsx",
+      "target": "onboarding_useonboardingstate_ts",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "OnboardingPage.tsx",
+      "source_location": "L1",
+      "weight": 1.0
+    },
+    {
+      "source": "onboardingpage_tsx",
+      "target": "onboarding_useonboardingstate_steps",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "OnboardingPage.tsx",
+      "source_location": "L1",
+      "weight": 1.0
+    },
+    {
+      "source": "onboardingpage_tsx",
+      "target": "onboarding_useonboardingstate_getprogresswidth",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "OnboardingPage.tsx",
+      "source_location": "L1",
+      "weight": 1.0
+    },
+    {
+      "source": "onboardingpage_tsx",
+      "target": "onboarding_useonboardingstate_isstep0submitting",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "OnboardingPage.tsx",
+      "source_location": "L1",
+      "weight": 1.0
+    },
+    {
+      "source": "onboardingpage_tsx",
+      "target": "onboarding_useonboardingstate_isstep1loading",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "OnboardingPage.tsx",
+      "source_location": "L1",
+      "weight": 1.0
+    },
+    {
+      "source": "onboardingpage_tsx",
+      "target": "onboarding_useonboardingstate_useonboardingstate",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "OnboardingPage.tsx",
+      "source_location": "L1",
+      "weight": 1.0
+    },
+    {
+      "source": "onboardingpage_tsx",
+      "target": "onboarding_stepcreateorg_tsx",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "OnboardingPage.tsx",
+      "source_location": "L2",
+      "weight": 1.0
+    },
+    {
+      "source": "onboardingpage_tsx",
+      "target": "onboarding_stepcreateorg_stepcreateorg",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "OnboardingPage.tsx",
+      "source_location": "L2",
+      "weight": 1.0
+    },
+    {
+      "source": "onboardingpage_tsx",
+      "target": "onboarding_stephostbasics_tsx",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "OnboardingPage.tsx",
+      "source_location": "L3",
+      "weight": 1.0
+    },
+    {
+      "source": "onboardingpage_tsx",
+      "target": "onboarding_stephostbasics_stephostbasics",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "OnboardingPage.tsx",
+      "source_location": "L3",
+      "weight": 1.0
+    },
+    {
+      "source": "onboardingpage_tsx",
+      "target": "onboarding_stephostcredentials_tsx",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "OnboardingPage.tsx",
+      "source_location": "L4",
+      "weight": 1.0
+    },
+    {
+      "source": "onboardingpage_tsx",
+      "target": "onboarding_stephostcredentials_stephostcredentials",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "OnboardingPage.tsx",
+      "source_location": "L4",
+      "weight": 1.0
+    },
+    {
+      "source": "onboardingpage_tsx",
+      "target": "onboarding_steptestfailed_tsx",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "OnboardingPage.tsx",
+      "source_location": "L5",
+      "weight": 1.0
+    },
+    {
+      "source": "onboardingpage_tsx",
+      "target": "onboarding_steptestfailed_steptestfailed",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "OnboardingPage.tsx",
+      "source_location": "L5",
+      "weight": 1.0
+    },
+    {
+      "source": "onboardingpage_tsx",
+      "target": "onboarding_stepcomplete_tsx",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "OnboardingPage.tsx",
+      "source_location": "L6",
+      "weight": 1.0
+    },
+    {
+      "source": "onboardingpage_tsx",
+      "target": "onboarding_stepcomplete_stepcomplete",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "OnboardingPage.tsx",
+      "source_location": "L6",
+      "weight": 1.0
+    },
+    {
+      "source": "onboardingpage_tsx",
+      "target": "onboarding_loadingcard_tsx",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "OnboardingPage.tsx",
+      "source_location": "L7",
+      "weight": 1.0
+    },
+    {
+      "source": "onboardingpage_tsx",
+      "target": "onboarding_loadingcard_loadingcard",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "OnboardingPage.tsx",
+      "source_location": "L7",
+      "weight": 1.0
+    },
+    {
+      "source": "onboardingpage_tsx",
+      "target": "pages_onboardingpage_onboardingpage",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "OnboardingPage.tsx",
+      "source_location": "L9",
+      "weight": 1.0
+    },
+    {
+      "source": "onboardingpage_tsx",
+      "target": "pages_onboardingpage_onboardingheader",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "OnboardingPage.tsx",
+      "source_location": "L26",
+      "weight": 1.0
+    },
+    {
+      "source": "onboardingpage_tsx",
+      "target": "pages_onboardingpage_onboardingsteprouter",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "OnboardingPage.tsx",
+      "source_location": "L42",
+      "weight": 1.0
+    },
+    {
+      "source": "pricingpage_tsx",
+      "target": "react_router_dom",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "PricingPage.tsx",
+      "source_location": "L1",
+      "weight": 1.0
+    },
+    {
+      "source": "pricingpage_tsx",
+      "target": "lucide_react",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "PricingPage.tsx",
+      "source_location": "L2",
+      "weight": 1.0
+    },
+    {
+      "source": "pricingpage_tsx",
+      "target": "c_code_docker_watchtower_dash_src_components_ui_button_tsx",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "PricingPage.tsx",
+      "source_location": "L3",
+      "weight": 1.0
+    },
+    {
+      "source": "pricingpage_tsx",
+      "target": "ui_button_button",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "PricingPage.tsx",
+      "source_location": "L3",
+      "weight": 1.0
+    },
+    {
+      "source": "pricingpage_tsx",
+      "target": "c_code_docker_watchtower_dash_src_components_layout_publicnavbar_tsx",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "PricingPage.tsx",
+      "source_location": "L4",
+      "weight": 1.0
+    },
+    {
+      "source": "pricingpage_tsx",
+      "target": "layout_publicnavbar_publicnavbar",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "PricingPage.tsx",
+      "source_location": "L4",
+      "weight": 1.0
+    },
+    {
+      "source": "pricingpage_tsx",
+      "target": "c_code_docker_watchtower_dash_src_components_layout_publicfooter_tsx",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "PricingPage.tsx",
+      "source_location": "L5",
+      "weight": 1.0
+    },
+    {
+      "source": "pricingpage_tsx",
+      "target": "layout_publicfooter_publicfooter",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "PricingPage.tsx",
+      "source_location": "L5",
+      "weight": 1.0
+    },
+    {
+      "source": "pricingpage_tsx",
+      "target": "c_code_docker_watchtower_dash_src_lib_pricing_ts",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "PricingPage.tsx",
+      "source_location": "L6",
+      "weight": 1.0
+    },
+    {
+      "source": "pricingpage_tsx",
+      "target": "lib_pricing_pricingcomparisonrows",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "PricingPage.tsx",
+      "source_location": "L6",
+      "weight": 1.0
+    },
+    {
+      "source": "pricingpage_tsx",
+      "target": "lib_pricing_pricingplans",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "PricingPage.tsx",
+      "source_location": "L6",
+      "weight": 1.0
+    },
+    {
+      "source": "pricingpage_tsx",
+      "target": "c_code_docker_watchtower_dash_src_lib_utils_ts",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "PricingPage.tsx",
+      "source_location": "L7",
+      "weight": 1.0
+    },
+    {
+      "source": "pricingpage_tsx",
+      "target": "lib_utils_cn",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "PricingPage.tsx",
+      "source_location": "L7",
+      "weight": 1.0
+    },
+    {
+      "source": "pricingpage_tsx",
+      "target": "c_code_docker_watchtower_dash_src_lib_hostname_ts",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "PricingPage.tsx",
+      "source_location": "L8",
+      "weight": 1.0
+    },
+    {
+      "source": "pricingpage_tsx",
+      "target": "lib_hostname_ispreviewauthbypassenabled",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "PricingPage.tsx",
+      "source_location": "L8",
+      "weight": 1.0
+    },
+    {
+      "source": "pricingpage_tsx",
+      "target": "c_code_docker_watchtower_dash_src_components_shared_seo_tsx",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "PricingPage.tsx",
+      "source_location": "L9",
+      "weight": 1.0
+    },
+    {
+      "source": "pricingpage_tsx",
+      "target": "shared_seo_seo",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "PricingPage.tsx",
+      "source_location": "L9",
+      "weight": 1.0
+    },
+    {
+      "source": "pricingpage_tsx",
+      "target": "pages_pricingpage_pricingpage",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "PricingPage.tsx",
+      "source_location": "L11",
+      "weight": 1.0
+    },
+    {
+      "source": "privacypage_tsx",
+      "target": "c_code_docker_watchtower_dash_src_components_layout_publicnavbar_tsx",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "PrivacyPage.tsx",
+      "source_location": "L1",
+      "weight": 1.0
+    },
+    {
+      "source": "privacypage_tsx",
+      "target": "layout_publicnavbar_publicnavbar",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "PrivacyPage.tsx",
+      "source_location": "L1",
+      "weight": 1.0
+    },
+    {
+      "source": "privacypage_tsx",
+      "target": "c_code_docker_watchtower_dash_src_components_layout_publicfooter_tsx",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "PrivacyPage.tsx",
+      "source_location": "L2",
+      "weight": 1.0
+    },
+    {
+      "source": "privacypage_tsx",
+      "target": "layout_publicfooter_publicfooter",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "PrivacyPage.tsx",
+      "source_location": "L2",
+      "weight": 1.0
+    },
+    {
+      "source": "privacypage_tsx",
+      "target": "c_code_docker_watchtower_dash_src_components_shared_seo_tsx",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "PrivacyPage.tsx",
+      "source_location": "L3",
+      "weight": 1.0
+    },
+    {
+      "source": "privacypage_tsx",
+      "target": "shared_seo_seo",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "PrivacyPage.tsx",
+      "source_location": "L3",
+      "weight": 1.0
+    },
+    {
+      "source": "privacypage_tsx",
+      "target": "pages_privacypage_privacypage",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "PrivacyPage.tsx",
+      "source_location": "L5",
+      "weight": 1.0
+    },
+    {
+      "source": "refundspage_tsx",
+      "target": "c_code_docker_watchtower_dash_src_components_layout_publicnavbar_tsx",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "RefundsPage.tsx",
+      "source_location": "L1",
+      "weight": 1.0
+    },
+    {
+      "source": "refundspage_tsx",
+      "target": "layout_publicnavbar_publicnavbar",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "RefundsPage.tsx",
+      "source_location": "L1",
+      "weight": 1.0
+    },
+    {
+      "source": "refundspage_tsx",
+      "target": "c_code_docker_watchtower_dash_src_components_layout_publicfooter_tsx",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "RefundsPage.tsx",
+      "source_location": "L2",
+      "weight": 1.0
+    },
+    {
+      "source": "refundspage_tsx",
+      "target": "layout_publicfooter_publicfooter",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "RefundsPage.tsx",
+      "source_location": "L2",
+      "weight": 1.0
+    },
+    {
+      "source": "refundspage_tsx",
+      "target": "c_code_docker_watchtower_dash_src_components_shared_seo_tsx",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "RefundsPage.tsx",
+      "source_location": "L3",
+      "weight": 1.0
+    },
+    {
+      "source": "refundspage_tsx",
+      "target": "shared_seo_seo",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "RefundsPage.tsx",
+      "source_location": "L3",
+      "weight": 1.0
+    },
+    {
+      "source": "refundspage_tsx",
+      "target": "pages_refundspage_refundspage",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "RefundsPage.tsx",
+      "source_location": "L5",
+      "weight": 1.0
+    },
+    {
+      "source": "securitypage_tsx",
+      "target": "react_router_dom",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "SecurityPage.tsx",
+      "source_location": "L1",
+      "weight": 1.0
+    },
+    {
+      "source": "securitypage_tsx",
+      "target": "c_code_docker_watchtower_dash_src_components_ui_button_tsx",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "SecurityPage.tsx",
+      "source_location": "L2",
+      "weight": 1.0
+    },
+    {
+      "source": "securitypage_tsx",
+      "target": "ui_button_button",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "SecurityPage.tsx",
+      "source_location": "L2",
+      "weight": 1.0
+    },
+    {
+      "source": "securitypage_tsx",
+      "target": "lucide_react",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "SecurityPage.tsx",
+      "source_location": "L3",
+      "weight": 1.0
+    },
+    {
+      "source": "securitypage_tsx",
+      "target": "c_code_docker_watchtower_dash_src_components_layout_publicnavbar_tsx",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "SecurityPage.tsx",
+      "source_location": "L4",
+      "weight": 1.0
+    },
+    {
+      "source": "securitypage_tsx",
+      "target": "layout_publicnavbar_publicnavbar",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "SecurityPage.tsx",
+      "source_location": "L4",
+      "weight": 1.0
+    },
+    {
+      "source": "securitypage_tsx",
+      "target": "c_code_docker_watchtower_dash_src_components_layout_publicfooter_tsx",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "SecurityPage.tsx",
+      "source_location": "L5",
+      "weight": 1.0
+    },
+    {
+      "source": "securitypage_tsx",
+      "target": "layout_publicfooter_publicfooter",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "SecurityPage.tsx",
+      "source_location": "L5",
+      "weight": 1.0
+    },
+    {
+      "source": "securitypage_tsx",
+      "target": "c_code_docker_watchtower_dash_src_lib_hostname_ts",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "SecurityPage.tsx",
+      "source_location": "L6",
+      "weight": 1.0
+    },
+    {
+      "source": "securitypage_tsx",
+      "target": "lib_hostname_ispreviewauthbypassenabled",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "SecurityPage.tsx",
+      "source_location": "L6",
+      "weight": 1.0
+    },
+    {
+      "source": "securitypage_tsx",
+      "target": "c_code_docker_watchtower_dash_src_components_shared_seo_tsx",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "SecurityPage.tsx",
+      "source_location": "L7",
+      "weight": 1.0
+    },
+    {
+      "source": "securitypage_tsx",
+      "target": "shared_seo_seo",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "SecurityPage.tsx",
+      "source_location": "L7",
+      "weight": 1.0
+    },
+    {
+      "source": "securitypage_tsx",
+      "target": "pages_securitypage_items",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "SecurityPage.tsx",
+      "source_location": "L9",
+      "weight": 1.0
+    },
+    {
+      "source": "securitypage_tsx",
+      "target": "pages_securitypage_securitypage",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "SecurityPage.tsx",
+      "source_location": "L42",
+      "weight": 1.0
+    },
+    {
+      "source": "signuppage_tsx",
+      "target": "react",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "SignupPage.tsx",
+      "source_location": "L1",
+      "weight": 1.0
+    },
+    {
+      "source": "signuppage_tsx",
+      "target": "react_router_dom",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "SignupPage.tsx",
+      "source_location": "L2",
+      "weight": 1.0
+    },
+    {
+      "source": "signuppage_tsx",
+      "target": "react_router_dom",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "SignupPage.tsx",
+      "source_location": "L3",
+      "weight": 1.0
+    },
+    {
+      "source": "signuppage_tsx",
+      "target": "c_code_docker_watchtower_dash_src_components_shared_logolink_tsx",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "SignupPage.tsx",
+      "source_location": "L4",
+      "weight": 1.0
+    },
+    {
+      "source": "signuppage_tsx",
+      "target": "shared_logolink_logolink",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "SignupPage.tsx",
+      "source_location": "L4",
+      "weight": 1.0
+    },
+    {
+      "source": "signuppage_tsx",
+      "target": "lucide_react",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "SignupPage.tsx",
+      "source_location": "L5",
+      "weight": 1.0
+    },
+    {
+      "source": "signuppage_tsx",
+      "target": "c_code_docker_watchtower_dash_src_components_ui_loginbackground_tsx",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "SignupPage.tsx",
+      "source_location": "L6",
+      "weight": 1.0
+    },
+    {
+      "source": "signuppage_tsx",
+      "target": "ui_loginbackground_loginbackground",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "SignupPage.tsx",
+      "source_location": "L6",
+      "weight": 1.0
+    },
+    {
+      "source": "signuppage_tsx",
+      "target": "c_code_docker_watchtower_dash_src_lib_auth_redirect_ts",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "SignupPage.tsx",
+      "source_location": "L7",
+      "weight": 1.0
+    },
+    {
+      "source": "signuppage_tsx",
+      "target": "lib_auth_redirect_getsafenextpath",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "SignupPage.tsx",
+      "source_location": "L7",
+      "weight": 1.0
+    },
+    {
+      "source": "signuppage_tsx",
+      "target": "c_code_docker_watchtower_dash_src_components_shared_seo_tsx",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "SignupPage.tsx",
+      "source_location": "L8",
+      "weight": 1.0
+    },
+    {
+      "source": "signuppage_tsx",
+      "target": "shared_seo_seo",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "SignupPage.tsx",
+      "source_location": "L8",
+      "weight": 1.0
+    },
+    {
+      "source": "signuppage_tsx",
+      "target": "pages_signuppage_features",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "SignupPage.tsx",
+      "source_location": "L10",
+      "weight": 1.0
+    },
+    {
+      "source": "signuppage_tsx",
+      "target": "pages_signuppage_signuppage",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "SignupPage.tsx",
+      "source_location": "L16",
+      "weight": 1.0
+    },
+    {
+      "source": "termspage_tsx",
+      "target": "c_code_docker_watchtower_dash_src_components_layout_publicnavbar_tsx",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "TermsPage.tsx",
+      "source_location": "L1",
+      "weight": 1.0
+    },
+    {
+      "source": "termspage_tsx",
+      "target": "layout_publicnavbar_publicnavbar",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "TermsPage.tsx",
+      "source_location": "L1",
+      "weight": 1.0
+    },
+    {
+      "source": "termspage_tsx",
+      "target": "c_code_docker_watchtower_dash_src_components_layout_publicfooter_tsx",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "TermsPage.tsx",
+      "source_location": "L2",
+      "weight": 1.0
+    },
+    {
+      "source": "termspage_tsx",
+      "target": "layout_publicfooter_publicfooter",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "TermsPage.tsx",
+      "source_location": "L2",
+      "weight": 1.0
+    },
+    {
+      "source": "termspage_tsx",
+      "target": "c_code_docker_watchtower_dash_src_components_shared_seo_tsx",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "TermsPage.tsx",
+      "source_location": "L3",
+      "weight": 1.0
+    },
+    {
+      "source": "termspage_tsx",
+      "target": "shared_seo_seo",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "TermsPage.tsx",
+      "source_location": "L3",
+      "weight": 1.0
+    },
+    {
+      "source": "termspage_tsx",
+      "target": "pages_termspage_termspage",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "TermsPage.tsx",
+      "source_location": "L5",
+      "weight": 1.0
+    },
+    {
+      "source": "onboarding_copyblock_tsx",
+      "target": "react",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "onboarding\\CopyBlock.tsx",
+      "source_location": "L1",
+      "weight": 1.0
+    },
+    {
+      "source": "onboarding_copyblock_tsx",
+      "target": "lucide_react",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "onboarding\\CopyBlock.tsx",
+      "source_location": "L2",
+      "weight": 1.0
+    },
+    {
+      "source": "onboarding_copyblock_tsx",
+      "target": "c_code_docker_watchtower_dash_src_components_ui_use_toast_ts",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "onboarding\\CopyBlock.tsx",
+      "source_location": "L3",
+      "weight": 1.0
+    },
+    {
+      "source": "onboarding_copyblock_tsx",
+      "target": "ui_use_toast_usetoast",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "onboarding\\CopyBlock.tsx",
+      "source_location": "L3",
+      "weight": 1.0
+    },
+    {
+      "source": "onboarding_copyblock_tsx",
+      "target": "onboarding_copyblock_copyblock",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "onboarding\\CopyBlock.tsx",
+      "source_location": "L9",
+      "weight": 1.0
+    },
+    {
+      "source": "onboarding_errorbanner_tsx",
+      "target": "lucide_react",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "onboarding\\ErrorBanner.tsx",
+      "source_location": "L1",
+      "weight": 1.0
+    },
+    {
+      "source": "onboarding_errorbanner_tsx",
+      "target": "onboarding_errorbanner_errorbanner",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "onboarding\\ErrorBanner.tsx",
+      "source_location": "L4",
+      "weight": 1.0
+    },
+    {
+      "source": "onboarding_errorbanner_tsx",
+      "target": "onboarding_errorbanner_errorbox",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "onboarding\\ErrorBanner.tsx",
+      "source_location": "L14",
+      "weight": 1.0
+    },
+    {
+      "source": "onboarding_loadingcard_tsx",
+      "target": "lucide_react",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "onboarding\\LoadingCard.tsx",
+      "source_location": "L1",
+      "weight": 1.0
+    },
+    {
+      "source": "onboarding_loadingcard_tsx",
+      "target": "onboarding_loadingcard_props",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "onboarding\\LoadingCard.tsx",
+      "source_location": "L3",
+      "weight": 1.0
+    },
+    {
+      "source": "onboarding_loadingcard_tsx",
+      "target": "onboarding_loadingcard_loadingcard",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "onboarding\\LoadingCard.tsx",
+      "source_location": "L9",
+      "weight": 1.0
+    },
+    {
+      "source": "onboarding_stepcomplete_tsx",
+      "target": "lucide_react",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "onboarding\\StepComplete.tsx",
+      "source_location": "L1",
+      "weight": 1.0
+    },
+    {
+      "source": "onboarding_stepcomplete_tsx",
+      "target": "c_code_docker_watchtower_dash_src_components_ui_button_tsx",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "onboarding\\StepComplete.tsx",
+      "source_location": "L2",
+      "weight": 1.0
+    },
+    {
+      "source": "onboarding_stepcomplete_tsx",
+      "target": "ui_button_button",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "onboarding\\StepComplete.tsx",
+      "source_location": "L2",
+      "weight": 1.0
+    },
+    {
+      "source": "onboarding_stepcomplete_tsx",
+      "target": "onboarding_stepcomplete_props",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "onboarding\\StepComplete.tsx",
+      "source_location": "L4",
+      "weight": 1.0
+    },
+    {
+      "source": "onboarding_stepcomplete_tsx",
+      "target": "onboarding_stepcomplete_stepcomplete",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "onboarding\\StepComplete.tsx",
+      "source_location": "L9",
+      "weight": 1.0
+    },
+    {
+      "source": "onboarding_stepcreateorg_tsx",
+      "target": "lucide_react",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "onboarding\\StepCreateOrg.tsx",
+      "source_location": "L1",
+      "weight": 1.0
+    },
+    {
+      "source": "onboarding_stepcreateorg_tsx",
+      "target": "c_code_docker_watchtower_dash_src_components_ui_button_tsx",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "onboarding\\StepCreateOrg.tsx",
+      "source_location": "L2",
+      "weight": 1.0
+    },
+    {
+      "source": "onboarding_stepcreateorg_tsx",
+      "target": "ui_button_button",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "onboarding\\StepCreateOrg.tsx",
+      "source_location": "L2",
+      "weight": 1.0
+    },
+    {
+      "source": "onboarding_stepcreateorg_tsx",
+      "target": "c_code_docker_watchtower_dash_src_components_ui_input_tsx",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "onboarding\\StepCreateOrg.tsx",
+      "source_location": "L3",
+      "weight": 1.0
+    },
+    {
+      "source": "onboarding_stepcreateorg_tsx",
+      "target": "ui_input_input",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "onboarding\\StepCreateOrg.tsx",
+      "source_location": "L3",
+      "weight": 1.0
+    },
+    {
+      "source": "onboarding_stepcreateorg_tsx",
+      "target": "c_code_docker_watchtower_dash_src_components_ui_label_tsx",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "onboarding\\StepCreateOrg.tsx",
+      "source_location": "L4",
+      "weight": 1.0
+    },
+    {
+      "source": "onboarding_stepcreateorg_tsx",
+      "target": "ui_label_label",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "onboarding\\StepCreateOrg.tsx",
+      "source_location": "L4",
+      "weight": 1.0
+    },
+    {
+      "source": "onboarding_stepcreateorg_tsx",
+      "target": "onboarding_errorbanner_tsx",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "onboarding\\StepCreateOrg.tsx",
+      "source_location": "L5",
+      "weight": 1.0
+    },
+    {
+      "source": "onboarding_stepcreateorg_tsx",
+      "target": "onboarding_errorbanner_errorbox",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "onboarding\\StepCreateOrg.tsx",
+      "source_location": "L5",
+      "weight": 1.0
+    },
+    {
+      "source": "onboarding_stepcreateorg_tsx",
+      "target": "onboarding_stepcreateorg_props",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "onboarding\\StepCreateOrg.tsx",
+      "source_location": "L7",
+      "weight": 1.0
+    },
+    {
+      "source": "onboarding_stepcreateorg_tsx",
+      "target": "onboarding_stepcreateorg_stepcreateorg",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "onboarding\\StepCreateOrg.tsx",
+      "source_location": "L15",
+      "weight": 1.0
+    },
+    {
+      "source": "onboarding_stephostbasics_tsx",
+      "target": "lucide_react",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "onboarding\\StepHostBasics.tsx",
+      "source_location": "L1",
+      "weight": 1.0
+    },
+    {
+      "source": "onboarding_stephostbasics_tsx",
+      "target": "c_code_docker_watchtower_dash_src_components_ui_button_tsx",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "onboarding\\StepHostBasics.tsx",
+      "source_location": "L2",
+      "weight": 1.0
+    },
+    {
+      "source": "onboarding_stephostbasics_tsx",
+      "target": "ui_button_button",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "onboarding\\StepHostBasics.tsx",
+      "source_location": "L2",
+      "weight": 1.0
+    },
+    {
+      "source": "onboarding_stephostbasics_tsx",
+      "target": "c_code_docker_watchtower_dash_src_components_ui_input_tsx",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "onboarding\\StepHostBasics.tsx",
+      "source_location": "L3",
+      "weight": 1.0
+    },
+    {
+      "source": "onboarding_stephostbasics_tsx",
+      "target": "ui_input_input",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "onboarding\\StepHostBasics.tsx",
+      "source_location": "L3",
+      "weight": 1.0
+    },
+    {
+      "source": "onboarding_stephostbasics_tsx",
+      "target": "c_code_docker_watchtower_dash_src_components_ui_label_tsx",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "onboarding\\StepHostBasics.tsx",
+      "source_location": "L4",
+      "weight": 1.0
+    },
+    {
+      "source": "onboarding_stephostbasics_tsx",
+      "target": "ui_label_label",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "onboarding\\StepHostBasics.tsx",
+      "source_location": "L4",
+      "weight": 1.0
+    },
+    {
+      "source": "onboarding_stephostbasics_tsx",
+      "target": "onboarding_errorbanner_tsx",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "onboarding\\StepHostBasics.tsx",
+      "source_location": "L5",
+      "weight": 1.0
+    },
+    {
+      "source": "onboarding_stephostbasics_tsx",
+      "target": "onboarding_errorbanner_errorbanner",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "onboarding\\StepHostBasics.tsx",
+      "source_location": "L5",
+      "weight": 1.0
+    },
+    {
+      "source": "onboarding_stephostbasics_tsx",
+      "target": "onboarding_useonboardingstate_ts",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "onboarding\\StepHostBasics.tsx",
+      "source_location": "L6",
+      "weight": 1.0
+    },
+    {
+      "source": "onboarding_stephostbasics_tsx",
+      "target": "onboarding_useonboardingstate_connection_modes",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "onboarding\\StepHostBasics.tsx",
+      "source_location": "L6",
+      "weight": 1.0
+    },
+    {
+      "source": "onboarding_stephostbasics_tsx",
+      "target": "c_code_docker_watchtower_dash_src_types_database_ts",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "onboarding\\StepHostBasics.tsx",
+      "source_location": "L7",
+      "weight": 1.0
+    },
+    {
+      "source": "onboarding_stephostbasics_tsx",
+      "target": "types_database_connectionmode",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "onboarding\\StepHostBasics.tsx",
+      "source_location": "L7",
+      "weight": 1.0
+    },
+    {
+      "source": "onboarding_stephostbasics_tsx",
+      "target": "onboarding_stephostbasics_mode_icons",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "onboarding\\StepHostBasics.tsx",
+      "source_location": "L10",
+      "weight": 1.0
+    },
+    {
+      "source": "onboarding_stephostbasics_tsx",
+      "target": "onboarding_stephostbasics_props",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "onboarding\\StepHostBasics.tsx",
+      "source_location": "L15",
+      "weight": 1.0
+    },
+    {
+      "source": "onboarding_stephostbasics_tsx",
+      "target": "onboarding_stephostbasics_stephostbasics",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "onboarding\\StepHostBasics.tsx",
+      "source_location": "L29",
+      "weight": 1.0
+    },
+    {
+      "source": "onboarding_stephostbasics_tsx",
+      "target": "onboarding_stephostbasics_connectionmodeselector",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "onboarding\\StepHostBasics.tsx",
+      "source_location": "L121",
+      "weight": 1.0
+    },
+    {
+      "source": "onboarding_stephostcredentials_tsx",
+      "target": "react",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "onboarding\\StepHostCredentials.tsx",
+      "source_location": "L1",
+      "weight": 1.0
+    },
+    {
+      "source": "onboarding_stephostcredentials_tsx",
+      "target": "lucide_react",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "onboarding\\StepHostCredentials.tsx",
+      "source_location": "L2",
+      "weight": 1.0
+    },
+    {
+      "source": "onboarding_stephostcredentials_tsx",
+      "target": "c_code_docker_watchtower_dash_src_components_ui_button_tsx",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "onboarding\\StepHostCredentials.tsx",
+      "source_location": "L3",
+      "weight": 1.0
+    },
+    {
+      "source": "onboarding_stephostcredentials_tsx",
+      "target": "ui_button_button",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "onboarding\\StepHostCredentials.tsx",
+      "source_location": "L3",
+      "weight": 1.0
+    },
+    {
+      "source": "onboarding_stephostcredentials_tsx",
+      "target": "onboarding_errorbanner_tsx",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "onboarding\\StepHostCredentials.tsx",
+      "source_location": "L4",
+      "weight": 1.0
+    },
+    {
+      "source": "onboarding_stephostcredentials_tsx",
+      "target": "onboarding_errorbanner_errorbanner",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "onboarding\\StepHostCredentials.tsx",
+      "source_location": "L4",
+      "weight": 1.0
+    },
+    {
+      "source": "onboarding_stephostcredentials_tsx",
+      "target": "c_code_docker_watchtower_dash_src_types_database_ts",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "onboarding\\StepHostCredentials.tsx",
+      "source_location": "L5",
+      "weight": 1.0
+    },
+    {
+      "source": "onboarding_stephostcredentials_tsx",
+      "target": "types_database_connectionmode",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "onboarding\\StepHostCredentials.tsx",
+      "source_location": "L5",
+      "weight": 1.0
+    },
+    {
+      "source": "onboarding_stephostcredentials_tsx",
+      "target": "onboarding_stephostcredentials_props",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "onboarding\\StepHostCredentials.tsx",
+      "source_location": "L7",
+      "weight": 1.0
+    },
+    {
+      "source": "onboarding_stephostcredentials_tsx",
+      "target": "onboarding_stephostcredentials_copycommand",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "onboarding\\StepHostCredentials.tsx",
+      "source_location": "L23",
+      "weight": 1.0
+    },
+    {
+      "source": "onboarding_stephostcredentials_tsx",
+      "target": "onboarding_stephostcredentials_stephostcredentials",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "onboarding\\StepHostCredentials.tsx",
+      "source_location": "L67",
+      "weight": 1.0
+    },
+    {
+      "source": "onboarding_steptestfailed_tsx",
+      "target": "lucide_react",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "onboarding\\StepTestFailed.tsx",
+      "source_location": "L1",
+      "weight": 1.0
+    },
+    {
+      "source": "onboarding_steptestfailed_tsx",
+      "target": "c_code_docker_watchtower_dash_src_components_ui_button_tsx",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "onboarding\\StepTestFailed.tsx",
+      "source_location": "L2",
+      "weight": 1.0
+    },
+    {
+      "source": "onboarding_steptestfailed_tsx",
+      "target": "ui_button_button",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "onboarding\\StepTestFailed.tsx",
+      "source_location": "L2",
+      "weight": 1.0
+    },
+    {
+      "source": "onboarding_steptestfailed_tsx",
+      "target": "onboarding_steptestfailed_props",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "onboarding\\StepTestFailed.tsx",
+      "source_location": "L4",
+      "weight": 1.0
+    },
+    {
+      "source": "onboarding_steptestfailed_tsx",
+      "target": "onboarding_steptestfailed_steptestfailed",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "onboarding\\StepTestFailed.tsx",
+      "source_location": "L12",
+      "weight": 1.0
+    },
+    {
+      "source": "onboarding_useonboardingstate_ts",
+      "target": "react",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "onboarding\\useOnboardingState.ts",
+      "source_location": "L1",
+      "weight": 1.0
+    },
+    {
+      "source": "onboarding_useonboardingstate_ts",
+      "target": "react_router_dom",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "onboarding\\useOnboardingState.ts",
+      "source_location": "L2",
+      "weight": 1.0
+    },
+    {
+      "source": "onboarding_useonboardingstate_ts",
+      "target": "react",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "onboarding\\useOnboardingState.ts",
+      "source_location": "L3",
+      "weight": 1.0
+    },
+    {
+      "source": "onboarding_useonboardingstate_ts",
+      "target": "c_code_docker_watchtower_dash_src_components_ui_use_toast_ts",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "onboarding\\useOnboardingState.ts",
+      "source_location": "L4",
+      "weight": 1.0
+    },
+    {
+      "source": "onboarding_useonboardingstate_ts",
+      "target": "ui_use_toast_usetoast",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "onboarding\\useOnboardingState.ts",
+      "source_location": "L4",
+      "weight": 1.0
+    },
+    {
+      "source": "onboarding_useonboardingstate_ts",
+      "target": "c_code_docker_watchtower_dash_src_services_agent_enrollment_ts",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "onboarding\\useOnboardingState.ts",
+      "source_location": "L5",
+      "weight": 1.0
+    },
+    {
+      "source": "onboarding_useonboardingstate_ts",
+      "target": "services_agent_enrollment_agentenrollmentapi",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "onboarding\\useOnboardingState.ts",
+      "source_location": "L5",
+      "weight": 1.0
+    },
+    {
+      "source": "onboarding_useonboardingstate_ts",
+      "target": "services_agent_enrollment_agentenrollmentcreateresponse",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "onboarding\\useOnboardingState.ts",
+      "source_location": "L5",
+      "weight": 1.0
+    },
+    {
+      "source": "onboarding_useonboardingstate_ts",
+      "target": "services_agent_enrollment_agentenrollmentfinalizeresponse",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "onboarding\\useOnboardingState.ts",
+      "source_location": "L5",
+      "weight": 1.0
+    },
+    {
+      "source": "onboarding_useonboardingstate_ts",
+      "target": "c_code_docker_watchtower_dash_src_types_database_ts",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "onboarding\\useOnboardingState.ts",
+      "source_location": "L6",
+      "weight": 1.0
+    },
+    {
+      "source": "onboarding_useonboardingstate_ts",
+      "target": "types_database_connectionmode",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "onboarding\\useOnboardingState.ts",
+      "source_location": "L6",
+      "weight": 1.0
+    },
+    {
+      "source": "onboarding_useonboardingstate_ts",
+      "target": "c_code_docker_watchtower_dash_src_lib_onboarding_gate_ts",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "onboarding\\useOnboardingState.ts",
+      "source_location": "L7",
+      "weight": 1.0
+    },
+    {
+      "source": "onboarding_useonboardingstate_ts",
+      "target": "lib_onboarding_gate_deriveneedsonboarding",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "onboarding\\useOnboardingState.ts",
+      "source_location": "L7",
+      "weight": 1.0
+    },
+    {
+      "source": "onboarding_useonboardingstate_ts",
+      "target": "lib_onboarding_gate_normalizeonboardingstatus",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "onboarding\\useOnboardingState.ts",
+      "source_location": "L7",
+      "weight": 1.0
+    },
+    {
+      "source": "onboarding_useonboardingstate_ts",
+      "target": "onboarding_useonboardingstate_onboardingstep",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "onboarding\\useOnboardingState.ts",
+      "source_location": "L9",
+      "weight": 1.0
+    },
+    {
+      "source": "onboarding_useonboardingstate_ts",
+      "target": "onboarding_useonboardingstate_steps",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "onboarding\\useOnboardingState.ts",
+      "source_location": "L20",
+      "weight": 1.0
+    },
+    {
+      "source": "onboarding_useonboardingstate_ts",
+      "target": "onboarding_useonboardingstate_connection_modes",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "onboarding\\useOnboardingState.ts",
+      "source_location": "L22",
+      "weight": 1.0
+    },
+    {
+      "source": "onboarding_useonboardingstate_ts",
+      "target": "onboarding_useonboardingstate_isstep0submitting",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "onboarding\\useOnboardingState.ts",
+      "source_location": "L27",
+      "weight": 1.0
+    },
+    {
+      "source": "onboarding_useonboardingstate_ts",
+      "target": "onboarding_useonboardingstate_isstep1loading",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "onboarding\\useOnboardingState.ts",
+      "source_location": "L31",
+      "weight": 1.0
+    },
+    {
+      "source": "onboarding_useonboardingstate_ts",
+      "target": "onboarding_useonboardingstate_getprogresswidth",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "onboarding\\useOnboardingState.ts",
+      "source_location": "L35",
+      "weight": 1.0
+    },
+    {
+      "source": "onboarding_useonboardingstate_ts",
+      "target": "onboarding_useonboardingstate_markonboardingstatus",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "onboarding\\useOnboardingState.ts",
+      "source_location": "L43",
+      "weight": 1.0
+    },
+    {
+      "source": "onboarding_useonboardingstate_ts",
+      "target": "onboarding_useonboardingstate_authsyncstatus",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "onboarding\\useOnboardingState.ts",
+      "source_location": "L94",
+      "weight": 1.0
+    },
+    {
+      "source": "onboarding_useonboardingstate_ts",
+      "target": "onboarding_useonboardingstate_checkauthsyncstatus",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "onboarding\\useOnboardingState.ts",
+      "source_location": "L99",
+      "weight": 1.0
+    },
+    {
+      "source": "onboarding_useonboardingstate_ts",
+      "target": "onboarding_useonboardingstate_syncpollingresult",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "onboarding\\useOnboardingState.ts",
+      "source_location": "L128",
+      "weight": 1.0
+    },
+    {
+      "source": "onboarding_useonboardingstate_ts",
+      "target": "onboarding_useonboardingstate_pollfororganizationsync",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "onboarding\\useOnboardingState.ts",
+      "source_location": "L134",
+      "weight": 1.0
+    },
+    {
+      "source": "onboarding_useonboardingstate_ts",
+      "target": "onboarding_useonboardingstate_useorganizationsynceffect",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "onboarding\\useOnboardingState.ts",
+      "source_location": "L159",
+      "weight": 1.0
+    },
+    {
+      "source": "onboarding_useonboardingstate_ts",
+      "target": "onboarding_useonboardingstate_useonboardingstate",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "onboarding\\useOnboardingState.ts",
+      "source_location": "L201",
+      "weight": 1.0
+    },
+    {
+      "source": "onboarding_useonboardingstate_pollfororganizationsync",
+      "target": "onboarding_useonboardingstate_checkauthsyncstatus",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "onboarding\\useOnboardingState.ts",
+      "source_location": "L142",
+      "weight": 1.0
+    },
+    {
+      "source": "onboarding_useonboardingstate_useonboardingstate",
+      "target": "onboarding_useonboardingstate_useorganizationsynceffect",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "onboarding\\useOnboardingState.ts",
+      "source_location": "L236",
+      "weight": 1.0
+    },
+    {
+      "source": "pages_onboardingpage_onboardingpage",
+      "target": "onboarding_useonboardingstate_useonboardingstate",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "OnboardingPage.tsx",
+      "source_location": "L10",
+      "weight": 1.0
+    },
+    {
+      "source": "pages_onboardingpage_onboardingpage",
+      "target": "onboarding_useonboardingstate_getprogresswidth",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "OnboardingPage.tsx",
+      "source_location": "L15",
+      "weight": 1.0
+    },
+    {
+      "source": "pages_onboardingpage_onboardingsteprouter",
+      "target": "onboarding_useonboardingstate_isstep0submitting",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "OnboardingPage.tsx",
+      "source_location": "L56",
+      "weight": 1.0
+    },
+    {
+      "source": "pages_onboardingpage_onboardingsteprouter",
+      "target": "onboarding_useonboardingstate_isstep1loading",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "OnboardingPage.tsx",
+      "source_location": "L101",
+      "weight": 1.0
+    }
+  ],
+  "input_tokens": 0,
+  "output_tokens": 0
+}

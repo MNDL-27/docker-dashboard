@@ -1,0 +1,16 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "plugin": [
+    ".opencode/plugins/graphify.js"
+  ],
+  "mcp": {
+    "notion": {
+      "type": "local",
+      "command": ["npx", "-y", "@notionhq/notion-mcp-server"],
+      "enabled": true,
+      "env": {
+        "NOTION_API_KEY": "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"
+      }
+    }
+  }
+}

@@ -1,0 +1,108 @@
+{
+  "communities": {
+    "0": [
+      "c_code_docker_watchtower_dash_netlify_functions_lib_host_health_mjs",
+      "lib_host_health_failurestatusforcount",
+      "lib_host_health_parsestalethresholdminutes",
+      "lib_host_health_shouldmarkhoststale",
+      "lib_host_health_stalecutoffdate"
+    ],
+    "1": [
+      "lib_security_test_headers",
+      "lib_security_test_mockedsql",
+      "lib_security_test_req",
+      "lib_security_test_warnspy",
+      "netlify_functions_lib_security_test_ts"
+    ],
+    "2": [
+      "c_code_docker_watchtower_dash_netlify_functions_lib_admin_audit_test_ts",
+      "lib_admin_audit_test_assertadminreason",
+      "lib_admin_audit_test_normalizeadminreason"
+    ],
+    "3": [
+      "c_code_docker_watchtower_dash_netlify_functions_lib_donor_email_templates_test_ts",
+      "lib_donor_email_templates_test_tpl"
+    ],
+    "4": [
+      "c_code_docker_watchtower_dash_netlify_functions_lib_email_retry_test_ts",
+      "lib_email_retry_test_tpl"
+    ],
+    "5": [
+      "c_code_docker_watchtower_dash_netlify_functions_lib_access_controls_test_ts"
+    ],
+    "6": [
+      "c_code_docker_watchtower_dash_netlify_functions_lib_donor_billing_helpers_test_ts"
+    ],
+    "7": [
+      "c_code_docker_watchtower_dash_netlify_functions_lib_donor_billing_test_ts"
+    ],
+    "8": [
+      "c_code_docker_watchtower_dash_netlify_functions_lib_email_test_ts"
+    ],
+    "9": [
+      "c_code_docker_watchtower_dash_netlify_functions_lib_org_access_test_ts"
+    ]
+  },
+  "cohesion": {
+    "0": 0.5,
+    "1": 0.4,
+    "2": 0.67,
+    "3": 1.0,
+    "4": 1.0,
+    "5": 1.0,
+    "6": 1.0,
+    "7": 1.0,
+    "8": 1.0,
+    "9": 1.0
+  },
+  "gods": [
+    {
+      "id": "lib_host_health_stalecutoffdate",
+      "label": "staleCutoffDate()",
+      "degree": 2
+    },
+    {
+      "id": "lib_host_health_shouldmarkhoststale",
+      "label": "shouldMarkHostStale()",
+      "degree": 2
+    },
+    {
+      "id": "lib_donor_email_templates_test_tpl",
+      "label": "tpl",
+      "degree": 1
+    },
+    {
+      "id": "lib_email_retry_test_tpl",
+      "label": "tpl",
+      "degree": 1
+    },
+    {
+      "id": "lib_security_test_mockedsql",
+      "label": "mockedSql",
+      "degree": 1
+    },
+    {
+      "id": "lib_security_test_req",
+      "label": "req",
+      "degree": 1
+    },
+    {
+      "id": "lib_security_test_headers",
+      "label": "headers",
+      "degree": 1
+    },
+    {
+      "id": "lib_security_test_warnspy",
+      "label": "warnSpy",
+      "degree": 1
+    }
+  ],
+  "surprises": [],
+  "questions": [
+    {
+      "type": "isolated_nodes",
+      "question": "What connects `tpl`, `tpl`, `mockedSql` to the rest of the system?",
+      "why": "6 weakly-connected nodes found - possible documentation gaps or missing edges."
+    }
+  ]
+}

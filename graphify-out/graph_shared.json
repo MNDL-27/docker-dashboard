@@ -1,0 +1,1514 @@
+{
+  "directed": false,
+  "multigraph": false,
+  "graph": {},
+  "nodes": [
+    {
+      "label": "agent-version.ts",
+      "file_type": "code",
+      "source_file": "agent-version.ts",
+      "source_location": "L1",
+      "id": "c_code_docker_watchtower_dash_shared_agent_version_ts",
+      "community": 6,
+      "norm_label": "agent-version.ts"
+    },
+    {
+      "label": "diagnostics.test.ts",
+      "file_type": "code",
+      "source_file": "lib/diagnostics.test.ts",
+      "source_location": "L1",
+      "id": "c_code_docker_watchtower_dash_shared_lib_diagnostics_test_ts",
+      "community": 4,
+      "norm_label": "diagnostics.test.ts"
+    },
+    {
+      "label": "diagnostics.ts",
+      "file_type": "code",
+      "source_file": "lib/diagnostics.ts",
+      "source_location": "L1",
+      "id": "c_code_docker_watchtower_dash_shared_lib_diagnostics_ts",
+      "community": 4,
+      "norm_label": "diagnostics.ts"
+    },
+    {
+      "label": "trimDiagnostic()",
+      "file_type": "code",
+      "source_file": "lib/diagnostics.ts",
+      "source_location": "L1",
+      "id": "lib_diagnostics_trimdiagnostic",
+      "community": 4,
+      "norm_label": "trimdiagnostic()"
+    },
+    {
+      "label": "decodeHtmlEntities()",
+      "file_type": "code",
+      "source_file": "lib/diagnostics.ts",
+      "source_location": "L5",
+      "id": "lib_diagnostics_decodehtmlentities",
+      "community": 4,
+      "norm_label": "decodehtmlentities()"
+    },
+    {
+      "label": "summarizeHtmlDiagnostic()",
+      "file_type": "code",
+      "source_file": "lib/diagnostics.ts",
+      "source_location": "L15",
+      "id": "lib_diagnostics_summarizehtmldiagnostic",
+      "community": 4,
+      "norm_label": "summarizehtmldiagnostic()"
+    },
+    {
+      "label": "summarizeDiagnosticText()",
+      "file_type": "code",
+      "source_file": "lib/diagnostics.ts",
+      "source_location": "L35",
+      "id": "lib_diagnostics_summarizediagnostictext",
+      "community": 4,
+      "norm_label": "summarizediagnostictext()"
+    },
+    {
+      "label": "parseDiagnosticPayload()",
+      "file_type": "code",
+      "source_file": "lib/diagnostics.ts",
+      "source_location": "L49",
+      "id": "lib_diagnostics_parsediagnosticpayload",
+      "community": 4,
+      "norm_label": "parsediagnosticpayload()"
+    },
+    {
+      "label": "formatDiagnosticDetail()",
+      "file_type": "code",
+      "source_file": "lib/diagnostics.ts",
+      "source_location": "L57",
+      "id": "lib_diagnostics_formatdiagnosticdetail",
+      "community": 4,
+      "norm_label": "formatdiagnosticdetail()"
+    },
+    {
+      "label": "api.ts",
+      "file_type": "code",
+      "source_file": "schema/api.ts",
+      "source_location": "L1",
+      "id": "c_code_docker_watchtower_dash_shared_schema_api_ts",
+      "community": 1,
+      "norm_label": "api.ts"
+    },
+    {
+      "label": "registry",
+      "file_type": "code",
+      "source_file": "schema/api.ts",
+      "source_location": "L5",
+      "id": "schema_api_registry",
+      "community": 1,
+      "norm_label": "registry"
+    },
+    {
+      "label": "generateOpenAPI()",
+      "file_type": "code",
+      "source_file": "schema/api.ts",
+      "source_location": "L83",
+      "id": "schema_api_generateopenapi",
+      "community": 1,
+      "norm_label": "generateopenapi()"
+    },
+    {
+      "label": "error.ts",
+      "file_type": "code",
+      "source_file": "schema/error.ts",
+      "source_location": "L1",
+      "id": "c_code_docker_watchtower_dash_shared_schema_error_ts",
+      "community": 1,
+      "norm_label": "error.ts"
+    },
+    {
+      "label": "ProblemDetailsSchema",
+      "file_type": "code",
+      "source_file": "schema/error.ts",
+      "source_location": "L6",
+      "id": "schema_error_problemdetailsschema",
+      "community": 1,
+      "norm_label": "problemdetailsschema"
+    },
+    {
+      "label": "createProblemResponse()",
+      "file_type": "code",
+      "source_file": "schema/error.ts",
+      "source_location": "L29",
+      "id": "schema_error_createproblemresponse",
+      "community": 1,
+      "norm_label": "createproblemresponse()"
+    },
+    {
+      "label": "plan-policy.ts",
+      "file_type": "code",
+      "source_file": "schema/plan-policy.ts",
+      "source_location": "L1",
+      "id": "c_code_docker_watchtower_dash_shared_schema_plan_policy_ts",
+      "community": 2,
+      "norm_label": "plan-policy.ts"
+    },
+    {
+      "label": "PlanId",
+      "file_type": "code",
+      "source_file": "schema/plan-policy.ts",
+      "source_location": "L1",
+      "id": "schema_plan_policy_planid",
+      "community": 2,
+      "norm_label": "planid"
+    },
+    {
+      "label": "SubscriptionStatus",
+      "file_type": "code",
+      "source_file": "schema/plan-policy.ts",
+      "source_location": "L3",
+      "id": "schema_plan_policy_subscriptionstatus",
+      "community": 2,
+      "norm_label": "subscriptionstatus"
+    },
+    {
+      "label": "PlanPolicy",
+      "file_type": "code",
+      "source_file": "schema/plan-policy.ts",
+      "source_location": "L5",
+      "id": "schema_plan_policy_planpolicy",
+      "community": 2,
+      "norm_label": "planpolicy"
+    },
+    {
+      "label": "PLAN_POLICY_BY_PLAN",
+      "file_type": "code",
+      "source_file": "schema/plan-policy.ts",
+      "source_location": "L18",
+      "id": "schema_plan_policy_plan_policy_by_plan",
+      "community": 2,
+      "norm_label": "plan_policy_by_plan"
+    },
+    {
+      "label": "normalizePlan()",
+      "file_type": "code",
+      "source_file": "schema/plan-policy.ts",
+      "source_location": "L69",
+      "id": "schema_plan_policy_normalizeplan",
+      "community": 2,
+      "norm_label": "normalizeplan()"
+    },
+    {
+      "label": "normalizeSubscriptionStatus()",
+      "file_type": "code",
+      "source_file": "schema/plan-policy.ts",
+      "source_location": "L77",
+      "id": "schema_plan_policy_normalizesubscriptionstatus",
+      "community": 2,
+      "norm_label": "normalizesubscriptionstatus()"
+    },
+    {
+      "label": "isPaidSubscriptionStatus()",
+      "file_type": "code",
+      "source_file": "schema/plan-policy.ts",
+      "source_location": "L85",
+      "id": "schema_plan_policy_ispaidsubscriptionstatus",
+      "community": 2,
+      "norm_label": "ispaidsubscriptionstatus()"
+    },
+    {
+      "label": "getEffectivePlanForEnforcement()",
+      "file_type": "code",
+      "source_file": "schema/plan-policy.ts",
+      "source_location": "L89",
+      "id": "schema_plan_policy_geteffectiveplanforenforcement",
+      "community": 2,
+      "norm_label": "geteffectiveplanforenforcement()"
+    },
+    {
+      "label": "proxy.ts",
+      "file_type": "code",
+      "source_file": "schema/proxy.ts",
+      "source_location": "L1",
+      "id": "c_code_docker_watchtower_dash_shared_schema_proxy_ts",
+      "community": 1,
+      "norm_label": "proxy.ts"
+    },
+    {
+      "label": "ProxyActionSchema",
+      "file_type": "code",
+      "source_file": "schema/proxy.ts",
+      "source_location": "L6",
+      "id": "schema_proxy_proxyactionschema",
+      "community": 1,
+      "norm_label": "proxyactionschema"
+    },
+    {
+      "label": "ProxyRequestParamsSchema",
+      "file_type": "code",
+      "source_file": "schema/proxy.ts",
+      "source_location": "L14",
+      "id": "schema_proxy_proxyrequestparamsschema",
+      "community": 1,
+      "norm_label": "proxyrequestparamsschema"
+    },
+    {
+      "label": "LogQueryParamsSchema",
+      "file_type": "code",
+      "source_file": "schema/proxy.ts",
+      "source_location": "L21",
+      "id": "schema_proxy_logqueryparamsschema",
+      "community": 1,
+      "norm_label": "logqueryparamsschema"
+    },
+    {
+      "label": "IdempotencyHeaderSchema",
+      "file_type": "code",
+      "source_file": "schema/proxy.ts",
+      "source_location": "L27",
+      "id": "schema_proxy_idempotencyheaderschema",
+      "community": 1,
+      "norm_label": "idempotencyheaderschema"
+    },
+    {
+      "label": "watchtower-agent-release.ts",
+      "file_type": "code",
+      "source_file": "shared/watchtower-agent-release.ts",
+      "source_location": "L1",
+      "id": "shared_watchtower_agent_release_ts",
+      "community": 0,
+      "norm_label": "watchtower-agent-release.ts"
+    },
+    {
+      "label": "WatchtowerAgentRelease",
+      "file_type": "code",
+      "source_file": "shared/watchtower-agent-release.ts",
+      "source_location": "L1",
+      "id": "shared_watchtower_agent_release_watchtoweragentrelease",
+      "community": 0,
+      "norm_label": "watchtoweragentrelease"
+    },
+    {
+      "label": "WatchtowerAgentReleaseResponse",
+      "file_type": "code",
+      "source_file": "shared/watchtower-agent-release.ts",
+      "source_location": "L17",
+      "id": "shared_watchtower_agent_release_watchtoweragentreleaseresponse",
+      "community": 0,
+      "norm_label": "watchtoweragentreleaseresponse"
+    },
+    {
+      "label": "WatchtowerAgentConnectionMode",
+      "file_type": "code",
+      "source_file": "shared/watchtower-agent-release.ts",
+      "source_location": "L39",
+      "id": "shared_watchtower_agent_release_watchtoweragentconnectionmode",
+      "community": 0,
+      "norm_label": "watchtoweragentconnectionmode"
+    },
+    {
+      "label": "WatchtowerAgentEnrollmentCommandOptions",
+      "file_type": "code",
+      "source_file": "shared/watchtower-agent-release.ts",
+      "source_location": "L41",
+      "id": "shared_watchtower_agent_release_watchtoweragentenrollmentcommandoptions",
+      "community": 0,
+      "norm_label": "watchtoweragentenrollmentcommandoptions"
+    },
+    {
+      "label": "WatchtowerAgentInstallCommandOptions",
+      "file_type": "code",
+      "source_file": "shared/watchtower-agent-release.ts",
+      "source_location": "L50",
+      "id": "shared_watchtower_agent_release_watchtoweragentinstallcommandoptions",
+      "community": 0,
+      "norm_label": "watchtoweragentinstallcommandoptions"
+    },
+    {
+      "label": "WatchtowerAgentUpdateStatus",
+      "file_type": "code",
+      "source_file": "shared/watchtower-agent-release.ts",
+      "source_location": "L58",
+      "id": "shared_watchtower_agent_release_watchtoweragentupdatestatus",
+      "community": 0,
+      "norm_label": "watchtoweragentupdatestatus"
+    },
+    {
+      "label": "WatchtowerAgentUpdateCopy",
+      "file_type": "code",
+      "source_file": "shared/watchtower-agent-release.ts",
+      "source_location": "L64",
+      "id": "shared_watchtower_agent_release_watchtoweragentupdatecopy",
+      "community": 0,
+      "norm_label": "watchtoweragentupdatecopy"
+    },
+    {
+      "label": "CURRENT_WATCHTOWER_AGENT_RELEASE",
+      "file_type": "code",
+      "source_file": "shared/watchtower-agent-release.ts",
+      "source_location": "L87",
+      "id": "shared_watchtower_agent_release_current_watchtower_agent_release",
+      "community": 6,
+      "norm_label": "current_watchtower_agent_release"
+    },
+    {
+      "label": "buildAtomicInstallerCommand()",
+      "file_type": "code",
+      "source_file": "shared/watchtower-agent-release.ts",
+      "source_location": "L103",
+      "id": "shared_watchtower_agent_release_buildatomicinstallercommand",
+      "community": 5,
+      "norm_label": "buildatomicinstallercommand()"
+    },
+    {
+      "label": "buildWatchtowerAgentPreflightCommand()",
+      "file_type": "code",
+      "source_file": "shared/watchtower-agent-release.ts",
+      "source_location": "L143",
+      "id": "shared_watchtower_agent_release_buildwatchtoweragentpreflightcommand",
+      "community": 3,
+      "norm_label": "buildwatchtoweragentpreflightcommand()"
+    },
+    {
+      "label": "buildWatchtowerAgentUpgradeCommand()",
+      "file_type": "code",
+      "source_file": "shared/watchtower-agent-release.ts",
+      "source_location": "L149",
+      "id": "shared_watchtower_agent_release_buildwatchtoweragentupgradecommand",
+      "community": 3,
+      "norm_label": "buildwatchtoweragentupgradecommand()"
+    },
+    {
+      "label": "buildWatchtowerAgentAssetUrl()",
+      "file_type": "code",
+      "source_file": "shared/watchtower-agent-release.ts",
+      "source_location": "L155",
+      "id": "shared_watchtower_agent_release_buildwatchtoweragentasseturl",
+      "community": 5,
+      "norm_label": "buildwatchtoweragentasseturl()"
+    },
+    {
+      "label": "buildWatchtowerAgentInstallCommand()",
+      "file_type": "code",
+      "source_file": "shared/watchtower-agent-release.ts",
+      "source_location": "L162",
+      "id": "shared_watchtower_agent_release_buildwatchtoweragentinstallcommand",
+      "community": 5,
+      "norm_label": "buildwatchtoweragentinstallcommand()"
+    },
+    {
+      "label": "getWatchtowerAgentRecommendedBindAddress()",
+      "file_type": "code",
+      "source_file": "shared/watchtower-agent-release.ts",
+      "source_location": "L168",
+      "id": "shared_watchtower_agent_release_getwatchtoweragentrecommendedbindaddress",
+      "community": 0,
+      "norm_label": "getwatchtoweragentrecommendedbindaddress()"
+    },
+    {
+      "label": "getWatchtowerAgentModeLabel()",
+      "file_type": "code",
+      "source_file": "shared/watchtower-agent-release.ts",
+      "source_location": "L174",
+      "id": "shared_watchtower_agent_release_getwatchtoweragentmodelabel",
+      "community": 3,
+      "norm_label": "getwatchtoweragentmodelabel()"
+    },
+    {
+      "label": "buildInstallerExtraArgs()",
+      "file_type": "code",
+      "source_file": "shared/watchtower-agent-release.ts",
+      "source_location": "L180",
+      "id": "shared_watchtower_agent_release_buildinstallerextraargs",
+      "community": 5,
+      "norm_label": "buildinstallerextraargs()"
+    },
+    {
+      "label": "buildWatchtowerAgentEnrollmentInstallCommand()",
+      "file_type": "code",
+      "source_file": "shared/watchtower-agent-release.ts",
+      "source_location": "L202",
+      "id": "shared_watchtower_agent_release_buildwatchtoweragentenrollmentinstallcommand",
+      "community": 5,
+      "norm_label": "buildwatchtoweragentenrollmentinstallcommand()"
+    },
+    {
+      "label": "buildWatchtowerAgentAdvancedInstallCommand()",
+      "file_type": "code",
+      "source_file": "shared/watchtower-agent-release.ts",
+      "source_location": "L223",
+      "id": "shared_watchtower_agent_release_buildwatchtoweragentadvancedinstallcommand",
+      "community": 5,
+      "norm_label": "buildwatchtoweragentadvancedinstallcommand()"
+    },
+    {
+      "label": "buildWatchtowerAgentVerifyCommand()",
+      "file_type": "code",
+      "source_file": "shared/watchtower-agent-release.ts",
+      "source_location": "L242",
+      "id": "shared_watchtower_agent_release_buildwatchtoweragentverifycommand",
+      "community": 3,
+      "norm_label": "buildwatchtoweragentverifycommand()"
+    },
+    {
+      "label": "buildWatchtowerAgentLocalVerifyCommand()",
+      "file_type": "code",
+      "source_file": "shared/watchtower-agent-release.ts",
+      "source_location": "L247",
+      "id": "shared_watchtower_agent_release_buildwatchtoweragentlocalverifycommand",
+      "community": 0,
+      "norm_label": "buildwatchtoweragentlocalverifycommand()"
+    },
+    {
+      "label": "buildWatchtowerAgentSetupSummary()",
+      "file_type": "code",
+      "source_file": "shared/watchtower-agent-release.ts",
+      "source_location": "L254",
+      "id": "shared_watchtower_agent_release_buildwatchtoweragentsetupsummary",
+      "community": 3,
+      "norm_label": "buildwatchtoweragentsetupsummary()"
+    },
+    {
+      "label": "buildWatchtowerAgentVerifySummary()",
+      "file_type": "code",
+      "source_file": "shared/watchtower-agent-release.ts",
+      "source_location": "L260",
+      "id": "shared_watchtower_agent_release_buildwatchtoweragentverifysummary",
+      "community": 3,
+      "norm_label": "buildwatchtoweragentverifysummary()"
+    },
+    {
+      "label": "buildWatchtowerAgentNextStepSummary()",
+      "file_type": "code",
+      "source_file": "shared/watchtower-agent-release.ts",
+      "source_location": "L266",
+      "id": "shared_watchtower_agent_release_buildwatchtoweragentnextstepsummary",
+      "community": 3,
+      "norm_label": "buildwatchtoweragentnextstepsummary()"
+    },
+    {
+      "label": "buildWatchtowerAgentRepairCommand()",
+      "file_type": "code",
+      "source_file": "shared/watchtower-agent-release.ts",
+      "source_location": "L272",
+      "id": "shared_watchtower_agent_release_buildwatchtoweragentrepaircommand",
+      "community": 3,
+      "norm_label": "buildwatchtoweragentrepaircommand()"
+    },
+    {
+      "label": "getWatchtowerAgentUpdateStatus()",
+      "file_type": "code",
+      "source_file": "shared/watchtower-agent-release.ts",
+      "source_location": "L281",
+      "id": "shared_watchtower_agent_release_getwatchtoweragentupdatestatus",
+      "community": 7,
+      "norm_label": "getwatchtoweragentupdatestatus()"
+    },
+    {
+      "label": "getWatchtowerAgentUpdateStatusCopy()",
+      "file_type": "code",
+      "source_file": "shared/watchtower-agent-release.ts",
+      "source_location": "L298",
+      "id": "shared_watchtower_agent_release_getwatchtoweragentupdatestatuscopy",
+      "community": 0,
+      "norm_label": "getwatchtoweragentupdatestatuscopy()"
+    },
+    {
+      "label": "buildWatchtowerAgentUpdateCopy()",
+      "file_type": "code",
+      "source_file": "shared/watchtower-agent-release.ts",
+      "source_location": "L327",
+      "id": "shared_watchtower_agent_release_buildwatchtoweragentupdatecopy",
+      "community": 0,
+      "norm_label": "buildwatchtoweragentupdatecopy()"
+    },
+    {
+      "label": "isAgentVersionOutdated()",
+      "file_type": "code",
+      "source_file": "shared/watchtower-agent-release.ts",
+      "source_location": "L353",
+      "id": "shared_watchtower_agent_release_isagentversionoutdated",
+      "community": 7,
+      "norm_label": "isagentversionoutdated()"
+    },
+    {
+      "label": "buildWatchtowerAgentReleaseResponse()",
+      "file_type": "code",
+      "source_file": "shared/watchtower-agent-release.ts",
+      "source_location": "L371",
+      "id": "shared_watchtower_agent_release_buildwatchtoweragentreleaseresponse",
+      "community": 3,
+      "norm_label": "buildwatchtoweragentreleaseresponse()"
+    }
+  ],
+  "links": [
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "agent-version.ts",
+      "source_location": "L1",
+      "weight": 1.0,
+      "source": "c_code_docker_watchtower_dash_shared_agent_version_ts",
+      "target": "shared_watchtower_agent_release_current_watchtower_agent_release",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "lib/diagnostics.test.ts",
+      "source_location": "L3",
+      "weight": 1.0,
+      "source": "c_code_docker_watchtower_dash_shared_lib_diagnostics_test_ts",
+      "target": "c_code_docker_watchtower_dash_shared_lib_diagnostics_ts",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "lib/diagnostics.test.ts",
+      "source_location": "L3",
+      "weight": 1.0,
+      "source": "c_code_docker_watchtower_dash_shared_lib_diagnostics_test_ts",
+      "target": "lib_diagnostics_formatdiagnosticdetail",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "lib/diagnostics.test.ts",
+      "source_location": "L3",
+      "weight": 1.0,
+      "source": "c_code_docker_watchtower_dash_shared_lib_diagnostics_test_ts",
+      "target": "lib_diagnostics_parsediagnosticpayload",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "lib/diagnostics.test.ts",
+      "source_location": "L3",
+      "weight": 1.0,
+      "source": "c_code_docker_watchtower_dash_shared_lib_diagnostics_test_ts",
+      "target": "lib_diagnostics_summarizediagnostictext",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "lib/diagnostics.ts",
+      "source_location": "L1",
+      "weight": 1.0,
+      "source": "c_code_docker_watchtower_dash_shared_lib_diagnostics_ts",
+      "target": "lib_diagnostics_trimdiagnostic",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "lib/diagnostics.ts",
+      "source_location": "L5",
+      "weight": 1.0,
+      "source": "c_code_docker_watchtower_dash_shared_lib_diagnostics_ts",
+      "target": "lib_diagnostics_decodehtmlentities",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "lib/diagnostics.ts",
+      "source_location": "L15",
+      "weight": 1.0,
+      "source": "c_code_docker_watchtower_dash_shared_lib_diagnostics_ts",
+      "target": "lib_diagnostics_summarizehtmldiagnostic",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "lib/diagnostics.ts",
+      "source_location": "L35",
+      "weight": 1.0,
+      "source": "c_code_docker_watchtower_dash_shared_lib_diagnostics_ts",
+      "target": "lib_diagnostics_summarizediagnostictext",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "lib/diagnostics.ts",
+      "source_location": "L49",
+      "weight": 1.0,
+      "source": "c_code_docker_watchtower_dash_shared_lib_diagnostics_ts",
+      "target": "lib_diagnostics_parsediagnosticpayload",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "lib/diagnostics.ts",
+      "source_location": "L57",
+      "weight": 1.0,
+      "source": "c_code_docker_watchtower_dash_shared_lib_diagnostics_ts",
+      "target": "lib_diagnostics_formatdiagnosticdetail",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "lib/diagnostics.ts",
+      "source_location": "L21",
+      "weight": 1.0,
+      "source": "lib_diagnostics_summarizehtmldiagnostic",
+      "target": "lib_diagnostics_trimdiagnostic",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "lib/diagnostics.ts",
+      "source_location": "L46",
+      "weight": 1.0,
+      "source": "lib_diagnostics_summarizediagnostictext",
+      "target": "lib_diagnostics_trimdiagnostic",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "lib/diagnostics.ts",
+      "source_location": "L77",
+      "weight": 1.0,
+      "source": "lib_diagnostics_formatdiagnosticdetail",
+      "target": "lib_diagnostics_trimdiagnostic",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "lib/diagnostics.ts",
+      "source_location": "L17",
+      "weight": 1.0,
+      "source": "lib_diagnostics_summarizehtmldiagnostic",
+      "target": "lib_diagnostics_decodehtmlentities",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "lib/diagnostics.ts",
+      "source_location": "L43",
+      "weight": 1.0,
+      "source": "lib_diagnostics_summarizediagnostictext",
+      "target": "lib_diagnostics_summarizehtmldiagnostic",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "lib/diagnostics.ts",
+      "source_location": "L53",
+      "weight": 1.0,
+      "source": "lib_diagnostics_parsediagnosticpayload",
+      "target": "lib_diagnostics_summarizediagnostictext",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "lib/diagnostics.ts",
+      "source_location": "L63",
+      "weight": 1.0,
+      "source": "lib_diagnostics_formatdiagnosticdetail",
+      "target": "lib_diagnostics_summarizediagnostictext",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "schema/api.ts",
+      "source_location": "L2",
+      "weight": 1.0,
+      "source": "c_code_docker_watchtower_dash_shared_schema_api_ts",
+      "target": "c_code_docker_watchtower_dash_shared_schema_proxy_ts",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "schema/api.ts",
+      "source_location": "L2",
+      "weight": 1.0,
+      "source": "c_code_docker_watchtower_dash_shared_schema_api_ts",
+      "target": "schema_proxy_proxyrequestparamsschema",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "schema/api.ts",
+      "source_location": "L2",
+      "weight": 1.0,
+      "source": "c_code_docker_watchtower_dash_shared_schema_api_ts",
+      "target": "schema_proxy_proxyactionschema",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "schema/api.ts",
+      "source_location": "L2",
+      "weight": 1.0,
+      "source": "c_code_docker_watchtower_dash_shared_schema_api_ts",
+      "target": "schema_proxy_logqueryparamsschema",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "schema/api.ts",
+      "source_location": "L2",
+      "weight": 1.0,
+      "source": "c_code_docker_watchtower_dash_shared_schema_api_ts",
+      "target": "schema_proxy_idempotencyheaderschema",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "schema/api.ts",
+      "source_location": "L3",
+      "weight": 1.0,
+      "source": "c_code_docker_watchtower_dash_shared_schema_api_ts",
+      "target": "c_code_docker_watchtower_dash_shared_schema_error_ts",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "schema/api.ts",
+      "source_location": "L3",
+      "weight": 1.0,
+      "source": "c_code_docker_watchtower_dash_shared_schema_api_ts",
+      "target": "schema_error_problemdetailsschema",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "schema/api.ts",
+      "source_location": "L5",
+      "weight": 1.0,
+      "source": "c_code_docker_watchtower_dash_shared_schema_api_ts",
+      "target": "schema_api_registry",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "schema/api.ts",
+      "source_location": "L83",
+      "weight": 1.0,
+      "source": "c_code_docker_watchtower_dash_shared_schema_api_ts",
+      "target": "schema_api_generateopenapi",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "schema/error.ts",
+      "source_location": "L6",
+      "weight": 1.0,
+      "source": "c_code_docker_watchtower_dash_shared_schema_error_ts",
+      "target": "schema_error_problemdetailsschema",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "schema/error.ts",
+      "source_location": "L29",
+      "weight": 1.0,
+      "source": "c_code_docker_watchtower_dash_shared_schema_error_ts",
+      "target": "schema_error_createproblemresponse",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "schema/plan-policy.ts",
+      "source_location": "L1",
+      "weight": 1.0,
+      "source": "c_code_docker_watchtower_dash_shared_schema_plan_policy_ts",
+      "target": "schema_plan_policy_planid",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "schema/plan-policy.ts",
+      "source_location": "L3",
+      "weight": 1.0,
+      "source": "c_code_docker_watchtower_dash_shared_schema_plan_policy_ts",
+      "target": "schema_plan_policy_subscriptionstatus",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "schema/plan-policy.ts",
+      "source_location": "L5",
+      "weight": 1.0,
+      "source": "c_code_docker_watchtower_dash_shared_schema_plan_policy_ts",
+      "target": "schema_plan_policy_planpolicy",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "schema/plan-policy.ts",
+      "source_location": "L18",
+      "weight": 1.0,
+      "source": "c_code_docker_watchtower_dash_shared_schema_plan_policy_ts",
+      "target": "schema_plan_policy_plan_policy_by_plan",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "schema/plan-policy.ts",
+      "source_location": "L69",
+      "weight": 1.0,
+      "source": "c_code_docker_watchtower_dash_shared_schema_plan_policy_ts",
+      "target": "schema_plan_policy_normalizeplan",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "schema/plan-policy.ts",
+      "source_location": "L77",
+      "weight": 1.0,
+      "source": "c_code_docker_watchtower_dash_shared_schema_plan_policy_ts",
+      "target": "schema_plan_policy_normalizesubscriptionstatus",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "schema/plan-policy.ts",
+      "source_location": "L85",
+      "weight": 1.0,
+      "source": "c_code_docker_watchtower_dash_shared_schema_plan_policy_ts",
+      "target": "schema_plan_policy_ispaidsubscriptionstatus",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "schema/plan-policy.ts",
+      "source_location": "L89",
+      "weight": 1.0,
+      "source": "c_code_docker_watchtower_dash_shared_schema_plan_policy_ts",
+      "target": "schema_plan_policy_geteffectiveplanforenforcement",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "schema/plan-policy.ts",
+      "source_location": "L98",
+      "weight": 1.0,
+      "source": "schema_plan_policy_geteffectiveplanforenforcement",
+      "target": "schema_plan_policy_normalizeplan",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "schema/plan-policy.ts",
+      "source_location": "L99",
+      "weight": 1.0,
+      "source": "schema_plan_policy_geteffectiveplanforenforcement",
+      "target": "schema_plan_policy_normalizesubscriptionstatus",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "schema/plan-policy.ts",
+      "source_location": "L101",
+      "weight": 1.0,
+      "source": "schema_plan_policy_geteffectiveplanforenforcement",
+      "target": "schema_plan_policy_ispaidsubscriptionstatus",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "schema/proxy.ts",
+      "source_location": "L6",
+      "weight": 1.0,
+      "source": "c_code_docker_watchtower_dash_shared_schema_proxy_ts",
+      "target": "schema_proxy_proxyactionschema",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "schema/proxy.ts",
+      "source_location": "L14",
+      "weight": 1.0,
+      "source": "c_code_docker_watchtower_dash_shared_schema_proxy_ts",
+      "target": "schema_proxy_proxyrequestparamsschema",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "schema/proxy.ts",
+      "source_location": "L21",
+      "weight": 1.0,
+      "source": "c_code_docker_watchtower_dash_shared_schema_proxy_ts",
+      "target": "schema_proxy_logqueryparamsschema",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "schema/proxy.ts",
+      "source_location": "L27",
+      "weight": 1.0,
+      "source": "c_code_docker_watchtower_dash_shared_schema_proxy_ts",
+      "target": "schema_proxy_idempotencyheaderschema",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "shared/watchtower-agent-release.ts",
+      "source_location": "L1",
+      "weight": 1.0,
+      "source": "shared_watchtower_agent_release_ts",
+      "target": "shared_watchtower_agent_release_watchtoweragentrelease",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "shared/watchtower-agent-release.ts",
+      "source_location": "L17",
+      "weight": 1.0,
+      "source": "shared_watchtower_agent_release_ts",
+      "target": "shared_watchtower_agent_release_watchtoweragentreleaseresponse",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "shared/watchtower-agent-release.ts",
+      "source_location": "L39",
+      "weight": 1.0,
+      "source": "shared_watchtower_agent_release_ts",
+      "target": "shared_watchtower_agent_release_watchtoweragentconnectionmode",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "shared/watchtower-agent-release.ts",
+      "source_location": "L41",
+      "weight": 1.0,
+      "source": "shared_watchtower_agent_release_ts",
+      "target": "shared_watchtower_agent_release_watchtoweragentenrollmentcommandoptions",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "shared/watchtower-agent-release.ts",
+      "source_location": "L50",
+      "weight": 1.0,
+      "source": "shared_watchtower_agent_release_ts",
+      "target": "shared_watchtower_agent_release_watchtoweragentinstallcommandoptions",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "shared/watchtower-agent-release.ts",
+      "source_location": "L58",
+      "weight": 1.0,
+      "source": "shared_watchtower_agent_release_ts",
+      "target": "shared_watchtower_agent_release_watchtoweragentupdatestatus",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "shared/watchtower-agent-release.ts",
+      "source_location": "L64",
+      "weight": 1.0,
+      "source": "shared_watchtower_agent_release_ts",
+      "target": "shared_watchtower_agent_release_watchtoweragentupdatecopy",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "shared/watchtower-agent-release.ts",
+      "source_location": "L87",
+      "weight": 1.0,
+      "source": "shared_watchtower_agent_release_ts",
+      "target": "shared_watchtower_agent_release_current_watchtower_agent_release",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "shared/watchtower-agent-release.ts",
+      "source_location": "L103",
+      "weight": 1.0,
+      "source": "shared_watchtower_agent_release_ts",
+      "target": "shared_watchtower_agent_release_buildatomicinstallercommand",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "shared/watchtower-agent-release.ts",
+      "source_location": "L143",
+      "weight": 1.0,
+      "source": "shared_watchtower_agent_release_ts",
+      "target": "shared_watchtower_agent_release_buildwatchtoweragentpreflightcommand",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "shared/watchtower-agent-release.ts",
+      "source_location": "L149",
+      "weight": 1.0,
+      "source": "shared_watchtower_agent_release_ts",
+      "target": "shared_watchtower_agent_release_buildwatchtoweragentupgradecommand",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "shared/watchtower-agent-release.ts",
+      "source_location": "L155",
+      "weight": 1.0,
+      "source": "shared_watchtower_agent_release_ts",
+      "target": "shared_watchtower_agent_release_buildwatchtoweragentasseturl",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "shared/watchtower-agent-release.ts",
+      "source_location": "L162",
+      "weight": 1.0,
+      "source": "shared_watchtower_agent_release_ts",
+      "target": "shared_watchtower_agent_release_buildwatchtoweragentinstallcommand",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "shared/watchtower-agent-release.ts",
+      "source_location": "L168",
+      "weight": 1.0,
+      "source": "shared_watchtower_agent_release_ts",
+      "target": "shared_watchtower_agent_release_getwatchtoweragentrecommendedbindaddress",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "shared/watchtower-agent-release.ts",
+      "source_location": "L174",
+      "weight": 1.0,
+      "source": "shared_watchtower_agent_release_ts",
+      "target": "shared_watchtower_agent_release_getwatchtoweragentmodelabel",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "shared/watchtower-agent-release.ts",
+      "source_location": "L180",
+      "weight": 1.0,
+      "source": "shared_watchtower_agent_release_ts",
+      "target": "shared_watchtower_agent_release_buildinstallerextraargs",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "shared/watchtower-agent-release.ts",
+      "source_location": "L202",
+      "weight": 1.0,
+      "source": "shared_watchtower_agent_release_ts",
+      "target": "shared_watchtower_agent_release_buildwatchtoweragentenrollmentinstallcommand",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "shared/watchtower-agent-release.ts",
+      "source_location": "L223",
+      "weight": 1.0,
+      "source": "shared_watchtower_agent_release_ts",
+      "target": "shared_watchtower_agent_release_buildwatchtoweragentadvancedinstallcommand",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "shared/watchtower-agent-release.ts",
+      "source_location": "L242",
+      "weight": 1.0,
+      "source": "shared_watchtower_agent_release_ts",
+      "target": "shared_watchtower_agent_release_buildwatchtoweragentverifycommand",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "shared/watchtower-agent-release.ts",
+      "source_location": "L247",
+      "weight": 1.0,
+      "source": "shared_watchtower_agent_release_ts",
+      "target": "shared_watchtower_agent_release_buildwatchtoweragentlocalverifycommand",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "shared/watchtower-agent-release.ts",
+      "source_location": "L254",
+      "weight": 1.0,
+      "source": "shared_watchtower_agent_release_ts",
+      "target": "shared_watchtower_agent_release_buildwatchtoweragentsetupsummary",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "shared/watchtower-agent-release.ts",
+      "source_location": "L260",
+      "weight": 1.0,
+      "source": "shared_watchtower_agent_release_ts",
+      "target": "shared_watchtower_agent_release_buildwatchtoweragentverifysummary",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "shared/watchtower-agent-release.ts",
+      "source_location": "L266",
+      "weight": 1.0,
+      "source": "shared_watchtower_agent_release_ts",
+      "target": "shared_watchtower_agent_release_buildwatchtoweragentnextstepsummary",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "shared/watchtower-agent-release.ts",
+      "source_location": "L272",
+      "weight": 1.0,
+      "source": "shared_watchtower_agent_release_ts",
+      "target": "shared_watchtower_agent_release_buildwatchtoweragentrepaircommand",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "shared/watchtower-agent-release.ts",
+      "source_location": "L281",
+      "weight": 1.0,
+      "source": "shared_watchtower_agent_release_ts",
+      "target": "shared_watchtower_agent_release_getwatchtoweragentupdatestatus",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "shared/watchtower-agent-release.ts",
+      "source_location": "L298",
+      "weight": 1.0,
+      "source": "shared_watchtower_agent_release_ts",
+      "target": "shared_watchtower_agent_release_getwatchtoweragentupdatestatuscopy",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "shared/watchtower-agent-release.ts",
+      "source_location": "L327",
+      "weight": 1.0,
+      "source": "shared_watchtower_agent_release_ts",
+      "target": "shared_watchtower_agent_release_buildwatchtoweragentupdatecopy",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "shared/watchtower-agent-release.ts",
+      "source_location": "L353",
+      "weight": 1.0,
+      "source": "shared_watchtower_agent_release_ts",
+      "target": "shared_watchtower_agent_release_isagentversionoutdated",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "shared/watchtower-agent-release.ts",
+      "source_location": "L371",
+      "weight": 1.0,
+      "source": "shared_watchtower_agent_release_ts",
+      "target": "shared_watchtower_agent_release_buildwatchtoweragentreleaseresponse",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "shared/watchtower-agent-release.ts",
+      "source_location": "L112",
+      "weight": 1.0,
+      "source": "shared_watchtower_agent_release_buildatomicinstallercommand",
+      "target": "shared_watchtower_agent_release_buildwatchtoweragentasseturl",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "shared/watchtower-agent-release.ts",
+      "source_location": "L165",
+      "weight": 1.0,
+      "source": "shared_watchtower_agent_release_buildwatchtoweragentinstallcommand",
+      "target": "shared_watchtower_agent_release_buildatomicinstallercommand",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "shared/watchtower-agent-release.ts",
+      "source_location": "L216",
+      "weight": 1.0,
+      "source": "shared_watchtower_agent_release_buildwatchtoweragentenrollmentinstallcommand",
+      "target": "shared_watchtower_agent_release_buildatomicinstallercommand",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "shared/watchtower-agent-release.ts",
+      "source_location": "L235",
+      "weight": 1.0,
+      "source": "shared_watchtower_agent_release_buildwatchtoweragentadvancedinstallcommand",
+      "target": "shared_watchtower_agent_release_buildatomicinstallercommand",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "shared/watchtower-agent-release.ts",
+      "source_location": "L384",
+      "weight": 1.0,
+      "source": "shared_watchtower_agent_release_buildwatchtoweragentreleaseresponse",
+      "target": "shared_watchtower_agent_release_buildwatchtoweragentpreflightcommand",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "shared/watchtower-agent-release.ts",
+      "source_location": "L276",
+      "weight": 1.0,
+      "source": "shared_watchtower_agent_release_buildwatchtoweragentrepaircommand",
+      "target": "shared_watchtower_agent_release_buildwatchtoweragentupgradecommand",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "shared/watchtower-agent-release.ts",
+      "source_location": "L385",
+      "weight": 1.0,
+      "source": "shared_watchtower_agent_release_buildwatchtoweragentreleaseresponse",
+      "target": "shared_watchtower_agent_release_buildwatchtoweragentupgradecommand",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "shared/watchtower-agent-release.ts",
+      "source_location": "L393",
+      "weight": 1.0,
+      "source": "shared_watchtower_agent_release_buildwatchtoweragentreleaseresponse",
+      "target": "shared_watchtower_agent_release_buildwatchtoweragentinstallcommand",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "shared/watchtower-agent-release.ts",
+      "source_location": "L402",
+      "weight": 1.0,
+      "source": "shared_watchtower_agent_release_buildwatchtoweragentreleaseresponse",
+      "target": "shared_watchtower_agent_release_getwatchtoweragentmodelabel",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "shared/watchtower-agent-release.ts",
+      "source_location": "L213",
+      "weight": 1.0,
+      "source": "shared_watchtower_agent_release_buildwatchtoweragentenrollmentinstallcommand",
+      "target": "shared_watchtower_agent_release_buildinstallerextraargs",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "shared/watchtower-agent-release.ts",
+      "source_location": "L232",
+      "weight": 1.0,
+      "source": "shared_watchtower_agent_release_buildwatchtoweragentadvancedinstallcommand",
+      "target": "shared_watchtower_agent_release_buildinstallerextraargs",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "shared/watchtower-agent-release.ts",
+      "source_location": "L394",
+      "weight": 1.0,
+      "source": "shared_watchtower_agent_release_buildwatchtoweragentreleaseresponse",
+      "target": "shared_watchtower_agent_release_buildwatchtoweragentadvancedinstallcommand",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "shared/watchtower-agent-release.ts",
+      "source_location": "L278",
+      "weight": 1.0,
+      "source": "shared_watchtower_agent_release_buildwatchtoweragentrepaircommand",
+      "target": "shared_watchtower_agent_release_buildwatchtoweragentverifycommand",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "shared/watchtower-agent-release.ts",
+      "source_location": "L386",
+      "weight": 1.0,
+      "source": "shared_watchtower_agent_release_buildwatchtoweragentreleaseresponse",
+      "target": "shared_watchtower_agent_release_buildwatchtoweragentverifycommand",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "shared/watchtower-agent-release.ts",
+      "source_location": "L399",
+      "weight": 1.0,
+      "source": "shared_watchtower_agent_release_buildwatchtoweragentreleaseresponse",
+      "target": "shared_watchtower_agent_release_buildwatchtoweragentsetupsummary",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "shared/watchtower-agent-release.ts",
+      "source_location": "L400",
+      "weight": 1.0,
+      "source": "shared_watchtower_agent_release_buildwatchtoweragentreleaseresponse",
+      "target": "shared_watchtower_agent_release_buildwatchtoweragentverifysummary",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "shared/watchtower-agent-release.ts",
+      "source_location": "L401",
+      "weight": 1.0,
+      "source": "shared_watchtower_agent_release_buildwatchtoweragentreleaseresponse",
+      "target": "shared_watchtower_agent_release_buildwatchtoweragentnextstepsummary",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "shared/watchtower-agent-release.ts",
+      "source_location": "L387",
+      "weight": 1.0,
+      "source": "shared_watchtower_agent_release_buildwatchtoweragentreleaseresponse",
+      "target": "shared_watchtower_agent_release_buildwatchtoweragentrepaircommand",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "shared/watchtower-agent-release.ts",
+      "source_location": "L289",
+      "weight": 1.0,
+      "source": "shared_watchtower_agent_release_getwatchtoweragentupdatestatus",
+      "target": "shared_watchtower_agent_release_isagentversionoutdated",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "shared/watchtower-agent-release.ts",
+      "source_location": "L375",
+      "weight": 1.0,
+      "source": "shared_watchtower_agent_release_buildwatchtoweragentreleaseresponse",
+      "target": "shared_watchtower_agent_release_getwatchtoweragentupdatestatus",
+      "confidence_score": 1.0
+    }
+  ],
+  "hyperedges": [],
+  "built_at_commit": "ed28244c211be7b6c2b23ccf8ca4f5a7352c3e35"
+}

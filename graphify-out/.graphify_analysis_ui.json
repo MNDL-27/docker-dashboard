@@ -1,0 +1,534 @@
+{
+  "communities": {
+    "0": [
+      "c_code_docker_watchtower_dash_src_components_ui_input_tsx",
+      "c_code_docker_watchtower_dash_src_components_ui_separator_tsx",
+      "c_code_docker_watchtower_dash_src_components_ui_skeleton_tsx",
+      "c_code_docker_watchtower_dash_src_components_ui_tooltip_tsx",
+      "src_components_ui_sidebar_tsx",
+      "ui_input_input",
+      "ui_separator_separator",
+      "ui_sidebar_sidebar",
+      "ui_sidebar_sidebarcontent",
+      "ui_sidebar_sidebarcontext",
+      "ui_sidebar_sidebarfooter",
+      "ui_sidebar_sidebargroup",
+      "ui_sidebar_sidebargroupaction",
+      "ui_sidebar_sidebargroupcontent",
+      "ui_sidebar_sidebargrouplabel",
+      "ui_sidebar_sidebarheader",
+      "ui_sidebar_sidebarinput",
+      "ui_sidebar_sidebarinset",
+      "ui_sidebar_sidebarmenu",
+      "ui_sidebar_sidebarmenuaction",
+      "ui_sidebar_sidebarmenubadge",
+      "ui_sidebar_sidebarmenubutton",
+      "ui_sidebar_sidebarmenubuttonvariants",
+      "ui_sidebar_sidebarmenuitem",
+      "ui_sidebar_sidebarmenuskeleton",
+      "ui_sidebar_sidebarmenusub",
+      "ui_sidebar_sidebarmenusubbutton",
+      "ui_sidebar_sidebarmenusubitem",
+      "ui_sidebar_sidebarprovider",
+      "ui_sidebar_sidebarrail",
+      "ui_sidebar_sidebarseparator",
+      "ui_sidebar_sidebartrigger",
+      "ui_sidebar_usesidebar",
+      "ui_skeleton_skeleton",
+      "ui_tooltip_tooltipcontent"
+    ],
+    "1": [
+      "src_components_ui_alert_dialog_tsx",
+      "src_components_ui_button_tsx",
+      "src_components_ui_button_variants_ts",
+      "src_components_ui_calendar_tsx",
+      "src_components_ui_pagination_tsx",
+      "ui_alert_dialog_alertdialogaction",
+      "ui_alert_dialog_alertdialogcancel",
+      "ui_alert_dialog_alertdialogcontent",
+      "ui_alert_dialog_alertdialogdescription",
+      "ui_alert_dialog_alertdialogfooter",
+      "ui_alert_dialog_alertdialogheader",
+      "ui_alert_dialog_alertdialogoverlay",
+      "ui_alert_dialog_alertdialogtitle",
+      "ui_button_button",
+      "ui_button_buttonprops",
+      "ui_button_variants_buttonvariants",
+      "ui_calendar_calendar",
+      "ui_calendar_calendarprops",
+      "ui_pagination_pagination",
+      "ui_pagination_paginationcontent",
+      "ui_pagination_paginationellipsis",
+      "ui_pagination_paginationitem",
+      "ui_pagination_paginationlink",
+      "ui_pagination_paginationlinkprops",
+      "ui_pagination_paginationnext",
+      "ui_pagination_paginationprevious"
+    ],
+    "2": [
+      "c_code_docker_watchtower_dash_src_components_ui_dialog_tsx",
+      "src_components_ui_command_tsx",
+      "ui_command_command",
+      "ui_command_commanddialog",
+      "ui_command_commanddialogprops",
+      "ui_command_commandempty",
+      "ui_command_commandgroup",
+      "ui_command_commandinput",
+      "ui_command_commanditem",
+      "ui_command_commandlist",
+      "ui_command_commandseparator",
+      "ui_command_commandshortcut",
+      "ui_dialog_dialogcontent",
+      "ui_dialog_dialogdescription",
+      "ui_dialog_dialogfooter",
+      "ui_dialog_dialogheader",
+      "ui_dialog_dialogoverlay",
+      "ui_dialog_dialogtitle"
+    ],
+    "3": [
+      "c_code_docker_watchtower_dash_src_components_ui_label_tsx",
+      "src_components_ui_form_tsx",
+      "ui_form_formcontrol",
+      "ui_form_formdescription",
+      "ui_form_formfield",
+      "ui_form_formfieldcontext",
+      "ui_form_formfieldcontextvalue",
+      "ui_form_formitem",
+      "ui_form_formitemcontext",
+      "ui_form_formitemcontextvalue",
+      "ui_form_formlabel",
+      "ui_form_formmessage",
+      "ui_form_useformfield",
+      "ui_label_label",
+      "ui_label_labelvariants"
+    ],
+    "4": [
+      "c_code_docker_watchtower_dash_src_components_ui_carousel_tsx",
+      "ui_carousel_carousel",
+      "ui_carousel_carouselapi",
+      "ui_carousel_carouselcontent",
+      "ui_carousel_carouselcontext",
+      "ui_carousel_carouselcontextprops",
+      "ui_carousel_carouselitem",
+      "ui_carousel_carouselnext",
+      "ui_carousel_carouseloptions",
+      "ui_carousel_carouselplugin",
+      "ui_carousel_carouselprevious",
+      "ui_carousel_carouselprops",
+      "ui_carousel_usecarousel",
+      "ui_carousel_usecarouselparameters"
+    ],
+    "5": [
+      "c_code_docker_watchtower_dash_src_components_ui_menubar_tsx",
+      "ui_menubar_menubar",
+      "ui_menubar_menubarcheckboxitem",
+      "ui_menubar_menubarcontent",
+      "ui_menubar_menubaritem",
+      "ui_menubar_menubarlabel",
+      "ui_menubar_menubarradioitem",
+      "ui_menubar_menubarseparator",
+      "ui_menubar_menubarshortcut",
+      "ui_menubar_menubarsubcontent",
+      "ui_menubar_menubarsubtrigger",
+      "ui_menubar_menubartrigger"
+    ],
+    "6": [
+      "c_code_docker_watchtower_dash_src_components_ui_toast_tsx",
+      "c_code_docker_watchtower_dash_src_components_ui_toaster_tsx",
+      "ui_toast_toast",
+      "ui_toast_toastaction",
+      "ui_toast_toastactionelement",
+      "ui_toast_toastclose",
+      "ui_toast_toastdescription",
+      "ui_toast_toastprops",
+      "ui_toast_toasttitle",
+      "ui_toast_toastvariants",
+      "ui_toast_toastviewport",
+      "ui_toaster_toaster"
+    ],
+    "7": [
+      "c_code_docker_watchtower_dash_src_components_ui_chart_tsx",
+      "ui_chart_chartconfig",
+      "ui_chart_chartcontainer",
+      "ui_chart_chartcontext",
+      "ui_chart_chartcontextprops",
+      "ui_chart_chartlegendcontent",
+      "ui_chart_chartstyle",
+      "ui_chart_charttooltipcontent",
+      "ui_chart_getpayloadconfigfrompayload",
+      "ui_chart_themes",
+      "ui_chart_usechart"
+    ],
+    "8": [
+      "c_code_docker_watchtower_dash_src_components_ui_context_menu_tsx",
+      "ui_context_menu_contextmenucheckboxitem",
+      "ui_context_menu_contextmenucontent",
+      "ui_context_menu_contextmenuitem",
+      "ui_context_menu_contextmenulabel",
+      "ui_context_menu_contextmenuradioitem",
+      "ui_context_menu_contextmenuseparator",
+      "ui_context_menu_contextmenushortcut",
+      "ui_context_menu_contextmenusubcontent",
+      "ui_context_menu_contextmenusubtrigger"
+    ],
+    "9": [
+      "c_code_docker_watchtower_dash_src_components_ui_dropdown_menu_tsx",
+      "ui_dropdown_menu_dropdownmenucheckboxitem",
+      "ui_dropdown_menu_dropdownmenucontent",
+      "ui_dropdown_menu_dropdownmenuitem",
+      "ui_dropdown_menu_dropdownmenulabel",
+      "ui_dropdown_menu_dropdownmenuradioitem",
+      "ui_dropdown_menu_dropdownmenuseparator",
+      "ui_dropdown_menu_dropdownmenushortcut",
+      "ui_dropdown_menu_dropdownmenusubcontent",
+      "ui_dropdown_menu_dropdownmenusubtrigger"
+    ],
+    "10": [
+      "c_code_docker_watchtower_dash_src_components_ui_sheet_tsx",
+      "ui_sheet_sheetcontent",
+      "ui_sheet_sheetcontentprops",
+      "ui_sheet_sheetdescription",
+      "ui_sheet_sheetfooter",
+      "ui_sheet_sheetheader",
+      "ui_sheet_sheetoverlay",
+      "ui_sheet_sheettitle",
+      "ui_sheet_sheetvariants"
+    ],
+    "11": [
+      "c_code_docker_watchtower_dash_src_components_ui_table_tsx",
+      "ui_table_table",
+      "ui_table_tablebody",
+      "ui_table_tablecaption",
+      "ui_table_tablecell",
+      "ui_table_tablefooter",
+      "ui_table_tablehead",
+      "ui_table_tableheader",
+      "ui_table_tablerow"
+    ],
+    "12": [
+      "c_code_docker_watchtower_dash_src_components_ui_breadcrumb_tsx",
+      "ui_breadcrumb_breadcrumb",
+      "ui_breadcrumb_breadcrumbellipsis",
+      "ui_breadcrumb_breadcrumbitem",
+      "ui_breadcrumb_breadcrumblink",
+      "ui_breadcrumb_breadcrumblist",
+      "ui_breadcrumb_breadcrumbpage",
+      "ui_breadcrumb_breadcrumbseparator"
+    ],
+    "13": [
+      "c_code_docker_watchtower_dash_src_components_ui_drawer_tsx",
+      "ui_drawer_drawer",
+      "ui_drawer_drawercontent",
+      "ui_drawer_drawerdescription",
+      "ui_drawer_drawerfooter",
+      "ui_drawer_drawerheader",
+      "ui_drawer_draweroverlay",
+      "ui_drawer_drawertitle"
+    ],
+    "14": [
+      "src_components_ui_navigation_menu_tsx",
+      "ui_navigation_menu_navigationmenu",
+      "ui_navigation_menu_navigationmenucontent",
+      "ui_navigation_menu_navigationmenuindicator",
+      "ui_navigation_menu_navigationmenulist",
+      "ui_navigation_menu_navigationmenutrigger",
+      "ui_navigation_menu_navigationmenutriggerstyle",
+      "ui_navigation_menu_navigationmenuviewport"
+    ],
+    "15": [
+      "c_code_docker_watchtower_dash_src_components_ui_select_tsx",
+      "ui_select_selectcontent",
+      "ui_select_selectitem",
+      "ui_select_selectlabel",
+      "ui_select_selectscrolldownbutton",
+      "ui_select_selectscrollupbutton",
+      "ui_select_selectseparator",
+      "ui_select_selecttrigger"
+    ],
+    "16": [
+      "src_components_ui_toggle_group_tsx",
+      "src_components_ui_toggle_tsx",
+      "src_components_ui_toggle_variants_ts",
+      "ui_toggle_group_togglegroup",
+      "ui_toggle_group_togglegroupcontext",
+      "ui_toggle_group_togglegroupitem",
+      "ui_toggle_toggle",
+      "ui_toggle_variants_togglevariants"
+    ],
+    "17": [
+      "c_code_docker_watchtower_dash_src_components_ui_card_tsx",
+      "ui_card_card",
+      "ui_card_cardcontent",
+      "ui_card_carddescription",
+      "ui_card_cardfooter",
+      "ui_card_cardheader",
+      "ui_card_cardtitle"
+    ],
+    "18": [
+      "c_code_docker_watchtower_dash_src_components_ui_alert_tsx",
+      "ui_alert_alert",
+      "ui_alert_alertdescription",
+      "ui_alert_alerttitle",
+      "ui_alert_alertvariants"
+    ],
+    "19": [
+      "src_components_ui_badge_tsx",
+      "src_components_ui_badge_variants_ts",
+      "ui_badge_badge",
+      "ui_badge_badgeprops",
+      "ui_badge_variants_badgevariants"
+    ],
+    "20": [
+      "c_code_docker_watchtower_dash_src_components_ui_input_otp_tsx",
+      "ui_input_otp_inputotp",
+      "ui_input_otp_inputotpgroup",
+      "ui_input_otp_inputotpseparator",
+      "ui_input_otp_inputotpslot"
+    ],
+    "21": [
+      "c_code_docker_watchtower_dash_src_components_ui_accordion_tsx",
+      "ui_accordion_accordioncontent",
+      "ui_accordion_accordionitem",
+      "ui_accordion_accordiontrigger"
+    ],
+    "22": [
+      "c_code_docker_watchtower_dash_src_components_ui_avatar_tsx",
+      "ui_avatar_avatar",
+      "ui_avatar_avatarfallback",
+      "ui_avatar_avatarimage"
+    ],
+    "23": [
+      "c_code_docker_watchtower_dash_src_components_ui_tabs_tsx",
+      "ui_tabs_tabscontent",
+      "ui_tabs_tabslist",
+      "ui_tabs_tabstrigger"
+    ],
+    "24": [
+      "c_code_docker_watchtower_dash_src_components_ui_radio_group_tsx",
+      "ui_radio_group_radiogroup",
+      "ui_radio_group_radiogroupitem"
+    ],
+    "25": [
+      "c_code_docker_watchtower_dash_src_components_ui_resizable_tsx",
+      "ui_resizable_resizablehandle",
+      "ui_resizable_resizablepanelgroup"
+    ],
+    "26": [
+      "c_code_docker_watchtower_dash_src_components_ui_scroll_area_tsx",
+      "ui_scroll_area_scrollarea",
+      "ui_scroll_area_scrollbar"
+    ],
+    "27": [
+      "src_components_ui_sonner_tsx",
+      "ui_sonner_toaster",
+      "ui_sonner_toasterprops"
+    ],
+    "28": [
+      "src_components_ui_textarea_tsx",
+      "ui_textarea_textarea",
+      "ui_textarea_textareaprops"
+    ],
+    "29": [
+      "c_code_docker_watchtower_dash_src_components_ui_checkbox_tsx",
+      "ui_checkbox_checkbox"
+    ],
+    "30": [
+      "c_code_docker_watchtower_dash_src_components_ui_hover_card_tsx",
+      "ui_hover_card_hovercardcontent"
+    ],
+    "31": [
+      "c_code_docker_watchtower_dash_src_components_ui_loginbackground_tsx",
+      "ui_loginbackground_loginbackground"
+    ],
+    "32": [
+      "c_code_docker_watchtower_dash_src_components_ui_popover_tsx",
+      "ui_popover_popovercontent"
+    ],
+    "33": [
+      "c_code_docker_watchtower_dash_src_components_ui_progress_tsx",
+      "ui_progress_progress"
+    ],
+    "34": [
+      "c_code_docker_watchtower_dash_src_components_ui_slider_tsx",
+      "ui_slider_slider"
+    ],
+    "35": [
+      "c_code_docker_watchtower_dash_src_components_ui_switch_tsx",
+      "ui_switch_switch"
+    ],
+    "36": [
+      "c_code_docker_watchtower_dash_src_components_ui_aspect_ratio_tsx"
+    ],
+    "37": [
+      "c_code_docker_watchtower_dash_src_components_ui_collapsible_tsx"
+    ],
+    "38": [
+      "c_code_docker_watchtower_dash_src_components_ui_use_toast_ts"
+    ]
+  },
+  "cohesion": {
+    "0": 0.06,
+    "1": 0.09,
+    "2": 0.13,
+    "3": 0.14,
+    "4": 0.14,
+    "5": 0.17,
+    "6": 0.24,
+    "7": 0.18,
+    "8": 0.2,
+    "9": 0.2,
+    "10": 0.22,
+    "11": 0.22,
+    "12": 0.25,
+    "13": 0.25,
+    "14": 0.25,
+    "15": 0.25,
+    "16": 0.25,
+    "17": 0.29,
+    "18": 0.4,
+    "19": 0.5,
+    "20": 0.4,
+    "21": 0.5,
+    "22": 0.5,
+    "23": 0.5,
+    "24": 0.67,
+    "25": 0.67,
+    "26": 0.67,
+    "27": 0.67,
+    "28": 0.67,
+    "29": 1.0,
+    "30": 1.0,
+    "31": 1.0,
+    "32": 1.0,
+    "33": 1.0,
+    "34": 1.0,
+    "35": 1.0,
+    "36": 1.0,
+    "37": 1.0,
+    "38": 1.0
+  },
+  "gods": [
+    {
+      "id": "ui_button_variants_buttonvariants",
+      "label": "buttonVariants",
+      "degree": 7
+    },
+    {
+      "id": "ui_badge_variants_badgevariants",
+      "label": "badgeVariants",
+      "degree": 3
+    },
+    {
+      "id": "ui_button_button",
+      "label": "Button",
+      "degree": 3
+    },
+    {
+      "id": "ui_toggle_variants_togglevariants",
+      "label": "toggleVariants",
+      "degree": 3
+    },
+    {
+      "id": "ui_badge_badge",
+      "label": "Badge()",
+      "degree": 2
+    },
+    {
+      "id": "ui_button_buttonprops",
+      "label": "ButtonProps",
+      "degree": 2
+    },
+    {
+      "id": "ui_calendar_calendar",
+      "label": "Calendar()",
+      "degree": 2
+    },
+    {
+      "id": "ui_dialog_dialogcontent",
+      "label": "DialogContent",
+      "degree": 2
+    },
+    {
+      "id": "ui_dialog_dialogtitle",
+      "label": "DialogTitle",
+      "degree": 2
+    },
+    {
+      "id": "ui_dialog_dialogdescription",
+      "label": "DialogDescription",
+      "degree": 2
+    }
+  ],
+  "surprises": [
+    {
+      "source": "Calendar()",
+      "target": "buttonVariants",
+      "source_files": [
+        "src/components/ui/calendar.tsx",
+        "src/components/ui/button-variants.ts"
+      ],
+      "confidence": "EXTRACTED",
+      "relation": "calls",
+      "why": "peripheral node `Calendar()` unexpectedly reaches hub `buttonVariants`"
+    },
+    {
+      "source": "PaginationLink()",
+      "target": "buttonVariants",
+      "source_files": [
+        "src/components/ui/pagination.tsx",
+        "src/components/ui/button-variants.ts"
+      ],
+      "confidence": "EXTRACTED",
+      "relation": "calls",
+      "why": "peripheral node `PaginationLink()` unexpectedly reaches hub `buttonVariants`"
+    },
+    {
+      "source": "Badge()",
+      "target": "badgeVariants",
+      "source_files": [
+        "src/components/ui/badge.tsx",
+        "src/components/ui/badge-variants.ts"
+      ],
+      "confidence": "EXTRACTED",
+      "relation": "calls",
+      "why": "cross-file semantic connection"
+    }
+  ],
+  "questions": [
+    {
+      "type": "bridge_node",
+      "question": "Why does `Button` connect `Community 1` to `Community 0`, `Community 4`?",
+      "why": "High betweenness centrality (0.051) - this node is a cross-community bridge."
+    },
+    {
+      "type": "isolated_nodes",
+      "question": "What connects `AccordionItem`, `AccordionTrigger`, `AccordionContent` to the rest of the system?",
+      "why": "180 weakly-connected nodes found - possible documentation gaps or missing edges."
+    },
+    {
+      "type": "low_cohesion",
+      "question": "Should `Community 0` be split into smaller, more focused modules?",
+      "why": "Cohesion score 0.06 - nodes in this community are weakly interconnected."
+    },
+    {
+      "type": "low_cohesion",
+      "question": "Should `Community 1` be split into smaller, more focused modules?",
+      "why": "Cohesion score 0.09 - nodes in this community are weakly interconnected."
+    },
+    {
+      "type": "low_cohesion",
+      "question": "Should `Community 2` be split into smaller, more focused modules?",
+      "why": "Cohesion score 0.13 - nodes in this community are weakly interconnected."
+    },
+    {
+      "type": "low_cohesion",
+      "question": "Should `Community 3` be split into smaller, more focused modules?",
+      "why": "Cohesion score 0.14 - nodes in this community are weakly interconnected."
+    },
+    {
+      "type": "low_cohesion",
+      "question": "Should `Community 4` be split into smaller, more focused modules?",
+      "why": "Cohesion score 0.14 - nodes in this community are weakly interconnected."
+    }
+  ]
+}

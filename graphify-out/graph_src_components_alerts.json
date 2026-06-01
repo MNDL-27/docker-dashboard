@@ -1,0 +1,336 @@
+{
+  "directed": false,
+  "multigraph": false,
+  "graph": {},
+  "nodes": [
+    {
+      "label": "ActiveAlertsTable.tsx",
+      "file_type": "code",
+      "source_file": "ActiveAlertsTable.tsx",
+      "source_location": "L1",
+      "id": "c_code_docker_watchtower_dash_src_components_alerts_activealertstable_tsx",
+      "community": 1,
+      "norm_label": "activealertstable.tsx"
+    },
+    {
+      "label": "AlertRow",
+      "file_type": "code",
+      "source_file": "ActiveAlertsTable.tsx",
+      "source_location": "L9",
+      "id": "alerts_activealertstable_alertrow",
+      "community": 1,
+      "norm_label": "alertrow"
+    },
+    {
+      "label": "formatEventTime()",
+      "file_type": "code",
+      "source_file": "ActiveAlertsTable.tsx",
+      "source_location": "L11",
+      "id": "alerts_activealertstable_formateventtime",
+      "community": 1,
+      "norm_label": "formateventtime()"
+    },
+    {
+      "label": "describeResource()",
+      "file_type": "code",
+      "source_file": "ActiveAlertsTable.tsx",
+      "source_location": "L15",
+      "id": "alerts_activealertstable_describeresource",
+      "community": 1,
+      "norm_label": "describeresource()"
+    },
+    {
+      "label": "ActiveAlertsTable()",
+      "file_type": "code",
+      "source_file": "ActiveAlertsTable.tsx",
+      "source_location": "L25",
+      "id": "alerts_activealertstable_activealertstable",
+      "community": 1,
+      "norm_label": "activealertstable()"
+    },
+    {
+      "label": "AlertHistoryFeed.tsx",
+      "file_type": "code",
+      "source_file": "AlertHistoryFeed.tsx",
+      "source_location": "L1",
+      "id": "c_code_docker_watchtower_dash_src_components_alerts_alerthistoryfeed_tsx",
+      "community": 3,
+      "norm_label": "alerthistoryfeed.tsx"
+    },
+    {
+      "label": "AlertHistoryFeed()",
+      "file_type": "code",
+      "source_file": "AlertHistoryFeed.tsx",
+      "source_location": "L7",
+      "id": "alerts_alerthistoryfeed_alerthistoryfeed",
+      "community": 3,
+      "norm_label": "alerthistoryfeed()"
+    },
+    {
+      "label": "AlertRuleDialog.tsx",
+      "file_type": "code",
+      "source_file": "AlertRuleDialog.tsx",
+      "source_location": "L1",
+      "id": "c_code_docker_watchtower_dash_src_components_alerts_alertruledialog_tsx",
+      "community": 0,
+      "norm_label": "alertruledialog.tsx"
+    },
+    {
+      "label": "CONDITION_OPTIONS",
+      "file_type": "code",
+      "source_file": "AlertRuleDialog.tsx",
+      "source_location": "L13",
+      "id": "alerts_alertruledialog_condition_options",
+      "community": 0,
+      "norm_label": "condition_options"
+    },
+    {
+      "label": "SEVERITY_OPTIONS",
+      "file_type": "code",
+      "source_file": "AlertRuleDialog.tsx",
+      "source_location": "L21",
+      "id": "alerts_alertruledialog_severity_options",
+      "community": 0,
+      "norm_label": "severity_options"
+    },
+    {
+      "label": "CHANNEL_OPTIONS",
+      "file_type": "code",
+      "source_file": "AlertRuleDialog.tsx",
+      "source_location": "L22",
+      "id": "alerts_alertruledialog_channel_options",
+      "community": 0,
+      "norm_label": "channel_options"
+    },
+    {
+      "label": "toInitialValues()",
+      "file_type": "code",
+      "source_file": "AlertRuleDialog.tsx",
+      "source_location": "L24",
+      "id": "alerts_alertruledialog_toinitialvalues",
+      "community": 0,
+      "norm_label": "toinitialvalues()"
+    },
+    {
+      "label": "AlertRuleDialog()",
+      "file_type": "code",
+      "source_file": "AlertRuleDialog.tsx",
+      "source_location": "L36",
+      "id": "alerts_alertruledialog_alertruledialog",
+      "community": 0,
+      "norm_label": "alertruledialog()"
+    },
+    {
+      "label": "AlertRulesPanel.tsx",
+      "file_type": "code",
+      "source_file": "AlertRulesPanel.tsx",
+      "source_location": "L1",
+      "id": "c_code_docker_watchtower_dash_src_components_alerts_alertrulespanel_tsx",
+      "community": 2,
+      "norm_label": "alertrulespanel.tsx"
+    },
+    {
+      "label": "formatCondition()",
+      "file_type": "code",
+      "source_file": "AlertRulesPanel.tsx",
+      "source_location": "L10",
+      "id": "alerts_alertrulespanel_formatcondition",
+      "community": 2,
+      "norm_label": "formatcondition()"
+    },
+    {
+      "label": "AlertRulesPanel()",
+      "file_type": "code",
+      "source_file": "AlertRulesPanel.tsx",
+      "source_location": "L18",
+      "id": "alerts_alertrulespanel_alertrulespanel",
+      "community": 2,
+      "norm_label": "alertrulespanel()"
+    },
+    {
+      "label": "AlertsSummaryCards.tsx",
+      "file_type": "code",
+      "source_file": "AlertsSummaryCards.tsx",
+      "source_location": "L1",
+      "id": "c_code_docker_watchtower_dash_src_components_alerts_alertssummarycards_tsx",
+      "community": 4,
+      "norm_label": "alertssummarycards.tsx"
+    },
+    {
+      "label": "AlertsSummaryCards()",
+      "file_type": "code",
+      "source_file": "AlertsSummaryCards.tsx",
+      "source_location": "L6",
+      "id": "alerts_alertssummarycards_alertssummarycards",
+      "community": 4,
+      "norm_label": "alertssummarycards()"
+    }
+  ],
+  "links": [
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "ActiveAlertsTable.tsx",
+      "source_location": "L9",
+      "weight": 1.0,
+      "source": "c_code_docker_watchtower_dash_src_components_alerts_activealertstable_tsx",
+      "target": "alerts_activealertstable_alertrow",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "ActiveAlertsTable.tsx",
+      "source_location": "L11",
+      "weight": 1.0,
+      "source": "c_code_docker_watchtower_dash_src_components_alerts_activealertstable_tsx",
+      "target": "alerts_activealertstable_formateventtime",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "ActiveAlertsTable.tsx",
+      "source_location": "L15",
+      "weight": 1.0,
+      "source": "c_code_docker_watchtower_dash_src_components_alerts_activealertstable_tsx",
+      "target": "alerts_activealertstable_describeresource",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "ActiveAlertsTable.tsx",
+      "source_location": "L25",
+      "weight": 1.0,
+      "source": "c_code_docker_watchtower_dash_src_components_alerts_activealertstable_tsx",
+      "target": "alerts_activealertstable_activealertstable",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "AlertHistoryFeed.tsx",
+      "source_location": "L7",
+      "weight": 1.0,
+      "source": "c_code_docker_watchtower_dash_src_components_alerts_alerthistoryfeed_tsx",
+      "target": "alerts_alerthistoryfeed_alerthistoryfeed",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "AlertRuleDialog.tsx",
+      "source_location": "L13",
+      "weight": 1.0,
+      "source": "c_code_docker_watchtower_dash_src_components_alerts_alertruledialog_tsx",
+      "target": "alerts_alertruledialog_condition_options",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "AlertRuleDialog.tsx",
+      "source_location": "L21",
+      "weight": 1.0,
+      "source": "c_code_docker_watchtower_dash_src_components_alerts_alertruledialog_tsx",
+      "target": "alerts_alertruledialog_severity_options",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "AlertRuleDialog.tsx",
+      "source_location": "L22",
+      "weight": 1.0,
+      "source": "c_code_docker_watchtower_dash_src_components_alerts_alertruledialog_tsx",
+      "target": "alerts_alertruledialog_channel_options",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "AlertRuleDialog.tsx",
+      "source_location": "L24",
+      "weight": 1.0,
+      "source": "c_code_docker_watchtower_dash_src_components_alerts_alertruledialog_tsx",
+      "target": "alerts_alertruledialog_toinitialvalues",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "AlertRuleDialog.tsx",
+      "source_location": "L36",
+      "weight": 1.0,
+      "source": "c_code_docker_watchtower_dash_src_components_alerts_alertruledialog_tsx",
+      "target": "alerts_alertruledialog_alertruledialog",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "AlertRulesPanel.tsx",
+      "source_location": "L6",
+      "weight": 1.0,
+      "source": "c_code_docker_watchtower_dash_src_components_alerts_alertrulespanel_tsx",
+      "target": "c_code_docker_watchtower_dash_src_components_alerts_alertruledialog_tsx",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "AlertRuleDialog.tsx",
+      "source_location": "L53",
+      "weight": 1.0,
+      "source": "alerts_alertruledialog_alertruledialog",
+      "target": "alerts_alertruledialog_toinitialvalues",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "AlertRulesPanel.tsx",
+      "source_location": "L6",
+      "weight": 1.0,
+      "source": "c_code_docker_watchtower_dash_src_components_alerts_alertrulespanel_tsx",
+      "target": "alerts_alertruledialog_alertruledialog",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "AlertRulesPanel.tsx",
+      "source_location": "L10",
+      "weight": 1.0,
+      "source": "c_code_docker_watchtower_dash_src_components_alerts_alertrulespanel_tsx",
+      "target": "alerts_alertrulespanel_formatcondition",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "AlertRulesPanel.tsx",
+      "source_location": "L18",
+      "weight": 1.0,
+      "source": "c_code_docker_watchtower_dash_src_components_alerts_alertrulespanel_tsx",
+      "target": "alerts_alertrulespanel_alertrulespanel",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "AlertsSummaryCards.tsx",
+      "source_location": "L6",
+      "weight": 1.0,
+      "source": "c_code_docker_watchtower_dash_src_components_alerts_alertssummarycards_tsx",
+      "target": "alerts_alertssummarycards_alertssummarycards",
+      "confidence_score": 1.0
+    }
+  ],
+  "hyperedges": [],
+  "built_at_commit": "ed28244c211be7b6c2b23ccf8ca4f5a7352c3e35"
+}

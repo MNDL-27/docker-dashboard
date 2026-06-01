@@ -1,0 +1,177 @@
+{
+  "communities": {
+    "0": [
+      "c_code_docker_watchtower_dash_src_lib_error_sanitizer_test_ts",
+      "c_code_docker_watchtower_dash_src_lib_error_sanitizer_ts",
+      "lib_error_sanitizer_agent_auth_patterns",
+      "lib_error_sanitizer_cloudflare_patterns",
+      "lib_error_sanitizer_docker_socket_patterns",
+      "lib_error_sanitizer_dockerdash_edge_patterns",
+      "lib_error_sanitizer_isagentautherror",
+      "lib_error_sanitizer_iscloudflareerror",
+      "lib_error_sanitizer_isdockerdashedgeerror",
+      "lib_error_sanitizer_isdockersocketerror",
+      "lib_error_sanitizer_istimeouterror",
+      "lib_error_sanitizer_isunreachableerror",
+      "lib_error_sanitizer_sanitizeconnectionerror",
+      "lib_error_sanitizer_sanitizederror",
+      "lib_error_sanitizer_stringifystructurederror",
+      "lib_error_sanitizer_test_error",
+      "lib_error_sanitizer_timeout_patterns",
+      "lib_error_sanitizer_unreachable_patterns"
+    ],
+    "1": [
+      "c_code_docker_watchtower_dash_src_lib_api_test_ts",
+      "c_code_docker_watchtower_dash_src_lib_api_ts",
+      "lib_api_apierror",
+      "lib_api_apierror_constructor",
+      "lib_api_apierrorbody",
+      "lib_api_apifetch",
+      "lib_api_apifetchoptions",
+      "lib_api_buildapierrormessage",
+      "lib_api_clerkglobal",
+      "lib_api_clerksession",
+      "lib_api_decodehtmlentities",
+      "lib_api_getclerkglobal",
+      "lib_api_getclerksessiontoken",
+      "lib_api_summarizeapierrortext",
+      "lib_api_test_fetchmock",
+      "lib_api_trimerrortext",
+      "lib_api_wait"
+    ],
+    "2": [
+      "c_code_docker_watchtower_dash_src_lib_host_health_state_test_ts",
+      "c_code_docker_watchtower_dash_src_lib_host_health_state_ts",
+      "lib_host_health_state_failurestatusforcount",
+      "lib_host_health_state_gethostalertcopy",
+      "lib_host_health_state_gethoststatusappearance",
+      "lib_host_health_state_isreadablehoststatus",
+      "lib_host_health_state_isunhealthyhoststatus",
+      "lib_host_health_state_normalizedhoststatus",
+      "lib_host_health_state_normalizehoststatus",
+      "lib_host_health_state_parsestalethresholdminutes",
+      "lib_host_health_state_shouldmarkhoststale"
+    ],
+    "3": [
+      "c_code_docker_watchtower_dash_src_lib_hostname_ts",
+      "lib_hostname_getapporigin",
+      "lib_hostname_getpublicorigin",
+      "lib_hostname_isapphost",
+      "lib_hostname_isappsubdomain",
+      "lib_hostname_isdocssubdomain",
+      "lib_hostname_islocaldev",
+      "lib_hostname_isnetlifypreview",
+      "lib_hostname_ispreviewauthbypassenabled"
+    ],
+    "4": [
+      "c_code_docker_watchtower_dash_src_lib_dashboard_summary_ts",
+      "lib_dashboard_summary_builddashboardstats",
+      "lib_dashboard_summary_dashboardstats",
+      "lib_dashboard_summary_isrecord",
+      "lib_dashboard_summary_normalizedashboardcontainers",
+      "lib_dashboard_summary_rawcontainer",
+      "lib_dashboard_summary_tostringarray"
+    ],
+    "5": [
+      "c_code_docker_watchtower_dash_src_lib_pricing_ts",
+      "lib_pricing_getcheckoutpriceid",
+      "lib_pricing_getpricingplan",
+      "lib_pricing_pricingcomparisonrows",
+      "lib_pricing_pricingplan",
+      "lib_pricing_pricingplans"
+    ],
+    "6": [
+      "c_code_docker_watchtower_dash_src_lib_onboarding_gate_ts",
+      "lib_onboarding_gate_deriveneedsonboarding",
+      "lib_onboarding_gate_normalizeonboardingstatus",
+      "lib_onboarding_gate_onboardingstatus"
+    ],
+    "7": [
+      "c_code_docker_watchtower_dash_src_lib_auth_redirect_ts",
+      "lib_auth_redirect_getsafenextpath"
+    ],
+    "8": [
+      "c_code_docker_watchtower_dash_src_lib_utils_ts",
+      "lib_utils_cn"
+    ],
+    "9": [
+      "c_code_docker_watchtower_dash_src_lib_agent_release_ts"
+    ],
+    "10": [
+      "c_code_docker_watchtower_dash_src_lib_agent_version_ts"
+    ]
+  },
+  "cohesion": {
+    "0": 0.17,
+    "1": 0.19,
+    "2": 0.35,
+    "3": 0.47,
+    "4": 0.33,
+    "5": 0.33,
+    "6": 0.5,
+    "7": 1.0,
+    "8": 1.0,
+    "9": 1.0,
+    "10": 1.0
+  },
+  "gods": [
+    {
+      "id": "lib_error_sanitizer_sanitizeconnectionerror",
+      "label": "sanitizeConnectionError()",
+      "degree": 8
+    },
+    {
+      "id": "lib_host_health_state_normalizehoststatus",
+      "label": "normalizeHostStatus()",
+      "degree": 6
+    },
+    {
+      "id": "lib_hostname_islocaldev",
+      "label": "isLocalDev()",
+      "degree": 6
+    },
+    {
+      "id": "lib_api_summarizeapierrortext",
+      "label": "summarizeApiErrorText()",
+      "degree": 5
+    },
+    {
+      "id": "lib_hostname_isnetlifypreview",
+      "label": "isNetlifyPreview()",
+      "degree": 5
+    },
+    {
+      "id": "lib_api_buildapierrormessage",
+      "label": "buildApiErrorMessage()",
+      "degree": 4
+    },
+    {
+      "id": "lib_api_getclerksessiontoken",
+      "label": "getClerkSessionToken()",
+      "degree": 4
+    },
+    {
+      "id": "lib_host_health_state_isunhealthyhoststatus",
+      "label": "isUnhealthyHostStatus()",
+      "degree": 4
+    },
+    {
+      "id": "lib_host_health_state_gethostalertcopy",
+      "label": "getHostAlertCopy()",
+      "degree": 4
+    },
+    {
+      "id": "lib_api_apifetch",
+      "label": "apiFetch()",
+      "degree": 3
+    }
+  ],
+  "surprises": [],
+  "questions": [
+    {
+      "type": "isolated_nodes",
+      "question": "What connects `fetchMock`, `ClerkSession`, `ClerkGlobal` to the rest of the system?",
+      "why": "20 weakly-connected nodes found - possible documentation gaps or missing edges."
+    }
+  ]
+}

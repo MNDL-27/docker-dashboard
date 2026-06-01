@@ -1,0 +1,1154 @@
+{
+  "nodes": [
+    {
+      "id": "c_code_docker_watchtower_dash_src_pages_onboarding_copyblock_tsx",
+      "label": "CopyBlock.tsx",
+      "file_type": "code",
+      "source_file": "CopyBlock.tsx",
+      "source_location": "L1"
+    },
+    {
+      "id": "onboarding_copyblock_copyblock",
+      "label": "CopyBlock()",
+      "file_type": "code",
+      "source_file": "CopyBlock.tsx",
+      "source_location": "L9"
+    },
+    {
+      "id": "c_code_docker_watchtower_dash_src_pages_onboarding_errorbanner_tsx",
+      "label": "ErrorBanner.tsx",
+      "file_type": "code",
+      "source_file": "ErrorBanner.tsx",
+      "source_location": "L1"
+    },
+    {
+      "id": "onboarding_errorbanner_errorbanner",
+      "label": "ErrorBanner()",
+      "file_type": "code",
+      "source_file": "ErrorBanner.tsx",
+      "source_location": "L4"
+    },
+    {
+      "id": "onboarding_errorbanner_errorbox",
+      "label": "ErrorBox()",
+      "file_type": "code",
+      "source_file": "ErrorBanner.tsx",
+      "source_location": "L14"
+    },
+    {
+      "id": "c_code_docker_watchtower_dash_src_pages_onboarding_index_ts",
+      "label": "index.ts",
+      "file_type": "code",
+      "source_file": "index.ts",
+      "source_location": "L1"
+    },
+    {
+      "id": "c_code_docker_watchtower_dash_src_pages_onboarding_loadingcard_tsx",
+      "label": "LoadingCard.tsx",
+      "file_type": "code",
+      "source_file": "LoadingCard.tsx",
+      "source_location": "L1"
+    },
+    {
+      "id": "onboarding_loadingcard_props",
+      "label": "Props",
+      "file_type": "code",
+      "source_file": "LoadingCard.tsx",
+      "source_location": "L3"
+    },
+    {
+      "id": "onboarding_loadingcard_loadingcard",
+      "label": "LoadingCard()",
+      "file_type": "code",
+      "source_file": "LoadingCard.tsx",
+      "source_location": "L9"
+    },
+    {
+      "id": "c_code_docker_watchtower_dash_src_pages_onboarding_stepcomplete_tsx",
+      "label": "StepComplete.tsx",
+      "file_type": "code",
+      "source_file": "StepComplete.tsx",
+      "source_location": "L1"
+    },
+    {
+      "id": "onboarding_stepcomplete_props",
+      "label": "Props",
+      "file_type": "code",
+      "source_file": "StepComplete.tsx",
+      "source_location": "L4"
+    },
+    {
+      "id": "onboarding_stepcomplete_stepcomplete",
+      "label": "StepComplete()",
+      "file_type": "code",
+      "source_file": "StepComplete.tsx",
+      "source_location": "L9"
+    },
+    {
+      "id": "c_code_docker_watchtower_dash_src_pages_onboarding_stepcreateorg_tsx",
+      "label": "StepCreateOrg.tsx",
+      "file_type": "code",
+      "source_file": "StepCreateOrg.tsx",
+      "source_location": "L1"
+    },
+    {
+      "id": "onboarding_stepcreateorg_props",
+      "label": "Props",
+      "file_type": "code",
+      "source_file": "StepCreateOrg.tsx",
+      "source_location": "L7"
+    },
+    {
+      "id": "onboarding_stepcreateorg_stepcreateorg",
+      "label": "StepCreateOrg()",
+      "file_type": "code",
+      "source_file": "StepCreateOrg.tsx",
+      "source_location": "L15"
+    },
+    {
+      "id": "c_code_docker_watchtower_dash_src_pages_onboarding_stephostbasics_tsx",
+      "label": "StepHostBasics.tsx",
+      "file_type": "code",
+      "source_file": "StepHostBasics.tsx",
+      "source_location": "L1"
+    },
+    {
+      "id": "onboarding_stephostbasics_mode_icons",
+      "label": "MODE_ICONS",
+      "file_type": "code",
+      "source_file": "StepHostBasics.tsx",
+      "source_location": "L10"
+    },
+    {
+      "id": "onboarding_stephostbasics_props",
+      "label": "Props",
+      "file_type": "code",
+      "source_file": "StepHostBasics.tsx",
+      "source_location": "L15"
+    },
+    {
+      "id": "onboarding_stephostbasics_stephostbasics",
+      "label": "StepHostBasics()",
+      "file_type": "code",
+      "source_file": "StepHostBasics.tsx",
+      "source_location": "L29"
+    },
+    {
+      "id": "onboarding_stephostbasics_connectionmodeselector",
+      "label": "ConnectionModeSelector()",
+      "file_type": "code",
+      "source_file": "StepHostBasics.tsx",
+      "source_location": "L121"
+    },
+    {
+      "id": "c_code_docker_watchtower_dash_src_pages_onboarding_stephostcredentials_tsx",
+      "label": "StepHostCredentials.tsx",
+      "file_type": "code",
+      "source_file": "StepHostCredentials.tsx",
+      "source_location": "L1"
+    },
+    {
+      "id": "onboarding_stephostcredentials_props",
+      "label": "Props",
+      "file_type": "code",
+      "source_file": "StepHostCredentials.tsx",
+      "source_location": "L7"
+    },
+    {
+      "id": "onboarding_stephostcredentials_copycommand",
+      "label": "CopyCommand()",
+      "file_type": "code",
+      "source_file": "StepHostCredentials.tsx",
+      "source_location": "L23"
+    },
+    {
+      "id": "onboarding_stephostcredentials_stephostcredentials",
+      "label": "StepHostCredentials()",
+      "file_type": "code",
+      "source_file": "StepHostCredentials.tsx",
+      "source_location": "L67"
+    },
+    {
+      "id": "c_code_docker_watchtower_dash_src_pages_onboarding_steptestfailed_tsx",
+      "label": "StepTestFailed.tsx",
+      "file_type": "code",
+      "source_file": "StepTestFailed.tsx",
+      "source_location": "L1"
+    },
+    {
+      "id": "onboarding_steptestfailed_props",
+      "label": "Props",
+      "file_type": "code",
+      "source_file": "StepTestFailed.tsx",
+      "source_location": "L4"
+    },
+    {
+      "id": "onboarding_steptestfailed_steptestfailed",
+      "label": "StepTestFailed()",
+      "file_type": "code",
+      "source_file": "StepTestFailed.tsx",
+      "source_location": "L12"
+    },
+    {
+      "id": "c_code_docker_watchtower_dash_src_pages_onboarding_useonboardingstate_ts",
+      "label": "useOnboardingState.ts",
+      "file_type": "code",
+      "source_file": "useOnboardingState.ts",
+      "source_location": "L1"
+    },
+    {
+      "id": "onboarding_useonboardingstate_onboardingstep",
+      "label": "OnboardingStep",
+      "file_type": "code",
+      "source_file": "useOnboardingState.ts",
+      "source_location": "L9"
+    },
+    {
+      "id": "onboarding_useonboardingstate_steps",
+      "label": "STEPS",
+      "file_type": "code",
+      "source_file": "useOnboardingState.ts",
+      "source_location": "L20"
+    },
+    {
+      "id": "onboarding_useonboardingstate_connection_modes",
+      "label": "CONNECTION_MODES",
+      "file_type": "code",
+      "source_file": "useOnboardingState.ts",
+      "source_location": "L22"
+    },
+    {
+      "id": "onboarding_useonboardingstate_isstep0submitting",
+      "label": "isStep0Submitting()",
+      "file_type": "code",
+      "source_file": "useOnboardingState.ts",
+      "source_location": "L27"
+    },
+    {
+      "id": "onboarding_useonboardingstate_isstep1loading",
+      "label": "isStep1Loading()",
+      "file_type": "code",
+      "source_file": "useOnboardingState.ts",
+      "source_location": "L31"
+    },
+    {
+      "id": "onboarding_useonboardingstate_getprogresswidth",
+      "label": "getProgressWidth()",
+      "file_type": "code",
+      "source_file": "useOnboardingState.ts",
+      "source_location": "L35"
+    },
+    {
+      "id": "onboarding_useonboardingstate_markonboardingstatus",
+      "label": "markOnboardingStatus()",
+      "file_type": "code",
+      "source_file": "useOnboardingState.ts",
+      "source_location": "L43"
+    },
+    {
+      "id": "onboarding_useonboardingstate_authsyncstatus",
+      "label": "AuthSyncStatus",
+      "file_type": "code",
+      "source_file": "useOnboardingState.ts",
+      "source_location": "L94"
+    },
+    {
+      "id": "onboarding_useonboardingstate_checkauthsyncstatus",
+      "label": "checkAuthSyncStatus()",
+      "file_type": "code",
+      "source_file": "useOnboardingState.ts",
+      "source_location": "L99"
+    },
+    {
+      "id": "onboarding_useonboardingstate_syncpollingresult",
+      "label": "SyncPollingResult",
+      "file_type": "code",
+      "source_file": "useOnboardingState.ts",
+      "source_location": "L128"
+    },
+    {
+      "id": "onboarding_useonboardingstate_pollfororganizationsync",
+      "label": "pollForOrganizationSync()",
+      "file_type": "code",
+      "source_file": "useOnboardingState.ts",
+      "source_location": "L134"
+    },
+    {
+      "id": "onboarding_useonboardingstate_useorganizationsynceffect",
+      "label": "useOrganizationSyncEffect()",
+      "file_type": "code",
+      "source_file": "useOnboardingState.ts",
+      "source_location": "L159"
+    },
+    {
+      "id": "onboarding_useonboardingstate_useonboardingstate",
+      "label": "useOnboardingState()",
+      "file_type": "code",
+      "source_file": "useOnboardingState.ts",
+      "source_location": "L201"
+    }
+  ],
+  "edges": [
+    {
+      "source": "c_code_docker_watchtower_dash_src_pages_onboarding_copyblock_tsx",
+      "target": "react",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "CopyBlock.tsx",
+      "source_location": "L1",
+      "weight": 1.0
+    },
+    {
+      "source": "c_code_docker_watchtower_dash_src_pages_onboarding_copyblock_tsx",
+      "target": "lucide_react",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "CopyBlock.tsx",
+      "source_location": "L2",
+      "weight": 1.0
+    },
+    {
+      "source": "c_code_docker_watchtower_dash_src_pages_onboarding_copyblock_tsx",
+      "target": "c_code_docker_watchtower_dash_src_components_ui_use_toast_ts",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "CopyBlock.tsx",
+      "source_location": "L3",
+      "weight": 1.0
+    },
+    {
+      "source": "c_code_docker_watchtower_dash_src_pages_onboarding_copyblock_tsx",
+      "target": "ui_use_toast_usetoast",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "CopyBlock.tsx",
+      "source_location": "L3",
+      "weight": 1.0
+    },
+    {
+      "source": "c_code_docker_watchtower_dash_src_pages_onboarding_copyblock_tsx",
+      "target": "onboarding_copyblock_copyblock",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "CopyBlock.tsx",
+      "source_location": "L9",
+      "weight": 1.0
+    },
+    {
+      "source": "c_code_docker_watchtower_dash_src_pages_onboarding_errorbanner_tsx",
+      "target": "lucide_react",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "ErrorBanner.tsx",
+      "source_location": "L1",
+      "weight": 1.0
+    },
+    {
+      "source": "c_code_docker_watchtower_dash_src_pages_onboarding_errorbanner_tsx",
+      "target": "onboarding_errorbanner_errorbanner",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "ErrorBanner.tsx",
+      "source_location": "L4",
+      "weight": 1.0
+    },
+    {
+      "source": "c_code_docker_watchtower_dash_src_pages_onboarding_errorbanner_tsx",
+      "target": "onboarding_errorbanner_errorbox",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "ErrorBanner.tsx",
+      "source_location": "L14",
+      "weight": 1.0
+    },
+    {
+      "source": "c_code_docker_watchtower_dash_src_pages_onboarding_loadingcard_tsx",
+      "target": "lucide_react",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "LoadingCard.tsx",
+      "source_location": "L1",
+      "weight": 1.0
+    },
+    {
+      "source": "c_code_docker_watchtower_dash_src_pages_onboarding_loadingcard_tsx",
+      "target": "onboarding_loadingcard_props",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "LoadingCard.tsx",
+      "source_location": "L3",
+      "weight": 1.0
+    },
+    {
+      "source": "c_code_docker_watchtower_dash_src_pages_onboarding_loadingcard_tsx",
+      "target": "onboarding_loadingcard_loadingcard",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "LoadingCard.tsx",
+      "source_location": "L9",
+      "weight": 1.0
+    },
+    {
+      "source": "c_code_docker_watchtower_dash_src_pages_onboarding_stepcomplete_tsx",
+      "target": "lucide_react",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "StepComplete.tsx",
+      "source_location": "L1",
+      "weight": 1.0
+    },
+    {
+      "source": "c_code_docker_watchtower_dash_src_pages_onboarding_stepcomplete_tsx",
+      "target": "c_code_docker_watchtower_dash_src_components_ui_button_tsx",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "StepComplete.tsx",
+      "source_location": "L2",
+      "weight": 1.0
+    },
+    {
+      "source": "c_code_docker_watchtower_dash_src_pages_onboarding_stepcomplete_tsx",
+      "target": "ui_button_button",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "StepComplete.tsx",
+      "source_location": "L2",
+      "weight": 1.0
+    },
+    {
+      "source": "c_code_docker_watchtower_dash_src_pages_onboarding_stepcomplete_tsx",
+      "target": "onboarding_stepcomplete_props",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "StepComplete.tsx",
+      "source_location": "L4",
+      "weight": 1.0
+    },
+    {
+      "source": "c_code_docker_watchtower_dash_src_pages_onboarding_stepcomplete_tsx",
+      "target": "onboarding_stepcomplete_stepcomplete",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "StepComplete.tsx",
+      "source_location": "L9",
+      "weight": 1.0
+    },
+    {
+      "source": "c_code_docker_watchtower_dash_src_pages_onboarding_stepcreateorg_tsx",
+      "target": "lucide_react",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "StepCreateOrg.tsx",
+      "source_location": "L1",
+      "weight": 1.0
+    },
+    {
+      "source": "c_code_docker_watchtower_dash_src_pages_onboarding_stepcreateorg_tsx",
+      "target": "c_code_docker_watchtower_dash_src_components_ui_button_tsx",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "StepCreateOrg.tsx",
+      "source_location": "L2",
+      "weight": 1.0
+    },
+    {
+      "source": "c_code_docker_watchtower_dash_src_pages_onboarding_stepcreateorg_tsx",
+      "target": "ui_button_button",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "StepCreateOrg.tsx",
+      "source_location": "L2",
+      "weight": 1.0
+    },
+    {
+      "source": "c_code_docker_watchtower_dash_src_pages_onboarding_stepcreateorg_tsx",
+      "target": "c_code_docker_watchtower_dash_src_components_ui_input_tsx",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "StepCreateOrg.tsx",
+      "source_location": "L3",
+      "weight": 1.0
+    },
+    {
+      "source": "c_code_docker_watchtower_dash_src_pages_onboarding_stepcreateorg_tsx",
+      "target": "ui_input_input",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "StepCreateOrg.tsx",
+      "source_location": "L3",
+      "weight": 1.0
+    },
+    {
+      "source": "c_code_docker_watchtower_dash_src_pages_onboarding_stepcreateorg_tsx",
+      "target": "c_code_docker_watchtower_dash_src_components_ui_label_tsx",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "StepCreateOrg.tsx",
+      "source_location": "L4",
+      "weight": 1.0
+    },
+    {
+      "source": "c_code_docker_watchtower_dash_src_pages_onboarding_stepcreateorg_tsx",
+      "target": "ui_label_label",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "StepCreateOrg.tsx",
+      "source_location": "L4",
+      "weight": 1.0
+    },
+    {
+      "source": "c_code_docker_watchtower_dash_src_pages_onboarding_stepcreateorg_tsx",
+      "target": "c_code_docker_watchtower_dash_src_pages_onboarding_errorbanner_tsx",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "StepCreateOrg.tsx",
+      "source_location": "L5",
+      "weight": 1.0
+    },
+    {
+      "source": "c_code_docker_watchtower_dash_src_pages_onboarding_stepcreateorg_tsx",
+      "target": "onboarding_errorbanner_errorbox",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "StepCreateOrg.tsx",
+      "source_location": "L5",
+      "weight": 1.0
+    },
+    {
+      "source": "c_code_docker_watchtower_dash_src_pages_onboarding_stepcreateorg_tsx",
+      "target": "onboarding_stepcreateorg_props",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "StepCreateOrg.tsx",
+      "source_location": "L7",
+      "weight": 1.0
+    },
+    {
+      "source": "c_code_docker_watchtower_dash_src_pages_onboarding_stepcreateorg_tsx",
+      "target": "onboarding_stepcreateorg_stepcreateorg",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "StepCreateOrg.tsx",
+      "source_location": "L15",
+      "weight": 1.0
+    },
+    {
+      "source": "c_code_docker_watchtower_dash_src_pages_onboarding_stephostbasics_tsx",
+      "target": "lucide_react",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "StepHostBasics.tsx",
+      "source_location": "L1",
+      "weight": 1.0
+    },
+    {
+      "source": "c_code_docker_watchtower_dash_src_pages_onboarding_stephostbasics_tsx",
+      "target": "c_code_docker_watchtower_dash_src_components_ui_button_tsx",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "StepHostBasics.tsx",
+      "source_location": "L2",
+      "weight": 1.0
+    },
+    {
+      "source": "c_code_docker_watchtower_dash_src_pages_onboarding_stephostbasics_tsx",
+      "target": "ui_button_button",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "StepHostBasics.tsx",
+      "source_location": "L2",
+      "weight": 1.0
+    },
+    {
+      "source": "c_code_docker_watchtower_dash_src_pages_onboarding_stephostbasics_tsx",
+      "target": "c_code_docker_watchtower_dash_src_components_ui_input_tsx",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "StepHostBasics.tsx",
+      "source_location": "L3",
+      "weight": 1.0
+    },
+    {
+      "source": "c_code_docker_watchtower_dash_src_pages_onboarding_stephostbasics_tsx",
+      "target": "ui_input_input",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "StepHostBasics.tsx",
+      "source_location": "L3",
+      "weight": 1.0
+    },
+    {
+      "source": "c_code_docker_watchtower_dash_src_pages_onboarding_stephostbasics_tsx",
+      "target": "c_code_docker_watchtower_dash_src_components_ui_label_tsx",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "StepHostBasics.tsx",
+      "source_location": "L4",
+      "weight": 1.0
+    },
+    {
+      "source": "c_code_docker_watchtower_dash_src_pages_onboarding_stephostbasics_tsx",
+      "target": "ui_label_label",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "StepHostBasics.tsx",
+      "source_location": "L4",
+      "weight": 1.0
+    },
+    {
+      "source": "c_code_docker_watchtower_dash_src_pages_onboarding_stephostbasics_tsx",
+      "target": "c_code_docker_watchtower_dash_src_pages_onboarding_errorbanner_tsx",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "StepHostBasics.tsx",
+      "source_location": "L5",
+      "weight": 1.0
+    },
+    {
+      "source": "c_code_docker_watchtower_dash_src_pages_onboarding_stephostbasics_tsx",
+      "target": "onboarding_errorbanner_errorbanner",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "StepHostBasics.tsx",
+      "source_location": "L5",
+      "weight": 1.0
+    },
+    {
+      "source": "c_code_docker_watchtower_dash_src_pages_onboarding_stephostbasics_tsx",
+      "target": "c_code_docker_watchtower_dash_src_pages_onboarding_useonboardingstate_ts",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "StepHostBasics.tsx",
+      "source_location": "L6",
+      "weight": 1.0
+    },
+    {
+      "source": "c_code_docker_watchtower_dash_src_pages_onboarding_stephostbasics_tsx",
+      "target": "onboarding_useonboardingstate_connection_modes",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "StepHostBasics.tsx",
+      "source_location": "L6",
+      "weight": 1.0
+    },
+    {
+      "source": "c_code_docker_watchtower_dash_src_pages_onboarding_stephostbasics_tsx",
+      "target": "c_code_docker_watchtower_dash_src_types_database_ts",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "StepHostBasics.tsx",
+      "source_location": "L7",
+      "weight": 1.0
+    },
+    {
+      "source": "c_code_docker_watchtower_dash_src_pages_onboarding_stephostbasics_tsx",
+      "target": "types_database_connectionmode",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "StepHostBasics.tsx",
+      "source_location": "L7",
+      "weight": 1.0
+    },
+    {
+      "source": "c_code_docker_watchtower_dash_src_pages_onboarding_stephostbasics_tsx",
+      "target": "onboarding_stephostbasics_mode_icons",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "StepHostBasics.tsx",
+      "source_location": "L10",
+      "weight": 1.0
+    },
+    {
+      "source": "c_code_docker_watchtower_dash_src_pages_onboarding_stephostbasics_tsx",
+      "target": "onboarding_stephostbasics_props",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "StepHostBasics.tsx",
+      "source_location": "L15",
+      "weight": 1.0
+    },
+    {
+      "source": "c_code_docker_watchtower_dash_src_pages_onboarding_stephostbasics_tsx",
+      "target": "onboarding_stephostbasics_stephostbasics",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "StepHostBasics.tsx",
+      "source_location": "L29",
+      "weight": 1.0
+    },
+    {
+      "source": "c_code_docker_watchtower_dash_src_pages_onboarding_stephostbasics_tsx",
+      "target": "onboarding_stephostbasics_connectionmodeselector",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "StepHostBasics.tsx",
+      "source_location": "L121",
+      "weight": 1.0
+    },
+    {
+      "source": "c_code_docker_watchtower_dash_src_pages_onboarding_stephostcredentials_tsx",
+      "target": "react",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "StepHostCredentials.tsx",
+      "source_location": "L1",
+      "weight": 1.0
+    },
+    {
+      "source": "c_code_docker_watchtower_dash_src_pages_onboarding_stephostcredentials_tsx",
+      "target": "lucide_react",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "StepHostCredentials.tsx",
+      "source_location": "L2",
+      "weight": 1.0
+    },
+    {
+      "source": "c_code_docker_watchtower_dash_src_pages_onboarding_stephostcredentials_tsx",
+      "target": "c_code_docker_watchtower_dash_src_components_ui_button_tsx",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "StepHostCredentials.tsx",
+      "source_location": "L3",
+      "weight": 1.0
+    },
+    {
+      "source": "c_code_docker_watchtower_dash_src_pages_onboarding_stephostcredentials_tsx",
+      "target": "ui_button_button",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "StepHostCredentials.tsx",
+      "source_location": "L3",
+      "weight": 1.0
+    },
+    {
+      "source": "c_code_docker_watchtower_dash_src_pages_onboarding_stephostcredentials_tsx",
+      "target": "c_code_docker_watchtower_dash_src_pages_onboarding_errorbanner_tsx",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "StepHostCredentials.tsx",
+      "source_location": "L4",
+      "weight": 1.0
+    },
+    {
+      "source": "c_code_docker_watchtower_dash_src_pages_onboarding_stephostcredentials_tsx",
+      "target": "onboarding_errorbanner_errorbanner",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "StepHostCredentials.tsx",
+      "source_location": "L4",
+      "weight": 1.0
+    },
+    {
+      "source": "c_code_docker_watchtower_dash_src_pages_onboarding_stephostcredentials_tsx",
+      "target": "c_code_docker_watchtower_dash_src_types_database_ts",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "StepHostCredentials.tsx",
+      "source_location": "L5",
+      "weight": 1.0
+    },
+    {
+      "source": "c_code_docker_watchtower_dash_src_pages_onboarding_stephostcredentials_tsx",
+      "target": "types_database_connectionmode",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "StepHostCredentials.tsx",
+      "source_location": "L5",
+      "weight": 1.0
+    },
+    {
+      "source": "c_code_docker_watchtower_dash_src_pages_onboarding_stephostcredentials_tsx",
+      "target": "onboarding_stephostcredentials_props",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "StepHostCredentials.tsx",
+      "source_location": "L7",
+      "weight": 1.0
+    },
+    {
+      "source": "c_code_docker_watchtower_dash_src_pages_onboarding_stephostcredentials_tsx",
+      "target": "onboarding_stephostcredentials_copycommand",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "StepHostCredentials.tsx",
+      "source_location": "L23",
+      "weight": 1.0
+    },
+    {
+      "source": "c_code_docker_watchtower_dash_src_pages_onboarding_stephostcredentials_tsx",
+      "target": "onboarding_stephostcredentials_stephostcredentials",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "StepHostCredentials.tsx",
+      "source_location": "L67",
+      "weight": 1.0
+    },
+    {
+      "source": "c_code_docker_watchtower_dash_src_pages_onboarding_steptestfailed_tsx",
+      "target": "lucide_react",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "StepTestFailed.tsx",
+      "source_location": "L1",
+      "weight": 1.0
+    },
+    {
+      "source": "c_code_docker_watchtower_dash_src_pages_onboarding_steptestfailed_tsx",
+      "target": "c_code_docker_watchtower_dash_src_components_ui_button_tsx",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "StepTestFailed.tsx",
+      "source_location": "L2",
+      "weight": 1.0
+    },
+    {
+      "source": "c_code_docker_watchtower_dash_src_pages_onboarding_steptestfailed_tsx",
+      "target": "ui_button_button",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "StepTestFailed.tsx",
+      "source_location": "L2",
+      "weight": 1.0
+    },
+    {
+      "source": "c_code_docker_watchtower_dash_src_pages_onboarding_steptestfailed_tsx",
+      "target": "onboarding_steptestfailed_props",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "StepTestFailed.tsx",
+      "source_location": "L4",
+      "weight": 1.0
+    },
+    {
+      "source": "c_code_docker_watchtower_dash_src_pages_onboarding_steptestfailed_tsx",
+      "target": "onboarding_steptestfailed_steptestfailed",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "StepTestFailed.tsx",
+      "source_location": "L12",
+      "weight": 1.0
+    },
+    {
+      "source": "c_code_docker_watchtower_dash_src_pages_onboarding_useonboardingstate_ts",
+      "target": "react",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "useOnboardingState.ts",
+      "source_location": "L1",
+      "weight": 1.0
+    },
+    {
+      "source": "c_code_docker_watchtower_dash_src_pages_onboarding_useonboardingstate_ts",
+      "target": "react_router_dom",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "useOnboardingState.ts",
+      "source_location": "L2",
+      "weight": 1.0
+    },
+    {
+      "source": "c_code_docker_watchtower_dash_src_pages_onboarding_useonboardingstate_ts",
+      "target": "react",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "useOnboardingState.ts",
+      "source_location": "L3",
+      "weight": 1.0
+    },
+    {
+      "source": "c_code_docker_watchtower_dash_src_pages_onboarding_useonboardingstate_ts",
+      "target": "c_code_docker_watchtower_dash_src_components_ui_use_toast_ts",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "useOnboardingState.ts",
+      "source_location": "L4",
+      "weight": 1.0
+    },
+    {
+      "source": "c_code_docker_watchtower_dash_src_pages_onboarding_useonboardingstate_ts",
+      "target": "ui_use_toast_usetoast",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "useOnboardingState.ts",
+      "source_location": "L4",
+      "weight": 1.0
+    },
+    {
+      "source": "c_code_docker_watchtower_dash_src_pages_onboarding_useonboardingstate_ts",
+      "target": "c_code_docker_watchtower_dash_src_services_agent_enrollment_ts",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "useOnboardingState.ts",
+      "source_location": "L5",
+      "weight": 1.0
+    },
+    {
+      "source": "c_code_docker_watchtower_dash_src_pages_onboarding_useonboardingstate_ts",
+      "target": "services_agent_enrollment_agentenrollmentapi",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "useOnboardingState.ts",
+      "source_location": "L5",
+      "weight": 1.0
+    },
+    {
+      "source": "c_code_docker_watchtower_dash_src_pages_onboarding_useonboardingstate_ts",
+      "target": "services_agent_enrollment_agentenrollmentcreateresponse",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "useOnboardingState.ts",
+      "source_location": "L5",
+      "weight": 1.0
+    },
+    {
+      "source": "c_code_docker_watchtower_dash_src_pages_onboarding_useonboardingstate_ts",
+      "target": "services_agent_enrollment_agentenrollmentfinalizeresponse",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "useOnboardingState.ts",
+      "source_location": "L5",
+      "weight": 1.0
+    },
+    {
+      "source": "c_code_docker_watchtower_dash_src_pages_onboarding_useonboardingstate_ts",
+      "target": "c_code_docker_watchtower_dash_src_types_database_ts",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "useOnboardingState.ts",
+      "source_location": "L6",
+      "weight": 1.0
+    },
+    {
+      "source": "c_code_docker_watchtower_dash_src_pages_onboarding_useonboardingstate_ts",
+      "target": "types_database_connectionmode",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "useOnboardingState.ts",
+      "source_location": "L6",
+      "weight": 1.0
+    },
+    {
+      "source": "c_code_docker_watchtower_dash_src_pages_onboarding_useonboardingstate_ts",
+      "target": "c_code_docker_watchtower_dash_src_lib_onboarding_gate_ts",
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "useOnboardingState.ts",
+      "source_location": "L7",
+      "weight": 1.0
+    },
+    {
+      "source": "c_code_docker_watchtower_dash_src_pages_onboarding_useonboardingstate_ts",
+      "target": "lib_onboarding_gate_deriveneedsonboarding",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "useOnboardingState.ts",
+      "source_location": "L7",
+      "weight": 1.0
+    },
+    {
+      "source": "c_code_docker_watchtower_dash_src_pages_onboarding_useonboardingstate_ts",
+      "target": "lib_onboarding_gate_normalizeonboardingstatus",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "useOnboardingState.ts",
+      "source_location": "L7",
+      "weight": 1.0
+    },
+    {
+      "source": "c_code_docker_watchtower_dash_src_pages_onboarding_useonboardingstate_ts",
+      "target": "onboarding_useonboardingstate_onboardingstep",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "useOnboardingState.ts",
+      "source_location": "L9",
+      "weight": 1.0
+    },
+    {
+      "source": "c_code_docker_watchtower_dash_src_pages_onboarding_useonboardingstate_ts",
+      "target": "onboarding_useonboardingstate_steps",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "useOnboardingState.ts",
+      "source_location": "L20",
+      "weight": 1.0
+    },
+    {
+      "source": "c_code_docker_watchtower_dash_src_pages_onboarding_useonboardingstate_ts",
+      "target": "onboarding_useonboardingstate_connection_modes",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "useOnboardingState.ts",
+      "source_location": "L22",
+      "weight": 1.0
+    },
+    {
+      "source": "c_code_docker_watchtower_dash_src_pages_onboarding_useonboardingstate_ts",
+      "target": "onboarding_useonboardingstate_isstep0submitting",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "useOnboardingState.ts",
+      "source_location": "L27",
+      "weight": 1.0
+    },
+    {
+      "source": "c_code_docker_watchtower_dash_src_pages_onboarding_useonboardingstate_ts",
+      "target": "onboarding_useonboardingstate_isstep1loading",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "useOnboardingState.ts",
+      "source_location": "L31",
+      "weight": 1.0
+    },
+    {
+      "source": "c_code_docker_watchtower_dash_src_pages_onboarding_useonboardingstate_ts",
+      "target": "onboarding_useonboardingstate_getprogresswidth",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "useOnboardingState.ts",
+      "source_location": "L35",
+      "weight": 1.0
+    },
+    {
+      "source": "c_code_docker_watchtower_dash_src_pages_onboarding_useonboardingstate_ts",
+      "target": "onboarding_useonboardingstate_markonboardingstatus",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "useOnboardingState.ts",
+      "source_location": "L43",
+      "weight": 1.0
+    },
+    {
+      "source": "c_code_docker_watchtower_dash_src_pages_onboarding_useonboardingstate_ts",
+      "target": "onboarding_useonboardingstate_authsyncstatus",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "useOnboardingState.ts",
+      "source_location": "L94",
+      "weight": 1.0
+    },
+    {
+      "source": "c_code_docker_watchtower_dash_src_pages_onboarding_useonboardingstate_ts",
+      "target": "onboarding_useonboardingstate_checkauthsyncstatus",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "useOnboardingState.ts",
+      "source_location": "L99",
+      "weight": 1.0
+    },
+    {
+      "source": "c_code_docker_watchtower_dash_src_pages_onboarding_useonboardingstate_ts",
+      "target": "onboarding_useonboardingstate_syncpollingresult",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "useOnboardingState.ts",
+      "source_location": "L128",
+      "weight": 1.0
+    },
+    {
+      "source": "c_code_docker_watchtower_dash_src_pages_onboarding_useonboardingstate_ts",
+      "target": "onboarding_useonboardingstate_pollfororganizationsync",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "useOnboardingState.ts",
+      "source_location": "L134",
+      "weight": 1.0
+    },
+    {
+      "source": "c_code_docker_watchtower_dash_src_pages_onboarding_useonboardingstate_ts",
+      "target": "onboarding_useonboardingstate_useorganizationsynceffect",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "useOnboardingState.ts",
+      "source_location": "L159",
+      "weight": 1.0
+    },
+    {
+      "source": "c_code_docker_watchtower_dash_src_pages_onboarding_useonboardingstate_ts",
+      "target": "onboarding_useonboardingstate_useonboardingstate",
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "useOnboardingState.ts",
+      "source_location": "L201",
+      "weight": 1.0
+    },
+    {
+      "source": "onboarding_useonboardingstate_pollfororganizationsync",
+      "target": "onboarding_useonboardingstate_checkauthsyncstatus",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "useOnboardingState.ts",
+      "source_location": "L142",
+      "weight": 1.0
+    },
+    {
+      "source": "onboarding_useonboardingstate_useonboardingstate",
+      "target": "onboarding_useonboardingstate_useorganizationsynceffect",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "useOnboardingState.ts",
+      "source_location": "L236",
+      "weight": 1.0
+    }
+  ],
+  "input_tokens": 0,
+  "output_tokens": 0
+}
