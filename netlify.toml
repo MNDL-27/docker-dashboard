@@ -14,7 +14,12 @@
 [[headers]]
   for = "/*"
   [headers.values]
+    Content-Security-Policy = "default-src 'self'; script-src 'self' https://*.clerk.accounts.dev https://js.sentry-cdn.com https://cdn.paddle.com 'unsafe-inline'; style-src 'self' 'unsafe-inline'; connect-src 'self' https://*.clerk.accounts.dev https://*.ingest.de.sentry.io https://checkout.paddle.com https://api.paddle.com https://vendors.paddle.com wss://*.clerk.accounts.dev; frame-src 'self' https://*.clerk.accounts.dev https://checkout.paddle.com; img-src 'self' data: blob: https://img.clerk.com; font-src 'self' data:; object-src 'none'; base-uri 'self'; form-action 'self'; manifest-src 'self'; upgrade-insecure-requests; report-uri https://o4511412908261376.ingest.de.sentry.io/api/4511488947585104/csp-report/?sentry_key=5fbdc9857abd85c71e076b2d98297326"
     Permissions-Policy = "camera=(), geolocation=(), microphone=(), payment=(), usb=()"
+    Strict-Transport-Security = "max-age=31536000; includeSubDomains; preload"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+    X-Frame-Options = "SAMEORIGIN"
 
 # Canonical domain: www.dockerdash.app → dockerdash.app (301)
 [[redirects]]
