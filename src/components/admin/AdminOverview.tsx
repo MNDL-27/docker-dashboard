@@ -1,5 +1,5 @@
 import { Loader2, Building2, Users, Server, Activity, UserX, Lock, AlertTriangle } from "lucide-react";
-import { MetricCard } from "@/components/shared/MetricCard";
+import { KPICard } from "@/components/shared/KPICard";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useAdminOverview } from "@/hooks/useAdmin";
 import { StatusPill } from "./AdminShared";
@@ -19,13 +19,13 @@ export function AdminOverview() {
   return (
     <div className="space-y-4">
       <div className="grid gap-3 md:grid-cols-4 xl:grid-cols-7">
-        <MetricCard label="Active Now" value={overviewQuery.data?.metrics.active_users ?? 0} icon={Activity} />
-        <MetricCard label="Organizations" value={overviewQuery.data?.metrics.total_organizations ?? 0} icon={Building2} />
-        <MetricCard label="Users" value={overviewQuery.data?.metrics.total_users ?? 0} icon={Users} />
-        <MetricCard label="Active Hosts" value={overviewQuery.data?.metrics.active_hosts ?? 0} icon={Server} />
-        <MetricCard label="Suspended" value={overviewQuery.data?.metrics.suspended_users ?? 0} icon={UserX} />
-        <MetricCard label="Locked Orgs" value={overviewQuery.data?.metrics.locked_organizations ?? 0} icon={Lock} />
-        <MetricCard label="Quarantined Hosts" value={overviewQuery.data?.metrics.quarantined_hosts ?? 0} icon={AlertTriangle} />
+        <KPICard label="Active Now" value={overviewQuery.data?.metrics.active_users ?? 0} icon={Activity} />
+        <KPICard label="Organizations" value={overviewQuery.data?.metrics.total_organizations ?? 0} icon={Building2} />
+        <KPICard label="Users" value={overviewQuery.data?.metrics.total_users ?? 0} icon={Users} />
+        <KPICard label="Active Hosts" value={overviewQuery.data?.metrics.active_hosts ?? 0} icon={Server} />
+        <KPICard label="Suspended" value={overviewQuery.data?.metrics.suspended_users ?? 0} icon={UserX} />
+        <KPICard label="Locked Orgs" value={overviewQuery.data?.metrics.locked_organizations ?? 0} icon={Lock} />
+        <KPICard label="Quarantined Hosts" value={overviewQuery.data?.metrics.quarantined_hosts ?? 0} icon={AlertTriangle} />
       </div>
 
       <div className="glass-card p-5">

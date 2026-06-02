@@ -1,15 +1,9 @@
 import { useState } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Box, ChevronLeft, ChevronRight } from "lucide-react";
 import { LogoLink } from "@/components/shared/LogoLink";
 import { cn } from "@/lib/utils";
-import {
-  Box,
-  ChevronLeft,
-  ChevronRight,
-  Lock,
-} from "lucide-react";
-import { useViewerState } from "@/hooks/useViewerState";
-import { appNavGroups } from "./app-nav";
+import { useAppNavigation } from "@/hooks/useAppNavigation";
+import { NavItems } from "./NavItems";
 
 interface AppSidebarProps {
   className?: string;
@@ -17,17 +11,7 @@ interface AppSidebarProps {
 
 export function AppSidebar({ className }: AppSidebarProps) {
   const [collapsed, setCollapsed] = useState(false);
-  const location = useLocation();
-  const { data: viewer } = useViewerState();
-  const entitlements = viewer?.entitlements;
-
-  const visibleGroups = appNavGroups.map((group) => ({
-    ...group,
-    items: group.items.filter((item) => {
-      if (item.href === "/app/admin" && !viewer?.is_platform_admin) return false;
-      return true;
-    }),
-  }));
+  const { navGroups, entitlements } = useAppNavigation();
 
   return (
     <aside className={cn(
@@ -47,42 +31,19 @@ export function AppSidebar({ className }: AppSidebarProps) {
 
       {/* Nav */}
       <nav className="flex-1 overflow-y-auto py-2 px-2 space-y-4">
-        {visibleGroups.map((group) => (
-          <div key={group.label}>
-            {!collapsed && (
-              <span className="px-2 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/60 mb-1 block">
-                {group.label}
-              </span>
-            )}
-            <div className="space-y-0.5">
-              {group.items.map((item) => {
-                const active = location.pathname === item.href || (item.href !== "/app" && location.pathname.startsWith(item.href));
-                return (
-                  <Link
-                    key={item.href}
-                    to={item.href}
-                    className={cn(
-                      "flex items-center gap-2.5 px-2.5 py-1.5 rounded-md text-sm transition-colors",
-                      active
-                        ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium"
-                        : "text-sidebar-foreground hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground"
-                    )}
-                  >
-                    <item.icon className="h-4 w-4 shrink-0" />
-                    {!collapsed && (
-                      <>
-                        <span className="truncate">{item.label}</span>
-                        {item.premiumKey && !entitlements?.[item.premiumKey] && (
-                          <Lock className="h-3 w-3 ml-auto text-muted-foreground/50 shrink-0" />
-                        )}
-                      </>
-                    )}
-                  </Link>
-                );
-              })}
-            </div>
+        {collapsed ? (
+          <div className="space-y-4">
+            {navGroups.map((group) => (
+              <div key={group.label} className="flex flex-col items-center gap-1">
+                {group.items.map((item) => (
+                  <NavItems key={item.href} navGroups={[{ label: "", items: [item] }]} entitlements={entitlements as any} />
+                ))}
+              </div>
+            ))}
           </div>
-        ))}
+        ) : (
+          <NavItems navGroups={navGroups} entitlements={entitlements as any} />
+        )}
       </nav>
 
       {/* Collapse toggle */}

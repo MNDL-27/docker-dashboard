@@ -1,7 +1,7 @@
 import { Navigate, useLocation } from "react-router-dom";
 import { useAuth } from "@clerk/react";
 import { isPreviewAuthBypassEnabled } from "@/lib/hostname";
-import { useAuthMe, type AuthMeState } from "@/hooks/useAuthMe";
+import { useViewerState, type ViewerState } from "@/hooks/useViewerState";
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -12,12 +12,6 @@ interface ProtectedRouteProps {
 
 /**
  * Main application routing gate.
- * 
- * Responsibilities:
- * 1. Clerk Auth Verification
- * 2. Backend State Sync (/api/auth/me)
- * 3. Dedicated Deployment Blocking
- * 4. Onboarding & Org Requirements
  */
 export function ProtectedRoute({
   children,
@@ -29,30 +23,24 @@ export function ProtectedRoute({
   const location = useLocation();
   const previewBypass = isPreviewAuthBypassEnabled();
   
-  // Custom hook encapsulates fetch/retry/polling logic (flattens CC)
-  const authMe = useAuthMe(!previewBypass);
+  const { data: viewer, isLoading, error } = useViewerState();
 
-  // 1. System-level bypass (Previews/Local Dev)
   if (previewBypass) return <>{children}</>;
 
-  // 2. Auth Loading State
-  if (!isLoaded || authMe.status === "loading") {
+  if (!isLoaded || isLoading) {
     return <FullScreenLoader />;
   }
 
-  // 3. Unauthenticated State
-  if (!isSignedIn || authMe.status === "unauthenticated") {
+  if (!isSignedIn || !viewer) {
     return <Navigate to="/login" replace />;
   }
 
-  // 4. Backend Synchronization Error
-  if (authMe.status === "error") {
+  if (error) {
     return <AuthErrorState />;
   }
 
-  // 5. State-driven Redirect Logic (flattens "Bumpy Road")
   const redirect = getRedirectTarget({
-    state: authMe,
+    viewer,
     pathname: location.pathname,
     requireOnboarded,
     allowMissingOrganization,
@@ -66,45 +54,39 @@ export function ProtectedRoute({
   return <>{children}</>;
 }
 
-/**
- * Pure helper to determine redirect target based on application state.
- */
 function getRedirectTarget({
-  state,
+  viewer,
   pathname,
   requireOnboarded,
   allowMissingOrganization,
   skipResolvedRedirect
 }: {
-  state: AuthMeState;
+  viewer: ViewerState;
   pathname: string;
   requireOnboarded: boolean;
   allowMissingOrganization: boolean;
   skipResolvedRedirect: boolean;
 }): string | null {
-  // --- Route classification ---
   const isOnboardingRoute = pathname.startsWith("/onboarding");
   const isDedicatedIntakeRoute = pathname.startsWith("/dedicated/intake");
   const isDedicatedStatusRoute = pathname.startsWith("/app/dedicated-deployment");
 
-  // --- Business rule predicates ---
-  const deploymentInProgress = isDeploymentBlocked(state.dedicatedDeploymentStatus);
+  const deploymentInProgress = isDeploymentBlocked(viewer.dedicated_deployment_status);
 
   const shouldBlockForDeployment =
     deploymentInProgress && !isDedicatedStatusRoute && !isDedicatedIntakeRoute;
 
   const needsOrgCreation =
-    !state.hasOrgs && !allowMissingOrganization && !isOnboardingRoute;
+    !viewer.has_orgs && !allowMissingOrganization && !isOnboardingRoute;
 
   const shouldForceOnboarding =
-    requireOnboarded && state.hasOrgs && state.needsOnboarding &&
+    requireOnboarded && viewer.has_orgs && viewer.needs_onboarding &&
     !deploymentInProgress && !isOnboardingRoute;
 
   const onboardingAlreadyComplete =
-    !requireOnboarded && !skipResolvedRedirect && state.hasOrgs &&
-    !state.needsOnboarding && !deploymentInProgress;
+    !requireOnboarded && !skipResolvedRedirect && viewer.has_orgs &&
+    !viewer.needs_onboarding && !deploymentInProgress;
 
-  // --- Redirect decision (first match wins) ---
   if (shouldBlockForDeployment) return "/app/dedicated-deployment";
   if (needsOrgCreation) return "/onboarding";
   if (shouldForceOnboarding) return "/onboarding";

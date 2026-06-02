@@ -81,19 +81,8 @@ function shortenImage(img: string): string {
   return parts[parts.length - 1] || img;
 }
 
-function formatBytes(bytes: number): string {
-  if (!Number.isFinite(bytes) || bytes <= 0) return "0 B";
-  const units = ["B", "KB", "MB", "GB", "TB"];
-  const exponent = Math.floor(Math.log(bytes) / Math.log(1024));
-  return `${(bytes / 1024 ** exponent).toFixed(exponent > 1 ? 1 : 0)} ${units[exponent]}`;
-}
-
 function formatNetIO(rx: number, tx: number): string {
   return `${formatBytes(rx)} / ${formatBytes(tx)}`;
-}
-
-function formatPercent(value: number): string {
-  return `${value.toFixed(1)}%`;
 }
 
 function mapState(state?: string, health?: string): BadgeStatus {
@@ -148,43 +137,6 @@ function TelemetryBadge({
         : "Fleet telemetry live";
 
   return <span className={cn("inline-flex rounded-full border px-3 py-1 text-xs font-medium uppercase tracking-[0.18em]", tone)}>{label}</span>;
-}
-
-function FleetSignalCard({
-  label,
-  value,
-  helper,
-  icon: Icon,
-  status,
-  progress,
-}: {
-  label: string;
-  value: string;
-  helper: string;
-  icon: typeof Cpu;
-  status: "success" | "warning" | "destructive" | "neutral";
-  progress: number;
-}) {
-  const barTone = status === "destructive" ? "bg-destructive" : status === "warning" ? "bg-warning" : status === "success" ? "bg-primary" : "bg-muted-foreground/40";
-  const iconTone = status === "destructive" ? "text-destructive" : status === "warning" ? "text-warning" : status === "success" ? "text-primary" : "text-muted-foreground";
-
-  return (
-    <div className="glass-card rounded-2xl sm:rounded-[28px] p-4 sm:p-6">
-      <div className="flex items-start justify-between gap-3 sm:gap-4">
-        <div className="min-w-0">
-          <p className="text-[10px] sm:text-xs font-bold uppercase tracking-[0.24em] text-muted-foreground">{label}</p>
-          <p className="mt-2 sm:mt-4 text-2xl sm:text-4xl font-semibold tracking-tight text-foreground">{value}</p>
-        </div>
-        <div className="rounded-xl sm:rounded-2xl border border-white/10 bg-background/40 p-2 sm:p-3 shrink-0">
-          <Icon className={cn("h-4 w-4 sm:h-5 sm:w-5", iconTone)} />
-        </div>
-      </div>
-      <div className="mt-3 sm:mt-5 h-1.5 sm:h-2 overflow-hidden rounded-full bg-white/5">
-        <div className={cn("h-full rounded-full transition-all", barTone)} style={{ width: `${Math.max(0, Math.min(100, progress))}%` }} />
-      </div>
-      <p className="mt-2 sm:mt-3 text-xs sm:text-sm leading-5 sm:leading-6 text-muted-foreground">{helper}</p>
-    </div>
-  );
 }
 
 export default function ContainersPage() {
@@ -393,8 +345,8 @@ export default function ContainersPage() {
       ) : null}
 
       <div className="grid gap-4 sm:grid-cols-2">
-        <FleetSignalCard label="Fleet CPU" value={fleetCpuCard.value} helper={fleetCpuCard.helper} icon={Cpu} status={fleetCpuCard.status} progress={fleetCpuCard.progress} />
-        <FleetSignalCard label="Fleet Memory" value={fleetMemoryCard.value} helper={fleetMemoryCard.helper} icon={MemoryStick} status={fleetMemoryCard.status} progress={fleetMemoryCard.progress} />
+        <SignalCard label="Fleet CPU" value={fleetCpuCard.value} helper={fleetCpuCard.helper} icon={Cpu} tone={fleetCpuCard.status} progress={fleetCpuCard.progress} />
+        <SignalCard label="Fleet Memory" value={fleetMemoryCard.value} helper={fleetMemoryCard.helper} icon={MemoryStick} tone={fleetMemoryCard.status} progress={fleetMemoryCard.progress} />
       </div>
 
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">

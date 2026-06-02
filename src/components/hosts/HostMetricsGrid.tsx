@@ -3,7 +3,7 @@ import { Loader2 } from "lucide-react";
 import { AgentUpdateDialog } from "@/components/hosts/AgentUpdateDialog";
 import { Button } from "@/components/ui/button";
 import { Terminal } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { cn, formatBytes } from "@/lib/utils";
 import { normalizeHostStatus } from "@/lib/host-health-state";
 import type { HostMetricsDisk, HostMetricsFailure, HostMetricsPoint } from "@/hooks/useHostMetrics";
 import type { DockerHost } from "@/types/database";
@@ -12,15 +12,6 @@ import { CURRENT_WATCHTOWER_AGENT_VERSION } from "@/lib/agent-version";
 // ---------------------------------------------------------------------------
 // Shared formatting helpers
 // ---------------------------------------------------------------------------
-
-function formatBytes(bytes: number | null | undefined): string {
-  if (bytes === null || bytes === undefined || !Number.isFinite(bytes) || bytes < 0) return "Unavailable";
-  if (bytes === 0) return "0 B";
-  const units = ["B", "KB", "MB", "GB", "TB"];
-  const exponent = Math.min(Math.floor(Math.log(bytes) / Math.log(1024)), units.length - 1);
-  const value = bytes / 1024 ** exponent;
-  return `${value.toFixed(value >= 10 || exponent === 0 ? 0 : 1)} ${units[exponent]}`;
-}
 
 function formatSpeed(bytesPerSecond: number | null | undefined): string {
   if (!Number.isFinite(bytesPerSecond) || bytesPerSecond === null || bytesPerSecond === undefined || bytesPerSecond < 0) {

@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
-import { Link, useLocation, useNavigate } from "react-router-dom";
-import { Search, Command, Moon, Sun, LayoutDashboard, Server, Box, ActivitySquare, Settings, LifeBuoy, Menu, Lock } from "lucide-react";
+import { useLocation, useNavigate } from "react-router-dom";
+import { Search, Command, Moon, Sun, LayoutDashboard, Server, Box, ActivitySquare, Settings, LifeBuoy, Menu } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { UserButton, OrganizationSwitcher, useOrganization } from "@clerk/react";
 import {
@@ -12,12 +12,11 @@ import {
   CommandList,
   CommandShortcut,
 } from "@/components/ui/command";
-import { Sheet, SheetClose, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
+import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { useContainers, useDockerHosts } from "@/hooks/useDocker";
 import { NotificationBell } from "./NotificationBell";
-import { appNavGroups } from "./app-nav";
-import { cn } from "@/lib/utils";
-import { useViewerState } from "@/hooks/useViewerState";
+import { useAppNavigation } from "@/hooks/useAppNavigation";
+import { NavItems } from "./NavItems";
 
 type SearchableContainer = {
   Id?: string;
@@ -39,25 +38,13 @@ const quickSearchItems = [
 
 export function AppTopBar() {
   const navigate = useNavigate();
-  const location = useLocation();
   const { organization } = useOrganization();
-  const { data: viewer } = useViewerState();
+  const { navGroups, entitlements } = useAppNavigation();
   const [isDark, setIsDark] = useState(() => document.documentElement.classList.contains("dark"));
   const [searchOpen, setSearchOpen] = useState(false);
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const { data: hosts = [] } = useDockerHosts(organization?.id, { filterByPlan: true });
   const { data: rawContainers } = useContainers(organization?.id, searchOpen && hosts.length > 0);
-  const entitlements = viewer?.entitlements;
-
-  const visibleGroups = useMemo(() => {
-    return appNavGroups.map((group) => ({
-      ...group,
-      items: group.items.filter((item) => {
-        if (item.href === "/app/admin" && !viewer?.is_platform_admin) return false;
-        return true;
-      }),
-    }));
-  }, [viewer?.is_platform_admin]);
 
   const containers = useMemo(() => (Array.isArray(rawContainers) ? (rawContainers as SearchableContainer[]) : []), [rawContainers]);
 
@@ -126,37 +113,7 @@ export function AppTopBar() {
                 Docker Dashboard
               </div>
               <nav className="h-[calc(100dvh-3.5rem)] overflow-y-auto px-3 py-3 space-y-4">
-                {visibleGroups.map((group) => (
-                  <div key={group.label}>
-                    <p className="px-2 mb-1 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/70">
-                      {group.label}
-                    </p>
-                    <div className="space-y-1">
-                      {group.items.map((item) => {
-                        const active = location.pathname === item.href || (item.href !== "/app" && location.pathname.startsWith(item.href));
-                        return (
-                          <SheetClose asChild key={item.href}>
-                            <Link
-                              to={item.href}
-                              className={cn(
-                                "flex items-center gap-2.5 rounded-md px-2.5 py-2 text-sm",
-                                active
-                                  ? "bg-secondary text-foreground font-medium"
-                                  : "text-muted-foreground hover:bg-secondary/70 hover:text-foreground",
-                              )}
-                            >
-                              <item.icon className="h-4 w-4 shrink-0" />
-                              <span className="truncate">{item.label}</span>
-                              {item.premiumKey && !entitlements?.[item.premiumKey] && (
-                                <Lock className="h-3.5 w-3.5 ml-auto text-muted-foreground/60 shrink-0" />
-                              )}
-                            </Link>
-                          </SheetClose>
-                        );
-                      })}
-                    </div>
-                  </div>
-                ))}
+                <NavItems navGroups={navGroups} entitlements={entitlements as any} isMobile />
               </nav>
             </SheetContent>
           </Sheet>

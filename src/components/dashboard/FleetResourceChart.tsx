@@ -1,6 +1,6 @@
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { Activity } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { cn, formatBytes } from "@/lib/utils";
 import { useState, useEffect } from "react";
 import { useFleetMetrics, type FleetMetrics } from "@/hooks/useFleetMetrics";
 import { buildInitialFleetData } from "./fleet-resource-helpers";
@@ -13,14 +13,6 @@ interface FleetResourceChartProps {
 }
 
 const MAX_DATA_POINTS = 20;
-
-function formatBytes(bytes: number): string {
-  if (!Number.isFinite(bytes) || bytes <= 0) return '0.00 B';
-  const k = 1024;
-  const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
-  const i = Math.floor(Math.log(bytes) / Math.log(k));
-  return `${(bytes / Math.pow(k, i)).toFixed(2)} ${sizes[i]}`;
-}
 
 function formatPercentage(value: number): string {
   return Number.isFinite(value) ? value.toFixed(2) : '0.00';

@@ -2,6 +2,7 @@ import { PageHeader } from "@/components/shared/PageHeader";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { FleetResourceChart } from "@/components/dashboard/FleetResourceChart";
+import { SignalCard } from "@/components/dashboard/SignalCard";
 import { useFleetMetrics } from "@/hooks/useFleetMetrics";
 import { useDockerHosts } from "@/hooks/useDocker";
 import { useOrganization } from "@clerk/react";
@@ -16,30 +17,6 @@ const upcomingFeatures = [
   { icon: Network, title: "Network & TCP Health", desc: "Packet loss, bandwidth shifts, and connection trends per host." },
   { icon: HardDrive, title: "Disk Forecasting", desc: "Predict storage pressure windows and trigger preventative alerts." },
 ];
-
-function formatBytes(bytes: number): string {
-  if (!Number.isFinite(bytes) || bytes <= 0) return "0 B";
-  const units = ["B", "KB", "MB", "GB", "TB"];
-  const exponent = Math.min(Math.floor(Math.log(bytes) / Math.log(1024)), units.length - 1);
-  const value = bytes / 1024 ** exponent;
-  return `${value.toFixed(value >= 10 || exponent === 0 ? 0 : 1)} ${units[exponent]}`;
-}
-
-function formatSpeed(bytesPerSecond: number | null | undefined): string {
-  if (!Number.isFinite(bytesPerSecond) || bytesPerSecond === null || bytesPerSecond === undefined || bytesPerSecond < 0) {
-    return "--";
-  }
-  if (bytesPerSecond === 0) return "0 B/s";
-  const units = ["B/s", "KB/s", "MB/s", "GB/s", "TB/s"];
-  const exponent = Math.min(Math.floor(Math.log(bytesPerSecond) / Math.log(1024)), units.length - 1);
-  const value = bytesPerSecond / 1024 ** exponent;
-  return `${value.toFixed(value >= 10 || exponent === 0 ? 0 : 1)} ${units[exponent]}`;
-}
-
-function formatPercent(value: number | null | undefined): string {
-  if (!Number.isFinite(value) || value === null || value === undefined) return "--";
-  return `${value.toFixed(1)}%`;
-}
 
 function metricTone(value: number | null | undefined): MetricTone {
   if (value === null || value === undefined || !Number.isFinite(value)) return "neutral";
