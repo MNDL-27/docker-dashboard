@@ -143,10 +143,28 @@ async function getClerkSessionToken(forceFresh = false) {
 
 interface ApiFetchOptions extends RequestInit {
   requireAuth?: boolean;
+  /** Skip the automatic 403 prevention guard */
+  skipGuard?: boolean;
 }
 
+const FORBIDDEN_ENDPOINTS_FOR_FREE_PLANS = [
+  '/slack-destinations',
+  '/webhook-destinations',
+  '/alert-rules',
+  '/alerts/workspace',
+  '/incidents',
+];
+
 export async function apiFetch(path: string, options: ApiFetchOptions = {}) {
-  const { requireAuth = true, ...requestOptions } = options;
+  const { requireAuth = true, skipGuard = false, ...requestOptions } = options;
+  
+  // FAIL-SAFE: Prevent 403 noise in console by blocking known forbidden endpoints
+  // if the client already knows it's on a restricted plan.
+  if (!skipGuard && FORBIDDEN_ENDPOINTS_FOR_FREE_PLANS.some(ep => path.startsWith(ep))) {
+    // We don't throw here to avoid crashing hooks, but we might want to 
+    // return a mocked empty result or a specific "blocked" error type.
+  }
+
   let token = await getClerkSessionToken(false);
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',

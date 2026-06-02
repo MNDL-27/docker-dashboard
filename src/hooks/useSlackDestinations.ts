@@ -3,11 +3,16 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { slackDestinationsApi } from "@/services/slack-destinations-api";
 import type { SlackDestinationFormValues } from "@/types/alerts";
 
+import { useViewerState } from "@/hooks/useViewerState";
+
 export function useSlackDestinations(orgId?: string | null, enabled = true) {
+  const { data: viewer } = useViewerState();
+  const hasEntitlement = viewer?.entitlements?.canUseSlackDestinations ?? false;
+
   return useQuery({
     queryKey: ["slack-destinations", orgId],
     queryFn: () => slackDestinationsApi.listDestinations(),
-    enabled: !!orgId && enabled,
+    enabled: !!orgId && enabled && hasEntitlement,
   });
 }
 
