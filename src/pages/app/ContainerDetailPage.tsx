@@ -598,15 +598,21 @@ export default function ContainerDetailPage() {
           />
         </div>
 
-        <LogConsole
-          logs={logs}
-          loading={logsLoading}
-          title={`Live logs - ${name || containerId}`}
-          emptyMessage="No logs available for this container."
-          heightClassName="h-[560px]"
-          onRefresh={() => refetchLogs()}
-          refreshLabel="Refresh logs"
-        />
+        <PremiumFeatureBlock
+          title="Container Logs are a paid feature"
+          description="Upgrade your plan to view real-time container logs, terminal output, and history."
+          hasAccess={viewer?.entitlements?.canUseLogs ?? false}
+        >
+          <LogConsole
+            logs={logs}
+            loading={logsLoading}
+            title={`Live logs - ${name || containerId}`}
+            emptyMessage="No logs available for this container."
+            heightClassName="h-[560px]"
+            onRefresh={() => refetchLogs()}
+            refreshLabel="Refresh logs"
+          />
+        </PremiumFeatureBlock>
       </div>
     </div>
   );
