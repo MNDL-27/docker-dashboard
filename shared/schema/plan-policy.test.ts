@@ -16,6 +16,7 @@ describe("normalizePlan", () => {
     expect(normalizePlan("pro")).toBe("pro");
     expect(normalizePlan("team")).toBe("team");
     expect(normalizePlan("enterprise")).toBe("enterprise");
+    expect(normalizePlan("dedicated")).toBe("enterprise");
   });
 
   it("defaults null, undefined, and unknown values to free", () => {

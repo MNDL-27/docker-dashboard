@@ -67,6 +67,10 @@ export const PLAN_POLICY_BY_PLAN: Record<PlanId, PlanPolicy> = {
 };
 
 export function normalizePlan(value: string | null | undefined): PlanId {
+  if (value === "dedicated") {
+    return "enterprise";
+  }
+
   if (value === "pro" || value === "team" || value === "enterprise") {
     return value;
   }
