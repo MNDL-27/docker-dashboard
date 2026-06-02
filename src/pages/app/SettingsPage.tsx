@@ -119,10 +119,12 @@ export default function SettingsPage() {
           </PremiumFeatureBlock>
         </TabsContent>
 
-        <TabsContent value="Notifications" className="space-y-6">
+        <TabsContent value="Notifications" className="space-y-6 outline-none">
+          {/* Diagnostic Check: This should be visible to everyone */}
           <DesktopNotificationSettings />
           
-          <PremiumFeatureBlock
+          <div className="pt-4 border-t border-border/50">
+            <PremiumFeatureBlock
             title="Slack & Discord Notifications"
             description="Upgrade your plan to integrate with Slack and Discord and receive alerts directly in your channels."
             hasAccess={entitlements?.canUseSlackDestinations ?? false}
@@ -137,7 +139,8 @@ export default function SettingsPage() {
               onTest={slack.onTest}
             />
           </PremiumFeatureBlock>
-        </TabsContent>
+        </div>
+      </TabsContent>
       </Tabs>
     </div>
   );

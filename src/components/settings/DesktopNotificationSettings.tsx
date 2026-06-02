@@ -48,7 +48,10 @@ export function DesktopNotificationSettings() {
           <Bell className="h-6 w-6 text-primary" />
         </div>
         <div className="flex-1 min-w-0">
-          <h3 className="text-sm font-semibold tracking-tight">Desktop Notifications</h3>
+          <div className="flex items-center gap-2">
+            <h3 className="text-sm font-semibold tracking-tight">Desktop Notifications</h3>
+            <span className="bg-primary/10 text-primary text-[8px] px-1.5 py-0.5 rounded font-bold uppercase tracking-widest">Experimental</span>
+          </div>
           <p className="mt-1 text-xs text-muted-foreground leading-relaxed">
             Receive real-time infrastructure alerts on your computer or phone, even when the dashboard is closed or minimized.
           </p>
