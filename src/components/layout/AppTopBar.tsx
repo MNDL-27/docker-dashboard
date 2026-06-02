@@ -132,6 +132,9 @@ export function AppTopBar() {
         </div>
       )}
       <header className="h-14 border-b border-border bg-card/50 backdrop-blur-sm flex items-center justify-between px-4 shrink-0 sticky top-0 z-30">
+        <div className="absolute -bottom-px left-0 right-0 h-0.5 bg-yellow-500/50 flex items-center justify-center pointer-events-none">
+           <span className="bg-yellow-500 text-black text-[8px] font-bold px-1 px-1 rounded-t px-2">BUILD: V-FORCE-UI-777</span>
+        </div>
         {/* Left: Org Switcher */}
         <div className="flex items-center gap-2 min-w-0">
           <Sheet open={mobileNavOpen} onOpenChange={setMobileNavOpen}>
