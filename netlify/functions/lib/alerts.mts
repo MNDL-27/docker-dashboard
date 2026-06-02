@@ -461,6 +461,7 @@ export async function syncAlertEvents(auth: AppAuthContext) {
     `;
     await deliverSlackAlerts(auth, insertedRows[0] as AlertEventRow, 'alert.opened');
     await deliverAlertWebhooks(auth, insertedRows[0] as AlertEventRow, 'alert.opened');
+    await deliverInternalNotification(auth, insertedRows[0] as AlertEventRow, 'alert.opened');
   }
 
   const activeFingerprints = new Set(derivedSignals.map((signal) => signal.fingerprint));
@@ -476,8 +477,47 @@ export async function syncAlertEvents(auth: AppAuthContext) {
     if (resolvedRows[0]) {
       await deliverSlackAlerts(auth, resolvedRows[0] as AlertEventRow, 'alert.resolved');
       await deliverAlertWebhooks(auth, resolvedRows[0] as AlertEventRow, 'alert.resolved');
+      await deliverInternalNotification(auth, resolvedRows[0] as AlertEventRow, 'alert.resolved');
     }
   }
+}
+
+/**
+ * Creates an internal dashboard notification for an alert event.
+ */
+async function deliverInternalNotification(
+  auth: AppAuthContext,
+  event: AlertEventRow,
+  kind: 'alert.opened' | 'alert.resolved'
+) {
+  const typeMap: Record<string, string> = {
+    critical: 'error',
+    error: 'error',
+    warning: 'warning',
+    info: 'info'
+  };
+
+  const notificationType = kind === 'alert.resolved' ? 'success' : (typeMap[event.severity] || 'info');
+  const title = kind === 'alert.resolved' ? `Resolved: ${event.title}` : `Alert: ${event.title}`;
+
+  await sql`
+    INSERT INTO public.notifications (
+      organization_id,
+      title,
+      message,
+      type,
+      link,
+      metadata
+    )
+    VALUES (
+      ${auth.orgId},
+      ${title},
+      ${event.message},
+      ${notificationType},
+      ${`/app/alerts?id=${event.id}`},
+      ${JSON.stringify({ alert_id: event.id, fingerprint: event.fingerprint })}::jsonb
+    )
+  `;
 }
 
 export async function listAlertEvents(
