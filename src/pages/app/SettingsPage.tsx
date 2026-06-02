@@ -76,6 +76,12 @@ export default function SettingsPage() {
         breadcrumbs={[{ label: "Management" }, { label: "Settings" }]}
       />
 
+      {/* FORCE RENDER: Testing visibility outside of tabs */}
+      <div className="border-4 border-red-500 p-2 rounded-xl bg-red-500/5">
+        <div className="text-[10px] font-bold text-red-500 mb-2 px-2 uppercase tracking-tighter">Diagnostic Render - Should be visible to all</div>
+        <DesktopNotificationSettings />
+      </div>
+
       <Tabs value={tab} onValueChange={onChange} className="space-y-4">
         <TabsList className="h-auto w-full justify-start overflow-x-auto bg-secondary p-1 -mx-2 sm:mx-0 px-2 sm:px-0">
           {ALL_TABS.map((t) => (
