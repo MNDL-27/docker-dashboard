@@ -145,26 +145,6 @@ export function computeOrganizationEntitlements({
   const normalizedPlan = normalizePlan(plan);
   const normalizedStatus = normalizeSubscriptionStatus(subscriptionStatus);
 
-  if (isPlatformAdmin) {
-    return {
-      plan: normalizedPlan,
-      effectivePlan: normalizedPlan,
-      subscriptionStatus: normalizedStatus,
-      isPaidSubscriptionActive: true,
-      isDonorPremium,
-      seatLimit: null,
-      nodeLimit: null,
-      logTailLines: 5000,
-      maxPayloadBytes: 10 * 1024 * 1024,
-      canUseWebhookDestinations: true,
-      canUseSlackDestinations: true,
-      canUseAdvancedAlerts: true,
-      canUseTeamCollaboration: true,
-      canUseLogs: true,
-      canUseFileManager: true,
-    };
-  }
-
   const isPaidPlan = normalizedPlan !== "free";
   const isPaidSubscriptionActive = isPaidPlan && isPaidSubscriptionStatus(normalizedStatus);
   const effectivePlan = getEffectivePlanForEnforcement({
@@ -173,6 +153,31 @@ export function computeOrganizationEntitlements({
     isDonorPremium,
   });
   const paidTierPolicy = PLAN_POLICY_BY_PLAN[effectivePlan];
+
+  // Platform Admins can bypass user-level access checks (suspension, org locks)
+  // but they are now subject to the organization's plan limits for capacity
+  // and features. This allows testing the system as a regular user while
+  // maintaining management access where it counts.
+  if (isPlatformAdmin) {
+    return {
+      plan: normalizedPlan,
+      effectivePlan,
+      subscriptionStatus: normalizedStatus,
+      isPaidSubscriptionActive,
+      isDonorPremium,
+      // Admins are still subject to plan limits
+      seatLimit: paidTierPolicy.seatLimit,
+      nodeLimit: paidTierPolicy.nodeLimit,
+      logTailLines: paidTierPolicy.logTailLines,
+      maxPayloadBytes: paidTierPolicy.maxPayloadBytes,
+      canUseWebhookDestinations: paidTierPolicy.canUseWebhookDestinations,
+      canUseSlackDestinations: paidTierPolicy.canUseSlackDestinations,
+      canUseAdvancedAlerts: paidTierPolicy.canUseAdvancedAlerts || isDonorPremium,
+      canUseTeamCollaboration: paidTierPolicy.canUseTeamCollaboration,
+      canUseLogs: paidTierPolicy.canUseLogs || isDonorPremium,
+      canUseFileManager: paidTierPolicy.canUseFileManager,
+    };
+  }
 
   return {
     plan: normalizedPlan,
