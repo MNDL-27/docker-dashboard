@@ -152,7 +152,7 @@ export default function AlertsPage() {
     return <div className="flex h-64 items-center justify-center"><Loader2 className="h-8 w-8 animate-spin text-muted-foreground" /></div>;
   }
 
-  if (!hasAccess && !viewer?.is_platform_admin) {
+  if (!hasAccess) {
     return (
       <div className="space-y-6 animate-fade-in">
         <PageHeader
@@ -165,7 +165,7 @@ export default function AlertsPage() {
           description="Upgrade to an Individual, Business, or Dedicated plan to configure custom alert rules, Slack/Webhook notifications, and incident tracking."
           hasAccess={false}
         >
-          <div />
+          <div className="h-64" />
         </PremiumFeatureBlock>
       </div>
     );
