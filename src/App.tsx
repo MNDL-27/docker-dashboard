@@ -13,6 +13,7 @@ import { RequirePlatformAdmin } from "@/components/RequirePlatformAdmin";
 import { Loader2 } from "lucide-react";
 import { lazy, Suspense, useEffect } from "react";
 import { usePageViewTracking } from "@/hooks/usePageViewTracking";
+import { useViewerState } from "@/hooks/useViewerState";
 
 const LandingPage = lazy(() => import("./pages/LandingPage"));
 const FeaturesPage = lazy(() => import("./pages/FeaturesPage"));
@@ -68,6 +69,16 @@ const RouteFallback = () => (
 
 const PageViewTracker = () => { usePageViewTracking(); return null; };
 
+const PlanGuardian = () => {
+  const { data: viewer } = useViewerState();
+  useEffect(() => {
+    if (!viewer) return;
+    const isRestricted = !viewer.entitlements?.canUseAdvancedAlerts;
+    document.body.setAttribute('data-plan-restricted', String(isRestricted));
+  }, [viewer]);
+  return null;
+};
+
 const App = () => {
   const previewBypass = isPreviewAuthBypassEnabled();
 
@@ -87,6 +98,7 @@ const App = () => {
             <Sonner />
             <BrowserRouter>
               <PageViewTracker />
+              <PlanGuardian />
               <Suspense fallback={<RouteFallback />}>
                 <Routes>
                   {/* Marketing */}

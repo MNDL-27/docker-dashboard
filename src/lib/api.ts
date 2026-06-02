@@ -157,12 +157,19 @@ const FORBIDDEN_ENDPOINTS_FOR_FREE_PLANS = [
 
 export async function apiFetch(path: string, options: ApiFetchOptions = {}) {
   const { requireAuth = true, skipGuard = false, ...requestOptions } = options;
-  
+
   // FAIL-SAFE: Prevent 403 noise in console by blocking known forbidden endpoints
   // if the client already knows it's on a restricted plan.
+  // Note: We only block if this isn't an auth-me or profile call to avoid circular logic.
   if (!skipGuard && FORBIDDEN_ENDPOINTS_FOR_FREE_PLANS.some(ep => path.startsWith(ep))) {
-    // We don't throw here to avoid crashing hooks, but we might want to 
-    // return a mocked empty result or a specific "blocked" error type.
+    // Check if we have a restricted plan in the query cache
+    // This is a bit of a hack but it's the only way to block at the fetch level
+    // without introducing hooks into a plain function.
+    const isRestricted = document.body.getAttribute('data-plan-restricted') === 'true';
+    if (isRestricted) {
+      console.warn(`[Firewall] Blocked unauthorized call to ${path} to prevent 403 error.`);
+      return { destinations: [], alerts: [], rules: [], incidents: [], history: [], summary: {}, can_manage: false };
+    }
   }
 
   let token = await getClerkSessionToken(false);
