@@ -143,34 +143,10 @@ async function getClerkSessionToken(forceFresh = false) {
 
 interface ApiFetchOptions extends RequestInit {
   requireAuth?: boolean;
-  /** Skip the automatic 403 prevention guard */
-  skipGuard?: boolean;
 }
 
-const FORBIDDEN_ENDPOINTS_FOR_FREE_PLANS = [
-  '/slack-destinations',
-  '/webhook-destinations',
-  '/alert-rules',
-  '/alerts/workspace',
-  '/incidents',
-];
-
 export async function apiFetch(path: string, options: ApiFetchOptions = {}) {
-  const { requireAuth = true, skipGuard = false, ...requestOptions } = options;
-
-  // FAIL-SAFE Synchronous Firewall: Prevent 403 noise in console by blocking 
-  // known forbidden endpoints if the client already knows it's on a restricted plan.
-  if (!skipGuard && FORBIDDEN_ENDPOINTS_FOR_FREE_PLANS.some(ep => path.startsWith(ep))) {
-    // Check synchronous global state first
-    const isGlobalRestricted = (window as any).DOCKERDASH_RESTRICTED === true;
-    // Fallback to DOM attribute if global isn't set yet
-    const isDOMRestricted = document.body.getAttribute('data-plan-restricted') === 'true';
-    
-    if (isGlobalRestricted || isDOMRestricted) {
-      console.warn(`[Firewall] Silently blocked unauthorized call to ${path} to prevent console 403 noise.`);
-      return { destinations: [], alerts: [], rules: [], incidents: [], history: [], summary: {}, can_manage: false, notifications: [] };
-    }
-  }
+  const { requireAuth = true, ...requestOptions } = options;
 
   let token = await getClerkSessionToken(false);
   const headers: Record<string, string> = {
