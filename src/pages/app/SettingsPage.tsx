@@ -119,28 +119,34 @@ export default function SettingsPage() {
           </PremiumFeatureBlock>
         </TabsContent>
 
-        <TabsContent value="Notifications" className="space-y-6 outline-none">
-          {/* Diagnostic Check: This should be visible to everyone */}
-          <DesktopNotificationSettings />
+        <TabsContent value="Notifications" className="space-y-8 outline-none pt-2">
+          <section>
+            <DesktopNotificationSettings />
+          </section>
           
-          <div className="pt-4 border-t border-border/50">
+          <section className="pt-4 border-t border-border">
+            <div className="mb-4">
+              <h3 className="text-sm font-semibold tracking-tight">External Channels</h3>
+              <p className="text-xs text-muted-foreground">Manage your Slack and Discord notification targets.</p>
+            </div>
+            
             <PremiumFeatureBlock
-            title="Slack & Discord Notifications"
-            description="Upgrade your plan to integrate with Slack and Discord and receive alerts directly in your channels."
-            hasAccess={entitlements?.canUseSlackDestinations ?? false}
-          >
-            <SlackDestinationsPanel
-              destinations={slack.destinations}
-              canManage={slack.canManage}
-              saving={slack.saving}
-              testingId={slack.testingId}
-              onCreate={slack.onCreate}
-              onUpdate={slack.onUpdate}
-              onTest={slack.onTest}
-            />
-          </PremiumFeatureBlock>
-        </div>
-      </TabsContent>
+              title="Slack & Discord Notifications"
+              description="Upgrade your plan to integrate with Slack and Discord and receive alerts directly in your channels."
+              hasAccess={entitlements?.canUseSlackDestinations ?? false}
+            >
+              <SlackDestinationsPanel
+                destinations={slack.destinations}
+                canManage={slack.canManage}
+                saving={slack.saving}
+                testingId={slack.testingId}
+                onCreate={slack.onCreate}
+                onUpdate={slack.onUpdate}
+                onTest={slack.onTest}
+              />
+            </PremiumFeatureBlock>
+          </section>
+        </TabsContent>
       </Tabs>
     </div>
   );
