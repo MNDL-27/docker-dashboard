@@ -120,6 +120,9 @@ export default function SettingsPage() {
         </TabsContent>
 
         <TabsContent value="Notifications" className="space-y-8 outline-none pt-2">
+          <div className="bg-yellow-500/10 border border-yellow-500/20 p-2 text-[8px] text-center rounded">
+            DEBUG: Build v26-06-02-C (Strict Enforcement)
+          </div>
           <section>
             <DesktopNotificationSettings />
           </section>
