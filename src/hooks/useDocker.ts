@@ -49,7 +49,7 @@ interface ContainerLogOptions {
 
 // ── Hooks ───────────────────────────────────────────────────────────
 
-export function useDockerHosts(orgId?: string | null, options: { filterByPlan?: boolean } = {}) {
+export function useDockerHosts(orgId?: string | null, options: { filterByPlan?: boolean } = { filterByPlan: true }) {
   const { data: viewer } = useViewerState();
 
   return useQuery({
@@ -58,7 +58,7 @@ export function useDockerHosts(orgId?: string | null, options: { filterByPlan?: 
       return (await apiFetch(`/docker-hosts?orgId=${orgId}`)) as DockerHost[];
     },
     select: (hosts) => {
-      if (!options.filterByPlan) return hosts;
+      if (options.filterByPlan === false) return hosts;
       const nodeLimit = resolveNodeLimit(viewer);
       if (nodeLimit === null) return hosts;
       return sortHostsByCreation(hosts).slice(0, nodeLimit);
