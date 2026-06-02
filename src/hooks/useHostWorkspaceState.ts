@@ -15,7 +15,7 @@ import {
   getWatchtowerAgentUpdateStatusCopy,
 } from "@/lib/agent-release";
 import { normalizeHostStatus, isReadableHostStatus } from "@/lib/host-health-state";
-import { PLAN_POLICY_BY_PLAN, normalizePlan } from "../../shared/schema/plan-policy";
+import { resolveNodeLimit, getAllowedHostIds, isHostLocked as checkIsHostLocked } from "@/lib/host-limits";
 import type { DockerHost } from "@/types/database";
 
 export function useHostWorkspaceState() {
@@ -33,31 +33,18 @@ export function useHostWorkspaceState() {
   const [isInfrastructureVisible, setIsInfrastructureVisible] = useState(true);
   const [upgradeDialogOpen, setUpgradeDialogOpen] = useState(false);
 
-  const effectivePlan = viewer?.active_org_effective_plan ?? viewer?.active_org_plan;
-  const normalizedPlan = normalizePlan(effectivePlan);
-  const fallbackNodeLimit = PLAN_POLICY_BY_PLAN[normalizedPlan].nodeLimit;
-  const nodeLimit = viewer?.entitlements ? viewer.entitlements.nodeLimit : fallbackNodeLimit;
+  const nodeLimit = resolveNodeLimit(viewer);
 
   const hostsSortedByCreation = useMemo(() => {
-    return [...hosts].sort((a, b) => {
-      const dateA = a.created_at ? new Date(a.created_at).getTime() : 0;
-      const dateB = b.created_at ? new Date(b.created_at).getTime() : 0;
-      return dateA - dateB || a.id.localeCompare(b.id);
-    });
+    return sortHostsByCreation(hosts);
   }, [hosts]);
 
   const allowedHostIds = useMemo(() => {
-    if (nodeLimit === null) return null;
-    const allowed = new Set<string>();
-    for (let i = 0; i < Math.min(nodeLimit, hostsSortedByCreation.length); i++) {
-      allowed.add(hostsSortedByCreation[i].id);
-    }
-    return allowed;
-  }, [hostsSortedByCreation, nodeLimit]);
+    return getAllowedHostIds(hosts, nodeLimit);
+  }, [hosts, nodeLimit]);
 
   const isHostLocked = useCallback((hostId: string) => {
-    if (allowedHostIds === null) return false;
-    return !allowedHostIds.has(hostId);
+    return checkIsHostLocked(hostId, allowedHostIds);
   }, [allowedHostIds]);
 
   const filteredHosts = useMemo(() => {

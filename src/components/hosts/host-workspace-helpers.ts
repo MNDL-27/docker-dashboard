@@ -7,16 +7,9 @@ import {
   getWatchtowerAgentUpdateStatus,
   getWatchtowerAgentUpdateStatusCopy,
 } from "@/lib/agent-release";
+export { buildAddHostDisabledReason } from "@/lib/host-limits";
 
 export type PingResult = Awaited<ReturnType<typeof dockerApi.ping>>;
-
-export function buildAddHostDisabledReason(
-  hostCount: number,
-  nodeLimit: number | null,
-): string | undefined {
-  if (nodeLimit === null || hostCount < nodeLimit) return undefined;
-  return `Your plan allows up to ${nodeLimit} connected host(s). Upgrade to add more.`;
-}
 
 export function buildAgentVersionLine(
   result: PingResult,

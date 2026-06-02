@@ -5,7 +5,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AddHostDialog } from "@/components/docker/AddHostDialog";
 import { useDockerHosts } from "@/hooks/useDocker";
 import { useViewerState } from "@/hooks/useViewerState";
-import { PLAN_POLICY_BY_PLAN, normalizePlan } from "../../../shared/schema/plan-policy";
+import { resolveNodeLimit, buildAddHostDisabledReason } from "@/lib/host-limits";
 
 import { AdminOverview } from "@/components/admin/AdminOverview";
 import { AdminUserManagement } from "@/components/admin/AdminUserManagement";
@@ -24,14 +24,9 @@ export default function AdminPage() {
   const { organization: currentOrg } = useOrganization();
   const { data: viewer } = useViewerState();
   const { data: hosts = [] } = useDockerHosts(currentOrg?.id, { filterByPlan: true });
-  const effectivePlan = viewer?.active_org_effective_plan ?? viewer?.active_org_plan;
-  const normalizedPlan = normalizePlan(effectivePlan);
-  const fallbackNodeLimit = PLAN_POLICY_BY_PLAN[normalizedPlan].nodeLimit;
-  const nodeLimit = viewer?.entitlements ? viewer.entitlements.nodeLimit : fallbackNodeLimit;
-  const atNodeLimit = nodeLimit !== null && hosts.length >= nodeLimit;
-  const addHostDisabledReason = atNodeLimit
-    ? `Your plan allows up to ${nodeLimit} connected host(s). Upgrade to add more.`
-    : undefined;
+  
+  const nodeLimit = resolveNodeLimit(viewer);
+  const addHostDisabledReason = buildAddHostDisabledReason(hosts.length, nodeLimit);
 
   return (
     <div className="space-y-6 animate-fade-in">

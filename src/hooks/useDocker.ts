@@ -2,8 +2,8 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { dockerApi } from "@/services/docker-api";
 import { apiFetch } from "@/lib/api";
 import type { DockerHost, ConnectionMode } from "@/types/database";
-import { useViewerState, type ViewerState } from "@/hooks/useViewerState";
-import { normalizePlan, PLAN_POLICY_BY_PLAN } from "../../shared/schema/plan-policy";
+import { useViewerState } from "@/hooks/useViewerState";
+import { resolveNodeLimit, sortHostsByCreation } from "@/lib/host-limits";
 
 // ── Shared types & helpers ──────────────────────────────────────────
 
@@ -34,32 +34,10 @@ function buildHostBody(fields: HostMutationBase) {
   };
 }
 
-/** Subset of the Docker container payload that the proxy annotates with host metadata. */
+/** subset of the Docker container payload that the proxy annotates with host metadata. */
 interface ContainerHostRef {
   _hostId?: string;
   hostId?: string;
-}
-
-/** Resolve effective node limit from viewer entitlements + plan policy (WR-01) */
-function resolveNodeLimit(viewer: ViewerState | null | undefined): number | null {
-  const entitlements = viewer?.entitlements;
-  // When entitlements are loaded, use nodeLimit directly — null means unlimited
-  // (enterprise/dedicated plans). Only fall back to plan policy when entitlements
-  // haven't loaded yet (viewer is undefined/null).
-  if (entitlements) {
-    return entitlements.nodeLimit; // null = unlimited, number = capped
-  }
-  const activePlan = normalizePlan(viewer?.active_org_effective_plan);
-  return PLAN_POLICY_BY_PLAN[activePlan].nodeLimit;
-}
-
-/** Sort hosts by creation date (oldest first), breaking ties by ID (WR-01) */
-function sortHostsByCreation(hosts: DockerHost[]): DockerHost[] {
-  return [...hosts].sort((a, b) => {
-    const dateA = new Date(a.created_at).getTime() || 0;
-    const dateB = new Date(b.created_at).getTime() || 0;
-    return dateA - dateB || a.id.localeCompare(b.id);
-  });
 }
 
 /** Log query options parameter object (WR-03) */
