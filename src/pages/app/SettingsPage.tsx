@@ -57,10 +57,14 @@ export default function SettingsPage() {
   const entitlements = viewer?.entitlements;
 
   const { tab, onChange } = useTabSync(ALL_TABS, DEFAULT_TAB);
+  
+  // LAZY LOADING: Only trigger destination queries if the user is on the relevant tab
+  const showDestinations = tab === "Webhooks" || tab === "Notifications";
+  
   const { slack, webhook } = useDestinationSettings(
     currentOrg?.id,
-    entitlements?.canUseSlackDestinations ?? false,
-    entitlements?.canUseWebhookDestinations ?? false,
+    showDestinations && (entitlements?.canUseSlackDestinations ?? false),
+    showDestinations && (entitlements?.canUseWebhookDestinations ?? false),
   );
 
   return (
