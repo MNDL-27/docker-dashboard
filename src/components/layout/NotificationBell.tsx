@@ -8,6 +8,7 @@ import { cn } from "../../lib/utils";
 import { formatDistanceToNow } from "date-fns";
 import { useNavigate } from "react-router-dom";
 import { Notification } from "../../types/database";
+import { requestNotificationPermission } from "../../lib/browser-notifications";
 
 const NotificationIcon = ({ type }: { type: Notification["type"] }) => {
   switch (type) {
@@ -26,6 +27,9 @@ const NotificationIcon = ({ type }: { type: Notification["type"] }) => {
 
 export function NotificationBell() {
   const [open, setOpen] = useState(false);
+  const [permission, setPermission] = useState<NotificationPermission>(() => 
+    typeof window !== "undefined" && "Notification" in window ? Notification.permission : "denied"
+  );
   const { data: viewer } = useViewerState();
   const orgId = viewer?.active_org_id || null;
   
@@ -42,6 +46,11 @@ export function NotificationBell() {
   const handleDismissAll = () => {
     dismissAllMutation.mutate();
     setOpen(false);
+  };
+
+  const handleEnableDesktop = async () => {
+    const result = await requestNotificationPermission();
+    setPermission(result);
   };
 
   const handleClick = (n: Notification) => {
@@ -84,6 +93,24 @@ export function NotificationBell() {
             </Button>
           )}
         </div>
+
+        {permission !== "granted" && (
+          <div className="bg-primary/5 px-4 py-3 border-b border-zinc-200 dark:border-zinc-800">
+             <div className="flex flex-col gap-1.5">
+                <p className="text-[11px] font-medium text-zinc-900 dark:text-zinc-100">Enable Desktop Alerts</p>
+                <p className="text-[10px] text-muted-foreground leading-relaxed">Receive real-time infrastructure alerts even when the dashboard is closed.</p>
+                <Button 
+                  size="sm" 
+                  variant="outline" 
+                  className="h-7 text-[10px] mt-1 w-full"
+                  onClick={() => void handleEnableDesktop()}
+                  disabled={permission === "denied"}
+                >
+                  {permission === "denied" ? "Permission Denied (Check Settings)" : "Allow Desktop Notifications"}
+                </Button>
+             </div>
+          </div>
+        )}
 
         <div className="max-h-[400px] overflow-y-auto">
           {!notifications || notifications.length === 0 ? (
