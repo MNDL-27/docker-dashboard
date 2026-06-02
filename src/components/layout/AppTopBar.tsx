@@ -96,8 +96,41 @@ export function AppTopBar() {
     navigate(path);
   };
 
+  const handleDiagnosticReload = async () => {
+    await queryClient.clear();
+    window.location.reload();
+  };
+
   return (
     <>
+      {viewer?.is_platform_admin && (
+        <div className="bg-primary/20 border-b border-primary/30 px-4 py-1.5 flex items-center justify-between gap-4 text-[10px] font-mono uppercase tracking-wider text-primary-foreground/90">
+          <div className="flex items-center gap-4">
+            <span className="flex items-center gap-1.5">
+              <span className="opacity-60">Plan:</span>
+              <span className="font-bold">{entitlements?.plan || "unknown"}</span>
+            </span>
+            <span className="flex items-center gap-1.5">
+              <span className="opacity-60">Effective:</span>
+              <span className="font-bold">{entitlements?.effectivePlan || "unknown"}</span>
+            </span>
+            <span className="flex items-center gap-1.5">
+              <span className="opacity-60">Limit:</span>
+              <span className="font-bold">{entitlements?.nodeLimit === null ? "Unlimited" : entitlements?.nodeLimit}</span>
+            </span>
+            <span className="flex items-center gap-1.5">
+              <span className="opacity-60">Donor:</span>
+              <span className="font-bold text-success">{entitlements?.isDonorPremium ? "YES" : "NO"}</span>
+            </span>
+          </div>
+          <button 
+            onClick={() => void handleDiagnosticReload()}
+            className="hover:underline hover:text-white transition-colors"
+          >
+            Clear Cache & Reload
+          </button>
+        </div>
+      )}
       <header className="h-14 border-b border-border bg-card/50 backdrop-blur-sm flex items-center justify-between px-4 shrink-0 sticky top-0 z-30">
         {/* Left: Org Switcher */}
         <div className="flex items-center gap-2 min-w-0">

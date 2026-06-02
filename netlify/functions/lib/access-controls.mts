@@ -147,10 +147,17 @@ export function computeOrganizationEntitlements({
 
   const isPaidPlan = normalizedPlan !== "free";
   const isPaidSubscriptionActive = isPaidPlan && isPaidSubscriptionStatus(normalizedStatus);
+  
+  // FORCE STRICT LIMITS FOR ADMINS ON FREE PLAN
+  // This allows the developer to experience the 1-host limit exactly as
+  // a free user would, without donor overrides getting in the way.
+  const forceStrictFreePlan = isPlatformAdmin && normalizedPlan === "free";
+
   const effectivePlan = getEffectivePlanForEnforcement({
     plan: normalizedPlan,
     subscriptionStatus: normalizedStatus,
     isDonorPremium,
+    forceStrictFreePlan,
   });
   const paidTierPolicy = PLAN_POLICY_BY_PLAN[effectivePlan];
 

@@ -94,11 +94,17 @@ export function getEffectivePlanForEnforcement({
   plan,
   subscriptionStatus,
   isDonorPremium,
+  forceStrictFreePlan = false,
 }: {
   plan: string | null | undefined;
   subscriptionStatus: string | null | undefined;
   isDonorPremium?: boolean;
+  forceStrictFreePlan?: boolean;
 }): PlanId {
+  if (forceStrictFreePlan) {
+    return "free";
+  }
+
   const normalizedPlan = normalizePlan(plan);
   const normalizedStatus = normalizeSubscriptionStatus(subscriptionStatus);
   const isPaidPlan = normalizedPlan !== "free";
