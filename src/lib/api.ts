@@ -158,17 +158,17 @@ const FORBIDDEN_ENDPOINTS_FOR_FREE_PLANS = [
 export async function apiFetch(path: string, options: ApiFetchOptions = {}) {
   const { requireAuth = true, skipGuard = false, ...requestOptions } = options;
 
-  // FAIL-SAFE: Prevent 403 noise in console by blocking known forbidden endpoints
-  // if the client already knows it's on a restricted plan.
-  // Note: We only block if this isn't an auth-me or profile call to avoid circular logic.
+  // FAIL-SAFE Synchronous Firewall: Prevent 403 noise in console by blocking 
+  // known forbidden endpoints if the client already knows it's on a restricted plan.
   if (!skipGuard && FORBIDDEN_ENDPOINTS_FOR_FREE_PLANS.some(ep => path.startsWith(ep))) {
-    // Check if we have a restricted plan in the query cache
-    // This is a bit of a hack but it's the only way to block at the fetch level
-    // without introducing hooks into a plain function.
-    const isRestricted = document.body.getAttribute('data-plan-restricted') === 'true';
-    if (isRestricted) {
-      console.warn(`[Firewall] Blocked unauthorized call to ${path} to prevent 403 error.`);
-      return { destinations: [], alerts: [], rules: [], incidents: [], history: [], summary: {}, can_manage: false };
+    // Check synchronous global state first
+    const isGlobalRestricted = (window as any).DOCKERDASH_RESTRICTED === true;
+    // Fallback to DOM attribute if global isn't set yet
+    const isDOMRestricted = document.body.getAttribute('data-plan-restricted') === 'true';
+    
+    if (isGlobalRestricted || isDOMRestricted) {
+      console.warn(`[Firewall] Silently blocked unauthorized call to ${path} to prevent console 403 noise.`);
+      return { destinations: [], alerts: [], rules: [], incidents: [], history: [], summary: {}, can_manage: false, notifications: [] };
     }
   }
 

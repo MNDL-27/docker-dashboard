@@ -74,6 +74,7 @@ const PlanGuardian = () => {
   useEffect(() => {
     if (!viewer) return;
     const isRestricted = !viewer.entitlements?.canUseAdvancedAlerts;
+    (window as any).DOCKERDASH_RESTRICTED = isRestricted;
     document.body.setAttribute('data-plan-restricted', String(isRestricted));
   }, [viewer]);
   return null;
