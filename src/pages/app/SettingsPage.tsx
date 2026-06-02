@@ -72,7 +72,7 @@ export default function SettingsPage() {
     <div className="space-y-6 animate-fade-in">
       <PageHeader
         title="Settings"
-        description="Manage organization and project settings"
+        description="Manage organization and project settings [V-RED-BOX-101]"
         breadcrumbs={[{ label: "Management" }, { label: "Settings" }]}
       />
 
