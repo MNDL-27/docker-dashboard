@@ -94,24 +94,6 @@ export function NotificationBell() {
           )}
         </div>
 
-        {permission !== "granted" && (
-          <div className="bg-primary/5 px-4 py-3 border-b border-zinc-200 dark:border-zinc-800">
-             <div className="flex flex-col gap-1.5">
-                <p className="text-[11px] font-medium text-zinc-900 dark:text-zinc-100">Enable Desktop Alerts</p>
-                <p className="text-[10px] text-muted-foreground leading-relaxed">Receive real-time infrastructure alerts even when the dashboard is closed.</p>
-                <Button 
-                  size="sm" 
-                  variant="outline" 
-                  className="h-7 text-[10px] mt-1 w-full"
-                  onClick={() => void handleEnableDesktop()}
-                  disabled={permission === "denied"}
-                >
-                  {permission === "denied" ? "Permission Denied (Check Settings)" : "Allow Desktop Notifications"}
-                </Button>
-             </div>
-          </div>
-        )}
-
         <div className="max-h-[400px] overflow-y-auto">
           {!notifications || notifications.length === 0 ? (
             <div className="px-4 py-8 text-center text-sm text-zinc-500 dark:text-zinc-400">

@@ -6,6 +6,7 @@ import { ProfileSettings } from "@/components/settings/ProfileSettings";
 import { useSearchParams } from "react-router-dom";
 import { SlackDestinationsPanel } from "@/components/settings/SlackDestinationsPanel";
 import { WebhookDestinationsPanel } from "@/components/settings/WebhookDestinationsPanel";
+import { DesktopNotificationSettings } from "@/components/settings/DesktopNotificationSettings";
 import { useOrganization } from "@clerk/react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useViewerState } from "@/hooks/useViewerState";
@@ -118,7 +119,9 @@ export default function SettingsPage() {
           </PremiumFeatureBlock>
         </TabsContent>
 
-        <TabsContent value="Notifications">
+        <TabsContent value="Notifications" className="space-y-6">
+          <DesktopNotificationSettings />
+          
           <PremiumFeatureBlock
             title="Slack & Discord Notifications"
             description="Upgrade your plan to integrate with Slack and Discord and receive alerts directly in your channels."
