@@ -120,7 +120,13 @@ export default function SettingsPage() {
         </TabsContent>
 
         <TabsContent value="Notifications" className="space-y-6 outline-none pt-2">
-          <DesktopNotificationSettings />
+          <PremiumFeatureBlock
+            title="Browser Push Notifications"
+            description="Upgrade your plan to receive real-time infrastructure alerts directly on your desktop or mobile browser."
+            hasAccess={entitlements?.canUseAdvancedAlerts ?? false}
+          >
+            <DesktopNotificationSettings />
+          </PremiumFeatureBlock>
           
           <section className="pt-4 border-t border-border">
             <div className="mb-4">

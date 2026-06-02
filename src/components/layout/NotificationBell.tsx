@@ -27,9 +27,6 @@ const NotificationIcon = ({ type }: { type: DbNotification["type"] }) => {
 
 export function NotificationBell() {
   const [open, setOpen] = useState(false);
-  const [permission, setPermission] = useState<NotificationPermission>(() => 
-    typeof window !== "undefined" && "Notification" in window ? Notification.permission : "denied"
-  );
   const { data: viewer } = useViewerState();
   const orgId = viewer?.active_org_id || null;
   
@@ -46,11 +43,6 @@ export function NotificationBell() {
   const handleDismissAll = () => {
     dismissAllMutation.mutate();
     setOpen(false);
-  };
-
-  const handleEnableDesktop = async () => {
-    const result = await requestNotificationPermission();
-    setPermission(result);
   };
 
   const handleClick = (n: DbNotification) => {

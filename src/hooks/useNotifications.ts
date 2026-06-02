@@ -4,12 +4,15 @@ import { toast } from "sonner";
 import { useEffect, useRef } from "react";
 import { Notification as DbNotification } from "../types/database";
 import { requestNotificationPermission, sendNativeNotification } from "@/lib/browser-notifications";
+import { useViewerState } from "./useViewerState";
 
 export const NOTIFICATIONS_QUERY_KEY = ["notifications"];
 
 export function useNotifications(organizationId: string | null) {
   const queryClient = useQueryClient();
   const previousNotificationsRef = useRef<DbNotification[]>([]);
+  const { data: viewer } = useViewerState();
+  const canUseNative = viewer?.entitlements?.canUseAdvancedAlerts ?? false;
 
   const query = useQuery({
     queryKey: [...NOTIFICATIONS_QUERY_KEY, organizationId],
@@ -21,12 +24,12 @@ export function useNotifications(organizationId: string | null) {
     refetchInterval: 30000, // Poll every 30 seconds
   });
 
-  // Request permission on mount
+  // Request permission on mount (only if entitlement allows)
   useEffect(() => {
-    if (organizationId) {
+    if (organizationId && canUseNative) {
       void requestNotificationPermission();
     }
-  }, [organizationId]);
+  }, [organizationId, canUseNative]);
 
   // Check for newly arrived notifications to trigger toasts and native alerts
   useEffect(() => {
@@ -38,7 +41,7 @@ export function useNotifications(organizationId: string | null) {
     // Only notify if this isn't the first load (previous is not empty)
     if (previousNotificationsRef.current.length > 0 && newNotifications.length > 0) {
       newNotifications.forEach((n) => {
-        // 1. Trigger In-App Toast
+        // 1. Trigger In-App Toast (Always allowed)
         const toastFn = n.type === "error" ? toast.error 
           : n.type === "success" ? toast.success 
           : n.type === "warning" ? toast.warning 
@@ -49,17 +52,19 @@ export function useNotifications(organizationId: string | null) {
           duration: 5000,
         });
 
-        // 2. Trigger Native Browser Notification
-        sendNativeNotification(n.title, {
-          body: n.message,
-          tag: n.id, // Prevent duplicate alerts for the same ID
-          data: { link: n.link },
-        });
+        // 2. Trigger Native Browser Notification (Premium only)
+        if (canUseNative) {
+          sendNativeNotification(n.title, {
+            body: n.message,
+            tag: n.id, // Prevent duplicate alerts for the same ID
+            data: { link: n.link },
+          });
+        }
       });
     }
 
     previousNotificationsRef.current = query.data;
-  }, [query.data]);
+  }, [query.data, canUseNative]);
 
   return {
     ...query,
