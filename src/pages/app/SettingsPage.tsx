@@ -14,7 +14,7 @@ import { useDestinationSettings } from "@/hooks/useDestinationSettings";
 
 // ── Constants ───────────────────────────────────────────────────────
 
-const ALL_TABS = ["Members", "Profile", "Webhooks", "Notifications"] as const;
+const ALL_TABS = ["Profile", "Browser Alerts", "Members", "Webhooks", "Notifications"] as const;
 const DEFAULT_TAB = "Profile";
 
 // ── URL-synced tab hook ─────────────────────────────────────────────
@@ -85,9 +85,12 @@ export default function SettingsPage() {
           ))}
         </TabsList>
 
-        <TabsContent value="Profile" className="space-y-6">
-          <DesktopNotificationSettings />
+        <TabsContent value="Profile">
           <ProfileSettings />
+        </TabsContent>
+
+        <TabsContent value="Browser Alerts">
+          <DesktopNotificationSettings />
         </TabsContent>
 
         <TabsContent value="Members">
@@ -120,15 +123,8 @@ export default function SettingsPage() {
           </PremiumFeatureBlock>
         </TabsContent>
 
-        <TabsContent value="Notifications" className="space-y-8 outline-none pt-2">
-          <div className="bg-yellow-500/10 border border-yellow-500/20 p-2 text-[8px] text-center rounded">
-            DEBUG: Build v26-06-02-C (Strict Enforcement)
-          </div>
-          <section>
-            <DesktopNotificationSettings />
-          </section>
-          
-          <section className="pt-4 border-t border-border">
+        <TabsContent value="Notifications" className="space-y-6 outline-none pt-2">
+          <section className="pt-4">
             <div className="mb-4">
               <h3 className="text-sm font-semibold tracking-tight">External Channels</h3>
               <p className="text-xs text-muted-foreground">Manage your Slack and Discord notification targets.</p>
