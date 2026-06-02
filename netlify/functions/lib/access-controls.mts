@@ -161,6 +161,10 @@ export function computeOrganizationEntitlements({
   });
   const paidTierPolicy = PLAN_POLICY_BY_PLAN[effectivePlan];
 
+  // If we are forcing strict limits, we must also ignore the donor status
+  // for individual feature flags.
+  const activeDonorStatus = forceStrictFreePlan ? false : isDonorPremium;
+
   // Platform Admins can bypass user-level access checks (suspension, org locks)
   // but they are now subject to the organization's plan limits for capacity
   // and features. This allows testing the system as a regular user while
@@ -171,7 +175,7 @@ export function computeOrganizationEntitlements({
       effectivePlan,
       subscriptionStatus: normalizedStatus,
       isPaidSubscriptionActive,
-      isDonorPremium,
+      isDonorPremium: activeDonorStatus,
       // Admins are still subject to plan limits
       seatLimit: paidTierPolicy.seatLimit,
       nodeLimit: paidTierPolicy.nodeLimit,
@@ -179,9 +183,9 @@ export function computeOrganizationEntitlements({
       maxPayloadBytes: paidTierPolicy.maxPayloadBytes,
       canUseWebhookDestinations: paidTierPolicy.canUseWebhookDestinations,
       canUseSlackDestinations: paidTierPolicy.canUseSlackDestinations,
-      canUseAdvancedAlerts: paidTierPolicy.canUseAdvancedAlerts || isDonorPremium,
+      canUseAdvancedAlerts: paidTierPolicy.canUseAdvancedAlerts || activeDonorStatus,
       canUseTeamCollaboration: paidTierPolicy.canUseTeamCollaboration,
-      canUseLogs: paidTierPolicy.canUseLogs || isDonorPremium,
+      canUseLogs: paidTierPolicy.canUseLogs || activeDonorStatus,
       canUseFileManager: paidTierPolicy.canUseFileManager,
     };
   }
@@ -191,16 +195,16 @@ export function computeOrganizationEntitlements({
     effectivePlan,
     subscriptionStatus: normalizedStatus,
     isPaidSubscriptionActive,
-    isDonorPremium,
+    isDonorPremium: activeDonorStatus,
     seatLimit: paidTierPolicy.seatLimit,
     nodeLimit: paidTierPolicy.nodeLimit,
     logTailLines: paidTierPolicy.logTailLines,
     maxPayloadBytes: paidTierPolicy.maxPayloadBytes,
     canUseWebhookDestinations: paidTierPolicy.canUseWebhookDestinations,
     canUseSlackDestinations: paidTierPolicy.canUseSlackDestinations,
-    canUseAdvancedAlerts: paidTierPolicy.canUseAdvancedAlerts || isDonorPremium,
+    canUseAdvancedAlerts: paidTierPolicy.canUseAdvancedAlerts || activeDonorStatus,
     canUseTeamCollaboration: paidTierPolicy.canUseTeamCollaboration,
-    canUseLogs: paidTierPolicy.canUseLogs || isDonorPremium,
+    canUseLogs: paidTierPolicy.canUseLogs || activeDonorStatus,
     canUseFileManager: paidTierPolicy.canUseFileManager,
   };
 }
