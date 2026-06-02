@@ -14,7 +14,7 @@ import { useDestinationSettings } from "@/hooks/useDestinationSettings";
 
 // ── Constants ───────────────────────────────────────────────────────
 
-const ALL_TABS = ["Profile", "Browser Alerts", "Members", "Webhooks", "Notifications"] as const;
+const ALL_TABS = ["Members", "Profile", "Webhooks", "Notifications"] as const;
 const DEFAULT_TAB = "Profile";
 
 // ── URL-synced tab hook ─────────────────────────────────────────────
@@ -89,10 +89,6 @@ export default function SettingsPage() {
           <ProfileSettings />
         </TabsContent>
 
-        <TabsContent value="Browser Alerts">
-          <DesktopNotificationSettings />
-        </TabsContent>
-
         <TabsContent value="Members">
           <PremiumFeatureBlock
             title="Team Collaboration"
@@ -124,7 +120,9 @@ export default function SettingsPage() {
         </TabsContent>
 
         <TabsContent value="Notifications" className="space-y-6 outline-none pt-2">
-          <section className="pt-4">
+          <DesktopNotificationSettings />
+          
+          <section className="pt-4 border-t border-border">
             <div className="mb-4">
               <h3 className="text-sm font-semibold tracking-tight">External Channels</h3>
               <p className="text-xs text-muted-foreground">Manage your Slack and Discord notification targets.</p>
