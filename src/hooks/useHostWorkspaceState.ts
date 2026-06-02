@@ -15,7 +15,7 @@ import {
   getWatchtowerAgentUpdateStatusCopy,
 } from "@/lib/agent-release";
 import { normalizeHostStatus, isReadableHostStatus } from "@/lib/host-health-state";
-import { resolveNodeLimit, getAllowedHostIds, isHostLocked as checkIsHostLocked } from "@/lib/host-limits";
+import { resolveNodeLimit, getAllowedHostIds, sortHostsByCreation, isHostLocked as checkIsHostLocked } from "@/lib/host-limits";
 import type { DockerHost } from "@/types/database";
 
 export function useHostWorkspaceState() {
@@ -26,7 +26,7 @@ export function useHostWorkspaceState() {
   const { data: viewer } = useViewerState();
   const { toast } = useToast();
   const deleteHost = useDeleteDockerHost();
-  const { data: hosts = [], isLoading, refetch } = useDockerHosts(currentOrg?.id, { filterByPlan: true });
+  const { data: hosts = [], isLoading, refetch } = useDockerHosts(currentOrg?.id, { filterByPlan: false });
   
   const [search, setSearch] = useState("");
   const [testing, setTesting] = useState(false);

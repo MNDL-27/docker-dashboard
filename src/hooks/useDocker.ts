@@ -58,7 +58,12 @@ export function useDockerHosts(orgId?: string | null, options: { filterByPlan?: 
       return (await apiFetch(`/docker-hosts?orgId=${orgId}`)) as DockerHost[];
     },
     select: (hosts) => {
-      return sortHostsByCreation(hosts);
+      const sorted = sortHostsByCreation(hosts);
+      if (options.filterByPlan === false) return sorted;
+      
+      const nodeLimit = resolveNodeLimit(viewer);
+      if (nodeLimit === null) return sorted;
+      return sorted.slice(0, nodeLimit);
     },
     enabled: !!orgId,
     refetchInterval: (query) => (query.state.error ? false : 15000),
