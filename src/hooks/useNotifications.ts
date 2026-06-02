@@ -2,13 +2,14 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import * as api from "../services/notification-api";
 import { toast } from "sonner";
 import { useEffect, useRef } from "react";
-import { Notification } from "../types/database";
+import { Notification as DbNotification } from "../types/database";
+import { requestNotificationPermission, sendNativeNotification } from "@/lib/browser-notifications";
 
 export const NOTIFICATIONS_QUERY_KEY = ["notifications"];
 
 export function useNotifications(organizationId: string | null) {
   const queryClient = useQueryClient();
-  const previousNotificationsRef = useRef<Notification[]>([]);
+  const previousNotificationsRef = useRef<DbNotification[]>([]);
 
   const query = useQuery({
     queryKey: [...NOTIFICATIONS_QUERY_KEY, organizationId],
@@ -20,17 +21,24 @@ export function useNotifications(organizationId: string | null) {
     refetchInterval: 30000, // Poll every 30 seconds
   });
 
-  // Check for newly arrived notifications to trigger toasts
+  // Request permission on mount
+  useEffect(() => {
+    if (organizationId) {
+      void requestNotificationPermission();
+    }
+  }, [organizationId]);
+
+  // Check for newly arrived notifications to trigger toasts and native alerts
   useEffect(() => {
     if (!query.data) return;
 
     const previousIds = new Set(previousNotificationsRef.current.map((n) => n.id));
     const newNotifications = query.data.filter((n) => !previousIds.has(n.id));
 
-    // Only toast if this isn't the first load (previous is not empty)
+    // Only notify if this isn't the first load (previous is not empty)
     if (previousNotificationsRef.current.length > 0 && newNotifications.length > 0) {
       newNotifications.forEach((n) => {
-        // Find the right toast type
+        // 1. Trigger In-App Toast
         const toastFn = n.type === "error" ? toast.error 
           : n.type === "success" ? toast.success 
           : n.type === "warning" ? toast.warning 
@@ -39,6 +47,13 @@ export function useNotifications(organizationId: string | null) {
         toastFn(n.title, {
           description: n.message,
           duration: 5000,
+        });
+
+        // 2. Trigger Native Browser Notification
+        sendNativeNotification(n.title, {
+          body: n.message,
+          tag: n.id, // Prevent duplicate alerts for the same ID
+          data: { link: n.link },
         });
       });
     }
