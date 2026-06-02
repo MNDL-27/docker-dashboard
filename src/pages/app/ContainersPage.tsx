@@ -17,7 +17,7 @@ import {
   Square,
 } from "lucide-react";
 
-import { KPICard } from "@/components/dashboard/KPICard";
+import { KPICard } from "@/components/shared/KPICard";
 import { PageHeader } from "@/components/shared/PageHeader";
 import { StatusBadge } from "@/components/shared/StatusBadge";
 import { Button } from "@/components/ui/button";

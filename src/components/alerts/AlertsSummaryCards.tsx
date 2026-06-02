@@ -1,6 +1,6 @@
 import { BellRing, ShieldAlert, Siren, Workflow } from "lucide-react";
 
-import { KPICard } from "@/components/dashboard/KPICard";
+import { KPICard } from "@/components/shared/KPICard";
 import type { AlertsSummary } from "@/services/alerts-api";
 
 export function AlertsSummaryCards({ summary }: { summary: AlertsSummary }) {

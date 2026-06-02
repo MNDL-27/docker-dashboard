@@ -1,5 +1,5 @@
 import { PageHeader } from "@/components/shared/PageHeader";
-import { KPICard } from "@/components/dashboard/KPICard";
+import { KPICard } from "@/components/shared/KPICard";
 import { HostHealthGrid } from "@/components/dashboard/HostHealthGrid";
 import { FleetResourceChart } from "@/components/dashboard/FleetResourceChart";
 import { ContainersTable } from "@/components/dashboard/ContainersTable";
