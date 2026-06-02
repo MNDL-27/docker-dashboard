@@ -1,7 +1,7 @@
 import type { Config } from '@netlify/functions';
 
 import { requireAuth } from './lib/auth.mjs';
-import { assertOrganizationFeatureAllowed } from './lib/access-controls.mjs';
+import { assertOrganizationFeatureAllowed, resolveOrganizationEntitlements } from './lib/access-controls.mjs';
 import { ensureAlertsSchema } from './lib/ensure-alerts-schema.mjs';
 import { getOrganizationRole, requireOrganizationAdmin } from './lib/alerts.mjs';
 import {
@@ -25,12 +25,19 @@ export default async (req: Request) => {
   try {
     await ensureAlertsSchema();
     const auth = await requireAuth(req);
-    await assertOrganizationFeatureAllowed({
+    const entitlements = await resolveOrganizationEntitlements({
       organizationId: auth.orgId!,
       isPlatformAdmin: auth.isPlatformAdmin,
-      feature: 'webhook_destinations',
     });
+    
     const role = await getOrganizationRole(auth);
+
+    if (!entitlements.canUseWebhookDestinations) {
+      if (req.method === 'GET') {
+        return new Response(JSON.stringify({ destinations: [], role, can_manage: false }), { headers });
+      }
+      throw new Error("This feature requires an Individual, Business, or Dedicated subscription.");
+    }
 
     if (req.method === 'GET') {
       const destinations = await listWebhookDestinations(auth);

@@ -2,8 +2,8 @@ import type { Config } from '@netlify/functions';
 import { requireAuth } from './lib/auth.mjs';
 import { sql } from './lib/db.mjs';
 import { ensureAlertsSchema } from './lib/ensure-alerts-schema.mjs';
-import { ensureDefaultAlertRules, listAlertRules, requireOrganizationAdmin, syncAlertEvents } from './lib/alerts.mjs';
-import { assertAdvancedAlertsAccessAllowed } from './lib/access-controls.mjs';
+import { listAlertRules, requireOrganizationAdmin, syncAlertEvents } from './lib/alerts.mjs';
+import { assertAdvancedAlertsAccessAllowed, resolveOrganizationEntitlements } from './lib/access-controls.mjs';
 
 const headers = {
   'Access-Control-Allow-Origin': '*',
@@ -19,9 +19,15 @@ export default async (req: Request) => {
   try {
     await ensureAlertsSchema();
     const auth = await requireAuth(req);
+    const entitlements = await resolveOrganizationEntitlements({
+      organizationId: auth.orgId!,
+      isPlatformAdmin: auth.isPlatformAdmin,
+    });
 
     if (req.method === 'GET') {
-      await ensureDefaultAlertRules(auth);
+      if (!entitlements.canUseAdvancedAlerts) {
+        return new Response(JSON.stringify([]), { headers });
+      }
       return new Response(JSON.stringify(await listAlertRules(auth)), { headers });
     }
 
