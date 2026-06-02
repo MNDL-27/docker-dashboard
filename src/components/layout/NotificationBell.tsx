@@ -7,10 +7,10 @@ import { Button } from "../ui/button";
 import { cn } from "../../lib/utils";
 import { formatDistanceToNow } from "date-fns";
 import { useNavigate } from "react-router-dom";
-import { Notification } from "../../types/database";
+import { Notification as DbNotification } from "../../types/database";
 import { requestNotificationPermission } from "../../lib/browser-notifications";
 
-const NotificationIcon = ({ type }: { type: Notification["type"] }) => {
+const NotificationIcon = ({ type }: { type: DbNotification["type"] }) => {
   switch (type) {
     case "error":
       return <AlertCircle className="w-5 h-5 text-red-500" />;
@@ -53,7 +53,7 @@ export function NotificationBell() {
     setPermission(result);
   };
 
-  const handleClick = (n: Notification) => {
+  const handleClick = (n: DbNotification) => {
     if (n.link) {
       setOpen(false);
       if (n.link.startsWith("http://") || n.link.startsWith("https://")) {
@@ -119,7 +119,7 @@ export function NotificationBell() {
             </div>
           ) : (
             <div className="divide-y divide-zinc-100 dark:divide-zinc-800/50">
-              {notifications.map((n) => (
+              {notifications.map((n: DbNotification) => (
                 <div 
                   key={n.id} 
                   className={cn(
