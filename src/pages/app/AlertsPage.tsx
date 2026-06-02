@@ -30,15 +30,17 @@ export default function AlertsPage() {
   const [statusFilter, setStatusFilter] = useState<string>("open");
   const [pendingAlertId, setPendingAlertId] = useState<string | null>(null);
 
+  const hasAccess = viewer?.entitlements?.canUseAdvancedAlerts ?? false;
+
   const hostsQuery = useDockerHosts(currentOrg?.id, { filterByPlan: true });
   const alertsQuery = useAlertsWorkspace(currentOrg?.id, {
     severity: severityFilter === "all" ? undefined : severityFilter,
     status: statusFilter === "all" ? undefined : statusFilter,
-  });
-  const rulesQuery = useAlertRules(currentOrg?.id);
-  const incidentsQuery = useIncidentsFeed(currentOrg?.id);
-  const slackDestinationsQuery = useSlackDestinations(currentOrg?.id);
-  const webhookDestinationsQuery = useWebhookDestinations(currentOrg?.id);
+  }, hasAccess);
+  const rulesQuery = useAlertRules(currentOrg?.id, hasAccess);
+  const incidentsQuery = useIncidentsFeed(currentOrg?.id, hasAccess);
+  const slackDestinationsQuery = useSlackDestinations(currentOrg?.id, hasAccess);
+  const webhookDestinationsQuery = useWebhookDestinations(currentOrg?.id, hasAccess);
 
   const acknowledgeMutation = useAcknowledgeAlert();
   const resolveMutation = useResolveAlert();
@@ -52,7 +54,7 @@ export default function AlertsPage() {
   const history = incidentsQuery.data?.history ?? [];
   const slackDestinations = slackDestinationsQuery.data?.destinations ?? [];
   const webhookDestinations = webhookDestinationsQuery.data?.destinations ?? [];
-  const canManage = alertsQuery.data?.can_manage ?? false;
+  const canManage = (alertsQuery.data?.can_manage ?? false) && hasAccess;
   const summary = alertsQuery.data?.summary ?? {
     total_alerts: 0,
     critical_alerts: 0,
@@ -60,7 +62,7 @@ export default function AlertsPage() {
     open_incidents: 0,
   };
 
-  const loading = hostsQuery.isLoading || alertsQuery.isLoading || rulesQuery.isLoading || incidentsQuery.isLoading || slackDestinationsQuery.isLoading || webhookDestinationsQuery.isLoading;
+  const loading = hasAccess && (hostsQuery.isLoading || alertsQuery.isLoading || rulesQuery.isLoading || incidentsQuery.isLoading || slackDestinationsQuery.isLoading || webhookDestinationsQuery.isLoading);
   const hasHosts = (hostsQuery.data?.length ?? 0) > 0;
   const enabledSlackDestinationsCount = slackDestinations.filter((destination) => destination.enabled).length;
   const enabledWebhookDestinationsCount = webhookDestinations.filter((destination) => destination.enabled).length;
@@ -76,6 +78,7 @@ export default function AlertsPage() {
   };
 
   const handleAcknowledge = async (id: string) => {
+    if (!hasAccess) return;
     setPendingAlertId(id);
     try {
       await acknowledgeMutation.mutateAsync(id);
@@ -88,6 +91,7 @@ export default function AlertsPage() {
   };
 
   const handleResolve = async (id: string) => {
+    if (!hasAccess) return;
     setPendingAlertId(id);
     try {
       await resolveMutation.mutateAsync(id);
@@ -100,6 +104,7 @@ export default function AlertsPage() {
   };
 
   const handleCreateRule = async (values: AlertRuleFormValues) => {
+    if (!hasAccess) return;
     try {
       await createRuleMutation.mutateAsync(values);
       toast({ title: "Alert rule created" });
@@ -109,6 +114,7 @@ export default function AlertsPage() {
   };
 
   const handleUpdateRule = async (ruleId: string, values: Partial<AlertRuleFormValues>) => {
+    if (!hasAccess) return;
     try {
       await updateRuleMutation.mutateAsync({ id: ruleId, values });
       toast({ title: "Alert rule updated" });
@@ -118,6 +124,7 @@ export default function AlertsPage() {
   };
 
   const handleCreateIncident = async (alert: AlertEvent & { href?: string }) => {
+    if (!hasAccess) return;
     setPendingAlertId(alert.id);
     try {
       await createIncidentMutation.mutateAsync({
@@ -143,6 +150,25 @@ export default function AlertsPage() {
 
   if (loading) {
     return <div className="flex h-64 items-center justify-center"><Loader2 className="h-8 w-8 animate-spin text-muted-foreground" /></div>;
+  }
+
+  if (!hasAccess && !viewer?.is_platform_admin) {
+    return (
+      <div className="space-y-6 animate-fade-in">
+        <PageHeader
+          title="Alerts & Monitoring"
+          description="Persisted alert state, rule management, and recent incident activity for your active organization."
+          breadcrumbs={[{ label: "Observability" }, { label: "Alerts" }]}
+        />
+        <PremiumFeatureBlock
+          title="Alerting & Monitoring is a paid feature"
+          description="Upgrade to an Individual, Business, or Dedicated plan to configure custom alert rules, Slack/Webhook notifications, and incident tracking."
+          hasAccess={false}
+        >
+          <div />
+        </PremiumFeatureBlock>
+      </div>
+    );
   }
 
   return (

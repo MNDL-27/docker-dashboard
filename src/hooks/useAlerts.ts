@@ -3,28 +3,28 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { alertsApi } from "@/services/alerts-api";
 import type { AlertRuleFormValues } from "@/types/alerts";
 
-export function useAlertsWorkspace(orgId?: string | null, filters?: { severity?: string; status?: string }) {
+export function useAlertsWorkspace(orgId?: string | null, filters: { severity?: string; status?: string } = {}, enabled = true) {
   return useQuery({
-    queryKey: ["alerts-workspace", orgId, filters?.severity ?? "all", filters?.status ?? "active"],
-    queryFn: () => alertsApi.listAlerts(filters),
-    enabled: !!orgId,
+    queryKey: ["alerts-workspace", orgId, filters],
+    queryFn: () => alertsApi.getWorkspace(filters),
+    enabled: !!orgId && enabled,
     refetchInterval: 30000,
   });
 }
 
-export function useAlertRules(orgId?: string | null) {
+export function useAlertRules(orgId?: string | null, enabled = true) {
   return useQuery({
     queryKey: ["alert-rules", orgId],
     queryFn: () => alertsApi.listRules(),
-    enabled: !!orgId,
+    enabled: !!orgId && enabled,
   });
 }
 
-export function useIncidentsFeed(orgId?: string | null) {
+export function useIncidentsFeed(orgId?: string | null, enabled = true) {
   return useQuery({
     queryKey: ["incidents-feed", orgId],
     queryFn: () => alertsApi.listIncidents(),
-    enabled: !!orgId,
+    enabled: !!orgId && enabled,
     refetchInterval: 30000,
   });
 }
