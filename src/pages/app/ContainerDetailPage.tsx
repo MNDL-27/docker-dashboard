@@ -302,7 +302,19 @@ export default function ContainerDetailPage() {
     isFetching: statsFetching,
     refetch: refetchStats,
   } = useContainerStats(guardedHostId, containerId, 10000);
-  const { data: logsData, isLoading: logsLoading, refetch: refetchLogs } = useContainerLogs(guardedHostId, containerId, { tail: 200 });
+  
+  // MANUAL LOG FETCHING ONLY: To save Netlify resources, we never fetch logs automatically on this page.
+  const [logsRequested, setLogsRequested] = useState(false);
+  const { data: logsData, isFetching: logsLoading, refetch: refetchLogs } = useContainerLogs(
+    logsRequested ? guardedHostId : null, 
+    containerId, 
+    { tail: 200 }
+  );
+
+  const handleManualLogFetch = async () => {
+    setLogsRequested(true);
+    await refetchLogs();
+  };
 
   const handleAction = async (action: ContainerAction) => {
     if (!hostId || !containerId) return;
