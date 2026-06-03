@@ -17,6 +17,8 @@ import { useContainers, useDockerHosts } from "@/hooks/useDocker";
 import { NotificationBell } from "./NotificationBell";
 import { useAppNavigation } from "@/hooks/useAppNavigation";
 import { NavItems } from "./NavItems";
+import { useViewerState } from "@/hooks/useViewerState";
+import { useQueryClient } from "@tanstack/react-query";
 
 type SearchableContainer = {
   Id?: string;
@@ -38,6 +40,8 @@ const quickSearchItems = [
 
 export function AppTopBar() {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  const { data: viewer } = useViewerState();
   const { organization } = useOrganization();
   const { navGroups, entitlements } = useAppNavigation();
   const [isDark, setIsDark] = useState(() => document.documentElement.classList.contains("dark"));
