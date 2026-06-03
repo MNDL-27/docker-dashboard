@@ -31,12 +31,16 @@ export function ProtectedRoute({
     return <FullScreenLoader />;
   }
 
-  if (!isSignedIn || !viewer) {
+  if (!isSignedIn) {
     return <Navigate to="/login" replace />;
   }
 
   if (error) {
     return <AuthErrorState />;
+  }
+
+  if (!viewer) {
+    return <Navigate to="/login" replace />;
   }
 
   const redirect = getRedirectTarget({
@@ -47,7 +51,7 @@ export function ProtectedRoute({
     skipResolvedRedirect
   });
 
-  if (redirect) {
+  if (redirect && redirect !== location.pathname) {
     return <Navigate to={redirect} replace />;
   }
 
