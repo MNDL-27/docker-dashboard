@@ -19,7 +19,7 @@ export type AppNavItem = {
   label: string;
   icon: AppNavIcon;
   href: string;
-  premiumKey?: "canUseLogs" | "canUseFileManager" | "canUseTeamCollaboration";
+  premiumKey?: "canUseLogs" | "canUseFileManager" | "canUseTeamCollaboration" | "canUseAdvancedAlerts";
 };
 
 export type AppNavGroup = {
@@ -47,7 +47,7 @@ export const appNavGroups: AppNavGroup[] = [
     items: [
       { label: "Logs", icon: FileText, href: "/app/logs", premiumKey: "canUseLogs" },
       { label: "Files", icon: FolderOpen, href: "/app/files", premiumKey: "canUseFileManager" },
-      { label: "Alerts", icon: Bell, href: "/app/alerts" },
+      { label: "Alerts", icon: Bell, href: "/app/alerts", premiumKey: "canUseAdvancedAlerts" },
     ],
   },
   {
