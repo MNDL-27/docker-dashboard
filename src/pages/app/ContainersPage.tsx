@@ -27,7 +27,7 @@ import { useAllContainerStats, useContainers, useDockerHosts } from "@/hooks/use
 import { useFleetMetrics } from "@/hooks/useFleetMetrics";
 import { useViewerState } from "@/hooks/useViewerState";
 import { dockerApi } from "@/services/docker-api";
-import { cn } from "@/lib/utils";
+import { cn, formatPercent, formatBytes } from "@/lib/utils";
 import { PLAN_POLICY_BY_PLAN, normalizePlan } from "../../../shared/schema/plan-policy";
 
 type BadgeStatus = "running" | "unhealthy" | "exited" | "restarting" | "paused" | "critical" | "warning";
