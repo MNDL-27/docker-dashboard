@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { apiFetch } from "@/lib/api";
+import { useAuth } from "@clerk/react";
 
 export interface ViewerEntitlements {
   plan: "free" | "pro" | "team" | "enterprise";
@@ -38,12 +39,15 @@ export interface ViewerState {
 }
 
 export function useViewerState() {
+  const { isLoaded, isSignedIn } = useAuth();
+
   return useQuery({
     queryKey: ['auth-me'],
     queryFn: async () => {
       const data = await apiFetch('/auth/me');
       return data.user as ViewerState;
     },
+    enabled: isLoaded && isSignedIn,
     retry: false,
     staleTime: 30_000,
   });

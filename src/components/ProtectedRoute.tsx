@@ -23,20 +23,28 @@ export function ProtectedRoute({
   const location = useLocation();
   const previewBypass = isPreviewAuthBypassEnabled();
   
-  const { data: viewer, isLoading, error } = useViewerState();
+  const { data: viewer, isLoading: isViewerLoading, error } = useViewerState();
 
   if (previewBypass) return <>{children}</>;
 
-  if (!isLoaded || isLoading) {
+  // 1. Wait for Clerk to determine initial auth state
+  if (!isLoaded) {
     return <FullScreenLoader />;
   }
 
+  // 2. If not signed in, redirect to login immediately
   if (!isSignedIn) {
     return <Navigate to="/login" replace />;
   }
 
+  // 3. Handle backend errors or missing viewer data
   if (error) {
     return <AuthErrorState error={error} />;
+  }
+
+  // 4. Wait for the viewer profile fetch (which is now enabled since isLoaded && isSignedIn is true)
+  if (isViewerLoading) {
+    return <FullScreenLoader />;
   }
 
   // Handle cases where the backend returns a successful response but with an error code (e.g. 202 SYNC_PENDING)
