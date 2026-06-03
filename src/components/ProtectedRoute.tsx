@@ -36,7 +36,13 @@ export function ProtectedRoute({
   }
 
   if (error) {
-    return <AuthErrorState />;
+    return <AuthErrorState error={error} />;
+  }
+
+  // Handle cases where the backend returns a successful response but with an error code (e.g. 202 SYNC_PENDING)
+  const isSyncing = (viewer as unknown as Record<string, unknown>)?.code === 'SYNC_PENDING';
+  if (isSyncing) {
+    return <FullScreenLoader message="Syncing your account..." />;
   }
 
   if (!viewer) {
@@ -106,24 +112,33 @@ function isDeploymentBlocked(status: string | null): boolean {
   return !terminalStates.includes(status);
 }
 
-function FullScreenLoader() {
+function FullScreenLoader({ message }: { message?: string }) {
   return (
-    <div className="min-h-screen flex items-center justify-center bg-background">
+    <div className="min-h-screen flex flex-col items-center justify-center bg-background gap-4">
       <div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+      {message && <p className="text-xs text-muted-foreground animate-pulse">{message}</p>}
     </div>
   );
 }
 
-function AuthErrorState() {
+function AuthErrorState({ error }: { error: unknown }) {
+  const message = error instanceof Error ? error.message : "An unexpected error occurred.";
+
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center gap-3 bg-background px-4">
-      <p className="text-sm text-muted-foreground text-center">Unable to verify onboarding status right now.</p>
+    <div className="min-h-screen flex flex-col items-center justify-center gap-4 bg-background px-4">
+      <div className="rounded-full bg-destructive/10 p-3">
+        <div className="w-6 h-6 text-destructive flex items-center justify-center font-bold">!</div>
+      </div>
+      <div className="space-y-1 text-center">
+        <p className="text-sm font-medium">Unable to verify your account</p>
+        <p className="text-xs text-muted-foreground max-w-xs">{message}</p>
+      </div>
       <button
         type="button"
         onClick={() => window.location.reload()}
-        className="text-sm font-medium text-primary hover:underline"
+        className="text-xs font-semibold text-primary hover:underline bg-primary/5 px-4 py-2 rounded-lg transition-colors"
       >
-        Retry
+        Retry Authentication
       </button>
     </div>
   );
