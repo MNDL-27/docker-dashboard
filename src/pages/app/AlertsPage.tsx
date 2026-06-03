@@ -1,7 +1,6 @@
 import { useMemo, useState } from "react";
 import { useOrganization } from "@clerk/react";
 import { BellRing, Loader2, MessageSquareShare, ServerCrash, Webhook } from "lucide-react";
-import { Link } from "react-router-dom";
 
 import { AddHostDialog } from "@/components/docker/AddHostDialog";
 import { AlertsSummaryCards } from "@/components/alerts/AlertsSummaryCards";
@@ -25,11 +24,12 @@ import {
   useResolveAlert,
   useUpdateAlertRule,
 } from "@/hooks/useAlerts";
-import { useSlackDestinations } from "@/hooks/useSlackDestinations";
-import { useWebhookDestinations } from "@/hooks/useWebhookDestinations";
 import { useToast } from "@/hooks/use-toast";
 import type { AlertEvent } from "@/types/database";
 import type { AlertRuleFormValues } from "@/types/alerts";
+import { useDestinationSettings } from "@/hooks/useDestinationSettings";
+import { SlackDestinationsPanel } from "@/components/settings/SlackDestinationsPanel";
+import { WebhookDestinationsPanel } from "@/components/settings/WebhookDestinationsPanel";
 
 // ── Components ───────────────────────────────────────────────────────
 
@@ -44,6 +44,8 @@ function InternalAlertsPage({ viewer }: { viewer: ViewerState }) {
   const [statusFilter, setStatusFilter] = useState<string>("open");
   const [pendingAlertId, setPendingAlertId] = useState<string | null>(null);
 
+  const entitlements = viewer.entitlements;
+
   const hostsQuery = useDockerHosts(currentOrg?.id, { filterByPlan: true });
   const alertsQuery = useAlertsWorkspace(currentOrg?.id, {
     severity: severityFilter === "all" ? undefined : severityFilter,
@@ -51,8 +53,12 @@ function InternalAlertsPage({ viewer }: { viewer: ViewerState }) {
   });
   const rulesQuery = useAlertRules(currentOrg?.id);
   const incidentsQuery = useIncidentsFeed(currentOrg?.id);
-  const slackDestinationsQuery = useSlackDestinations(currentOrg?.id);
-  const webhookDestinationsQuery = useWebhookDestinations(currentOrg?.id);
+  
+  const { slack, webhook } = useDestinationSettings(
+    currentOrg?.id,
+    entitlements?.canUseSlackDestinations ?? false,
+    entitlements?.canUseWebhookDestinations ?? false,
+  );
 
   const acknowledgeMutation = useAcknowledgeAlert();
   const resolveMutation = useResolveAlert();
@@ -64,8 +70,7 @@ function InternalAlertsPage({ viewer }: { viewer: ViewerState }) {
   const rules = rulesQuery.data ?? [];
   const incidents = incidentsQuery.data?.incidents ?? [];
   const history = incidentsQuery.data?.history ?? [];
-  const slackDestinations = slackDestinationsQuery.data?.destinations ?? [];
-  const webhookDestinations = webhookDestinationsQuery.data?.destinations ?? [];
+  
   const canManage = alertsQuery.data?.can_manage ?? false;
   const summary = alertsQuery.data?.summary ?? {
     total_alerts: 0,
@@ -78,14 +83,12 @@ function InternalAlertsPage({ viewer }: { viewer: ViewerState }) {
     hostsQuery.isLoading ||
     alertsQuery.isLoading ||
     rulesQuery.isLoading ||
-    incidentsQuery.isLoading ||
-    slackDestinationsQuery.isLoading ||
-    webhookDestinationsQuery.isLoading;
+    incidentsQuery.isLoading;
+    
   const hasHosts = (hostsQuery.data?.length ?? 0) > 0;
-  const enabledSlackDestinationsCount = slackDestinations.filter((destination) => destination.enabled).length;
-  const enabledWebhookDestinationsCount = webhookDestinations.filter((destination) => destination.enabled).length;
-  const hasSlackRules = rules.some((rule) => rule.notification_channels.includes("slack"));
-  const hasWebhookRules = rules.some((rule) => rule.notification_channels.includes("webhook"));
+  
+  const enabledSlackDestinationsCount = slack.destinations.filter((d) => d.enabled).length;
+  const enabledWebhookDestinationsCount = webhook.destinations.filter((d) => d.enabled).length;
 
   const handleMutationError = (message: string, error: unknown) => {
     toast({
@@ -257,58 +260,6 @@ function InternalAlertsPage({ viewer }: { viewer: ViewerState }) {
             pendingId={pendingAlertId}
           />
 
-          {hasSlackRules && enabledSlackDestinationsCount === 0 ? (
-            <div className="rounded-xl border border-warning/30 bg-warning/10 p-3 sm:p-4">
-              <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
-                <div className="flex items-start gap-2 sm:gap-3">
-                  <div className="rounded-full bg-warning/15 p-1.5 sm:p-2 shrink-0">
-                    <MessageSquareShare className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-warning" />
-                  </div>
-                  <div className="min-w-0">
-                    <p className="text-xs sm:text-sm font-medium">
-                      Slack notifications are enabled on one or more rules, but no Slack destinations are configured.
-                    </p>
-                    <p className="text-[10px] sm:text-xs text-muted-foreground mt-0.5">
-                      Those rules will keep evaluating normally, but Slack messages will not be sent until an
-                      organization-level destination is added.
-                    </p>
-                  </div>
-                </div>
-                {canManage ? (
-                  <Button asChild size="sm" variant="outline" className="self-start mt-1 md:mt-0">
-                    <Link to="/app/settings?tab=Notifications">Open Notifications</Link>
-                  </Button>
-                ) : null}
-              </div>
-            </div>
-          ) : null}
-
-          {hasWebhookRules && enabledWebhookDestinationsCount === 0 ? (
-            <div className="rounded-xl border border-warning/30 bg-warning/10 p-3 sm:p-4">
-              <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
-                <div className="flex items-start gap-2 sm:gap-3">
-                  <div className="rounded-full bg-warning/15 p-1.5 sm:p-2 shrink-0">
-                    <Webhook className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-warning" />
-                  </div>
-                  <div className="min-w-0">
-                    <p className="text-xs sm:text-sm font-medium">
-                      Webhook delivery is enabled on one or more rules, but no destinations are configured.
-                    </p>
-                    <p className="text-[10px] sm:text-xs text-muted-foreground mt-0.5">
-                      Those rules will continue evaluating normally, but outbound webhook sends will be skipped until an
-                      organization-level destination is added.
-                    </p>
-                  </div>
-                </div>
-                {canManage ? (
-                  <Button asChild size="sm" variant="outline" className="self-start mt-1 md:mt-0">
-                    <Link to="/app/settings?tab=Webhooks">Open Webhooks</Link>
-                  </Button>
-                ) : null}
-              </div>
-            </div>
-          ) : null}
-
           <div id="alert-rules-section">
             <AlertRulesPanel
               rules={rules}
@@ -320,6 +271,49 @@ function InternalAlertsPage({ viewer }: { viewer: ViewerState }) {
               onUpdate={handleUpdateRule}
             />
           </div>
+
+          <section className="space-y-6">
+            <div className="mb-4">
+              <h3 className="text-sm font-semibold tracking-tight">Delivery Channels</h3>
+              <p className="text-xs text-muted-foreground">Configure where alerts are sent when rules are triggered.</p>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <PremiumFeatureBlock
+                title="Slack & Discord Notifications"
+                description="Upgrade your plan to integrate with Slack and Discord and receive alerts directly in your channels."
+                hasAccess={entitlements?.canUseSlackDestinations ?? false}
+              >
+                <SlackDestinationsPanel
+                  destinations={slack.destinations}
+                  canManage={slack.canManage}
+                  saving={slack.saving}
+                  testingId={slack.testingId}
+                  onCreate={slack.onCreate}
+                  onUpdate={slack.onUpdate}
+                  onTest={slack.onTest}
+                />
+              </PremiumFeatureBlock>
+
+              <PremiumFeatureBlock
+                title="Webhook Destinations"
+                description="Upgrade your plan to configure custom webhook destinations for real-time alerts."
+                hasAccess={entitlements?.canUseWebhookDestinations ?? false}
+              >
+                <WebhookDestinationsPanel
+                  destinations={webhook.destinations}
+                  canManage={webhook.canManage}
+                  saving={webhook.saving}
+                  testingId={webhook.testingId}
+                  latestSecret={webhook.latestSecret}
+                  onCreate={webhook.onCreate}
+                  onUpdate={webhook.onUpdate}
+                  onTest={webhook.onTest}
+                  onDismissSecret={webhook.onDismissSecret}
+                />
+              </PremiumFeatureBlock>
+            </div>
+          </section>
 
           <AlertHistoryFeed incidents={incidents} history={history} />
         </>

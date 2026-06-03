@@ -4,17 +4,14 @@ import { OrganizationMembersWorkspaceContainer } from "@/components/settings/Org
 import { useCallback, useEffect, useState } from "react";
 import { ProfileSettings } from "@/components/settings/ProfileSettings";
 import { useSearchParams } from "react-router-dom";
-import { SlackDestinationsPanel } from "@/components/settings/SlackDestinationsPanel";
-import { WebhookDestinationsPanel } from "@/components/settings/WebhookDestinationsPanel";
 import { DesktopNotificationSettings } from "@/components/settings/DesktopNotificationSettings";
 import { useOrganization } from "@clerk/react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useViewerState } from "@/hooks/useViewerState";
-import { useDestinationSettings } from "@/hooks/useDestinationSettings";
 
 // ── Constants ───────────────────────────────────────────────────────
 
-const ALL_TABS = ["Members", "Profile", "Webhooks", "Notifications"] as const;
+const ALL_TABS = ["Profile", "Members", "Notifications"] as const;
 const DEFAULT_TAB = "Profile";
 
 // ── URL-synced tab hook ─────────────────────────────────────────────
@@ -53,20 +50,10 @@ function useTabSync(validTabs: readonly string[], defaultTab: string) {
 // ── Page ────────────────────────────────────────────────────────────
 
 export default function SettingsPage() {
-  const { organization: currentOrg } = useOrganization();
   const { data: viewer } = useViewerState();
   const entitlements = viewer?.entitlements;
 
   const { tab, onChange } = useTabSync(ALL_TABS, DEFAULT_TAB);
-  
-  // LAZY LOADING: Only trigger destination queries if the user is on the relevant tab
-  const showDestinations = tab === "Webhooks" || tab === "Notifications";
-  
-  const { slack, webhook } = useDestinationSettings(
-    currentOrg?.id,
-    showDestinations && (entitlements?.canUseSlackDestinations ?? false),
-    showDestinations && (entitlements?.canUseWebhookDestinations ?? false),
-  );
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -99,51 +86,8 @@ export default function SettingsPage() {
           </PremiumFeatureBlock>
         </TabsContent>
 
-        <TabsContent value="Webhooks">
-          <PremiumFeatureBlock
-            title="Webhook Destinations"
-            description="Upgrade your plan to configure custom webhook destinations for real-time alerts."
-            hasAccess={entitlements?.canUseWebhookDestinations ?? false}
-          >
-            <WebhookDestinationsPanel
-              destinations={webhook.destinations}
-              canManage={webhook.canManage}
-              saving={webhook.saving}
-              testingId={webhook.testingId}
-              latestSecret={webhook.latestSecret}
-              onCreate={webhook.onCreate}
-              onUpdate={webhook.onUpdate}
-              onTest={webhook.onTest}
-              onDismissSecret={webhook.onDismissSecret}
-            />
-          </PremiumFeatureBlock>
-        </TabsContent>
-
         <TabsContent value="Notifications" className="space-y-6 outline-none pt-2">
           <DesktopNotificationSettings />
-          
-          <section className="pt-4 border-t border-border">
-            <div className="mb-4">
-              <h3 className="text-sm font-semibold tracking-tight">External Channels</h3>
-              <p className="text-xs text-muted-foreground">Manage your Slack and Discord notification targets.</p>
-            </div>
-            
-            <PremiumFeatureBlock
-              title="Slack & Discord Notifications"
-              description="Upgrade your plan to integrate with Slack and Discord and receive alerts directly in your channels."
-              hasAccess={entitlements?.canUseSlackDestinations ?? false}
-            >
-              <SlackDestinationsPanel
-                destinations={slack.destinations}
-                canManage={slack.canManage}
-                saving={slack.saving}
-                testingId={slack.testingId}
-                onCreate={slack.onCreate}
-                onUpdate={slack.onUpdate}
-                onTest={slack.onTest}
-              />
-            </PremiumFeatureBlock>
-          </section>
         </TabsContent>
       </Tabs>
     </div>

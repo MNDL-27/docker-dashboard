@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
-import { normalizeHostMetricsPoint } from "./useHostMetrics";
+import { transformApiMetrics } from "@/lib/metrics-transformer";
 
-describe("normalizeHostMetricsPoint", () => {
+describe("transformApiMetrics", () => {
   it("successfully normalizes a valid camelCase sample", () => {
     const raw = {
       timestamp: 1625097600000,
@@ -12,7 +12,7 @@ describe("normalizeHostMetricsPoint", () => {
       memoryUsed: 8000000000,
       memoryLimit: 16000000000,
     };
-    const result = normalizeHostMetricsPoint(raw);
+    const result = transformApiMetrics(raw);
     expect(result).not.toBeNull();
     expect(result?.cpu).toBe(45);
     expect(result?.totalCores).toBe(4);
@@ -28,13 +28,13 @@ describe("normalizeHostMetricsPoint", () => {
       memory_used: 8000000000,
       memory_limit: 16000000000,
     };
-    const result = normalizeHostMetricsPoint(raw as unknown as Parameters<typeof normalizeHostMetricsPoint>[0]);
+    const result = transformApiMetrics(raw as any);
     expect(result).not.toBeNull();
     expect(result?.usedCores).toBe(2);
     expect(result?.totalCores).toBe(4);
   });
 
-  it("returns null for missing core fields", () => {
+  it("sets core fields to null if missing", () => {
     const raw = {
       timestamp: 1625097600000,
       cpu: 45,
@@ -44,10 +44,11 @@ describe("normalizeHostMetricsPoint", () => {
       memoryUsed: 8000000000,
       memoryLimit: 16000000000,
     };
-    expect(normalizeHostMetricsPoint(raw as Parameters<typeof normalizeHostMetricsPoint>[0])).toBeNull();
+    const result = transformApiMetrics(raw as any);
+    expect(result.memory).toBeNull();
   });
 
-  it("clamps out of range values instead of returning null", () => {
+  it("clamps out of range values", () => {
     const raw = {
       timestamp: 1625097600000,
       cpu: 105, // > 100
@@ -57,7 +58,7 @@ describe("normalizeHostMetricsPoint", () => {
       memoryUsed: 20000000000,
       memoryLimit: 16000000000, // used > limit
     };
-    const result = normalizeHostMetricsPoint(raw as Parameters<typeof normalizeHostMetricsPoint>[0]);
+    const result = transformApiMetrics(raw as any);
     expect(result).not.toBeNull();
     expect(result?.cpu).toBe(100);
     expect(result?.memory).toBe(0);
@@ -76,7 +77,7 @@ describe("normalizeHostMetricsPoint", () => {
       memoryLimit: 16000000000,
       networkInBytesPerSec: "", // Should become null, not 0
     };
-    const result = normalizeHostMetricsPoint(raw as unknown as Parameters<typeof normalizeHostMetricsPoint>[0]);
+    const result = transformApiMetrics(raw as any);
     expect(result?.networkInBytesPerSec).toBeNull();
   });
 });

@@ -51,11 +51,15 @@ export function useNotifications(organizationId: string | null) {
         });
 
         // 2. Trigger Native Browser Notification
-        sendNativeNotification(n.title, {
-          body: n.message,
-          tag: n.id, // Prevent duplicate alerts for the same ID
-          data: { link: n.link },
-        });
+        const isEnabled = typeof window !== "undefined" ? localStorage.getItem("browser_notifications_enabled") !== "false" : true;
+        
+        if (isEnabled) {
+          sendNativeNotification(n.title, {
+            body: n.message,
+            tag: n.id, // Prevent duplicate alerts for the same ID
+            data: { link: n.link },
+          });
+        }
       });
     }
 
