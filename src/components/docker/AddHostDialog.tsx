@@ -14,6 +14,7 @@ import type { ConnectionMode, DockerHost } from "@/types/database";
 import { CURRENT_WATCHTOWER_AGENT_VERSION, isAgentVersionOutdated } from "@/lib/agent-version";
 import { sanitizeConnectionError } from "@/lib/error-sanitizer";
 import { CONNECTION_MODES } from "@/pages/onboarding/useOnboardingState";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 
 interface AddHostDialogProps {
   orgId: string;
@@ -104,7 +105,7 @@ function ConnectionModeSelector({
               onClick={() => onConnectionModeChange(m.value)}
               className={`relative p-3 rounded-xl border text-left transition-all ${
                 isSelected
-                  ? "border-primary bg-primary/5 ring-1 ring-primary/30 shadow-[0_0_15px_-3px_rgba(14,154,184,0.1)]"
+                  ? "border-primary bg-primary/5 ring-1 ring-primary/30 shadow-[0_0_15px_-3px_rgba(14,154,184,0.15)]"
                   : "border-border hover:border-primary/40 hover:bg-muted/30"
               }`}
             >
@@ -173,7 +174,6 @@ export function AddHostDialog({ orgId, trigger, host, disabledReason }: AddHostD
   useEffect(() => {
     if (!open) return;
     resetForm();
-    // resetForm closes over `host`; both `open` and `host` are the only inputs that should re-fire this effect.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, host]);
 
@@ -407,7 +407,7 @@ export function AddHostDialog({ orgId, trigger, host, disabledReason }: AddHostD
             <ShieldCheck className="h-6 w-6 text-primary" />
             {isEditing ? "Edit Docker Host" : "Connect Docker Host"}
           </DialogTitle>
-          <DialogDescription className="text-sm">
+          <DialogDescription className="text-sm text-muted-foreground">
             {isEditing
               ? "Update the saved host connection, endpoint, and credentials."
               : "Follow the guided setup to connect a new server to your fleet."}
@@ -423,7 +423,7 @@ export function AddHostDialog({ orgId, trigger, host, disabledReason }: AddHostD
 
             <div className="space-y-2">
               <Label className="text-sm font-medium">Host Name</Label>
-              <Input placeholder="e.g. prod-server-01" value={name} onChange={(e) => setName(e.target.value)} />
+              <Input placeholder="e.g. prod-server-01" value={name} onChange={(e) => setName(e.target.value)} className="h-10 bg-background" />
             </div>
 
             <div className="space-y-2">
@@ -432,12 +432,13 @@ export function AddHostDialog({ orgId, trigger, host, disabledReason }: AddHostD
                 placeholder={mode === "agent" ? "https://your-host:9876" : "https://docker.your-team.cloudflareaccess.com"}
                 value={hostUrl}
                 onChange={(e) => setHostUrl(e.target.value)}
+                className="h-10 bg-background"
               />
             </div>
 
             <div className="space-y-2">
               <Label className="text-sm font-medium">Docker Socket Path <span className="text-muted-foreground font-normal text-xs">(optional)</span></Label>
-              <Input placeholder="/var/run/docker.sock" value={socketPath} onChange={(e) => setSocketPath(e.target.value)} />
+              <Input placeholder="/var/run/docker.sock" value={socketPath} onChange={(e) => setSocketPath(e.target.value)} className="h-10 bg-background" />
             </div>
 
             {mode === "cloudflare_tunnel" ? (
@@ -482,7 +483,7 @@ export function AddHostDialog({ orgId, trigger, host, disabledReason }: AddHostD
                   value={agentApiKey}
                   onChange={(e) => setAgentApiKey(e.target.value)}
                   disabled={loadingSecrets}
-                  className="pr-10 h-10"
+                  className="pr-10 h-10 bg-background"
                 />
                 <button
                   type="button"
@@ -528,27 +529,34 @@ export function AddHostDialog({ orgId, trigger, host, disabledReason }: AddHostD
             </div>
           </div>
         ) : stage === "install" && enrollment ? (
-          <div className="p-6 space-y-6">
+          <div className="p-6 space-y-8">
              {/* Step 1: Install */}
             <div className="space-y-4 relative">
               <div className="flex items-center gap-3 mb-2">
-                <div className="w-7 h-7 rounded-full bg-primary/20 text-primary flex items-center justify-center font-bold text-xs border border-primary/20">1</div>
-                <h3 className="font-bold">Install & Verify</h3>
+                <div className="w-8 h-8 rounded-full bg-primary/20 text-primary flex items-center justify-center font-bold text-sm border border-primary/20">1</div>
+                <h3 className="font-bold text-lg">Install the Agent</h3>
               </div>
               
-              <p className="text-xs text-muted-foreground leading-relaxed">
+              <p className="text-sm text-muted-foreground leading-relaxed">
                 Run this one-liner on your Docker host to install the agent service.
               </p>
 
               <CommandBlock label="Run this command" command={enrollment.install_command} />
 
-              <div className="rounded-xl border border-border bg-muted/30 p-3 text-[11px] text-muted-foreground leading-relaxed flex items-start gap-2.5">
-                <Info className="h-3.5 w-3.5 text-primary shrink-0 mt-0.5" />
-                <div className="space-y-1.5">
-                  <p>Confirm the agent is listening locally before continuing:</p>
-                  <CommandBlock label="Local verify command" command={enrollment.verify_command} />
-                </div>
-              </div>
+              <Accordion type="single" collapsible className="w-full border rounded-xl overflow-hidden bg-muted/20">
+                <AccordionItem value="verify" className="border-none">
+                  <AccordionTrigger className="px-4 py-2 hover:no-underline text-xs text-muted-foreground">
+                    <div className="flex items-center gap-2 font-semibold">
+                      <Wrench className="h-3.5 w-3.5" />
+                      Optional: Verify locally
+                    </div>
+                  </AccordionTrigger>
+                  <AccordionContent className="px-4 pb-4 space-y-3">
+                    <p className="text-[11px] text-muted-foreground">Confirm the agent is listening locally before continuing:</p>
+                    <CommandBlock label="Local verify command" command={enrollment.verify_command} />
+                  </AccordionContent>
+                </AccordionItem>
+              </Accordion>
             </div>
 
             <div className="h-px bg-border/50" />
@@ -556,17 +564,12 @@ export function AddHostDialog({ orgId, trigger, host, disabledReason }: AddHostD
             {/* Step 2: Configure Access */}
             <div className="space-y-4">
               <div className="flex items-center gap-3 mb-2">
-                <div className="w-7 h-7 rounded-full bg-primary/20 text-primary flex items-center justify-center font-bold text-xs border border-primary/20">2</div>
-                <h3 className="font-bold">Configure Access</h3>
+                <div className="w-8 h-8 rounded-full bg-primary/20 text-primary flex items-center justify-center font-bold text-sm border border-primary/20">2</div>
+                <h3 className="font-bold text-lg">Configure Access</h3>
               </div>
 
-              <ConnectionModeSelector
-                connectionMode={mode}
-                onConnectionModeChange={setMode}
-              />
-
-              <div className="space-y-2 pt-1">
-                <Label htmlFor="host-url" className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/70">
+              <div className="space-y-3 pt-1">
+                <Label htmlFor="host-url" className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/70">
                   {mode === "agent" ? "Public Agent URL" : "Tunnel URL"}
                 </Label>
                 <Input
@@ -574,9 +577,9 @@ export function AddHostDialog({ orgId, trigger, host, disabledReason }: AddHostD
                   placeholder={mode === "agent" ? "https://agent.example.com:9876" : "https://docker.your-team.cloudflareaccess.com"}
                   value={hostUrl}
                   onChange={(e) => setHostUrl(e.target.value)}
-                  className="h-10 bg-background"
+                  className="h-11 bg-background"
                 />
-                <p className="text-[10px] text-muted-foreground leading-relaxed">
+                <p className="text-[11px] text-muted-foreground leading-relaxed">
                   {mode === "agent"
                     ? "The external HTTPS URL of your agent. Ensure port 9876 is accessible."
                     : "The Cloudflare Tunnel hostname routing to port 9876."}
@@ -611,14 +614,14 @@ export function AddHostDialog({ orgId, trigger, host, disabledReason }: AddHostD
               </div>
             ) : null}
 
-            <div className="flex gap-3 pt-2">
-              <Button variant="outline" onClick={() => setStage("basics")} className="gap-2">
+            <div className="flex gap-4 pt-2 pb-2">
+              <Button variant="outline" onClick={() => setStage("basics")} className="h-12 px-6 gap-2 border-border/60">
                 <RefreshCw className="h-4 w-4" />
                 Start Over
               </Button>
               <Button 
                 onClick={handleFinalizeGuidedSetup} 
-                className="flex-1 font-bold shadow-lg shadow-primary/10 h-11"
+                className="flex-1 font-bold shadow-lg shadow-primary/20 h-12 text-base"
                 disabled={!hostUrl.trim() || isBusy}
               >
                 {isBusy ? <><Loader2 className="h-4 w-4 animate-spin mr-2" />Verifying...</> : "Finish & Verify Connection"}
@@ -626,24 +629,29 @@ export function AddHostDialog({ orgId, trigger, host, disabledReason }: AddHostD
             </div>
           </div>
         ) : (
-          <div className="p-6 space-y-6">
+          <div className="p-6 space-y-8">
             <div className="space-y-2">
-              <Label className="text-sm font-medium">Host Name</Label>
+              <Label className="text-sm font-semibold uppercase tracking-wider text-muted-foreground/70">Host Name</Label>
               <Input 
                 placeholder="e.g. prod-server-01" 
                 value={name} 
                 onChange={(e) => setName(e.target.value)} 
-                className="h-11"
+                className="h-11 bg-background"
                 autoFocus
               />
-              <p className="text-xs text-muted-foreground mt-1.5">
+              <p className="text-[11px] text-muted-foreground mt-1.5">
                 A friendly name to identify this server in your dashboard.
               </p>
             </div>
 
+            <ConnectionModeSelector
+              connectionMode={mode}
+              onConnectionModeChange={setMode}
+            />
+
             <div className="space-y-2">
-              <Label className="text-sm font-medium">Docker Socket Path <span className="text-muted-foreground font-normal text-xs">(optional)</span></Label>
-              <Input placeholder="/var/run/docker.sock" value={socketPath} onChange={(e) => setSocketPath(e.target.value)} />
+              <Label className="text-sm font-semibold uppercase tracking-wider text-muted-foreground/70">Docker Socket Path <span className="text-muted-foreground font-normal text-xs">(optional)</span></Label>
+              <Input placeholder="/var/run/docker.sock" value={socketPath} onChange={(e) => setSocketPath(e.target.value)} className="h-10 bg-background" />
             </div>
 
             {guidedError ? (
@@ -653,15 +661,15 @@ export function AddHostDialog({ orgId, trigger, host, disabledReason }: AddHostD
               </div>
             ) : null}
 
-            <Button onClick={handleStartGuidedSetup} disabled={!name.trim() || isBusy} className="w-full h-11 text-base font-semibold">
+            <Button onClick={handleStartGuidedSetup} disabled={!name.trim() || isBusy} className="w-full h-12 text-base font-bold shadow-lg shadow-primary/20">
               {isBusy ? <><Loader2 className="h-4 w-4 animate-spin mr-2" />Preparing...</> : "Next: Generate Installer"}
               <ArrowRight className="h-4 w-4 ml-2" />
             </Button>
 
-            <div className="mt-2 flex items-start gap-2.5 rounded-lg border border-border bg-muted/40 px-4 py-3">
-              <Info className="h-4 w-4 text-muted-foreground shrink-0 mt-0.5" />
+            <div className="mt-2 flex items-start gap-3 rounded-xl border border-border bg-muted/40 px-4 py-4">
+              <Info className="h-4 w-4 text-primary shrink-0 mt-0.5" />
               <p className="text-[11px] text-muted-foreground leading-relaxed">
-                The Watchtower Agent is a lightweight monitoring tool that runs alongside Docker. It doesn't require exposing your Docker socket to the internet.
+                The Watchtower Agent is a lightweight monitoring tool that runs alongside Docker. It communicates over a secure, authenticated channel and doesn't require exposing your Docker socket to the internet.
               </p>
             </div>
           </div>

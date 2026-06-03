@@ -13,6 +13,8 @@ const MODE_ICONS: Record<ConnectionMode, typeof Terminal> = {
   cloudflare_tunnel: CloudCog,
 };
 
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+
 interface Props {
   hostUrl: string;
   onHostUrlChange: (v: string) => void;
@@ -23,7 +25,7 @@ interface Props {
   verifyCommand: string;
   setupSummary: string;
   verifySummary: string;
-  nextStepSummary: string;
+  next_step_summary: string;
   advancedManualCommand: string;
   expiresAt: string | null;
   error: string | null;
@@ -31,6 +33,7 @@ interface Props {
   onFinalize: () => void;
   onRegenerate: () => void;
 }
+
 
 function CopyCommand({
   label,
@@ -165,13 +168,20 @@ export function StepHostCredentials({
 
           <CopyCommand label="Run this command" command={installCommand} />
 
-          <div className="rounded-xl border border-border bg-muted/30 p-4 text-xs text-muted-foreground leading-relaxed flex items-start gap-3">
-            <Info className="h-4 w-4 text-primary shrink-0 mt-0.5" />
-            <div className="space-y-2">
-              <p>Once the script finishes, verify the agent is listening locally with this command:</p>
-              <CopyCommand label="Local verify command" command={verifyCommand} />
-            </div>
-          </div>
+          <Accordion type="single" collapsible className="w-full border rounded-xl overflow-hidden bg-muted/20">
+            <AccordionItem value="verify" className="border-none">
+              <AccordionTrigger className="px-4 py-2 hover:no-underline text-xs text-muted-foreground">
+                <div className="flex items-center gap-2 font-semibold">
+                  <Wrench className="h-3.5 w-3.5" />
+                  Optional: Verify locally
+                </div>
+              </AccordionTrigger>
+              <AccordionContent className="px-4 pb-4 space-y-3 border-t">
+                <p className="text-[11px] text-muted-foreground mt-2">Confirm the agent is listening locally before continuing:</p>
+                <CopyCommand label="Local verify command" command={verifyCommand} />
+              </AccordionContent>
+            </AccordionItem>
+          </Accordion>
 
           <div className="flex items-center justify-between pt-2">
             <Button variant="outline" size="sm" className="gap-2 h-9 text-xs" onClick={onRegenerate}>

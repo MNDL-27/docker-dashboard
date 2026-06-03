@@ -66,6 +66,8 @@ function OnboardingStepRouter({ ob }: { ob: ReturnType<typeof useOnboardingState
       <StepHostBasics
         hostName={ob.hostName}
         onHostNameChange={ob.setHostName}
+        connectionMode={ob.connectionMode}
+        onConnectionModeChange={ob.setConnectionMode}
         error={ob.error}
         isSkipping={ob.isSkipping}
         onNext={ob.handleBasicsNext}
