@@ -323,12 +323,6 @@ export function useOnboardingState() {
       setError("Host name is required.");
       return;
     }
-    try {
-      new URL(hostUrl);
-    } catch {
-      setError("Enter a valid URL (e.g. https://agent.example.com:9876)");
-      return;
-    }
 
     try {
       setState({ step: 1, phase: "preparing" });
@@ -337,7 +331,7 @@ export function useOnboardingState() {
       setState({ step: 1, phase: "basics" });
       setError(err instanceof Error ? err.message : "Failed to prepare the guided setup command.");
     }
-  }, [hostName, hostUrl, createEnrollment]);
+  }, [hostName, createEnrollment]);
 
   const handleRegenerateEnrollment = useCallback(async () => {
     try {
@@ -356,13 +350,25 @@ export function useOnboardingState() {
       return;
     }
 
+    if (!hostUrl.trim()) {
+      setError("Host URL is required to test the connection.");
+      return;
+    }
+
+    try {
+      new URL(hostUrl);
+    } catch {
+      setError("Enter a valid URL (e.g. https://agent.example.com:9876)");
+      return;
+    }
+
     setError(null);
     setTestError("");
     setRemediationCommand(null);
 
     try {
       setState({ step: 1, phase: "finalizing" });
-      const result = await agentEnrollmentApi.finalize(enrollment.session_id);
+      const result = await agentEnrollmentApi.finalize(enrollment.session_id, hostUrl);
       setFinalizeResult(result);
 
       if (!result.ok) {

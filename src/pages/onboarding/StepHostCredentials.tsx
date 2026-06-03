@@ -1,11 +1,23 @@
 import { useState } from "react";
-import { ShieldCheck, ArrowRight, ArrowLeft, Terminal, Copy, Eye, EyeOff, RefreshCw, Wrench, CloudCog } from "lucide-react";
+import { ShieldCheck, ArrowRight, ArrowLeft, Terminal, Copy, Eye, EyeOff, RefreshCw, Wrench, CloudCog, Check, Info } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { ErrorBanner } from "./ErrorBanner";
+import { CONNECTION_MODES } from "./useOnboardingState";
 import type { ConnectionMode } from "@/types/database";
 
+/* ── Icon map for connection mode cards ── */
+const MODE_ICONS: Record<ConnectionMode, typeof Terminal> = {
+  agent: Terminal,
+  cloudflare_tunnel: CloudCog,
+};
+
 interface Props {
+  hostUrl: string;
+  onHostUrlChange: (v: string) => void;
   connectionMode: ConnectionMode;
+  onConnectionModeChange: (v: ConnectionMode) => void;
   modeLabel: string;
   installCommand: string;
   verifyCommand: string;
@@ -64,8 +76,51 @@ function CopyCommand({
   );
 }
 
-export function StepHostCredentials({
+/* ── Connection Mode Card Selector (extracted sub-component) ── */
+function ConnectionModeSelector({
   connectionMode,
+  onConnectionModeChange,
+}: {
+  connectionMode: ConnectionMode;
+  onConnectionModeChange: (v: ConnectionMode) => void;
+}) {
+  return (
+    <div className="space-y-3">
+      <Label className="text-sm font-semibold uppercase tracking-wider text-muted-foreground/70">Connection Method</Label>
+      <div className="grid grid-cols-2 gap-4">
+        {CONNECTION_MODES.map((m) => {
+          const isSelected = connectionMode === m.value;
+          const Icon = MODE_ICONS[m.value];
+          return (
+            <button
+              key={m.value}
+              type="button"
+              onClick={() => onConnectionModeChange(m.value)}
+              className={`relative p-4 rounded-xl border text-left transition-all ${
+                isSelected
+                  ? "border-primary bg-primary/5 ring-1 ring-primary/30 shadow-[0_0_15px_-3px_rgba(14,154,184,0.1)]"
+                  : "border-border hover:border-primary/40 hover:bg-muted/30"
+              }`}
+            >
+              {isSelected && (
+                <div className="absolute top-3 right-3 w-4 h-4 rounded-full bg-primary flex items-center justify-center">
+                  <Check className="h-2.5 w-2.5 text-primary-foreground" />
+                </div>
+              )}
+              <Icon className={`h-5 w-5 mb-2 ${isSelected ? "text-primary" : "text-muted-foreground"}`} />
+              <div className={`text-sm font-semibold ${isSelected ? "text-foreground" : "text-foreground/80"}`}>{m.label}</div>
+              <div className="text-[11px] text-muted-foreground mt-1 leading-snug">{m.desc}</div>
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+export function StepHostCredentials({
+  hostUrl, onHostUrlChange,
+  connectionMode, onConnectionModeChange,
   modeLabel,
   installCommand,
   verifyCommand,
@@ -88,46 +143,88 @@ export function StepHostCredentials({
           <ShieldCheck className="h-7 w-7 text-primary" />
         </div>
         <h1 className="text-3xl font-bold tracking-tight mb-3">
-          Install the agent
+          Setup the Agent
         </h1>
         <p className="text-muted-foreground text-sm leading-relaxed max-w-md mx-auto">
-          {modeLabel} is ready. Run the generated command on your Linux Docker host, verify locally, then finish setup in Dockerdash.
+          Follow the steps below to get your host connected to Dockerdash.
         </p>
       </div>
 
-      <div className="glass-card-raised p-8 space-y-6">
-        <div className="rounded-xl border border-primary/20 bg-primary/5 p-4 text-sm text-primary">
-          {setupSummary}
-        </div>
+      <div className="space-y-6">
+        {/* Step 1: Install */}
+        <div className="glass-card-raised p-8 space-y-6 relative overflow-hidden">
+          <div className="absolute top-0 left-0 w-1 h-full bg-primary/40" />
+          <div className="flex items-center gap-3 mb-2">
+            <div className="w-8 h-8 rounded-full bg-primary/20 text-primary flex items-center justify-center font-bold text-sm">1</div>
+            <h2 className="text-xl font-bold">Install & Verify</h2>
+          </div>
+          
+          <p className="text-sm text-muted-foreground">
+            Run this one-liner on your Docker host to install the lightweight agent service.
+          </p>
 
-        {connectionMode === "cloudflare_tunnel" ? (
-          <div className="flex items-start gap-3 rounded-xl border border-amber-500/20 bg-amber-500/5 p-4">
-            <CloudCog className="h-5 w-5 text-amber-500 shrink-0 mt-0.5" />
-            <div className="space-y-1.5">
-              <p className="text-sm font-medium text-amber-600 dark:text-amber-400">
-                Configure your Cloudflare Tunnel
-              </p>
-              <p className="text-xs text-muted-foreground leading-relaxed">
-                Point your tunnel's public hostname to{" "}
-                <code className="bg-muted px-1.5 py-0.5 rounded font-mono text-foreground">http://127.0.0.1:9876</code>{" "}
-                on the host. The agent binds to localhost on port 9876 by default.
-              </p>
-              <p className="text-[11px] text-muted-foreground/70">
-                Example: <code className="bg-muted px-1 py-0.5 rounded font-mono">cloudflared tunnel run --url http://127.0.0.1:9876 your-tunnel-name</code>
-              </p>
+          <CopyCommand label="Run this command" command={installCommand} />
+
+          <div className="rounded-xl border border-border bg-muted/30 p-4 text-xs text-muted-foreground leading-relaxed flex items-start gap-3">
+            <Info className="h-4 w-4 text-primary shrink-0 mt-0.5" />
+            <div className="space-y-2">
+              <p>Once the script finishes, verify the agent is listening locally with this command:</p>
+              <CopyCommand label="Local verify command" command={verifyCommand} />
             </div>
           </div>
-        ) : null}
 
-        <CopyCommand label="Primary install command" command={installCommand} />
-
-        <div className="rounded-xl border border-border bg-muted/30 p-4 text-xs text-muted-foreground leading-relaxed space-y-2">
-          <p>{verifySummary}</p>
-          <p>{nextStepSummary}</p>
-          {expiresAt ? <p>Enrollment command expires at {new Date(expiresAt).toLocaleString()}.</p> : null}
+          <div className="flex items-center justify-between pt-2">
+            <Button variant="outline" size="sm" className="gap-2 h-9 text-xs" onClick={onRegenerate}>
+              <RefreshCw className="h-3.5 w-3.5" />
+              Regenerate installer
+            </Button>
+            {expiresAt ? <span className="text-[10px] text-muted-foreground">Command expires: {new Date(expiresAt).toLocaleTimeString()}</span> : null}
+          </div>
         </div>
 
-        <CopyCommand label="Local verify command" command={verifyCommand} />
+        {/* Step 2: Configure Access */}
+        <div className="glass-card-raised p-8 space-y-6 relative overflow-hidden">
+          <div className="absolute top-0 left-0 w-1 h-full bg-primary/40" />
+          <div className="flex items-center gap-3 mb-2">
+            <div className="w-8 h-8 rounded-full bg-primary/20 text-primary flex items-center justify-center font-bold text-sm">2</div>
+            <h2 className="text-xl font-bold">Configure Access</h2>
+          </div>
+
+          <ConnectionModeSelector
+            connectionMode={connectionMode}
+            onConnectionModeChange={onConnectionModeChange}
+          />
+
+          <div className="space-y-3 pt-2">
+            <Label htmlFor="host-url" className="text-sm font-semibold uppercase tracking-wider text-muted-foreground/70">
+              {connectionMode === "agent" ? "Public Agent URL" : "Tunnel URL"}
+            </Label>
+            <Input
+              id="host-url"
+              placeholder={connectionMode === "agent" ? "https://agent.example.com:9876" : "https://docker.your-team.cloudflareaccess.com"}
+              value={hostUrl}
+              onChange={(e) => onHostUrlChange(e.target.value)}
+              className="h-11 bg-background"
+            />
+            <p className="text-[11px] text-muted-foreground leading-relaxed">
+              {connectionMode === "agent"
+                ? "The external HTTPS URL of your agent. Ensure your firewall/proxy routes traffic to port 9876."
+                : "The Cloudflare Tunnel hostname. Ensure it routes to http://127.0.0.1:9876 on the host."}
+            </p>
+          </div>
+
+          {connectionMode === "cloudflare_tunnel" ? (
+            <div className="rounded-xl border border-amber-500/20 bg-amber-500/5 p-4 flex items-start gap-3 mt-4">
+              <CloudCog className="h-5 w-5 text-amber-500 shrink-0 mt-0.5" />
+              <div className="space-y-1">
+                <p className="text-xs font-semibold text-amber-600 dark:text-amber-400">Tunnel Routing Note</p>
+                <p className="text-[10px] text-muted-foreground leading-relaxed">
+                  Route your hostname to <code className="bg-muted px-1 rounded font-mono text-foreground">http://127.0.0.1:9876</code>.
+                </p>
+              </div>
+            </div>
+          ) : null}
+        </div>
 
         <div className="rounded-xl border border-border bg-muted/20 p-4 space-y-3">
           <button
@@ -136,42 +233,34 @@ export function StepHostCredentials({
             onClick={() => setShowAdvanced((value) => !value)}
           >
             <Wrench className="h-4 w-4 text-primary" />
-            {showAdvanced ? "Hide manual fallback" : "Use manual install instead"}
+            {showAdvanced ? "Hide advanced details" : "Advanced manual options"}
           </button>
           {showAdvanced ? (
-            <div className="space-y-2">
-              <p className="text-xs text-muted-foreground">
-                This advanced command embeds the long-lived agent API key. Use it only if you do not want the enrollment-token flow.
+            <div className="space-y-2 animate-in fade-in slide-in-from-top-2 duration-200">
+              <p className="text-[11px] text-muted-foreground">
+                Embedded long-lived API key fallback. Use only for non-interactive automation.
               </p>
-              <CopyCommand label="Advanced manual install" command={advancedManualCommand} masked />
+              <CopyCommand label="Manual install (embedded key)" command={advancedManualCommand} masked />
             </div>
           ) : null}
         </div>
 
         {error && <ErrorBanner message={error} />}
 
-        <div className="flex gap-3">
-          <Button variant="outline" className="h-11" onClick={onBack}>
-            <ArrowLeft className="h-4 w-4 mr-1" />
+        <div className="flex gap-4 pt-4">
+          <Button variant="outline" className="h-12 px-6" onClick={onBack}>
+            <ArrowLeft className="h-4 w-4 mr-2" />
             Back
           </Button>
-          <Button variant="outline" className="h-11 gap-2" onClick={onRegenerate}>
-            <RefreshCw className="h-4 w-4" />
-            Regenerate command
+          <Button 
+            className="flex-1 h-12 text-lg font-bold shadow-lg shadow-primary/20" 
+            size="lg" 
+            onClick={onFinalize}
+            disabled={!hostUrl.trim()}
+          >
+            Finish & Verify Connection
+            <ArrowRight className="h-5 w-5 ml-2" />
           </Button>
-          <Button className="flex-1 h-11 text-base" size="lg" onClick={onFinalize}>
-            Finish setup
-            <ArrowRight className="h-4 w-4 ml-1" />
-          </Button>
-        </div>
-
-        <div className="text-[11px] text-muted-foreground leading-relaxed space-y-1">
-          <p>
-            The guided flow keeps the long-lived API key out of the default copied command.
-          </p>
-          <p>
-            The generated installer command sets <code className="bg-muted px-1.5 py-0.5 rounded font-mono text-foreground">AGENT_BIND_ADDRESS=0.0.0.0</code> by default.
-          </p>
         </div>
       </div>
     </div>

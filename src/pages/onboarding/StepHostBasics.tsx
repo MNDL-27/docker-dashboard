@@ -25,11 +25,9 @@ interface Props {
   onSkip: () => void;
 }
 
-/** Step 1, Screen A — host name, connection method, and URL. */
+/** Step 1, Screen A — host name and basic intent. */
 export function StepHostBasics({
   hostName, onHostNameChange,
-  hostUrl, onHostUrlChange,
-  connectionMode, onConnectionModeChange,
   error, isSkipping,
   onNext, onSkip,
 }: Props) {
@@ -43,7 +41,7 @@ export function StepHostBasics({
           Add your first Docker host
         </h1>
         <p className="text-muted-foreground text-sm leading-relaxed max-w-sm mx-auto">
-          Connect via the Watchtower Agent with a reverse proxy or Cloudflare Tunnel in front of it.
+          Give your host a name to get started. You'll install the agent and configure the connection in the next step.
         </p>
       </div>
 
@@ -59,36 +57,14 @@ export function StepHostBasics({
             className="h-11"
             autoFocus
           />
-        </div>
-
-        {/* Connection Mode Cards */}
-        <ConnectionModeSelector
-          connectionMode={connectionMode}
-          onConnectionModeChange={onConnectionModeChange}
-        />
-
-        {/* Agent / Tunnel URL */}
-        <div className="space-y-2">
-          <Label htmlFor="host-url" className="text-base font-medium">
-            {connectionMode === "agent" ? "Agent URL" : "Tunnel URL"}
-          </Label>
-          <Input
-            id="host-url"
-            placeholder={connectionMode === "agent" ? "https://your-host:9876" : "https://docker.your-team.cloudflareaccess.com"}
-            value={hostUrl}
-            onChange={(e) => onHostUrlChange(e.target.value)}
-            className="h-11"
-          />
           <p className="text-xs text-muted-foreground mt-1.5">
-            {connectionMode === "agent"
-              ? "The HTTPS URL where the Watchtower Agent is running."
-              : "The Cloudflare Tunnel public hostname. Your tunnel must route traffic to the agent on port 9876."}
+            A friendly name to identify this server in your dashboard.
           </p>
         </div>
 
         {error && <ErrorBanner message={error} />}
 
-        <Button className="w-full h-11 text-base" size="lg" onClick={onNext} disabled={!hostName || !hostUrl}>
+        <Button className="w-full h-11 text-base" size="lg" onClick={onNext} disabled={!hostName.trim()}>
           Next
           <ArrowRight className="h-4 w-4 ml-1" />
         </Button>
@@ -108,9 +84,7 @@ export function StepHostBasics({
       <div className="mt-4 flex items-start gap-2.5 rounded-lg border border-border bg-muted/40 px-4 py-3">
         <Info className="h-4 w-4 text-muted-foreground shrink-0 mt-0.5" />
         <p className="text-xs text-muted-foreground leading-relaxed">
-          {connectionMode === "cloudflare_tunnel"
-            ? "The Watchtower Agent listens on port 9876. Configure your Cloudflare Tunnel to forward traffic to http://127.0.0.1:9876 on the host."
-            : "The Watchtower Agent runs alongside Docker on your host. Keep it on localhost and expose it through HTTPS or Cloudflare Tunnel."}
+          The Watchtower Agent is a lightweight, single-binary monitoring tool that runs alongside Docker on your host. It doesn't require exposing your Docker socket to the internet.
         </p>
       </div>
     </div>

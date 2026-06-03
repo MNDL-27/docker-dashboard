@@ -66,10 +66,6 @@ function OnboardingStepRouter({ ob }: { ob: ReturnType<typeof useOnboardingState
       <StepHostBasics
         hostName={ob.hostName}
         onHostNameChange={ob.setHostName}
-        hostUrl={ob.hostUrl}
-        onHostUrlChange={ob.setHostUrl}
-        connectionMode={ob.connectionMode}
-        onConnectionModeChange={ob.setConnectionMode}
         error={ob.error}
         isSkipping={ob.isSkipping}
         onNext={ob.handleBasicsNext}
@@ -81,13 +77,16 @@ function OnboardingStepRouter({ ob }: { ob: ReturnType<typeof useOnboardingState
   if (state.step === 1 && state.phase === "install") {
     return (
       <StepHostCredentials
+        hostUrl={ob.hostUrl}
+        onHostUrlChange={ob.setHostUrl}
         connectionMode={ob.connectionMode}
+        onConnectionModeChange={ob.setConnectionMode}
         modeLabel={ob.enrollment?.mode_label || ""}
         installCommand={ob.enrollment?.install_command || ""}
         verifyCommand={ob.enrollment?.verify_command || ""}
         setupSummary={ob.enrollment?.setup_summary || ""}
         verifySummary={ob.enrollment?.verify_summary || ""}
-        nextStepSummary={ob.enrollment?.next_step_summary || ""}
+        next_step_summary={ob.enrollment?.next_step_summary || ""}
         advancedManualCommand={ob.enrollment?.advanced_manual_command || ""}
         expiresAt={ob.enrollment?.expires_at || null}
         error={ob.error}

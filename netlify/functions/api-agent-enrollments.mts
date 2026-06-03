@@ -425,6 +425,22 @@ export default async (req: Request) => {
         return badRequest("Enrollment session is missing an agent API key", "invalid_enrollment_session", 500);
       }
 
+      // Update host_url if provided in finalize body
+      let finalHostUrl = session.host_url;
+      const providedHostUrl = typeof body?.host_url === "string" ? body.host_url.trim() : "";
+      if (providedHostUrl) {
+        try {
+          finalHostUrl = normalizeAndValidateHostUrl(providedHostUrl);
+          await sql`
+            UPDATE agent_enrollment_sessions
+            SET host_url = ${finalHostUrl}
+            WHERE id = ${session.id}
+          `;
+        } catch (error: any) {
+          return badRequest(error?.message || "Provided host_url is invalid");
+        }
+      }
+
       let hostId = session.docker_host_id as string | null;
       let host;
 
@@ -445,7 +461,7 @@ export default async (req: Request) => {
 
         const inserted = await sql`
           INSERT INTO docker_hosts (organization_id, name, host_url, connection_mode, docker_socket_path, created_by, status)
-          VALUES (${auth.orgId}, ${session.host_name}, ${session.host_url}, ${session.connection_mode}, ${session.docker_socket_path || "/var/run/docker.sock"}, ${auth.userId}, 'unknown')
+          VALUES (${auth.orgId}, ${session.host_name}, ${finalHostUrl}, ${session.connection_mode}, ${session.docker_socket_path || "/var/run/docker.sock"}, ${auth.userId}, 'unknown')
           RETURNING *
         `;
         host = inserted[0];
@@ -472,6 +488,13 @@ export default async (req: Request) => {
               onboarding_completed_at = COALESCE(onboarding_completed_at, now())
           WHERE id = ${auth.orgId}
         `;
+      } else if (providedHostUrl) {
+        // If host already exists, update its URL too
+        await sql`
+          UPDATE docker_hosts
+          SET host_url = ${finalHostUrl}
+          WHERE id = ${host.id}
+        `;
       }
 
       const limitState = await enforceOrganizationNodeLimit({
@@ -489,7 +512,7 @@ export default async (req: Request) => {
 
       const pingResult = await pingEnrollmentHost({
         hostId: hostId!,
-        hostUrl: session.host_url,
+        hostUrl: finalHostUrl,
         connectionMode: session.connection_mode,
         dockerSocketPath: session.docker_socket_path || "/var/run/docker.sock",
         agentApiKey,
@@ -537,15 +560,17 @@ export default async (req: Request) => {
       if (!hostName) {
         return badRequest("host_name is required");
       }
-      if (!hostUrl) {
-        return badRequest("host_url is required");
-      }
 
       let normalizedHostUrl: string;
-      try {
-        normalizedHostUrl = normalizeAndValidateHostUrl(hostUrl);
-      } catch (error: any) {
-        return badRequest(error?.message || "host_url is invalid");
+      if (hostUrl) {
+        try {
+          normalizedHostUrl = normalizeAndValidateHostUrl(hostUrl);
+        } catch (error: any) {
+          return badRequest(error?.message || "host_url is invalid");
+        }
+      } else {
+        // Use a placeholder if no URL is provided yet
+        normalizedHostUrl = "http://pending-setup.internal";
       }
 
       const token = createEnrollmentToken();
