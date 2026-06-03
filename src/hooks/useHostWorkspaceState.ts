@@ -85,7 +85,7 @@ export function useHostWorkspaceState() {
     navigate(`/app/hosts/${filteredHosts[0]?.id ?? hosts[0].id}`, { replace: true });
   }, [filteredHosts, hosts, hostsSortedByCreation, isHostLocked, isLoading, navigate, routeHostId, selectedHost]);
 
-  const selectedHostAutoProbe = selectedHost ? normalizeHostStatus(selectedHost.status) === "connected" : false;
+  const selectedHostAutoProbe = selectedHost ? ["connected", "stale"].includes(normalizeHostStatus(selectedHost.status)) : false;
   const selectedHostLocked = selectedHost ? isHostLocked(selectedHost.id) : false;
   
   const containersQuery = useHostContainers(selectedHostAutoProbe && !selectedHostLocked ? selectedHost?.id : null, 15000);

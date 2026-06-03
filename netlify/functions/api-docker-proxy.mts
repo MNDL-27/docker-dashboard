@@ -829,7 +829,19 @@ export default async (req: Request) => {
       }
 
       const metricsData = await metricsResponse.json();
-      
+
+      // Opportunistically update heartbeat to support environments where the background cron isn't running
+      try {
+        await sql`
+          UPDATE docker_hosts
+          SET status = 'connected', last_seen_at = now()
+          WHERE id = ${hostId}
+            AND (status != 'connected' OR last_seen_at < now() - interval '1 minute')
+        `;
+      } catch (e) {
+        console.error('[docker-proxy] failed to update host heartbeat', e);
+      }
+
       // Monthly network usage accumulation
       const currentRx = toFiniteNumber(metricsData.network_rx_total);
       const currentTx = toFiniteNumber(metricsData.network_tx_total);
