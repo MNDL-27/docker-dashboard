@@ -19,7 +19,7 @@ export type AppNavItem = {
   label: string;
   icon: AppNavIcon;
   href: string;
-  premiumKey?: "canUseLogs" | "canUseFileManager";
+  premiumKey?: "canUseLogs" | "canUseFileManager" | "canUseTeamCollaboration";
 };
 
 export type AppNavGroup = {
@@ -53,7 +53,7 @@ export const appNavGroups: AppNavGroup[] = [
   {
     label: "Management",
     items: [
-      { label: "Team", icon: Users, href: "/app/members" },
+      { label: "Team", icon: Users, href: "/app/members", premiumKey: "canUseTeamCollaboration" },
       { label: "Billing", icon: CreditCard, href: "/app/billing" },
       { label: "Settings", icon: Settings, href: "/app/settings" },
       { label: "Admin", icon: Shield, href: "/app/admin" },
