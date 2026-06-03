@@ -69,17 +69,6 @@ const RouteFallback = () => (
 
 const PageViewTracker = () => { usePageViewTracking(); return null; };
 
-const PlanGuardian = () => {
-  const { data: viewer } = useViewerState();
-  useEffect(() => {
-    if (!viewer) return;
-    const isRestricted = !viewer.entitlements?.canUseAdvancedAlerts;
-    (window as any).DOCKERDASH_RESTRICTED = isRestricted;
-    document.body.setAttribute('data-plan-restricted', String(isRestricted));
-  }, [viewer]);
-  return null;
-};
-
 const App = () => {
   const previewBypass = isPreviewAuthBypassEnabled();
 
@@ -99,7 +88,6 @@ const App = () => {
             <Sonner />
             <BrowserRouter>
               <PageViewTracker />
-              <PlanGuardian />
               <Suspense fallback={<RouteFallback />}>
                 <Routes>
                   {/* Marketing */}
