@@ -10,6 +10,7 @@ import {
   Server,
   Settings,
   Shield,
+  Users,
 } from "lucide-react";
 
 export type AppNavIcon = typeof LayoutDashboard;
@@ -52,6 +53,7 @@ export const appNavGroups: AppNavGroup[] = [
   {
     label: "Management",
     items: [
+      { label: "Team", icon: Users, href: "/app/members" },
       { label: "Billing", icon: CreditCard, href: "/app/billing" },
       { label: "Settings", icon: Settings, href: "/app/settings" },
       { label: "Admin", icon: Shield, href: "/app/admin" },

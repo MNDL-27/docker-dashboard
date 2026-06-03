@@ -1,17 +1,13 @@
 import { PageHeader } from "@/components/shared/PageHeader";
-import { PremiumFeatureBlock } from "@/components/shared/PremiumFeatureBlock";
-import { OrganizationMembersWorkspaceContainer } from "@/components/settings/OrganizationMembersWorkspace";
 import { useCallback, useEffect, useState } from "react";
 import { ProfileSettings } from "@/components/settings/ProfileSettings";
 import { useSearchParams } from "react-router-dom";
 import { DesktopNotificationSettings } from "@/components/settings/DesktopNotificationSettings";
-import { useOrganization } from "@clerk/react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useViewerState } from "@/hooks/useViewerState";
 
 // ── Constants ───────────────────────────────────────────────────────
 
-const ALL_TABS = ["Profile", "Members", "Notifications"] as const;
+const ALL_TABS = ["Profile", "Notifications"] as const;
 const DEFAULT_TAB = "Profile";
 
 // ── URL-synced tab hook ─────────────────────────────────────────────
@@ -50,9 +46,6 @@ function useTabSync(validTabs: readonly string[], defaultTab: string) {
 // ── Page ────────────────────────────────────────────────────────────
 
 export default function SettingsPage() {
-  const { data: viewer } = useViewerState();
-  const entitlements = viewer?.entitlements;
-
   const { tab, onChange } = useTabSync(ALL_TABS, DEFAULT_TAB);
 
   return (
@@ -74,16 +67,6 @@ export default function SettingsPage() {
 
         <TabsContent value="Profile">
           <ProfileSettings />
-        </TabsContent>
-
-        <TabsContent value="Members">
-          <PremiumFeatureBlock
-            title="Team Collaboration"
-            description="Upgrade your plan to invite team members to your organization and manage access together."
-            hasAccess={entitlements?.canUseTeamCollaboration ?? false}
-          >
-            <OrganizationMembersWorkspaceContainer />
-          </PremiumFeatureBlock>
         </TabsContent>
 
         <TabsContent value="Notifications" className="space-y-6 outline-none pt-2">

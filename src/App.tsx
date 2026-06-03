@@ -38,7 +38,7 @@ const ContainerDetailPage = lazy(() => import("./pages/app/ContainerDetailPage")
 const FileManagerPage = lazy(() => import("./pages/app/FileManagerPage"));
 const LogsPage = lazy(() => import("./pages/app/LogsPage"));
 const AlertsPage = lazy(() => import("./pages/app/AlertsPage"));
-// MembersPage removed — functionality moved to Settings > Members tab
+const MembersPage = lazy(() => import("./pages/app/MembersPage"));
 const BillingPage = lazy(() => import("./pages/app/BillingPage"));
 const SettingsPage = lazy(() => import("./pages/app/SettingsPage"));
 const OrganizationsPage = lazy(() => import("./pages/app/OrganizationsPage"));
@@ -136,7 +136,7 @@ const App = () => {
                     <Route path="incidents/:id" element={<Navigate to="/app/alerts" replace />} />
                     <Route path="deployments" element={<Navigate to="/app/hosts" replace />} />
                     <Route path="billing" element={<BillingPage />} />
-                    <Route path="members" element={<Navigate to="/app/settings?tab=Members" replace />} />
+                    <Route path="members" element={<MembersPage />} />
                     <Route path="dedicated-deployment" element={<DedicatedDeploymentPage />} />
                     <Route path="settings" element={<SettingsPage />} />
                     <Route path="admin" element={<RequirePlatformAdmin><AdminPage /></RequirePlatformAdmin>} />
