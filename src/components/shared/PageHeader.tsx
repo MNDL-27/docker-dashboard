@@ -9,7 +9,7 @@ interface PageHeaderProps {
 
 export function PageHeader({ title, description, actions, breadcrumbs }: PageHeaderProps) {
   return (
-    <div className="space-y-1 mb-6">
+    <div className="space-y-1">
       {breadcrumbs && breadcrumbs.length > 0 && (
         <nav className="flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground mb-2">
           {breadcrumbs.map((crumb, i) => (

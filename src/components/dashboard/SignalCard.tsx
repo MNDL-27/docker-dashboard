@@ -31,22 +31,22 @@ export function SignalCard({
     "text-muted-foreground";
 
   return (
-    <div className="glass-card rounded-2xl sm:rounded-[28px] p-4 sm:p-6">
+    <div className="glass-card rounded-xl p-4 sm:p-5">
       <div className="flex items-start justify-between gap-3 sm:gap-4">
         <div className="min-w-0">
-          <p className="text-[10px] sm:text-xs font-bold uppercase tracking-[0.24em] text-muted-foreground">{label}</p>
-          <p className="mt-2 sm:mt-4 text-2xl sm:text-4xl font-semibold tracking-tight text-foreground">{value}</p>
+          <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground">{label}</p>
+          <p className="mt-2 text-2xl sm:text-3xl font-semibold tracking-tight text-foreground tabular-nums">{value}</p>
         </div>
-        <div className="rounded-xl sm:rounded-2xl border border-white/10 bg-background/40 p-2 sm:p-3 shrink-0">
-          <Icon className={cn("h-4 w-4 sm:h-5 sm:w-5", iconTone)} />
+        <div className="rounded-lg border border-white/5 bg-background/40 p-2 shrink-0">
+          <Icon className={cn("h-4 w-4", iconTone)} />
         </div>
       </div>
       {progress !== undefined && (
-        <div className="mt-3 sm:mt-5 h-1.5 sm:h-2 overflow-hidden rounded-full bg-white/5">
+        <div className="mt-4 h-1.5 overflow-hidden rounded-full bg-white/5">
           <div className={cn("h-full rounded-full transition-all", barTone)} style={{ width: `${Math.max(0, Math.min(100, progress))}%` }} />
         </div>
       )}
-      <p className="mt-2 sm:mt-3 text-xs sm:text-sm leading-5 sm:leading-6 text-muted-foreground">{helper}</p>
+      <p className="mt-3 text-[10px] font-mono leading-relaxed text-muted-foreground uppercase tracking-wider">{helper}</p>
     </div>
   );
 }

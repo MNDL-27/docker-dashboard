@@ -444,7 +444,7 @@ export default function FileManagerPage() {
 
                 <div className={cn("grid gap-4", selectedFile ? "xl:grid-cols-[1fr,1fr]" : "xl:grid-cols-1")}>
                   {/* Directory listing */}
-                  <div className="glass-card min-w-0 rounded-[24px] overflow-hidden">
+                  <div className="glass-card min-w-0 rounded-xl overflow-hidden">
                     <div className="border-b border-white/5 px-5 py-3">
                       <div className="flex items-center justify-between">
                         <h4 className="text-sm font-semibold uppercase tracking-[0.18em] text-muted-foreground">
@@ -545,7 +545,7 @@ export default function FileManagerPage() {
 
                   {/* File content viewer */}
                   {selectedFile && selectedHostId && selectedContainerId && (
-                    <div className="glass-card min-w-0 overflow-hidden rounded-[24px]">
+                    <div className="glass-card min-w-0 overflow-hidden rounded-xl">
                       <FileViewer
                         hostId={selectedHostId}
                         containerId={selectedContainerId}
