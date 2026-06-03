@@ -224,7 +224,12 @@ install -m 0755 "$LATEST_SCRIPT" "${INSTALL_DIR}/watchtower-agent.sh"
 repair_systemd_socket_group
 
 step "Verifying agent config..."
-if ! "${INSTALL_DIR}/watchtower-agent.sh" --check >/dev/null 2>&1; then
+if ! (
+  # shellcheck disable=SC1090
+  [ -f "$ENV_FILE" ] && . "$ENV_FILE"
+  export AGENT_API_KEY AGENT_PORT AGENT_BIND_ADDRESS DOCKER_SOCKET WATCHTOWER_AGENT_STATE_DIR
+  "${INSTALL_DIR}/watchtower-agent.sh" --check >/dev/null 2>&1
+); then
   warn "Config verification failed after update. Attempting rollback is not supported."
   warn "Inspect: sudo journalctl -u ${SERVICE_NAME} -n 50"
 fi

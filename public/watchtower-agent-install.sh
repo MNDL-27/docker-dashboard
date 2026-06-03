@@ -1278,8 +1278,13 @@ if ! systemctl --quiet is-active "${SERVICE_NAME}.service"; then
 fi
 
 log "Verifying local health"
-if ! "${INSTALL_DIR}/watchtower-agent.sh" --check; then
-  fail "Local agent verification failed after install. Inspect: sudo journalctl -u ${SERVICE_NAME} -n 50"
+if ! (
+  # shellcheck disable=SC1090
+  [ -f "$ENV_FILE" ] && . "$ENV_FILE"
+  export AGENT_API_KEY AGENT_PORT AGENT_BIND_ADDRESS DOCKER_SOCKET WATCHTOWER_AGENT_STATE_DIR
+  "${INSTALL_DIR}/watchtower-agent.sh" --check
+); then
+  fail "Local agent verification failed after install. Inspect: journalctl -u ${SERVICE_NAME} -n 50"
 fi
 
 INSTALLED_RUNTIME_VERSION="$(extract_runtime_version "${INSTALL_DIR}/watchtower-agent.sh" || true)"
