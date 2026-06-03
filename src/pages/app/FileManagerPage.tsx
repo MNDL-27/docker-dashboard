@@ -378,12 +378,10 @@ export default function FileManagerPage() {
       />
 
       {!canUseFileManager ? (
-        <div className="glass-card rounded-[28px] p-8">
-          <PremiumFeatureBlock
-            title=""
-            description="Browse container filesystems, inspect configuration files, and preview logs directly from the dashboard. Upgrade to an Individual, Business, or Dedicated plan to unlock the File Manager."
-          />
-        </div>
+        <PremiumFeatureBlock
+          description="Browse container filesystems, inspect configuration files, and preview logs directly from the dashboard. Upgrade to an Individual, Business, or Dedicated plan to unlock the File Manager."
+          className="mt-4"
+        />
       ) : (
         <div className="grid gap-6 xl:grid-cols-[320px,1fr]">
           {/* Left: Container selector */}

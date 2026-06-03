@@ -57,7 +57,7 @@ export default function LogsPage() {
       <PageHeader title="Log Explorer" description="View real container logs" breadcrumbs={[{ label: "Observability" }, { label: "Logs" }]} />
 
       <PremiumFeatureBlock
-        title="Log Explorer is a paid feature"
+        title=""
         description="Upgrade to an Individual, Business, or Dedicated plan to view real-time container logs from your Docker hosts."
         hasAccess={hasAccess}
       >
