@@ -94,6 +94,16 @@ ensure_jq() {
   require_jq
 }
 
+ensure_socat() {
+  if command -v socat >/dev/null 2>&1; then
+    return 0
+  fi
+
+  log "Installing socat automatically"
+  install_package socat
+  command -v socat >/dev/null 2>&1 || fail "socat is required but not installed"
+}
+
 print_preflight_ok() {
   echo "OK: $1"
 }
@@ -320,7 +330,7 @@ done
 
 require_root
 
-for cmd in bash install systemctl getent useradd groupadd stat socat curl sed awk tr; do
+for cmd in bash install systemctl getent useradd groupadd stat curl sed awk tr; do
   require_command "$cmd"
 done
 
@@ -341,6 +351,7 @@ CONNECTION_MODE_VALUE="${CLI_CONNECTION_MODE:-agent}"
 
 if [ "$FLAG_CHECK" != "true" ]; then
   ensure_jq
+  ensure_socat
 fi
 
 if [ -n "$ENROLLMENT_TOKEN_VALUE" ]; then
