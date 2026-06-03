@@ -4,7 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { Plus, Loader2, CheckCircle2, XCircle, ShieldCheck, CloudCog, Terminal, Pencil, Eye, EyeOff, Copy, RefreshCw, Wrench } from "lucide-react";
+import { Plus, Loader2, CheckCircle2, XCircle, ShieldCheck, CloudCog, Terminal, Pencil, Eye, EyeOff, Copy, RefreshCw, Wrench, Info, Check, ArrowRight } from "lucide-react";
 import { useAddDockerHost, useUpdateDockerHost } from "@/hooks/useDocker";
 import { dockerApi } from "@/services/docker-api";
 import { agentEnrollmentApi, type AgentEnrollmentCreateResponse } from "@/services/agent-enrollment";
@@ -13,6 +13,8 @@ import { apiFetch } from "@/lib/api";
 import type { ConnectionMode, DockerHost } from "@/types/database";
 import { CURRENT_WATCHTOWER_AGENT_VERSION, isAgentVersionOutdated } from "@/lib/agent-version";
 import { sanitizeConnectionError } from "@/lib/error-sanitizer";
+import { CONNECTION_MODES } from "@/pages/onboarding/useOnboardingState";
+
 interface AddHostDialogProps {
   orgId: string;
   trigger?: React.ReactNode;
@@ -30,7 +32,13 @@ interface EditableHostSecrets {
   cfServiceTokenSecret: string;
 }
 
-type GuidedStage = "form" | "guided" | "finalizing";
+type GuidedStage = "basics" | "install" | "finalizing";
+
+/* ── Icon map for connection mode cards ── */
+const MODE_ICONS: Record<ConnectionMode, typeof Terminal> = {
+  agent: Terminal,
+  cloudflare_tunnel: CloudCog,
+};
 
 function CommandBlock({
   label,
@@ -54,22 +62,63 @@ function CommandBlock({
   return (
     <div className="space-y-2">
       <div className="flex items-center justify-between gap-3">
-        <Label>{label}</Label>
+        <Label className="text-xs font-medium text-muted-foreground">{label}</Label>
         <div className="flex items-center gap-2">
           {masked ? (
-            <Button type="button" variant="ghost" size="sm" className="gap-1.5" onClick={() => setRevealed((value) => !value)}>
-              {revealed ? <EyeOff className="h-3.5 w-3.5" /> : <Eye className="h-3.5 w-3.5" />}
+            <Button type="button" variant="ghost" size="sm" className="h-7 gap-1.5 text-[10px]" onClick={() => setRevealed((value) => !value)}>
+              {revealed ? <EyeOff className="h-3 w-3" /> : <Eye className="h-3 w-3" />}
               {revealed ? "Hide" : "Reveal"}
             </Button>
           ) : null}
-          <Button type="button" variant="ghost" size="sm" className="gap-1.5" onClick={handleCopy}>
-            <Copy className="h-3.5 w-3.5" />
+          <Button type="button" variant="ghost" size="sm" className="h-7 gap-1.5 text-[10px]" onClick={handleCopy}>
+            <Copy className="h-3 w-3" />
             {copied ? "Copied" : "Copy"}
           </Button>
         </div>
       </div>
-      <div className="overflow-x-auto rounded-lg border border-border bg-background p-4 font-mono text-xs leading-relaxed">
+      <div className="overflow-x-auto rounded-lg border border-border bg-background/50 p-3 font-mono text-[11px] leading-relaxed">
         <pre className="whitespace-pre-wrap break-all text-foreground/90">{visibleCommand}</pre>
+      </div>
+    </div>
+  );
+}
+
+function ConnectionModeSelector({
+  connectionMode,
+  onConnectionModeChange,
+}: {
+  connectionMode: ConnectionMode;
+  onConnectionModeChange: (v: ConnectionMode) => void;
+}) {
+  return (
+    <div className="space-y-3">
+      <Label className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/70">Connection Method</Label>
+      <div className="grid grid-cols-2 gap-3">
+        {CONNECTION_MODES.map((m) => {
+          const isSelected = connectionMode === m.value;
+          const Icon = MODE_ICONS[m.value];
+          return (
+            <button
+              key={m.value}
+              type="button"
+              onClick={() => onConnectionModeChange(m.value)}
+              className={`relative p-3 rounded-xl border text-left transition-all ${
+                isSelected
+                  ? "border-primary bg-primary/5 ring-1 ring-primary/30 shadow-[0_0_15px_-3px_rgba(14,154,184,0.1)]"
+                  : "border-border hover:border-primary/40 hover:bg-muted/30"
+              }`}
+            >
+              {isSelected && (
+                <div className="absolute top-2 right-2 w-3.5 h-3.5 rounded-full bg-primary flex items-center justify-center">
+                  <Check className="h-2 w-2 text-primary-foreground" />
+                </div>
+              )}
+              <Icon className={`h-4 w-4 mb-1.5 ${isSelected ? "text-primary" : "text-muted-foreground"}`} />
+              <div className={`text-xs font-semibold ${isSelected ? "text-foreground" : "text-foreground/80"}`}>{m.label}</div>
+              <div className="text-[9px] text-muted-foreground mt-0.5 leading-snug">{m.desc}</div>
+            </button>
+          );
+        })}
       </div>
     </div>
   );
@@ -78,7 +127,7 @@ function CommandBlock({
 export function AddHostDialog({ orgId, trigger, host, disabledReason }: AddHostDialogProps) {
   const isEditing = !!host;
   const [open, setOpen] = useState(false);
-  const [stage, setStage] = useState<GuidedStage>("form");
+  const [stage, setStage] = useState<GuidedStage>("basics");
   const [name, setName] = useState("");
   const [mode, setMode] = useState<ConnectionMode>("agent");
   const [hostUrl, setHostUrl] = useState("");
@@ -114,7 +163,7 @@ export function AddHostDialog({ orgId, trigger, host, disabledReason }: AddHostD
     setShowAdvanced(false);
     setEnrollment(null);
     setGuidedError("");
-    setStage("form");
+    setStage("basics");
     setTestStatus("idle");
     setTestError("");
     setTestMessage("");
@@ -236,13 +285,6 @@ export function AddHostDialog({ orgId, trigger, host, disabledReason }: AddHostD
 
   const handleStartGuidedSetup = async () => {
     setGuidedError("");
-    try {
-      new URL(hostUrl);
-    } catch {
-      setGuidedError("Enter a valid URL (for example https://agent.example.com:9876).");
-      return;
-    }
-
     if (!name.trim()) {
       setGuidedError("Host name is required.");
       return;
@@ -253,7 +295,6 @@ export function AddHostDialog({ orgId, trigger, host, disabledReason }: AddHostD
       const response = await agentEnrollmentApi.create({
         organizationId: orgId,
         hostName: name,
-        hostUrl,
         connectionMode: mode,
         dockerSocketPath: socketPath,
         cfServiceTokenId: mode === "cloudflare_tunnel" ? cfServiceTokenId.trim() || undefined : undefined,
@@ -261,23 +302,36 @@ export function AddHostDialog({ orgId, trigger, host, disabledReason }: AddHostD
       });
       setEnrollment(response);
       setGuidedError("");
-      setStage("guided");
+      setStage("install");
     } catch (error) {
       const sanitized = sanitizeConnectionError(error);
       setGuidedError(sanitized.description || "Failed to prepare the guided setup command.");
-      setStage("form");
+      setStage("basics");
     }
   };
 
   const handleFinalizeGuidedSetup = async () => {
     if (!enrollment?.session_id) return;
+
+    if (!hostUrl.trim()) {
+      setGuidedError("Host URL is required to test the connection.");
+      return;
+    }
+
+    try {
+      new URL(hostUrl);
+    } catch {
+      setGuidedError("Enter a valid URL (e.g. https://agent.example.com:9876)");
+      return;
+    }
+
     setGuidedError("");
     setTestError("");
     setRemediationCommand(null);
     setStage("finalizing");
 
     try {
-      const result = await agentEnrollmentApi.finalize(enrollment.session_id);
+      const result = await agentEnrollmentApi.finalize(enrollment.session_id, hostUrl);
       if (result.ok) {
         setTestStatus("success");
         setTestMessage(
@@ -301,20 +355,15 @@ export function AddHostDialog({ orgId, trigger, host, disabledReason }: AddHostD
         setTestStatus("error");
         setTestError(result.status || "Connection test failed.");
         setRemediationCommand(result.remediation_command);
-        setStage("guided");
+        setStage("install");
       }
     } catch (error) {
       setTestStatus("error");
       const sanitized = sanitizeConnectionError(error);
       setTestError(sanitized.description || "Connection test failed.");
-      setStage("guided");
+      setStage("install");
     }
   };
-
-  const modes: { value: ConnectionMode; label: string; icon: typeof Terminal; desc: string }[] = [
-    { value: "agent", label: "Agent (Direct)", icon: Terminal, desc: "Connect to the Watchtower Agent over HTTPS." },
-    { value: "cloudflare_tunnel", label: "Agent via CF Tunnel", icon: CloudCog, desc: "Same agent, accessed through a Cloudflare Tunnel." },
-  ];
 
   const isBusy = addHost.isPending || updateHost.isPending || loadingSecrets || stage === "finalizing";
 
@@ -325,11 +374,7 @@ export function AddHostDialog({ orgId, trigger, host, disabledReason }: AddHostD
     </Button>
   );
 
-  // Gate when org is at plan limit. Render a disabled placeholder + tooltip so
-  // users see why the action is blocked instead of getting a toast after
-  // filling out the form. Editing existing hosts is never gated. Reuse the
-  // caller's trigger (or defaultTrigger) so the disabled state keeps the same
-  // size/label as the enabled state.
+  // Gate when org is at plan limit.
   if (disabledReason && !isEditing) {
     const enabledTrigger = trigger ?? defaultTrigger;
     const disabledTrigger = isValidElement(enabledTrigger)
@@ -356,45 +401,187 @@ export function AddHostDialog({ orgId, trigger, host, disabledReason }: AddHostD
       <DialogTrigger asChild>
         {trigger || defaultTrigger}
       </DialogTrigger>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <ShieldCheck className="h-5 w-5 text-primary" />
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto p-0 gap-0 border-none shadow-2xl">
+        <DialogHeader className="p-6 pb-4 bg-muted/30 border-b border-border/50">
+          <DialogTitle className="flex items-center gap-2 text-xl">
+            <ShieldCheck className="h-6 w-6 text-primary" />
             {isEditing ? "Edit Docker Host" : "Connect Docker Host"}
           </DialogTitle>
-          <DialogDescription>
+          <DialogDescription className="text-sm">
             {isEditing
               ? "Update the saved host connection, endpoint, and credentials."
-              : "Create a guided one-command installer flow, then finish the host test through Dockerdash."}
+              : "Follow the guided setup to connect a new server to your fleet."}
           </DialogDescription>
         </DialogHeader>
 
-        {!isEditing && stage === "guided" && enrollment ? (
-          <div className="space-y-4 mt-2">
-            <div className="rounded-lg border border-primary/20 bg-primary/5 p-4 text-sm text-primary">
-              {enrollment.setup_summary}
+        {isEditing ? (
+          <div className="p-6 space-y-5">
+            <ConnectionModeSelector
+              connectionMode={mode}
+              onConnectionModeChange={setMode}
+            />
+
+            <div className="space-y-2">
+              <Label className="text-sm font-medium">Host Name</Label>
+              <Input placeholder="e.g. prod-server-01" value={name} onChange={(e) => setName(e.target.value)} />
             </div>
 
-            <CommandBlock label="Primary install command" command={enrollment.install_command} />
-            <CommandBlock label="Local verify command" command={enrollment.verify_command} />
+            <div className="space-y-2">
+              <Label className="text-sm font-medium">{mode === "agent" ? "Agent URL" : "Tunnel URL"}</Label>
+              <Input
+                placeholder={mode === "agent" ? "https://your-host:9876" : "https://docker.your-team.cloudflareaccess.com"}
+                value={hostUrl}
+                onChange={(e) => setHostUrl(e.target.value)}
+              />
+            </div>
 
-            <div className="rounded-lg border border-border bg-muted/20 p-4 space-y-3">
-              <button
-                type="button"
-                className="flex items-center gap-2 text-sm font-medium"
-                onClick={() => setShowAdvanced((value) => !value)}
-              >
-                <Wrench className="h-4 w-4 text-primary" />
-                {showAdvanced ? "Hide manual fallback" : "Use manual install instead"}
-              </button>
-              {showAdvanced ? (
+            <div className="space-y-2">
+              <Label className="text-sm font-medium">Docker Socket Path <span className="text-muted-foreground font-normal text-xs">(optional)</span></Label>
+              <Input placeholder="/var/run/docker.sock" value={socketPath} onChange={(e) => setSocketPath(e.target.value)} />
+            </div>
+
+            {mode === "cloudflare_tunnel" ? (
+              <div className="grid grid-cols-1 gap-4 p-4 rounded-xl bg-muted/20 border border-border/50">
                 <div className="space-y-2">
-                  <p className="text-xs text-muted-foreground">
-                    This advanced command embeds the long-lived API key. Use it only if you want to skip the enrollment-token flow.
-                  </p>
-                  <CommandBlock label="Advanced manual install" command={enrollment.advanced_manual_command} masked />
+                  <Label className="text-xs font-medium uppercase tracking-wider text-muted-foreground/70">CF Access Service Token ID <span className="text-muted-foreground font-normal">(optional)</span></Label>
+                  <Input
+                    placeholder="Only if CF Access is protecting the tunnel"
+                    value={cfServiceTokenId}
+                    onChange={(e) => setCfServiceTokenId(e.target.value)}
+                    className="h-9 bg-background"
+                  />
                 </div>
-              ) : null}
+                <div className="space-y-2">
+                  <Label className="text-xs font-medium uppercase tracking-wider text-muted-foreground/70">CF Access Service Token Secret <span className="text-muted-foreground font-normal">(optional)</span></Label>
+                  <div className="relative">
+                    <Input
+                      type={showCfSecret ? "text" : "password"}
+                      placeholder="Only if CF Access is protecting the tunnel"
+                      value={cfServiceTokenSecret}
+                      onChange={(e) => setCfServiceTokenSecret(e.target.value)}
+                      className="pr-10 h-9 bg-background"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowCfSecret((value) => !value)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground"
+                    >
+                      {showCfSecret ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ) : null}
+
+            <div className="space-y-2">
+              <Label className="text-sm font-medium">Agent API Key</Label>
+              <div className="relative">
+                <Input
+                  type={showAgentKey ? "text" : "password"}
+                  placeholder="Shared secret for authenticating with the agent"
+                  value={agentApiKey}
+                  onChange={(e) => setAgentApiKey(e.target.value)}
+                  disabled={loadingSecrets}
+                  className="pr-10 h-10"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowAgentKey((value) => !value)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground"
+                >
+                  {showAgentKey ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button>
+              </div>
+            </div>
+
+            {testStatus === "error" && testError ? (
+              <div className="flex items-start gap-2 p-3 rounded-md bg-destructive/10 border border-destructive/20">
+                <XCircle className="h-4 w-4 text-destructive shrink-0 mt-0.5" />
+                <p className="text-xs text-destructive">{testError}</p>
+              </div>
+            ) : null}
+
+            {testStatus === "success" ? (
+              <div className="flex items-center gap-2 p-3 rounded-md bg-primary/10 border border-primary/20">
+                <CheckCircle2 className="h-4 w-4 text-primary" />
+                <div className="space-y-0.5">
+                  <p className="text-xs text-primary">Connection successful!</p>
+                  {testMessage ? <p className="text-[11px] text-muted-foreground">{testMessage}</p> : null}
+                </div>
+              </div>
+            ) : null}
+
+            <Button 
+              onClick={handleSaveEdit} 
+              disabled={!name || !hostUrl || isBusy || !agentApiKey.trim()} 
+              className="w-full h-11 font-bold shadow-lg shadow-primary/10 mt-2"
+            >
+              {isBusy || testStatus === "testing" ? <><Loader2 className="h-4 w-4 animate-spin mr-2" />Saving...</> : "Save Changes & Test Connection"}
+            </Button>
+          </div>
+        ) : stage === "finalizing" && !enrollment ? (
+          <div className="p-12 text-center space-y-4">
+            <Loader2 className="h-10 w-10 animate-spin text-primary mx-auto" />
+            <div className="space-y-1">
+              <p className="font-bold">Preparing guided setup...</p>
+              <p className="text-sm text-muted-foreground">Creating a one-time enrollment for "{name}"</p>
+            </div>
+          </div>
+        ) : stage === "install" && enrollment ? (
+          <div className="p-6 space-y-6">
+             {/* Step 1: Install */}
+            <div className="space-y-4 relative">
+              <div className="flex items-center gap-3 mb-2">
+                <div className="w-7 h-7 rounded-full bg-primary/20 text-primary flex items-center justify-center font-bold text-xs border border-primary/20">1</div>
+                <h3 className="font-bold">Install & Verify</h3>
+              </div>
+              
+              <p className="text-xs text-muted-foreground leading-relaxed">
+                Run this one-liner on your Docker host to install the agent service.
+              </p>
+
+              <CommandBlock label="Run this command" command={enrollment.install_command} />
+
+              <div className="rounded-xl border border-border bg-muted/30 p-3 text-[11px] text-muted-foreground leading-relaxed flex items-start gap-2.5">
+                <Info className="h-3.5 w-3.5 text-primary shrink-0 mt-0.5" />
+                <div className="space-y-1.5">
+                  <p>Confirm the agent is listening locally before continuing:</p>
+                  <CommandBlock label="Local verify command" command={enrollment.verify_command} />
+                </div>
+              </div>
+            </div>
+
+            <div className="h-px bg-border/50" />
+
+            {/* Step 2: Configure Access */}
+            <div className="space-y-4">
+              <div className="flex items-center gap-3 mb-2">
+                <div className="w-7 h-7 rounded-full bg-primary/20 text-primary flex items-center justify-center font-bold text-xs border border-primary/20">2</div>
+                <h3 className="font-bold">Configure Access</h3>
+              </div>
+
+              <ConnectionModeSelector
+                connectionMode={mode}
+                onConnectionModeChange={setMode}
+              />
+
+              <div className="space-y-2 pt-1">
+                <Label htmlFor="host-url" className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/70">
+                  {mode === "agent" ? "Public Agent URL" : "Tunnel URL"}
+                </Label>
+                <Input
+                  id="host-url"
+                  placeholder={mode === "agent" ? "https://agent.example.com:9876" : "https://docker.your-team.cloudflareaccess.com"}
+                  value={hostUrl}
+                  onChange={(e) => setHostUrl(e.target.value)}
+                  className="h-10 bg-background"
+                />
+                <p className="text-[10px] text-muted-foreground leading-relaxed">
+                  {mode === "agent"
+                    ? "The external HTTPS URL of your agent. Ensure port 9876 is accessible."
+                    : "The Cloudflare Tunnel hostname routing to port 9876."}
+                </p>
+              </div>
             </div>
 
             {guidedError ? (
@@ -424,149 +611,59 @@ export function AddHostDialog({ orgId, trigger, host, disabledReason }: AddHostD
               </div>
             ) : null}
 
-            <div className="flex gap-3">
-              <Button variant="outline" onClick={handleStartGuidedSetup} className="gap-2">
+            <div className="flex gap-3 pt-2">
+              <Button variant="outline" onClick={() => setStage("basics")} className="gap-2">
                 <RefreshCw className="h-4 w-4" />
-                Regenerate command
+                Start Over
               </Button>
-              <Button onClick={handleFinalizeGuidedSetup} className="flex-1">
-                {stage === "finalizing" ? <><Loader2 className="h-4 w-4 animate-spin mr-2" />Finishing...</> : "Finish Setup & Test"}
+              <Button 
+                onClick={handleFinalizeGuidedSetup} 
+                className="flex-1 font-bold shadow-lg shadow-primary/10 h-11"
+                disabled={!hostUrl.trim() || isBusy}
+              >
+                {isBusy ? <><Loader2 className="h-4 w-4 animate-spin mr-2" />Verifying...</> : "Finish & Verify Connection"}
               </Button>
             </div>
           </div>
         ) : (
-          <div className="space-y-4 mt-2">
+          <div className="p-6 space-y-6">
             <div className="space-y-2">
-              <Label>Connection Method</Label>
-              <div className="grid grid-cols-2 gap-2">
-                {modes.map((m) => (
-                  <button
-                    key={m.value}
-                    type="button"
-                    onClick={() => setMode(m.value)}
-                    className={`p-3 rounded-lg border text-left transition-all ${
-                      mode === m.value
-                        ? "border-primary bg-primary/5 ring-1 ring-primary/20"
-                        : "border-border hover:border-primary/40"
-                    }`}
-                  >
-                    <m.icon className={`h-4 w-4 mb-1 ${mode === m.value ? "text-primary" : "text-muted-foreground"}`} />
-                    <div className="text-xs font-medium">{m.label}</div>
-                    <div className="text-[10px] text-muted-foreground mt-0.5">{m.desc}</div>
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <Label>Host Name</Label>
-              <Input placeholder="e.g. prod-server-01" value={name} onChange={(e) => setName(e.target.value)} />
-            </div>
-
-            <div className="space-y-2">
-              <Label>{mode === "agent" ? "Agent URL" : "Tunnel URL"}</Label>
-              <Input
-                placeholder={mode === "agent" ? "https://your-host:9876" : "https://docker.your-team.cloudflareaccess.com"}
-                value={hostUrl}
-                onChange={(e) => setHostUrl(e.target.value)}
+              <Label className="text-sm font-medium">Host Name</Label>
+              <Input 
+                placeholder="e.g. prod-server-01" 
+                value={name} 
+                onChange={(e) => setName(e.target.value)} 
+                className="h-11"
+                autoFocus
               />
+              <p className="text-xs text-muted-foreground mt-1.5">
+                A friendly name to identify this server in your dashboard.
+              </p>
             </div>
 
             <div className="space-y-2">
-              <Label>Docker Socket Path <span className="text-muted-foreground">(optional)</span></Label>
+              <Label className="text-sm font-medium">Docker Socket Path <span className="text-muted-foreground font-normal text-xs">(optional)</span></Label>
               <Input placeholder="/var/run/docker.sock" value={socketPath} onChange={(e) => setSocketPath(e.target.value)} />
             </div>
 
-            {mode === "cloudflare_tunnel" ? (
-              <>
-                <div className="space-y-2">
-                  <Label>CF Access Service Token ID <span className="text-muted-foreground">(optional)</span></Label>
-                  <Input
-                    placeholder="Only if CF Access is protecting the tunnel"
-                    value={cfServiceTokenId}
-                    onChange={(e) => setCfServiceTokenId(e.target.value)}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label>CF Access Service Token Secret <span className="text-muted-foreground">(optional)</span></Label>
-                  <div className="relative">
-                    <Input
-                      type={showCfSecret ? "text" : "password"}
-                      placeholder="Only if CF Access is protecting the tunnel"
-                      value={cfServiceTokenSecret}
-                      onChange={(e) => setCfServiceTokenSecret(e.target.value)}
-                      className="pr-10"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowCfSecret((value) => !value)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground"
-                    >
-                      {showCfSecret ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                    </button>
-                  </div>
-                </div>
-              </>
+            {guidedError ? (
+              <div className="flex items-start gap-2 p-3 rounded-md bg-destructive/10 border border-destructive/20">
+                <XCircle className="h-4 w-4 text-destructive shrink-0 mt-0.5" />
+                <p className="text-xs text-destructive">{guidedError}</p>
+              </div>
             ) : null}
 
-            {isEditing ? (
-              <>
-                <div className="space-y-2">
-                  <Label>Agent API Key</Label>
-                  <div className="relative">
-                    <Input
-                      type={showAgentKey ? "text" : "password"}
-                      placeholder="Shared secret for authenticating with the agent"
-                      value={agentApiKey}
-                      onChange={(e) => setAgentApiKey(e.target.value)}
-                      disabled={loadingSecrets}
-                      className="pr-10"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowAgentKey((value) => !value)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground"
-                    >
-                      {showAgentKey ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                    </button>
-                  </div>
-                </div>
+            <Button onClick={handleStartGuidedSetup} disabled={!name.trim() || isBusy} className="w-full h-11 text-base font-semibold">
+              {isBusy ? <><Loader2 className="h-4 w-4 animate-spin mr-2" />Preparing...</> : "Next: Generate Installer"}
+              <ArrowRight className="h-4 w-4 ml-2" />
+            </Button>
 
-                {testStatus === "error" && testError ? (
-                  <div className="flex items-start gap-2 p-3 rounded-md bg-destructive/10 border border-destructive/20">
-                    <XCircle className="h-4 w-4 text-destructive shrink-0 mt-0.5" />
-                    <p className="text-xs text-destructive">{testError}</p>
-                  </div>
-                ) : null}
-
-                {testStatus === "success" ? (
-                  <div className="flex items-center gap-2 p-3 rounded-md bg-primary/10 border border-primary/20">
-                    <CheckCircle2 className="h-4 w-4 text-primary" />
-                    <div className="space-y-0.5">
-                      <p className="text-xs text-primary">Connection successful!</p>
-                      {testMessage ? <p className="text-[11px] text-muted-foreground">{testMessage}</p> : null}
-                    </div>
-                  </div>
-                ) : null}
-
-                <Button onClick={handleSaveEdit} disabled={!name || !hostUrl || isBusy || !agentApiKey.trim()} className="w-full">
-                  {isBusy || testStatus === "testing" ? <><Loader2 className="h-4 w-4 animate-spin mr-2" />Saving...</> : "Save Changes & Test Connection"}
-                </Button>
-              </>
-            ) : (
-              <>
-                {guidedError ? (
-                  <div className="flex items-start gap-2 p-3 rounded-md bg-destructive/10 border border-destructive/20">
-                    <XCircle className="h-4 w-4 text-destructive shrink-0 mt-0.5" />
-                    <p className="text-xs text-destructive">{guidedError}</p>
-                  </div>
-                ) : null}
-
-                <Button onClick={handleStartGuidedSetup} disabled={!name || !hostUrl || isBusy} className="w-full">
-                  {isBusy ? <><Loader2 className="h-4 w-4 animate-spin mr-2" />Preparing...</> : "Generate Install Command"}
-                </Button>
-              </>
-            )}
+            <div className="mt-2 flex items-start gap-2.5 rounded-lg border border-border bg-muted/40 px-4 py-3">
+              <Info className="h-4 w-4 text-muted-foreground shrink-0 mt-0.5" />
+              <p className="text-[11px] text-muted-foreground leading-relaxed">
+                The Watchtower Agent is a lightweight monitoring tool that runs alongside Docker. It doesn't require exposing your Docker socket to the internet.
+              </p>
+            </div>
           </div>
         )}
       </DialogContent>

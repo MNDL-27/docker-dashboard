@@ -212,7 +212,7 @@ sudo watchtower-agent-uninstall`;
 
           <div className="pl-12">
             <InfoBox variant="success">
-              Once Preflight, Update, and Verify pass, add the host in Watchtower with the same API key.
+              Once Preflight, Update, and Verify pass, the recommended way to finish setup is using the <strong>Connect Host</strong> guided flow in the dashboard, which automatically handles key exchange and connection testing.
             </InfoBox>
           </div>
         </TabsContent>
@@ -266,34 +266,11 @@ cloudflared tunnel run --url http://127.0.0.1:9876 watchtower-agent`}
 
           <StepCard step={5} title="Add Host in Watchtower">
             <p className="text-sm text-muted-foreground">
-              Go to <strong>Hosts - Connect Host</strong> and enter:
+              The recommended way to finish setup is using the <strong>Connect Host</strong> guided flow in the dashboard, which automatically handles key exchange and connection testing.
             </p>
-            <ul className="ml-4 space-y-1.5 text-sm text-muted-foreground">
-              <li className="flex items-start gap-2">
-                <CloudCog className="mt-0.5 h-3.5 w-3.5 shrink-0 text-primary" />
-                <span>
-                  <strong>Connection mode:</strong> Agent via CF Tunnel
-                </span>
-              </li>
-              <li className="flex items-start gap-2">
-                <Globe className="mt-0.5 h-3.5 w-3.5 shrink-0 text-primary" />
-                <span>
-                  <strong>Tunnel URL:</strong> <code className="bg-muted px-1 rounded">https://docker.your-team.com</code>
-                </span>
-              </li>
-              <li className="flex items-start gap-2">
-                <ShieldCheck className="mt-0.5 h-3.5 w-3.5 shrink-0 text-primary" />
-                <span>
-                  <strong>Agent API Key:</strong> The key from step 1
-                </span>
-              </li>
-              <li className="flex items-start gap-2">
-                <Lock className="mt-0.5 h-3.5 w-3.5 shrink-0 text-primary" />
-                <span>
-                  <strong>CF Access tokens:</strong> Only if you configured CF Access in step 4
-                </span>
-              </li>
-            </ul>
+            <InfoBox variant="success">
+              Navigate to <strong>Infrastructure → Hosts</strong> and click <strong>Connect Host</strong>. The guided wizard will provide you with the exact command for your host and test the connection automatically.
+            </InfoBox>
           </StepCard>
 
           <div className="pl-12">
