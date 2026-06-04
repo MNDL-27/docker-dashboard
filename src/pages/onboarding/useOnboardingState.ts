@@ -395,7 +395,7 @@ export function useOnboardingState() {
       setTestError(err instanceof Error ? err.message : "Connection test failed.");
       setState({ step: 1, phase: "test-failed" });
     }
-  }, [enrollment, hostName, toast]);
+  }, [enrollment, hostName, hostUrl, toast]);
 
   const handleRetryTest = useCallback(async () => {
     await finalizeEnrollment();
