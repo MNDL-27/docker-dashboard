@@ -5,6 +5,7 @@ import { Label } from "@/components/ui/label";
 import { ErrorBanner } from "./ErrorBanner";
 import type { ConnectionMode } from "@/types/database";
 import { CONNECTION_MODES } from "./useOnboardingState";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 interface Props {
   hostName: string;
@@ -19,6 +20,7 @@ interface Props {
 
 const MODE_ICONS: Record<ConnectionMode, typeof Terminal> = {
   agent: Terminal,
+  http: Terminal,
   cloudflare_tunnel: CloudCog,
 };
 
@@ -63,35 +65,29 @@ export function StepHostBasics({
         {/* Connection Method */}
         <div className="space-y-3">
           <Label className="text-sm font-semibold uppercase tracking-wider text-muted-foreground/70">Connection Method</Label>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {CONNECTION_MODES.map((m) => {
-              const isSelected = connectionMode === m.value;
-              const Icon = MODE_ICONS[m.value];
-              return (
-                <button
-                  key={m.value}
-                  type="button"
-                  onClick={() => onConnectionModeChange(m.value)}
-                  className={`relative p-5 rounded-2xl border text-left transition-all group ${
-                    isSelected
-                      ? "border-primary bg-primary/5 ring-1 ring-primary/30 shadow-[0_0_20px_-5px_rgba(14,154,184,0.15)]"
-                      : "border-border hover:border-primary/40 hover:bg-muted/30"
-                  }`}
-                >
-                  {isSelected && (
-                    <div className="absolute top-4 right-4 w-5 h-5 rounded-full bg-primary flex items-center justify-center">
-                      <Check className="h-3 w-3 text-primary-foreground" />
+          <Select value={connectionMode} onValueChange={(val: string) => onConnectionModeChange(val as ConnectionMode)}>
+            <SelectTrigger className="h-14 bg-background w-full">
+              <SelectValue placeholder="Select a connection method" />
+            </SelectTrigger>
+            <SelectContent>
+              {CONNECTION_MODES.map((m) => {
+                const Icon = MODE_ICONS[m.value];
+                return (
+                  <SelectItem key={m.value} value={m.value} className="py-3 cursor-pointer">
+                    <div className="flex items-center gap-4">
+                      <div className="flex h-8 w-8 items-center justify-center rounded-md bg-muted text-muted-foreground shrink-0">
+                        <Icon className="h-4 w-4" />
+                      </div>
+                      <div className="flex flex-col items-start gap-0.5">
+                        <span className="text-sm font-semibold leading-none">{m.label}</span>
+                        <span className="text-xs text-muted-foreground">{m.desc}</span>
+                      </div>
                     </div>
-                  )}
-                  <div className={`w-10 h-10 rounded-xl mb-4 flex items-center justify-center transition-colors ${isSelected ? "bg-primary/20 text-primary" : "bg-muted text-muted-foreground group-hover:text-primary/70"}`}>
-                    <Icon className="h-5 w-5" />
-                  </div>
-                  <div className={`font-bold ${isSelected ? "text-foreground" : "text-foreground/80"}`}>{m.label}</div>
-                  <div className="text-xs text-muted-foreground mt-1.5 leading-relaxed">{m.desc}</div>
-                </button>
-              );
-            })}
-          </div>
+                  </SelectItem>
+                );
+              })}
+            </SelectContent>
+          </Select>
         </div>
 
         {error && <ErrorBanner message={error} />}

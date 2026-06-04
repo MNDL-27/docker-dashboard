@@ -15,6 +15,7 @@ import { CURRENT_WATCHTOWER_AGENT_VERSION, isAgentVersionOutdated } from "@/lib/
 import { sanitizeConnectionError } from "@/lib/error-sanitizer";
 import { CONNECTION_MODES } from "@/pages/onboarding/useOnboardingState";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 interface AddHostDialogProps {
   orgId: string;
@@ -93,34 +94,30 @@ function ConnectionModeSelector({
 }) {
   return (
     <div className="space-y-3">
-      <Label className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/70">Connection Method</Label>
-      <div className="grid grid-cols-2 gap-3">
-        {CONNECTION_MODES.map((m) => {
-          const isSelected = connectionMode === m.value;
-          const Icon = MODE_ICONS[m.value];
-          return (
-            <button
-              key={m.value}
-              type="button"
-              onClick={() => onConnectionModeChange(m.value)}
-              className={`relative p-3 rounded-xl border text-left transition-all ${
-                isSelected
-                  ? "border-primary bg-primary/5 ring-1 ring-primary/30 shadow-[0_0_15px_-3px_rgba(14,154,184,0.15)]"
-                  : "border-border hover:border-primary/40 hover:bg-muted/30"
-              }`}
-            >
-              {isSelected && (
-                <div className="absolute top-2 right-2 w-3.5 h-3.5 rounded-full bg-primary flex items-center justify-center">
-                  <Check className="h-2 w-2 text-primary-foreground" />
+      <Label className="text-sm font-semibold uppercase tracking-wider text-muted-foreground/70">Connection Method</Label>
+      <Select value={connectionMode} onValueChange={(val: string) => onConnectionModeChange(val as ConnectionMode)}>
+        <SelectTrigger className="h-14 bg-background w-full">
+          <SelectValue placeholder="Select a connection method" />
+        </SelectTrigger>
+        <SelectContent>
+          {CONNECTION_MODES.map((m) => {
+            const Icon = MODE_ICONS[m.value];
+            return (
+              <SelectItem key={m.value} value={m.value} className="py-3 cursor-pointer">
+                <div className="flex items-center gap-4">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-md bg-muted text-muted-foreground shrink-0">
+                    <Icon className="h-4 w-4" />
+                  </div>
+                  <div className="flex flex-col items-start gap-0.5">
+                    <span className="text-sm font-semibold leading-none">{m.label}</span>
+                    <span className="text-xs text-muted-foreground">{m.desc}</span>
+                  </div>
                 </div>
-              )}
-              <Icon className={`h-4 w-4 mb-1.5 ${isSelected ? "text-primary" : "text-muted-foreground"}`} />
-              <div className={`text-xs font-semibold ${isSelected ? "text-foreground" : "text-foreground/80"}`}>{m.label}</div>
-              <div className="text-[9px] text-muted-foreground mt-0.5 leading-snug">{m.desc}</div>
-            </button>
-          );
-        })}
-      </div>
+              </SelectItem>
+            );
+          })}
+        </SelectContent>
+      </Select>
     </div>
   );
 }
