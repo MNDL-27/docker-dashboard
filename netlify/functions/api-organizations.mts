@@ -2,6 +2,7 @@ import type { Config } from '@netlify/functions';
 import { sql } from './lib/db.mjs';
 import { requireAuth } from './lib/auth.mjs';
 import { assertOrganizationWriteAllowed, assertUserOrganizationCapacityAvailable } from './lib/access-controls.mjs';
+import { clerkClient } from './lib/clerk.mjs';
 
 const headers = {
   'Access-Control-Allow-Origin': '*',
@@ -237,6 +238,14 @@ export default async (req: Request) => {
 
       if (deleted.length === 0) {
         return new Response(JSON.stringify({ error: 'Organization not found' }), { status: 404, headers });
+      }
+
+      if (deleted[0].clerk_org_id) {
+        try {
+          await clerkClient.organizations.deleteOrganization(deleted[0].clerk_org_id);
+        } catch (clerkErr: any) {
+          console.error('[api-organizations] Failed to delete org from Clerk:', clerkErr?.message);
+        }
       }
 
       return new Response(JSON.stringify({ success: true, id: deleted[0].id }), { headers });
