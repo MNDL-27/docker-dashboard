@@ -278,7 +278,7 @@ function OrgCard({ org }: { org: { id: string; name: string; slug: string | null
             {hostCount} host{hostCount !== 1 ? "s" : ""}
           </Badge>
           <Button asChild size="sm" variant="outline" className="gap-1.5">
-            <Link to="/app/settings">
+            <Link to="/app/members">
               Manage
               <ChevronRight className="h-3.5 w-3.5" />
             </Link>
