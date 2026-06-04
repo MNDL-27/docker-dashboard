@@ -184,7 +184,7 @@ export default async (req: Request) => {
       });
       let hostUrl: string;
       try {
-        hostUrl = normalizeAndValidateHostUrl(String(body.host_url ?? ""));
+        hostUrl = normalizeAndValidateHostUrl(String(body.host_url ?? ""), String(body.connection_mode ?? ""));
       } catch (error: any) {
         return new Response(JSON.stringify({ error: error?.message || 'Invalid host_url' }), { status: 400, headers });
       }
@@ -241,7 +241,7 @@ export default async (req: Request) => {
       const body = await req.json();
       let hostUrl: string;
       try {
-        hostUrl = normalizeAndValidateHostUrl(String(body.host_url ?? ""));
+        hostUrl = normalizeAndValidateHostUrl(String(body.host_url ?? ""), String(body.connection_mode ?? ""));
       } catch (error: any) {
         return new Response(JSON.stringify({ error: error?.message || 'Invalid host_url' }), { status: 400, headers });
       }

@@ -206,10 +206,8 @@ export function AddHostDialog({ orgId, trigger, host, disabledReason }: AddHostD
   }, [open, host, toast]);
 
   const handleSaveEdit = async () => {
-    try {
-      new URL(hostUrl);
-    } catch {
-      toast({ title: "Invalid URL", description: "Enter a valid agent or tunnel URL.", variant: "destructive" });
+    if (!hostUrl.trim()) {
+      toast({ title: "Invalid Host", description: "Enter a valid agent IP or hostname.", variant: "destructive" });
       return;
     }
 
@@ -315,10 +313,8 @@ export function AddHostDialog({ orgId, trigger, host, disabledReason }: AddHostD
       return;
     }
 
-    try {
-      new URL(hostUrl);
-    } catch {
-      setGuidedError("Enter a valid URL (e.g. https://agent.example.com:9876)");
+    if (!hostUrl.trim()) {
+      setGuidedError("Enter a valid IP or hostname (e.g. 192.168.1.5)");
       return;
     }
 
@@ -424,9 +420,9 @@ export function AddHostDialog({ orgId, trigger, host, disabledReason }: AddHostD
             </div>
 
             <div className="space-y-2">
-              <Label className="text-sm font-medium">{mode === "cloudflare_tunnel" ? "Tunnel URL" : mode === "http" ? "HTTP Agent URL" : "Agent URL"}</Label>
+              <Label className="text-sm font-medium">{mode === "cloudflare_tunnel" ? "Tunnel Hostname" : mode === "http" ? "HTTP Agent Hostname/IP" : "Agent Hostname/IP"}</Label>
               <Input
-                placeholder={mode === "cloudflare_tunnel" ? "https://docker.your-team.cloudflareaccess.com" : mode === "http" ? "http://your-host:9876" : "https://your-host:9876"}
+                placeholder={mode === "cloudflare_tunnel" ? "docker.your-team.cloudflareaccess.com" : "192.168.1.5"}
                 value={hostUrl}
                 onChange={(e) => setHostUrl(e.target.value)}
                 className="h-10 bg-background"
@@ -567,11 +563,11 @@ export function AddHostDialog({ orgId, trigger, host, disabledReason }: AddHostD
 
               <div className="space-y-3 pt-1">
                 <Label htmlFor="host-url" className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/70">
-                  {mode === "cloudflare_tunnel" ? "Tunnel URL" : mode === "http" ? "Public HTTP Agent URL" : "Public Agent URL"}
+                  {mode === "cloudflare_tunnel" ? "Tunnel Hostname" : mode === "http" ? "Public HTTP Agent Hostname/IP" : "Public Agent Hostname/IP"}
                 </Label>
                 <Input
                   id="host-url"
-                  placeholder={mode === "cloudflare_tunnel" ? "https://docker.your-team.cloudflareaccess.com" : mode === "http" ? "http://agent.example.com:9876" : "https://agent.example.com:9876"}
+                  placeholder={mode === "cloudflare_tunnel" ? "docker.your-team.cloudflareaccess.com" : "agent.example.com"}
                   value={hostUrl}
                   onChange={(e) => setHostUrl(e.target.value)}
                   className="h-11 bg-background"
@@ -580,8 +576,8 @@ export function AddHostDialog({ orgId, trigger, host, disabledReason }: AddHostD
                   {mode === "cloudflare_tunnel"
                     ? "The Cloudflare Tunnel hostname routing to port 9876."
                     : mode === "http"
-                      ? "The external HTTP URL of your agent. Ensure port 9876 is accessible."
-                      : "The external HTTPS URL of your agent. Ensure port 9876 is accessible."}
+                      ? "The external IP or hostname of your agent. Ensure port 9876 is accessible."
+                      : "The external IP or hostname of your agent. Ensure port 9876 is accessible."}
                 </p>
               </div>
             </div>

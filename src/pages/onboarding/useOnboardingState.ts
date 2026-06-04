@@ -356,10 +356,8 @@ export function useOnboardingState() {
       return;
     }
 
-    try {
-      new URL(hostUrl);
-    } catch {
-      setError("Enter a valid URL (e.g. https://agent.example.com:9876)");
+    if (!hostUrl.trim()) {
+      setError("Enter a valid IP or hostname (e.g. 192.168.1.5)");
       return;
     }
 

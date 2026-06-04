@@ -430,7 +430,7 @@ export default async (req: Request) => {
       const providedHostUrl = typeof body?.host_url === "string" ? body.host_url.trim() : "";
       if (providedHostUrl) {
         try {
-          finalHostUrl = normalizeAndValidateHostUrl(providedHostUrl);
+          finalHostUrl = normalizeAndValidateHostUrl(providedHostUrl, session.connection_mode);
           await sql`
             UPDATE agent_enrollment_sessions
             SET host_url = ${finalHostUrl}
@@ -564,7 +564,7 @@ export default async (req: Request) => {
       let normalizedHostUrl: string;
       if (hostUrl) {
         try {
-          normalizedHostUrl = normalizeAndValidateHostUrl(hostUrl);
+          normalizedHostUrl = normalizeAndValidateHostUrl(hostUrl, connectionMode);
         } catch (error: any) {
           return badRequest(error?.message || "host_url is invalid");
         }

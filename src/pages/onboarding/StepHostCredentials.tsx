@@ -205,11 +205,11 @@ export function StepHostCredentials({
 
           <div className="space-y-3 pt-2">
             <Label htmlFor="host-url" className="text-sm font-semibold uppercase tracking-wider text-muted-foreground/70">
-              {connectionMode === "cloudflare_tunnel" ? "Tunnel URL" : connectionMode === "http" ? "Public HTTP Agent URL" : "Public Agent URL"}
+              {connectionMode === "cloudflare_tunnel" ? "Tunnel Hostname" : connectionMode === "http" ? "Public HTTP Agent Hostname/IP" : "Public Agent Hostname/IP"}
             </Label>
             <Input
               id="host-url"
-              placeholder={connectionMode === "cloudflare_tunnel" ? "https://docker.your-team.cloudflareaccess.com" : connectionMode === "http" ? "http://agent.example.com:9876" : "https://agent.example.com:9876"}
+              placeholder={connectionMode === "cloudflare_tunnel" ? "docker.your-team.cloudflareaccess.com" : "agent.example.com"}
               value={hostUrl}
               onChange={(e) => onHostUrlChange(e.target.value)}
               className="h-11 bg-background"
@@ -218,8 +218,8 @@ export function StepHostCredentials({
               {connectionMode === "cloudflare_tunnel"
                 ? "The Cloudflare Tunnel hostname. Ensure it routes to http://127.0.0.1:9876 on the host."
                 : connectionMode === "http"
-                  ? "The external HTTP URL of your agent. Ensure your firewall/proxy routes traffic to port 9876."
-                  : "The external HTTPS URL of your agent. Ensure your firewall/proxy routes traffic to port 9876."}
+                  ? "The external IP or hostname of your agent. Ensure your firewall/proxy routes traffic to port 9876."
+                  : "The external IP or hostname of your agent. Ensure your firewall/proxy routes traffic to port 9876."}
             </p>
           </div>
 

@@ -652,7 +652,7 @@ export default async (req: Request) => {
       `;
       const allContainers: any[] = [];
 
-      await mapConcurrent(hosts as any[], 5, async (host) => {
+      await mapConcurrent(hosts as any[], 50, async (host) => {
         try {
           const secretsRecord = await sql`
             SELECT agent_api_key, cf_service_token_id, cf_service_token_secret 
@@ -661,7 +661,7 @@ export default async (req: Request) => {
           const secrets = decryptHostSecrets(secretsRecord[0] || null, host.id);
 
           const { url, method, headers: reqHeaders } = buildRequest(host, secrets, '/containers/json?all=true', 'GET');
-          const resp = await dockerFetch(url, method, reqHeaders, 5000); // 5s timeout
+          const resp = await dockerFetch(url, method, reqHeaders, 3000); // 3s timeout
           
           if (resp.ok && resp.status !== 413) {
             const containers = await resp.json();
@@ -711,7 +711,7 @@ export default async (req: Request) => {
       `;
       const allStats: any[] = [];
 
-      await mapConcurrent(hosts as any[], 5, async (host) => {
+      await mapConcurrent(hosts as any[], 50, async (host) => {
         try {
           const secretsRecord = await sql`
             SELECT agent_api_key, cf_service_token_id, cf_service_token_secret 
@@ -732,11 +732,11 @@ export default async (req: Request) => {
           // Cap at 20 containers per host to bound latency
           const capped = containers.slice(0, 20);
 
-          await mapConcurrent(capped, 5, async (container: any) => {
+          await mapConcurrent(capped, 20, async (container: any) => {
             try {
               const cId = container.Id;
               const statsReq = buildRequest(host, secrets, `/containers/${cId}/stats?stream=false`, 'GET');
-              const statsResp = await dockerFetch(statsReq.url, statsReq.method, statsReq.headers, 3000);
+              const statsResp = await dockerFetch(statsReq.url, statsReq.method, statsReq.headers, 2000);
               if (!statsResp.ok) return;
               const s = await statsResp.json();
 
