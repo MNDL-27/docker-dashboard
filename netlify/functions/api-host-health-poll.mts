@@ -1,4 +1,6 @@
 import type { Config } from '@netlify/functions';
+import { buildCorsHeaders } from './lib/security.mjs';
+import crypto from 'node:crypto';
 import { sql } from './lib/db.mjs';
 import { decryptHostSecrets, SecretCryptoError } from './lib/crypto.mjs';
 import {
@@ -12,24 +14,22 @@ import { buildWatchtowerAgentReleaseResponse } from './lib/agent-release.mts';
 import { ensureDockerHostSchema } from './lib/ensure-docker-host-schema.mjs';
 import { buildValidatedAgentUrl } from './lib/host-url.mjs';
 
-const headers = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'Content-Type, x-cron-secret',
-  'Content-Type': 'application/json'
-};
 
+const buildHeaders = (req: Request) => buildCorsHeaders(req);
 const PING_TIMEOUT_MS = 10000
 
 function isAuthorizedSchedulerRequest(req: Request) {
   const expectedSecret = (process.env.HEALTH_POLL_SECRET || '').trim()
-  const providedSecret = (req.headers.get('x-cron-secret') || '').trim()
-  const schedulerEvent = (req.headers.get('x-nf-event') || '').trim().toLowerCase()
-
-  if (expectedSecret && providedSecret === expectedSecret) {
-    return true
+  if (!expectedSecret) {
+    return false
   }
-
-  return schedulerEvent === 'schedule'
+  const providedSecret = (req.headers.get('x-cron-secret') || '').trim()
+  const expectedBuf = Buffer.from(expectedSecret)
+  const providedBuf = Buffer.from(providedSecret)
+  if (expectedBuf.length !== providedBuf.length) {
+    return false
+  }
+  return crypto.timingSafeEqual(providedBuf, expectedBuf)
 }
 
 function buildPingRequest(
@@ -104,14 +104,14 @@ async function fetchAgentVersionReport(
 
 export default async (req: Request) => {
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers });
+    return new Response(null, { headers: buildHeaders(req) });
   }
 
   try {
     await ensureDockerHostSchema();
 
     if (!isAuthorizedSchedulerRequest(req)) {
-      return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers })
+      return new Response(JSON.stringify({ error: 'Unauthorized' }), { status: 401, headers: buildHeaders(req) })
     }
 
     const orgRows = await sql<Array<{ organization_id: string | null }>>`
@@ -131,7 +131,7 @@ export default async (req: Request) => {
     }
 
     if (allowedHostIds.length === 0) {
-      return new Response(JSON.stringify({ polled: 0, message: 'No eligible hosts to poll' }), { headers });
+      return new Response(JSON.stringify({ polled: 0, message: 'No eligible hosts to poll' }), { headers: buildHeaders(req) });
     }
 
     const hosts = await sql`
@@ -154,7 +154,7 @@ export default async (req: Request) => {
     `
 
     if (hosts.length === 0) {
-      return new Response(JSON.stringify({ polled: 0, message: 'No hosts to poll' }), { headers })
+      return new Response(JSON.stringify({ polled: 0, message: 'No hosts to poll' }), { headers: buildHeaders(req) })
     }
 
     const results: any[] = []
@@ -258,10 +258,10 @@ export default async (req: Request) => {
       stale_threshold_minutes: staleThresholdMinutes,
       results,
       timestamp: new Date().toISOString()
-    }), { headers })
+    }), { headers: buildHeaders(req) })
 
   } catch (error: any) {
-    return new Response(JSON.stringify({ error: error.message }), { status: 500, headers })
+    return new Response(JSON.stringify({ error: error.message }), { status: 500, headers: buildHeaders(req) })
   }
 };
 

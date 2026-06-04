@@ -1,17 +1,14 @@
 import type { Config } from '@netlify/functions';
+import { buildCorsHeaders } from './lib/security.mjs';
 import { sql } from './lib/db.mjs';
 import { requireAuth } from './lib/auth.mjs';
 import { assertOrganizationFeatureAllowed } from './lib/access-controls.mjs';
 
-const headers = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-  'Content-Type': 'application/json'
-};
 
+const buildHeaders = (req: Request) => buildCorsHeaders(req);
 export default async (req: Request) => {
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers });
+    return new Response(null, { headers: buildHeaders(req) });
   }
 
   try {
@@ -22,10 +19,10 @@ export default async (req: Request) => {
     const orgId = authContext.orgId || url.searchParams.get('orgId');
 
     if (req.method !== 'GET') {
-      return new Response(JSON.stringify({ error: 'Method not allowed' }), { status: 405, headers });
+      return new Response(JSON.stringify({ error: 'Method not allowed' }), { status: 405, headers: buildHeaders(req) });
     }
     if (!orgId) {
-      return new Response(JSON.stringify({ error: 'orgId required' }), { status: 400, headers });
+      return new Response(JSON.stringify({ error: 'orgId required' }), { status: 400, headers: buildHeaders(req) });
     }
 
     await assertOrganizationFeatureAllowed({
@@ -45,10 +42,10 @@ export default async (req: Request) => {
       )
     `;
 
-    return new Response(JSON.stringify(members), { headers });
+    return new Response(JSON.stringify(members), { headers: buildHeaders(req) });
 
   } catch (err: any) {
-    return new Response(JSON.stringify({ error: err.message || 'Unauthorized' }), { status: 401, headers });
+    return new Response(JSON.stringify({ error: err.message || 'Unauthorized' }), { status: 401, headers: buildHeaders(req) });
   }
 };
 

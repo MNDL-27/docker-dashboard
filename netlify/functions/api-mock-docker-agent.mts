@@ -1,16 +1,28 @@
 import type { Config } from '@netlify/functions';
+import { buildCorsHeaders } from './lib/security.mjs';
 import { sql } from './lib/db.mjs';
 import { CURRENT_WATCHTOWER_AGENT_VERSION } from './lib/agent-version.mts';
 
-const headers = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'Content-Type, X-Agent-Key, X-Docker-Socket',
-  'Content-Type': 'application/json'
-};
+
+const buildHeaders = (req: Request) => buildCorsHeaders(req);
+const MOCK_AGENT_DISABLED_HEADERS = { 'Content-Type': 'application/json' };
+
+function isMockAgentEnabled() {
+  if (process.env.NODE_ENV === 'production') return false;
+  const flag = (process.env.ENABLE_MOCK_AGENT || '').trim().toLowerCase();
+  return flag === 'true' || flag === '1';
+}
 
 export default async (req: Request) => {
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers });
+    return new Response(null, { headers: buildHeaders(req) });
+  }
+
+  if (!isMockAgentEnabled()) {
+    return new Response(JSON.stringify({ error: 'Not found' }), {
+      status: 404,
+      headers: MOCK_AGENT_DISABLED_HEADERS,
+    });
   }
 
   try {
@@ -28,14 +40,14 @@ export default async (req: Request) => {
     }
 
     if (path === '/docker/_ping' || path.endsWith('/_ping')) {
-      return new Response('OK', { status: 200, headers });
+      return new Response('OK', { status: 200, headers: buildHeaders(req) });
     }
 
     if (path === '/agent/version' || path.endsWith('/agent/version')) {
       return new Response(JSON.stringify({
         agent_version: CURRENT_WATCHTOWER_AGENT_VERSION,
         version: CURRENT_WATCHTOWER_AGENT_VERSION,
-      }), { status: 200, headers });
+      }), { status: 200, headers: buildHeaders(req) });
     }
 
     if (path === '/metrics' || path.endsWith('/metrics')) {
@@ -49,7 +61,7 @@ export default async (req: Request) => {
         network_out_bytes_per_sec: 262_144,
         disk_read_bytes_per_sec: 131_072,
         disk_write_bytes_per_sec: 65_536,
-      }), { status: 200, headers });
+      }), { status: 200, headers: buildHeaders(req) });
     }
 
     if (path === '/docker/version' || path.endsWith('/version')) {
@@ -60,7 +72,7 @@ export default async (req: Request) => {
         Arch: 'amd64',
         KernelVersion: '6.1.0-mock',
         GoVersion: 'go1.22.0',
-      }), { status: 200, headers });
+      }), { status: 200, headers: buildHeaders(req) });
     }
 
     return new Response(JSON.stringify({ error: 'Not found', path }), {
@@ -68,7 +80,7 @@ export default async (req: Request) => {
       headers,
     });
   } catch (err: any) {
-    return new Response(JSON.stringify({ error: err.message }), { status: 500, headers });
+    return new Response(JSON.stringify({ error: err.message }), { status: 500, headers: buildHeaders(req) });
   }
 };
 

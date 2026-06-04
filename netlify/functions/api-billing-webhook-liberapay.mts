@@ -5,13 +5,15 @@ import { applyRateLimit, RATE_LIMITS } from "./lib/security.mjs";
 
 const headers = donorJsonHeaders();
 
+
+const buildHeaders = (req: Request) => buildCorsHeaders(req);
 export default async (req: Request) => {
   if (req.method === "OPTIONS") {
-    return new Response(null, { headers });
+    return new Response(null, { headers: buildHeaders(req) });
   }
 
   if (req.method !== "POST") {
-    return new Response(JSON.stringify({ error: "Method not allowed" }), { status: 405, headers });
+    return new Response(JSON.stringify({ error: "Method not allowed" }), { status: 405, headers: buildHeaders(req) });
   }
 
   try {
@@ -30,7 +32,7 @@ export default async (req: Request) => {
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Failed to process liberapay webhook";
-    return new Response(JSON.stringify({ error: message }), { status: 400, headers });
+    return new Response(JSON.stringify({ error: message }), { status: 400, headers: buildHeaders(req) });
   }
 };
 

@@ -1,16 +1,11 @@
 import type { Config } from "@netlify/functions";
+import { buildCorsHeaders } from './lib/security.mjs';
 import { requireAuth } from "./lib/auth.mjs";
 import { assertOrganizationWriteAllowed } from "./lib/access-controls.mjs";
 import {
   createOrUpdateDedicatedDeployment,
   getCurrentDedicatedDeployment,
 } from "./lib/dedicated-deployments.mjs";
-
-const headers = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "Content-Type, Authorization",
-  "Content-Type": "application/json",
-};
 
 function json(body: unknown, init: ResponseInit = {}) {
   return new Response(JSON.stringify(body), {
@@ -19,9 +14,11 @@ function json(body: unknown, init: ResponseInit = {}) {
   });
 }
 
+
+const buildHeaders = (req: Request) => buildCorsHeaders(req);
 export default async (req: Request) => {
   if (req.method === "OPTIONS") {
-    return new Response(null, { headers });
+    return new Response(null, { headers: buildHeaders(req) });
   }
 
   try {

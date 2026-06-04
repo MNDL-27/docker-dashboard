@@ -1,16 +1,13 @@
 import type { Config } from '@netlify/functions';
+import { buildCorsHeaders } from './lib/security.mjs';
 import { requireAuth } from './lib/auth.mjs';
 import { sql } from './lib/db.mjs';
 
-const headers = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-  'Content-Type': 'application/json'
-};
 
+const buildHeaders = (req: Request) => buildCorsHeaders(req);
 export default async (req: Request) => {
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers });
+    return new Response(null, { headers: buildHeaders(req) });
   }
 
   try {
@@ -19,13 +16,13 @@ export default async (req: Request) => {
     if (req.method === 'GET') {
       const users = await sql`SELECT email, full_name, avatar_url FROM users WHERE id = ${auth.userId}`;
       if (!users.length) return new Response('User not sync', { status: 404 });
-      return new Response(JSON.stringify(users[0]), { headers });
+      return new Response(JSON.stringify(users[0]), { headers: buildHeaders(req) });
     }
 
-    return new Response(JSON.stringify({ error: 'Method not allowed' }), { status: 405, headers });
+    return new Response(JSON.stringify({ error: 'Method not allowed' }), { status: 405, headers: buildHeaders(req) });
 
   } catch (err: any) {
-    return new Response(JSON.stringify({ error: err.message || 'Unauthorized' }), { status: 401, headers });
+    return new Response(JSON.stringify({ error: err.message || 'Unauthorized' }), { status: 401, headers: buildHeaders(req) });
   }
 };
 

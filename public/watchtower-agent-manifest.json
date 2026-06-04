@@ -1,0 +1,11 @@
+{
+  "generated_at": "2026-06-04T14:35:24.851Z",
+  "artifacts": [
+    {
+      "name": "watchtower-agent.sh",
+      "role": "runtime",
+      "size": 21488,
+      "sha256": "6d66c598f159705502d1f3bdbd93985ab18b7fab91000cbd6955390cf30bc825"
+    }
+  ]
+}

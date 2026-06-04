@@ -1,18 +1,15 @@
 import type { Config } from '@netlify/functions';
+import { buildCorsHeaders } from './lib/security.mjs';
 import { requireAuth } from './lib/auth.mjs';
 import { sql } from './lib/db.mjs';
 import { ensureAlertsSchema } from './lib/ensure-alerts-schema.mjs';
 import { listAlertHistory, listIncidents, requireOrganizationAdmin } from './lib/alerts.mjs';
 
-const headers = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-  'Content-Type': 'application/json',
-};
 
+const buildHeaders = (req: Request) => buildCorsHeaders(req);
 export default async (req: Request) => {
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers });
+    return new Response(null, { headers: buildHeaders(req) });
   }
 
   try {
@@ -21,14 +18,14 @@ export default async (req: Request) => {
 
     if (req.method === 'GET') {
       const [incidents, history] = await Promise.all([listIncidents(auth), listAlertHistory(auth)]);
-      return new Response(JSON.stringify({ incidents, history }), { headers });
+      return new Response(JSON.stringify({ incidents, history }), { headers: buildHeaders(req) });
     }
 
     if (req.method === 'POST') {
       await requireOrganizationAdmin(auth);
       const body = await req.json();
       if (!body?.source_alert_event_id) {
-        return new Response(JSON.stringify({ error: 'source_alert_event_id required' }), { status: 400, headers });
+        return new Response(JSON.stringify({ error: 'source_alert_event_id required' }), { status: 400, headers: buildHeaders(req) });
       }
 
       const [sourceAlert] = await sql`
@@ -38,7 +35,7 @@ export default async (req: Request) => {
       `;
 
       if (!sourceAlert) {
-        return new Response(JSON.stringify({ error: 'Alert not found' }), { status: 404, headers });
+        return new Response(JSON.stringify({ error: 'Alert not found' }), { status: 404, headers: buildHeaders(req) });
       }
 
       const existing = await sql`
@@ -51,7 +48,7 @@ export default async (req: Request) => {
       `;
 
       if (existing.length > 0) {
-        return new Response(JSON.stringify(existing[0]), { headers });
+        return new Response(JSON.stringify(existing[0]), { headers: buildHeaders(req) });
       }
 
       const [incident] = await sql`
@@ -81,13 +78,13 @@ export default async (req: Request) => {
         WHERE id = ${body.source_alert_event_id}
       `;
 
-      return new Response(JSON.stringify(incident), { status: 201, headers });
+      return new Response(JSON.stringify(incident), { status: 201, headers: buildHeaders(req) });
     }
 
-    return new Response(JSON.stringify({ error: 'Method not allowed' }), { status: 405, headers });
+    return new Response(JSON.stringify({ error: 'Method not allowed' }), { status: 405, headers: buildHeaders(req) });
   } catch (error: any) {
     const status = /Admin access required|Access denied/.test(error?.message || '') ? 403 : 500;
-    return new Response(JSON.stringify({ error: error?.message || 'Failed to process incidents' }), { status, headers });
+    return new Response(JSON.stringify({ error: error?.message || 'Failed to process incidents' }), { status, headers: buildHeaders(req) });
   }
 };
 

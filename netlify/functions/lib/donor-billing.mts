@@ -7,7 +7,7 @@ import { normalizeAdminReason, assertAdminReason, recordAdminAudit } from "./adm
 import { extractDnr8Token, parseFiniteNumber, coerceString } from "./donor-billing-helpers.mjs";
 import { donorActivationTemplate, donorRenewalReminderTemplate, donorRevokedTemplate } from "./donor-email-templates.mjs";
 import { sendEmail } from "./email.mjs";
-import { verifyWebhookTimestamp } from "./security.mjs";
+import { verifyWebhookTimestamp, buildCorsHeaders } from "./security.mjs";
 
 export type DonorProvider = "liberapay" | "paypal";
 
@@ -473,7 +473,7 @@ export async function createDonorIntent(req: Request) {
   const payerEmail = coerceString(body.payer_email);
 
   if (!organizationId) {
-    return new Response(JSON.stringify({ error: "organization_id is required" }), { status: 400, headers: jsonHeaders });
+    return new Response(JSON.stringify({ error: "organization_id is required" }), { status: 400, headers: donorJsonHeaders(req) });
   }
 
   const rows = await sql`
@@ -484,7 +484,7 @@ export async function createDonorIntent(req: Request) {
   `;
 
   if (rows.length === 0) {
-    return new Response(JSON.stringify({ error: "Organization not found" }), { status: 404, headers: jsonHeaders });
+    return new Response(JSON.stringify({ error: "Organization not found" }), { status: 404, headers: donorJsonHeaders(req) });
   }
 
   if (!adminBypass) {
@@ -543,7 +543,7 @@ export async function createDonorIntent(req: Request) {
       ],
       metadata,
     }),
-    { status: 200, headers: jsonHeaders },
+    { status: 200, headers: donorJsonHeaders(req) },
   );
 }
 
@@ -577,7 +577,7 @@ export async function listUnmatchedBillingEvents(req: Request) {
     LIMIT ${limit}
   `;
 
-  return new Response(JSON.stringify({ events: rows }), { status: 200, headers: jsonHeaders });
+  return new Response(JSON.stringify({ events: rows }), { status: 200, headers: donorJsonHeaders(req) });
 }
 
 export async function adminMatchBillingEvent(req: Request) {
@@ -593,7 +593,7 @@ export async function adminMatchBillingEvent(req: Request) {
   if (!billingEventId || !organizationId) {
     return new Response(JSON.stringify({ error: "billing_event_id and organization_id are required" }), {
       status: 400,
-      headers: jsonHeaders,
+      headers: donorJsonHeaders(req),
     });
   }
 
@@ -607,7 +607,7 @@ export async function adminMatchBillingEvent(req: Request) {
   `;
 
   if (beforeRows.length === 0) {
-    return new Response(JSON.stringify({ error: "Billing event not found" }), { status: 404, headers: jsonHeaders });
+    return new Response(JSON.stringify({ error: "Billing event not found" }), { status: 404, headers: donorJsonHeaders(req) });
   }
 
   const donorUpdate = await extendDonorPremium({
@@ -617,7 +617,7 @@ export async function adminMatchBillingEvent(req: Request) {
   });
 
   if (!donorUpdate) {
-    return new Response(JSON.stringify({ error: "Organization not found" }), { status: 404, headers: jsonHeaders });
+    return new Response(JSON.stringify({ error: "Organization not found" }), { status: 404, headers: donorJsonHeaders(req) });
   }
 
   const [updated] = await sql`
@@ -664,7 +664,7 @@ export async function adminMatchBillingEvent(req: Request) {
       donor_premium_expires_at: donorUpdate.donor_premium_expires_at,
       grant_days: grantDays,
     }),
-    { status: 200, headers: jsonHeaders },
+    { status: 200, headers: donorJsonHeaders(req) },
   );
 }
 
@@ -992,13 +992,15 @@ export async function sendDueDonorRevocations() {
   };
 }
 
-const jsonHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "Content-Type, Authorization, x-webhook-secret, x-donor-secret, x-liberapay-secret, x-paypal-secret",
-  "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
-  "Content-Type": "application/json",
-};
+const WEBHOOK_CORS_HEADERS = "Content-Type, Authorization, x-webhook-secret, x-donor-secret, x-liberapay-secret, x-paypal-secret";
 
-export function donorJsonHeaders() {
-  return jsonHeaders;
+export function donorJsonHeaders(req?: Request) {
+  if (!req) {
+    return { "Content-Type": "application/json" };
+  }
+  return {
+    ...buildCorsHeaders(req),
+    "Access-Control-Allow-Headers": WEBHOOK_CORS_HEADERS,
+    "Content-Type": "application/json",
+  };
 }

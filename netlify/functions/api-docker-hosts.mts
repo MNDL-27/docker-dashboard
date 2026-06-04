@@ -1,4 +1,5 @@
 import type { Config } from '@netlify/functions';
+import { buildCorsHeaders } from './lib/security.mjs';
 import { sql } from './lib/db.mjs';
 import { requireAuth } from './lib/auth.mjs';
 import { assertHostProxyAllowed, assertOrganizationNodeCapacityAvailable, assertOrganizationWriteAllowed, enforceOrganizationNodeLimit } from './lib/access-controls.mjs';
@@ -6,15 +7,11 @@ import { decryptHostSecrets, encryptSecret } from './lib/crypto.mjs';
 import { parseStaleThresholdMinutes, staleCutoffDate } from './lib/host-health.mjs';
 import { normalizeAndValidateHostUrl } from './lib/host-url.mjs';
 
-const headers = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-  'Content-Type': 'application/json'
-};
 
+const buildHeaders = (req: Request) => buildCorsHeaders(req);
 export default async (req: Request) => {
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers });
+    return new Response(null, { headers: buildHeaders(req) });
   }
 
   try {
@@ -70,7 +67,7 @@ export default async (req: Request) => {
           JOIN organization_members om ON h.organization_id = om.organization_id
           WHERE h.id = ${hostId} AND om.user_id = ${auth.userId}
         `;
-        if (hosts.length === 0) return new Response(JSON.stringify({ error: 'Not found' }), { status: 404, headers });
+        if (hosts.length === 0) return new Response(JSON.stringify({ error: 'Not found' }), { status: 404, headers: buildHeaders(req) });
 
         const limitState = await enforceOrganizationNodeLimit({
           organizationId: hosts[0].organization_id,
@@ -80,18 +77,18 @@ export default async (req: Request) => {
         if (!limitState.allowedHostIds.includes(hostId)) {
           return new Response(
             JSON.stringify({ error: 'This host is over your current plan limit. Remove extra hosts or upgrade to reactivate it.' }),
-            { status: 402, headers },
+            { status: 402, headers: buildHeaders(req) },
           );
         }
 
         const includeSecrets = url.searchParams.get('includeSecrets') === 'true';
         if (!includeSecrets) {
-          return new Response(JSON.stringify(hosts[0]), { headers });
+          return new Response(JSON.stringify(hosts[0]), { headers: buildHeaders(req) });
         }
 
         const isAdmin = await requireOrgAdmin(hosts[0].organization_id);
         if (!isAdmin) {
-          return new Response(JSON.stringify({ error: 'Admin access required for active org' }), { status: 403, headers });
+          return new Response(JSON.stringify({ error: 'Admin access required for active org' }), { status: 403, headers: buildHeaders(req) });
         }
 
         const secretsRecord = await sql`
@@ -108,10 +105,10 @@ export default async (req: Request) => {
             cfServiceTokenId: secrets?.cf_service_token_id || '',
             cfServiceTokenSecret: secrets?.cf_service_token_secret || '',
           },
-        }), { headers });
+        }), { headers: buildHeaders(req) });
       }
 
-      if (!orgId) return new Response(JSON.stringify({ error: 'Active org required' }), { status: 400, headers });
+      if (!orgId) return new Response(JSON.stringify({ error: 'Active org required' }), { status: 400, headers: buildHeaders(req) });
 
       await enforceOrganizationNodeLimit({
         organizationId: orgId,
@@ -133,15 +130,15 @@ export default async (req: Request) => {
         WHERE h.organization_id = ${orgId} AND om.user_id = ${auth.userId}
         ORDER BY h.created_at DESC
       `;
-      return new Response(JSON.stringify(hosts), { headers });
+      return new Response(JSON.stringify(hosts), { headers: buildHeaders(req) });
     }
 
     if (req.method === 'POST') {
       const body = await req.json();
-      if (!orgId) return new Response(JSON.stringify({ error: 'Active org required' }), { status: 400, headers });
+      if (!orgId) return new Response(JSON.stringify({ error: 'Active org required' }), { status: 400, headers: buildHeaders(req) });
       const isAdmin = await requireOrgAdmin(orgId);
       if (!isAdmin) {
-        return new Response(JSON.stringify({ error: 'Admin access required for active org' }), { status: 403, headers });
+        return new Response(JSON.stringify({ error: 'Admin access required for active org' }), { status: 403, headers: buildHeaders(req) });
       }
       await assertOrganizationNodeCapacityAvailable({
         organizationId: orgId,
@@ -151,7 +148,7 @@ export default async (req: Request) => {
       try {
         hostUrl = normalizeAndValidateHostUrl(String(body.host_url ?? ""));
       } catch (error: any) {
-        return new Response(JSON.stringify({ error: error?.message || 'Invalid host_url' }), { status: 400, headers });
+        return new Response(JSON.stringify({ error: error?.message || 'Invalid host_url' }), { status: 400, headers: buildHeaders(req) });
       }
 
       const [host] = await sql`
@@ -180,11 +177,11 @@ export default async (req: Request) => {
         `;
       }
 
-      return new Response(JSON.stringify(host), { headers });
+      return new Response(JSON.stringify(host), { headers: buildHeaders(req) });
     }
 
     if (req.method === 'PATCH') {
-      if (!hostId) return new Response(JSON.stringify({ error: 'hostId required' }), { status: 400, headers });
+      if (!hostId) return new Response(JSON.stringify({ error: 'hostId required' }), { status: 400, headers: buildHeaders(req) });
       await assertHostProxyAllowed({ hostId, isPlatformAdmin: auth.isPlatformAdmin });
 
       const hostRecords = await sql`
@@ -194,13 +191,13 @@ export default async (req: Request) => {
       `;
 
       if (hostRecords.length === 0) {
-        return new Response(JSON.stringify({ error: 'Not found' }), { status: 404, headers });
+        return new Response(JSON.stringify({ error: 'Not found' }), { status: 404, headers: buildHeaders(req) });
       }
 
       const host = hostRecords[0];
       const isAdmin = await requireOrgAdmin(host.organization_id);
       if (!isAdmin) {
-        return new Response(JSON.stringify({ error: 'Admin access required for active org' }), { status: 403, headers });
+        return new Response(JSON.stringify({ error: 'Admin access required for active org' }), { status: 403, headers: buildHeaders(req) });
       }
 
       const body = await req.json();
@@ -208,7 +205,7 @@ export default async (req: Request) => {
       try {
         hostUrl = normalizeAndValidateHostUrl(String(body.host_url ?? ""));
       } catch (error: any) {
-        return new Response(JSON.stringify({ error: error?.message || 'Invalid host_url' }), { status: 400, headers });
+        return new Response(JSON.stringify({ error: error?.message || 'Invalid host_url' }), { status: 400, headers: buildHeaders(req) });
       }
 
       const [updatedHost] = await sql`
@@ -239,11 +236,11 @@ export default async (req: Request) => {
         `;
       }
 
-      return new Response(JSON.stringify(updatedHost), { headers });
+      return new Response(JSON.stringify(updatedHost), { headers: buildHeaders(req) });
     }
 
     if (req.method === 'DELETE') {
-      if (!hostId) return new Response(JSON.stringify({ error: 'hostId required' }), { status: 400, headers });
+      if (!hostId) return new Response(JSON.stringify({ error: 'hostId required' }), { status: 400, headers: buildHeaders(req) });
       await assertHostProxyAllowed({ hostId, isPlatformAdmin: auth.isPlatformAdmin });
       
       // Delete will cascade to secrets, but we must verify org admin first
@@ -255,13 +252,13 @@ export default async (req: Request) => {
           AND user_id = ${auth.userId} AND role IN ('owner', 'admin')
         )
       `;
-      return new Response(JSON.stringify({ success: true }), { headers });
+      return new Response(JSON.stringify({ success: true }), { headers: buildHeaders(req) });
     }
 
-    return new Response(JSON.stringify({ error: 'Method not allowed' }), { status: 405, headers });
+    return new Response(JSON.stringify({ error: 'Method not allowed' }), { status: 405, headers: buildHeaders(req) });
 
   } catch (err: any) {
-    return new Response(JSON.stringify({ error: err.message || 'Unauthorized' }), { status: 401, headers });
+    return new Response(JSON.stringify({ error: err.message || 'Unauthorized' }), { status: 401, headers: buildHeaders(req) });
   }
 };
 

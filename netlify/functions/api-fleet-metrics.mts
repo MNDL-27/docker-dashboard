@@ -1,16 +1,13 @@
 import type { Config } from '@netlify/functions';
+import { buildCorsHeaders } from './lib/security.mjs';
 import { sql } from './lib/db.mjs';
 import { requireAuth } from './lib/auth.mjs';
 import { enforceOrganizationNodeLimit } from './lib/access-controls.mjs';
 import { decryptHostSecrets } from './lib/crypto.mjs';
 import { buildValidatedAgentUrl } from './lib/host-url.mjs';
 
-const headers = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-  'Content-Type': 'application/json'
-};
 
+const buildHeaders = (req: Request) => buildCorsHeaders(req);
 interface FleetMetricsPoint {
   timestamp: number;
   time: string;
@@ -86,7 +83,7 @@ async function fetchHostMetrics(hostUrl: string, apiKey: string, timeoutMs = 500
 
 export default async (req: Request) => {
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers });
+    return new Response(null, { headers: buildHeaders(req) });
   }
 
   try {
@@ -94,7 +91,7 @@ export default async (req: Request) => {
     const orgId = auth.orgId;
 
     if (!orgId) {
-      return new Response(JSON.stringify({ error: 'Active org required' }), { status: 400, headers });
+      return new Response(JSON.stringify({ error: 'Active org required' }), { status: 400, headers: buildHeaders(req) });
     }
 
     // Verify user has access to org
@@ -103,7 +100,7 @@ export default async (req: Request) => {
       WHERE organization_id = ${orgId} AND user_id = ${auth.userId}
     `;
     if (memberships.length === 0) {
-      return new Response(JSON.stringify({ error: 'Access denied' }), { status: 403, headers });
+      return new Response(JSON.stringify({ error: 'Access denied' }), { status: 403, headers: buildHeaders(req) });
     }
 
     const limitState = await enforceOrganizationNodeLimit({
@@ -112,7 +109,7 @@ export default async (req: Request) => {
     });
 
     if (limitState.allowedHostIds.length === 0) {
-      return new Response(JSON.stringify([]), { headers });
+      return new Response(JSON.stringify([]), { headers: buildHeaders(req) });
     }
 
     // Get all hosts for the org
@@ -124,7 +121,7 @@ export default async (req: Request) => {
     `;
 
     if (hosts.length === 0) {
-      return new Response(JSON.stringify([]), { headers });
+      return new Response(JSON.stringify([]), { headers: buildHeaders(req) });
     }
 
     // Fetch secrets and metrics for each host concurrently
@@ -267,7 +264,7 @@ export default async (req: Request) => {
     });
 
   } catch (error: any) {
-    return new Response(JSON.stringify({ error: 'Failed to fetch fleet metrics', details: error.message }), { status: 500, headers });
+    return new Response(JSON.stringify({ error: 'Failed to fetch fleet metrics', details: error.message }), { status: 500, headers: buildHeaders(req) });
   }
 };
 

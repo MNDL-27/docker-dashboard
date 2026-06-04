@@ -1,4 +1,5 @@
 import crypto from "crypto";
+import { buildCorsHeaders } from './lib/security.mjs';
 import type { Config } from "@netlify/functions";
 import { sql } from "./lib/db.mjs";
 import { requireAuth } from "./lib/auth.mjs";
@@ -19,12 +20,6 @@ import {
   getWatchtowerAgentRecommendedBindAddress,
   type WatchtowerAgentConnectionMode,
 } from "../../shared/watchtower-agent-release.ts";
-
-const headers = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "Content-Type, Authorization",
-  "Content-Type": "application/json",
-};
 
 type SessionStatus = "created" | "claimed" | "installed" | "expired" | "cancelled";
 type ReasonCode =
@@ -313,9 +308,11 @@ async function pingEnrollmentHost(input: {
   }
 }
 
+
+const buildHeaders = (req: Request) => buildCorsHeaders(req);
 export default async (req: Request) => {
   if (req.method === "OPTIONS") {
-    return new Response(null, { headers });
+    return new Response(null, { headers: buildHeaders(req) });
   }
 
   await ensureAgentEnrollmentSchema();

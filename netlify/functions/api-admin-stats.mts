@@ -1,12 +1,9 @@
 import type { Config } from '@netlify/functions';
+import { buildCorsHeaders } from './lib/security.mjs';
 import { handleAdminRequest } from './lib/admin-handler.mjs';
 
-const headers = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-  'Content-Type': 'application/json'
-};
 
+const buildHeaders = (req: Request) => buildCorsHeaders(req);
 export default async (req: Request) => {
   const forwarded = new Request(req.url.replace('/stats', '/overview'), {
     method: req.method,
@@ -24,7 +21,7 @@ export default async (req: Request) => {
       activeHosts: data.metrics.active_hosts,
       activeUsers: data.metrics.active_users,
     }
-  }), { headers });
+  }), { headers: buildHeaders(req) });
 };
 
 export const config: Config = {

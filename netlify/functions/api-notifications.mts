@@ -1,24 +1,18 @@
 import type { Config, Context } from "@netlify/functions";
+import { buildCorsHeaders } from './lib/security.mjs';
 import { requireAuth } from "./lib/auth.mjs";
 import { sql } from "./lib/db.mjs";
 import { ensureNotificationsSchema } from "./lib/ensure-notifications-schema.mjs";
 
+
+const buildHeaders = (req: Request) => buildCorsHeaders(req);
 export default async (req: Request, context: Context) => {
   if (req.method === "OPTIONS") {
     return new Response(null, {
       status: 204,
-      headers: {
-        "Access-Control-Allow-Origin": "*",
-        "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
-        "Access-Control-Allow-Headers": "Authorization, Content-Type",
-      },
+      headers: buildHeaders(req),
     });
   }
-
-  const corsHeaders = {
-    "Access-Control-Allow-Origin": "*",
-    "Content-Type": "application/json",
-  };
 
   try {
     await ensureNotificationsSchema();
@@ -45,7 +39,7 @@ export default async (req: Request, context: Context) => {
 
       return new Response(JSON.stringify({ notifications }), {
         status: 200,
-        headers: corsHeaders,
+        headers: buildHeaders(req),
       });
     }
 
@@ -62,7 +56,7 @@ export default async (req: Request, context: Context) => {
       if (!notification) {
         return new Response(JSON.stringify({ error: "Notification not found or unauthorized" }), {
           status: 404,
-          headers: corsHeaders,
+          headers: buildHeaders(req),
         });
       }
       
@@ -74,7 +68,7 @@ export default async (req: Request, context: Context) => {
 
       return new Response(JSON.stringify({ success: true }), {
         status: 200,
-        headers: corsHeaders,
+        headers: buildHeaders(req),
       });
     }
 
@@ -105,20 +99,20 @@ export default async (req: Request, context: Context) => {
 
       return new Response(JSON.stringify({ success: true }), {
         status: 200,
-        headers: corsHeaders,
+        headers: buildHeaders(req),
       });
     }
 
     return new Response(JSON.stringify({ error: "Method not allowed" }), {
       status: 405,
-      headers: corsHeaders,
+      headers: buildHeaders(req),
     });
 
   } catch (error: any) {
     console.error("Notifications API Error:", error);
     return new Response(JSON.stringify({ error: error.message }), {
       status: error.message?.includes('Unauthorized') || error.message?.includes('Sync pending') ? 401 : 500,
-      headers: corsHeaders,
+      headers: buildHeaders(req),
     });
   }
 };
