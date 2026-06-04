@@ -1,16 +1,26 @@
-import { cn } from "@/lib/utils";
+import { useMemo } from "react";
+import { cn, formatBytes } from "@/lib/utils";
 import { Box, Square, RefreshCcw, ExternalLink } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import type { DashboardContainerSummary } from "@/components/dashboard/dashboard-types";
+import type { DashboardContainerSummary, ContainerStatsItem } from "@/components/dashboard/dashboard-types";
 
 interface ContainersTableProps {
   containers: DashboardContainerSummary[];
+  rawStats?: unknown;
   isLoading?: boolean;
   className?: string;
 }
 
-export function ContainersTable({ containers, isLoading, className }: ContainersTableProps) {
+export function ContainersTable({ containers, rawStats, isLoading, className }: ContainersTableProps) {
+  const statsMap = useMemo(() => {
+    const map = new Map<string, ContainerStatsItem>();
+    if (Array.isArray(rawStats)) {
+      (rawStats as ContainerStatsItem[]).forEach((s) => map.set(s.containerId, s));
+    }
+    return map;
+  }, [rawStats]);
+
   return (
     <div className={cn("glass-card overflow-hidden flex flex-col h-full", className)}>
       <div className="p-3 sm:p-4 border-b border-white/5 flex items-center justify-between gap-3">
@@ -48,7 +58,12 @@ export function ContainersTable({ containers, isLoading, className }: Containers
                 </td>
               </tr>
             ) : (
-              containers.slice(0, 10).map((container) => (
+              containers.slice(0, 10).map((container) => {
+                const isRunning = container.State === "running";
+                const s = statsMap.get(container.Id);
+                const pct = s && s.memory_limit > 0 ? Math.round((s.memory_usage / s.memory_limit) * 100) : 0;
+                
+                return (
                 <tr key={container.Id} className="hover:bg-white/5 transition-colors group">
                   <td className="px-2 sm:px-4 py-2.5 sm:py-3">
                     <div className="flex flex-col">
@@ -80,12 +95,24 @@ export function ContainersTable({ containers, isLoading, className }: Containers
                   </td>
                   <td className="hidden sm:table-cell px-2 sm:px-4 py-2.5 sm:py-3">
                     <div className="flex flex-col gap-1 w-20 sm:w-24">
-                      <span className="text-[9px] sm:text-[10px] text-muted-foreground font-medium">-</span>
+                      {s && isRunning ? (
+                        <span className={cn("text-[9px] sm:text-[10px] font-medium", s.cpu_percent > 80 ? "text-warning" : "text-muted-foreground")}>
+                          {s.cpu_percent}%
+                        </span>
+                      ) : (
+                        <span className="text-[9px] sm:text-[10px] text-muted-foreground font-medium">-</span>
+                      )}
                     </div>
                   </td>
                   <td className="hidden sm:table-cell px-2 sm:px-4 py-2.5 sm:py-3">
                     <div className="flex flex-col">
-                      <span className="text-[10px] sm:text-[11px] font-semibold text-muted-foreground">-</span>
+                      {s && isRunning ? (
+                        <span className={cn("text-[10px] sm:text-[11px] font-semibold", pct > 85 ? "text-warning" : "text-muted-foreground")}>
+                          {formatBytes(s.memory_usage)}
+                        </span>
+                      ) : (
+                        <span className="text-[10px] sm:text-[11px] font-semibold text-muted-foreground">-</span>
+                      )}
                     </div>
                   </td>
                   <td className="px-2 sm:px-4 py-2.5 sm:py-3 text-right">
@@ -99,7 +126,8 @@ export function ContainersTable({ containers, isLoading, className }: Containers
                     </div>
                   </td>
                 </tr>
-              ))
+              );
+            })
             )}
           </tbody>
         </table>

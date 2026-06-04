@@ -1,7 +1,7 @@
 import { useMemo } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useOrganization, useOrganizationList } from "@clerk/react";
-import { useDockerHosts, useContainers } from "@/hooks/useDocker";
+import { useDockerHosts, useContainers, useAllContainerStats } from "@/hooks/useDocker";
 import { useViewerState } from "@/hooks/useViewerState";
 import { buildDashboardStats } from "@/lib/dashboard-summary";
 import { DashboardLoadingState } from "@/components/dashboard/DashboardLoadingState";
@@ -33,6 +33,11 @@ export default function DashboardPage() {
     error: containersError,
   } = useContainers(currentOrg?.id, hosts.length > 0, 30000);
 
+  const {
+    data: rawStats = [],
+    isFetching: statsFetching,
+  } = useAllContainerStats(currentOrg?.id, hosts.length > 0, 15000);
+
   const stats = useMemo(() => buildDashboardStats(hosts, containers), [hosts, containers]);
 
   if (orgLoading) {
@@ -63,7 +68,8 @@ export default function DashboardPage() {
       organizationId={organization?.id ?? null}
       hosts={hosts}
       stats={stats}
-      containersLoading={containersLoading}
+      rawStats={rawStats}
+      containersLoading={containersLoading || statsFetching}
       liveDataError={containersError instanceof Error ? containersError.message : null}
       fleetMetricsRefetchInterval={10000}
     />
