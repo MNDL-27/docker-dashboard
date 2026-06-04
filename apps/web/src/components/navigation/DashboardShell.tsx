@@ -11,6 +11,9 @@ type DashboardShellProps = {
 
 const NAV_LINKS = [
     { href: '/fleet', label: 'Fleet' },
+    { href: '/monitoring', label: 'Monitoring' },
+    { href: '/logs', label: 'Logs' },
+    { href: '/deployments', label: 'Deployments' },
     { href: '/alerts', label: 'Alerts' },
     { href: '/audit', label: 'Audit' },
     { href: '/settings/members', label: 'Settings' },

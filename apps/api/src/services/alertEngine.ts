@@ -1,5 +1,5 @@
 import { prisma } from '../lib/prisma';
-import crypto from 'crypto';
+import { dispatchWebhooks } from './webhooks';
 
 const EVAL_INTERVAL_MS = 60_000; // Run every 1 minute
 
@@ -12,9 +12,9 @@ let intervalHandle: NodeJS.Timeout | null = null;
 export function startAlertEngine(): void {
     console.log('[AlertEngine] Starting evaluation loop (interval: 60s)');
     // Run immediately on startup, then every EVAL_INTERVAL_MS
-    evaluateRules().catch(err => console.error('[AlertEngine] Initial evaluation error:', err));
+    evaluateAllRules().catch(err => console.error('[AlertEngine] Initial evaluation error:', err));
     intervalHandle = setInterval(() => {
-        evaluateRules().catch(err => console.error('[AlertEngine] Evaluation error:', err));
+        evaluateAllRules().catch(err => console.error('[AlertEngine] Evaluation error:', err));
     }, EVAL_INTERVAL_MS);
 }
 
@@ -32,7 +32,7 @@ export function stopAlertEngine(): void {
 /**
  * Core evaluation logic — checks all rules across all orgs.
  */
-async function evaluateRules(): Promise<void> {
+async function evaluateAllRules(): Promise<void> {
     const rules = await prisma.alertRule.findMany({
         include: {
             organization: {
@@ -45,7 +45,13 @@ async function evaluateRules(): Promise<void> {
 
     for (const rule of rules) {
         try {
-            await evaluateRule(rule);
+            // Some rules are container-specific, some can be fleet-wide.
+            // For Phase 4, we evaluate the same rule against both individual containers 
+            // AND the aggregated fleet metrics where applicable.
+            
+            await evaluateContainerRules(rule);
+            await evaluateFleetRule(rule);
+            
         } catch (err) {
             console.error(`[AlertEngine] Error evaluating rule ${rule.id} (${rule.name}):`, err);
         }
@@ -53,21 +59,19 @@ async function evaluateRules(): Promise<void> {
 }
 
 /**
- * Evaluate a single rule against all relevant containers.
+ * Evaluate a rule against individual containers.
  */
-async function evaluateRule(rule: {
-    id: string;
-    organizationId: string;
-    condition: string;
-    threshold: number | null;
-    duration: number;
-    name: string;
-}): Promise<void> {
-    // Get all containers belonging to this org's hosts
+async function evaluateContainerRules(rule: any): Promise<void> {
+    // Only these conditions apply to individual containers
+    const containerConditions = ['CONTAINER_DOWN', 'RESTART_LOOP', 'CPU_USAGE', 'MEMORY_USAGE'];
+    if (!containerConditions.includes(rule.condition)) return;
+
+    // Get all containers belonging to this org/project
     const containers = await prisma.container.findMany({
         where: {
             host: {
                 organizationId: rule.organizationId,
+                ...(rule.projectId ? { projectId: rule.projectId } : {}),
             },
         },
         include: {
@@ -78,7 +82,7 @@ async function evaluateRule(rule: {
     });
 
     for (const container of containers) {
-        const isConditionMet = await checkCondition(rule, container);
+        const isConditionMet = await checkContainerCondition(rule, container);
 
         // Find existing FIRING alert for this rule + container
         const existingAlert = await prisma.alert.findFirst({
@@ -99,7 +103,15 @@ async function evaluateRule(rule: {
                 },
             });
             console.log(`[AlertEngine] FIRING alert for rule "${rule.name}" on container "${container.name}"`);
-            await dispatchWebhook(alert.id, rule, container, 'alert.firing');
+            
+            await dispatchWebhooks(rule.organizationId, rule.projectId, {
+                event: 'alert.firing',
+                alert_id: alert.id,
+                rule_name: rule.name,
+                container_name: container.name,
+                host_name: container.host.name,
+                details: { condition: rule.condition, threshold: rule.threshold }
+            });
         } else if (!isConditionMet && existingAlert) {
             // Resolve existing alert
             await prisma.alert.update({
@@ -110,15 +122,109 @@ async function evaluateRule(rule: {
                 },
             });
             console.log(`[AlertEngine] RESOLVED alert for rule "${rule.name}" on container "${container.name}"`);
-            await dispatchWebhook(existingAlert.id, rule, container, 'alert.resolved');
+            
+            await dispatchWebhooks(rule.organizationId, rule.projectId, {
+                event: 'alert.resolved',
+                alert_id: existingAlert.id,
+                rule_name: rule.name,
+                container_name: container.name,
+                host_name: container.host.name,
+            });
         }
+    }
+}
+
+/**
+ * Evaluate a rule against Fleet aggregated metrics.
+ */
+async function evaluateFleetRule(rule: any): Promise<void> {
+    // These conditions can apply to fleet-wide aggregates
+    const fleetConditions = ['CPU_USAGE', 'MEMORY_USAGE'];
+    if (!fleetConditions.includes(rule.condition)) return;
+
+    // Get the latest FleetMetric for this org/project
+    const latestMetric = await prisma.fleetMetric.findFirst({
+        where: {
+            organizationId: rule.organizationId,
+            projectId: rule.projectId || null,
+        },
+        orderBy: { timestamp: 'desc' },
+    });
+
+    if (!latestMetric) return;
+
+    // Check if the metric is recent enough (e.g. within last 5 minutes)
+    const now = new Date();
+    if (now.getTime() - new Date(latestMetric.timestamp).getTime() > 5 * 60_000) {
+        return;
+    }
+
+    let isConditionMet = false;
+    const threshold = rule.threshold;
+    if (threshold === null) return;
+
+    if (rule.condition === 'CPU_USAGE') {
+        isConditionMet = latestMetric.cpuUsagePercentAvg > threshold;
+    } else if (rule.condition === 'MEMORY_USAGE') {
+        isConditionMet = Number(latestMetric.memoryUsageBytesAvg) > threshold;
+    }
+
+    // Find existing FIRING incident for this rule (no containerId means fleet-wide)
+    const existingIncident = await prisma.incident.findFirst({
+        where: {
+            ruleId: rule.id,
+            organizationId: rule.organizationId,
+            projectId: rule.projectId || null,
+            status: 'FIRING',
+        },
+    });
+
+    if (isConditionMet && !existingIncident) {
+        // Trigger new Incident
+        const incident = await prisma.incident.create({
+            data: {
+                ruleId: rule.id,
+                organizationId: rule.organizationId,
+                projectId: rule.projectId || null,
+                status: 'FIRING',
+            },
+        });
+        console.log(`[AlertEngine] FIRING incident for rule "${rule.name}" on fleet (${rule.projectId || 'org-wide'})`);
+        
+        await dispatchWebhooks(rule.organizationId, rule.projectId, {
+            event: 'incident.firing',
+            incident_id: incident.id,
+            rule_name: rule.name,
+            details: { 
+                scope: rule.projectId ? 'project' : 'organization',
+                condition: rule.condition, 
+                threshold, 
+                current_value: rule.condition === 'CPU_USAGE' ? latestMetric.cpuUsagePercentAvg : latestMetric.memoryUsageBytesAvg.toString() 
+            }
+        });
+    } else if (!isConditionMet && existingIncident) {
+        // Resolve existing incident
+        await prisma.incident.update({
+            where: { id: existingIncident.id },
+            data: {
+                status: 'RESOLVED',
+                resolvedAt: new Date(),
+            },
+        });
+        console.log(`[AlertEngine] RESOLVED incident for rule "${rule.name}" on fleet`);
+        
+        await dispatchWebhooks(rule.organizationId, rule.projectId, {
+            event: 'incident.resolved',
+            incident_id: existingIncident.id,
+            rule_name: rule.name,
+        });
     }
 }
 
 /**
  * Check whether a condition is currently met for a given container.
  */
-async function checkCondition(
+async function checkContainerCondition(
     rule: { condition: string; threshold: number | null; duration: number },
     container: { id: string; state: string; status: string; updatedAt: Date; host: { name: string } }
 ): Promise<boolean> {
@@ -127,21 +233,16 @@ async function checkCondition(
 
     switch (rule.condition) {
         case 'CONTAINER_DOWN': {
-            // Container state is "exited" and has been for longer than duration
             if (container.state !== 'exited') return false;
             const downSince = new Date(container.updatedAt).getTime();
             return (now.getTime() - downSince) > durationMs;
         }
 
         case 'RESTART_LOOP': {
-            // Check if container status string indicates restarts (Docker reports "Restarting (N)")
-            // Also check recent metrics for frequent state changes
-            const threshold = rule.threshold ?? 3; // Default: 3 restarts
+            const threshold = rule.threshold ?? 3;
             const restartsMatch = container.status.match(/Restarting/i);
             if (restartsMatch) return true;
 
-            // Count recent alerts or status changes as a proxy
-            // A more sophisticated implementation would track restart counts on the agent side
             const recentMetrics = await prisma.containerMetric.count({
                 where: {
                     containerId: container.id,
@@ -151,14 +252,11 @@ async function checkCondition(
                 },
             });
 
-            // If we have metrics flowing, container is likely restarting frequently
-            // This is a simplified heuristic — production would use agent restart event tracking
             return recentMetrics === 0 && container.state === 'restarting';
         }
 
         case 'CPU_USAGE': {
             if (rule.threshold === null) return false;
-            // Get latest metric within the duration window
             const latestMetric = await prisma.containerMetric.findFirst({
                 where: {
                     containerId: container.id,
@@ -175,7 +273,6 @@ async function checkCondition(
 
         case 'MEMORY_USAGE': {
             if (rule.threshold === null) return false;
-            // Threshold is in bytes
             const latestMetric = await prisma.containerMetric.findFirst({
                 where: {
                     containerId: container.id,
@@ -192,69 +289,5 @@ async function checkCondition(
 
         default:
             return false;
-    }
-}
-
-/**
- * Dispatch webhook notifications for an alert event.
- */
-async function dispatchWebhook(
-    alertId: string,
-    rule: { name: string; organizationId: string },
-    container: { name: string; host: { name: string } },
-    eventType: 'alert.firing' | 'alert.resolved'
-): Promise<void> {
-    try {
-        const webhooks = await prisma.webhook.findMany({
-            where: {
-                organizationId: rule.organizationId,
-                isActive: true,
-            },
-        });
-
-        if (webhooks.length === 0) return;
-
-        const payload = JSON.stringify({
-            event: eventType,
-            alert_id: alertId,
-            rule_name: rule.name,
-            container_name: container.name,
-            host_name: container.host.name,
-            timestamp: new Date().toISOString(),
-        });
-
-        for (const webhook of webhooks) {
-            try {
-                const headers: Record<string, string> = {
-                    'Content-Type': 'application/json',
-                };
-
-                // HMAC signature if secret is configured
-                if (webhook.secret) {
-                    const signature = crypto
-                        .createHmac('sha256', webhook.secret)
-                        .update(payload)
-                        .digest('hex');
-                    headers['X-Docker-Dashboard-Signature'] = `sha256=${signature}`;
-                }
-
-                const response = await fetch(webhook.url, {
-                    method: 'POST',
-                    headers,
-                    body: payload,
-                    signal: AbortSignal.timeout(10_000), // 10s timeout
-                });
-
-                if (!response.ok) {
-                    console.error(`[AlertEngine] Webhook delivery failed to ${webhook.url}: ${response.status}`);
-                } else {
-                    console.log(`[AlertEngine] Webhook delivered to ${webhook.url} (${eventType})`);
-                }
-            } catch (err) {
-                console.error(`[AlertEngine] Webhook delivery error to ${webhook.url}:`, err);
-            }
-        }
-    } catch (err) {
-        console.error('[AlertEngine] Failed to dispatch webhooks:', err);
     }
 }

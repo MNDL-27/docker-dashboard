@@ -63,6 +63,43 @@ router.get('/', requireOrgScope(), async (req: Request, res: Response): Promise<
     }
 });
 
+// GET /api/alerts/incidents - List fleet-wide incidents
+router.get('/incidents', requireOrgScope(), async (req: Request, res: Response): Promise<void> => {
+    try {
+        const { organizationId, projectId: scopedProjectId } = req.scope!;
+        const status = req.query.status as string | undefined;
+        const projectId = req.query.projectId as string | undefined;
+
+        const incidents = await prisma.incident.findMany({
+            where: {
+                organizationId,
+                ...(scopedProjectId ? { projectId: scopedProjectId } : (projectId ? { projectId } : {})),
+                ...(status ? { status } : {}),
+            },
+            include: {
+                rule: {
+                    select: {
+                        name: true,
+                        condition: true,
+                        threshold: true,
+                        duration: true,
+                    },
+                },
+                project: {
+                    select: { id: true, name: true },
+                },
+            },
+            orderBy: { startedAt: 'desc' },
+            take: 100,
+        });
+
+        res.json({ incidents });
+    } catch (error) {
+        console.error('List incidents error:', error);
+        res.status(500).json({ error: 'Failed to list incidents' });
+    }
+});
+
 // GET /api/alerts/rules - List alert rules for an organization (optional projectId filter)
 router.get('/rules', requireOrgScope(), async (req: Request, res: Response): Promise<void> => {
     try {

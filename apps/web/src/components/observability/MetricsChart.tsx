@@ -8,7 +8,7 @@ import {
     CartesianGrid,
     Tooltip,
     ResponsiveContainer,
-    Legend
+    Legend,
 } from 'recharts';
 import { format } from 'date-fns';
 
@@ -25,31 +25,29 @@ interface Props {
     type: 'cpu' | 'memory' | 'network';
 }
 
+function formatTime(ts: unknown): string {
+    try {
+        if (!ts) return '';
+        return format(new Date(ts as string), 'HH:mm:ss');
+    } catch {
+        return '';
+    }
+}
+
+function formatBytes(bytes: number): string {
+    if (bytes <= 0) return '0 B';
+    const k = 1024;
+    const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return `${parseFloat((bytes / Math.pow(k, i)).toFixed(2))} ${sizes[i]}`;
+}
+
 export default function MetricsChart({ data, type }: Props) {
-    const formatTime = (ts: any) => {
-        try {
-            if (!ts) return '';
-            return format(new Date(ts), 'HH:mm:ss');
-        } catch {
-            return '';
-        }
-    };
-
-    const formatBytes = (bytes: number) => {
-        if (bytes === 0) return '0 B';
-        const k = 1024;
-        const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
-        const i = Math.floor(Math.log(bytes) / Math.log(k));
-        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
-    };
-
     return (
-        <div className="w-full h-80 bg-slate-900 rounded-lg p-4 border border-slate-800">
-            <h3 className="text-sm font-medium text-slate-400 mb-4 capitalize">
-                {type} Usage
-            </h3>
-            <div className="w-full h-[250px]">
-                <ResponsiveContainer width="100%" height="100%">
+        <div className="glass-card">
+            <h3 className="chart-title">{type} Usage</h3>
+            <div className="chart-body">
+                <ResponsiveContainer width="100%" height={250}>
                     <LineChart data={data} margin={{ top: 5, right: 20, left: 10, bottom: 5 }}>
                         <CartesianGrid strokeDasharray="3 3" stroke="#334155" vertical={false} />
                         <XAxis
@@ -67,15 +65,7 @@ export default function MetricsChart({ data, type }: Props) {
                                 domain={[0, 'auto']}
                             />
                         )}
-                        {type === 'memory' && (
-                            <YAxis
-                                stroke="#94a3b8"
-                                fontSize={12}
-                                tickFormatter={formatBytes}
-                                width={80}
-                            />
-                        )}
-                        {type === 'network' && (
+                        {(type === 'memory' || type === 'network') && (
                             <YAxis
                                 stroke="#94a3b8"
                                 fontSize={12}
@@ -85,7 +75,12 @@ export default function MetricsChart({ data, type }: Props) {
                         )}
 
                         <Tooltip
-                            contentStyle={{ backgroundColor: '#0f172a', borderColor: '#334155', color: '#f8fafc' }}
+                            contentStyle={{
+                                backgroundColor: 'rgba(15, 23, 42, 0.9)',
+                                border: '1px solid #334155',
+                                borderRadius: '8px',
+                                color: '#f8fafc',
+                            }}
                             labelFormatter={formatTime}
                         />
 
@@ -137,6 +132,29 @@ export default function MetricsChart({ data, type }: Props) {
                     </LineChart>
                 </ResponsiveContainer>
             </div>
+
+            <style jsx>{`
+                .glass-card {
+                    background: rgba(30, 41, 59, 0.6);
+                    backdrop-filter: blur(12px);
+                    -webkit-backdrop-filter: blur(12px);
+                    border: 1px solid rgba(148, 163, 184, 0.1);
+                    border-radius: 16px;
+                    padding: 20px;
+                    box-shadow: 0 4px 24px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+                }
+                .chart-title {
+                    font-size: 14px;
+                    font-weight: 500;
+                    color: #94a3b8;
+                    margin-bottom: 16px;
+                    text-transform: capitalize;
+                }
+                .chart-body {
+                    width: 100%;
+                    height: 250px;
+                }
+            `}</style>
         </div>
     );
 }

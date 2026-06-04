@@ -46,14 +46,16 @@ model Organization {
   updatedAt DateTime @updatedAt
 
   // Relations
-  members    OrganizationMember[]
-  projects   Project[]
-  invites    OrganizationInvite[]
-  hosts      Host[]
-  hostTokens  HostToken[]
-  auditLogs   AuditLog[]
-  alertRules  AlertRule[]
-  webhooks    Webhook[]
+  members      OrganizationMember[]
+  projects     Project[]
+  invites      OrganizationInvite[]
+  hosts        Host[]
+  hostTokens   HostToken[]
+  auditLogs    AuditLog[]
+  alertRules   AlertRule[]
+  webhooks     Webhook[]
+  fleetMetrics FleetMetric[]
+  incidents    Incident[] @relation("OrganizationIncidents")
 
   @@index([slug])
 }
@@ -90,6 +92,8 @@ model Project {
   hostTokens   HostToken[]
   webhooks     Webhook[]
   alertRules   AlertRule[]
+  fleetMetrics FleetMetric[]
+  incidents    Incident[] @relation("ProjectIncidents")
 
   @@index([organizationId])
 }
@@ -151,22 +155,22 @@ model OrganizationInvite {
 
 // Host model
 model Host {
-  id             String     @id @default(uuid())
-  organizationId String
-  projectId      String
-  name           String
-  hostname       String
-  ipAddress      String?
-  agentVersion   String?
-  cpuCount       Int?
+  id               String     @id @default(uuid())
+  organizationId   String
+  projectId        String
+  name             String
+  hostname         String
+  ipAddress        String?
+  agentVersion     String?
+  cpuCount         Int?
   memoryTotalBytes BigInt?
-  os             String
-  architecture   String
-  dockerVersion  String
-  lastSeen       DateTime?
-  status         HostStatus @default(OFFLINE)
-  createdAt      DateTime   @default(now())
-  updatedAt      DateTime   @updatedAt
+  os               String
+  architecture     String
+  dockerVersion    String
+  lastSeen         DateTime?
+  status           HostStatus @default(OFFLINE)
+  createdAt        DateTime   @default(now())
+  updatedAt        DateTime   @updatedAt
 
   // Relations
   organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
@@ -202,24 +206,24 @@ model HostToken {
 
 // Container snapshot
 model Container {
-  id        String    @id @default(uuid())
-  dockerId  String
-  hostId    String
-  name      String
-  image     String
-  imageId   String
-  command   String
-  state     String
-  status    String
-  restartCount Int    @default(0)
-  ports     Json
-  labels    Json
-  networks  Json      @default("{}")
-  volumes   Json      @default("[]")
+  id              String    @id @default(uuid())
+  dockerId        String
+  hostId          String
+  name            String
+  image           String
+  imageId         String
+  command         String
+  state           String
+  status          String
+  restartCount    Int       @default(0)
+  ports           Json
+  labels          Json
+  networks        Json      @default("{}")
+  volumes         Json      @default("[]")
   dockerCreatedAt DateTime?
-  startedAt DateTime?
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
+  startedAt       DateTime?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
 
   // Relations
   host    Host              @relation(fields: [hostId], references: [id], onDelete: Cascade)
@@ -288,10 +292,29 @@ model AuditLog {
 
 // Phase 4: Alerting
 
+model FleetMetric {
+  id                  String   @id @default(cuid())
+  organizationId      String
+  projectId           String?
+  timestamp           DateTime @default(now())
+  containerCount      Int
+  cpuUsagePercentAvg  Float
+  memoryUsageBytesAvg BigInt
+  networkRxBytesMax   BigInt
+  networkTxBytesMax   BigInt
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  project      Project?     @relation(fields: [projectId], references: [id], onDelete: SetNull)
+
+  @@index([organizationId, timestamp(sort: Desc)])
+  @@index([projectId, timestamp(sort: Desc)])
+  @@index([timestamp(sort: Desc)])
+}
+
 model AlertRule {
   id             String   @id @default(cuid())
   organizationId String
-  projectId      String?  // null = applies to all projects in org
+  projectId      String? // null = applies to all projects in org
   name           String
   condition      String // "CONTAINER_DOWN", "RESTART_LOOP", "CPU_USAGE", "MEMORY_USAGE"
   threshold      Float? // Value to exceed (e.g. 80 for CPU%)
@@ -302,6 +325,7 @@ model AlertRule {
   organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   project      Project?     @relation(fields: [projectId], references: [id], onDelete: SetNull)
   alerts       Alert[]
+  incidents    Incident[] @relation("RuleIncidents")
 
   @@index([organizationId])
   @@index([projectId])
@@ -319,16 +343,16 @@ model Alert {
   rule      AlertRule @relation(fields: [ruleId], references: [id], onDelete: Cascade)
   container Container @relation(fields: [containerId], references: [id], onDelete: Cascade)
 
+  @@unique([ruleId, containerId, status]) // Deduplication: only one FIRING alert per rule+container
   @@index([ruleId])
   @@index([containerId])
   @@index([status])
-  @@unique([ruleId, containerId, status]) // Deduplication: only one FIRING alert per rule+container
 }
 
 model Webhook {
   id             String   @id @default(cuid())
   organizationId String
-  projectId      String?  // null = org-wide webhook; set = project-scoped
+  projectId      String? // null = org-wide webhook; set = project-scoped
   url            String
   secret         String? // Optional HMAC secret for payload signatures
   isActive       Boolean  @default(true)
@@ -340,4 +364,22 @@ model Webhook {
 
   @@index([organizationId])
   @@index([projectId])
+}
+
+model Incident {
+  id             String    @id @default(cuid())
+  ruleId         String
+  organizationId String
+  projectId      String?
+  status         String // "FIRING" or "RESOLVED"
+  startedAt      DateTime  @default(now())
+  resolvedAt     DateTime?
+  createdAt      DateTime  @default(now())
+
+  rule         AlertRule    @relation("RuleIncidents", fields: [ruleId], references: [id], onDelete: Cascade)
+  organization Organization @relation("OrganizationIncidents", fields: [organizationId], references: [id], onDelete: Cascade)
+  project      Project?     @relation("ProjectIncidents", fields: [projectId], references: [id], onDelete: SetNull)
+
+  @@index([organizationId])
+  @@index([status])
 }

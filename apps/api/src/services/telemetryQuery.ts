@@ -282,11 +282,21 @@ export async function getTelemetryHistory(input: {
     aggregate.memoryUsageBytesAvg = Math.round(aggregate.memoryUsageBytesAvg / aggregate.containerCount);
   }
 
-  const trend = await queryTelemetryTrend({
-    containerIds: containers.map((container) => container.id),
-    lookbackStart,
-    bucketSeconds: windowConfig.bucketSeconds,
-  });
+  // Use pre-aggregated FleetMetrics for Organization/Project trends to improve performance
+  const useFleetMetrics = !input.scope.hostId && !input.scope.containerId;
+
+  const trend = useFleetMetrics
+    ? await queryFleetMetricTrend({
+        organizationId: input.scope.organizationId,
+        projectId: input.scope.projectId,
+        lookbackStart,
+        bucketSeconds: windowConfig.bucketSeconds,
+      })
+    : await queryTelemetryTrend({
+        containerIds: containers.map((container) => container.id),
+        lookbackStart,
+        bucketSeconds: windowConfig.bucketSeconds,
+      });
 
   return {
     scope: input.scope,
@@ -326,6 +336,46 @@ async function queryTelemetryTrend(input: {
       max("networkTxBytes") AS network_tx_max
     FROM "ContainerMetric"
     WHERE "containerId" IN (${Prisma.join(input.containerIds)})
+      AND "timestamp" >= ${input.lookbackStart}
+    GROUP BY bucket
+    ORDER BY bucket ASC
+  `);
+
+  return rows.map((row) => ({
+    timestamp: row.bucket.toISOString(),
+    cpuUsagePercentAvg: Number((row.cpu_avg ?? 0).toFixed(2)),
+    memoryUsageBytesAvg: Math.round(row.memory_avg ?? 0),
+    networkRxBytesMax: toNumber(row.network_rx_max),
+    networkTxBytesMax: toNumber(row.network_tx_max),
+  }));
+}
+
+async function queryFleetMetricTrend(input: {
+  organizationId: string;
+  projectId?: string;
+  lookbackStart: Date;
+  bucketSeconds: number;
+}): Promise<TelemetryTrendPoint[]> {
+  const rows = await prisma.$queryRaw<Array<{
+    bucket: Date;
+    cpu_avg: number | null;
+    memory_avg: number | null;
+    network_rx_max: bigint | number | null;
+    network_tx_max: bigint | number | null;
+  }>>(Prisma.sql`
+    SELECT
+      date_bin(
+        make_interval(secs => ${input.bucketSeconds}),
+        "timestamp",
+        TIMESTAMPTZ '1970-01-01T00:00:00.000Z'
+      ) AS bucket,
+      avg("cpuUsagePercentAvg")::double precision AS cpu_avg,
+      avg("memoryUsageBytesAvg")::double precision AS memory_avg,
+      max("networkRxBytesMax") AS network_rx_max,
+      max("networkTxBytesMax") AS network_tx_max
+    FROM "FleetMetric"
+    WHERE "organizationId" = ${input.organizationId}
+      AND "projectId" ${input.projectId ? Prisma.sql`= ${input.projectId}` : Prisma.sql`IS NULL`}
       AND "timestamp" >= ${input.lookbackStart}
     GROUP BY bucket
     ORDER BY bucket ASC
