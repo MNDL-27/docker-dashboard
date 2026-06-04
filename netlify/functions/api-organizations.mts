@@ -179,13 +179,26 @@ export default async (req: Request) => {
         return new Response(JSON.stringify({ error: 'orgId query parameter required' }), { status: 400, headers });
       }
 
-      // Resolve Clerk org ID to internal UUID if needed
       let deleteOrgId = rawOrgId;
       if (rawOrgId.startsWith('org_')) {
         const orgLookup = await sql`
           SELECT id FROM public.organizations WHERE clerk_org_id = ${rawOrgId} LIMIT 1
         `;
+        
         if (orgLookup.length === 0) {
+          // Ghost organization: deleted locally but still exists in Clerk.
+          // Try to clean it up in Clerk so the UI stops rendering it.
+          try {
+            // Verify permission via Clerk SDK
+            const memberships = await clerkClient.organizations.getOrganizationMembershipList({ organizationId: rawOrgId });
+            const userMem = memberships.data.find((m: any) => m.publicUserData?.userId === authContext.clerkUserId);
+            if ((userMem && (userMem.role === 'org:admin' || userMem.role === 'org:owner' || userMem.role === 'admin')) || authContext.isPlatformAdmin) {
+              await clerkClient.organizations.deleteOrganization(rawOrgId);
+              return new Response(JSON.stringify({ success: true, message: 'Cleaned up ghost organization' }), { headers });
+            }
+          } catch (e: any) {
+            console.error('[api-organizations] Failed to check/delete ghost org from Clerk:', e?.message);
+          }
           return new Response(JSON.stringify({ error: 'Organization not found' }), { status: 404, headers });
         }
         deleteOrgId = orgLookup[0].id;

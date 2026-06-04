@@ -205,27 +205,6 @@ export default function OrganizationsPage() {
               </div>
             )}
           </div>
-
-          <div className="glass-card p-6">
-            <div className="flex items-center gap-2">
-              <Users className="h-4 w-4 text-primary" />
-              <h3 className="text-sm font-semibold tracking-tight">Membership tips</h3>
-            </div>
-            <div className="mt-4 space-y-3 text-sm text-muted-foreground">
-              <div className="flex items-center justify-between">
-                <span>Invite teammates</span>
-                <span className="text-foreground">From Settings → Team</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span>Assign roles</span>
-                <span className="text-foreground">Owner / Admin / Viewer</span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span>Switch orgs</span>
-                <span className="text-foreground">Top bar org switcher</span>
-              </div>
-            </div>
-          </div>
         </div>
       </div>
 
