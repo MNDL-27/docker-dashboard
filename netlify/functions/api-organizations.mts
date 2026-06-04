@@ -202,8 +202,8 @@ export default async (req: Request) => {
         return new Response(JSON.stringify({ error: 'Organization not found or you are not a member' }), { status: 404, headers });
       }
 
-      if (ownerCheck[0].role !== 'owner' && !authContext.isPlatformAdmin) {
-        return new Response(JSON.stringify({ error: 'Only the organization owner can delete it' }), { status: 403, headers });
+      if (ownerCheck[0].role !== 'owner' && ownerCheck[0].role !== 'admin' && !authContext.isPlatformAdmin) {
+        return new Response(JSON.stringify({ error: 'Only the organization owner or admin can delete it' }), { status: 403, headers });
       }
 
       // Refuse deletion if org still has hosts
