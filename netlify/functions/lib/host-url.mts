@@ -65,12 +65,8 @@ export function normalizeAndValidateHostUrl(input: string) {
   const ipVersion = isIP(hostname);
   const isLocal = isLocalHostname(hostname);
 
-  if (parsed.protocol === "http:") {
-    if (!isLocal || !allowLocalAgentUrls()) {
-      throw new Error("host_url must use https unless local agent URLs are explicitly allowed for development");
-    }
-  } else if (parsed.protocol !== "https:") {
-    throw new Error("host_url must use https");
+  if (parsed.protocol !== "http:" && parsed.protocol !== "https:") {
+    throw new Error("host_url must use http or https");
   }
 
   if (isLocal) {

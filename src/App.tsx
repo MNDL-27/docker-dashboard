@@ -10,6 +10,7 @@ import { isAppSubdomain, isDocsSubdomain, isPreviewAuthBypassEnabled } from "@/l
 import { RequireAppSubdomain } from "@/components/RequireAppSubdomain";
 import { ClerkProvider } from "@clerk/react";
 import { RequirePlatformAdmin } from "@/components/RequirePlatformAdmin";
+import { AppUpdateBanner } from "@/components/AppUpdateBanner";
 import { Loader2 } from "lucide-react";
 import { lazy, Suspense, useEffect } from "react";
 import { usePageViewTracking } from "@/hooks/usePageViewTracking";
@@ -107,6 +108,7 @@ const App = () => {
         <DarkModeInit>
             <Toaster />
             <Sonner />
+            <AppUpdateBanner />
             <BrowserRouter>
               <PageViewTracker />
               <Suspense fallback={<RouteFallback />}>
