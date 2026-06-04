@@ -72,12 +72,13 @@ export default async (req: Request) => {
           resolvedOrgId = orgLookup[0].id;
         }
 
-        // Verify the requesting user has membership in the resolved org
+        // Verify the requesting user has membership in the resolved org or is the creator
         const membershipCheck = await sql`
           SELECT 1
-          FROM public.organization_members
-          WHERE organization_id = ${resolvedOrgId}
-            AND user_id = ${auth.userId}
+          FROM public.organizations o
+          LEFT JOIN public.organization_members om ON o.id = om.organization_id AND om.user_id = ${auth.userId}
+          WHERE o.id = ${resolvedOrgId}
+            AND (om.user_id IS NOT NULL OR o.created_by = ${auth.userId})
           LIMIT 1
         `;
         if (membershipCheck.length === 0) {

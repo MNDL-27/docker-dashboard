@@ -190,19 +190,27 @@ export default async (req: Request) => {
         deleteOrgId = orgLookup[0].id;
       }
 
-      // Verify user is the owner of this org
+      // Verify user is the owner of this org (or the creator, in case of orphaned memberships)
       const ownerCheck = await sql`
-        SELECT om.role
-        FROM organization_members om
-        WHERE om.organization_id = ${deleteOrgId}
-          AND om.user_id = ${authContext.userId}
+        SELECT om.role, o.created_by
+        FROM organizations o
+        LEFT JOIN organization_members om ON o.id = om.organization_id AND om.user_id = ${authContext.userId}
+        WHERE o.id = ${deleteOrgId}
       `;
 
       if (ownerCheck.length === 0) {
+        return new Response(JSON.stringify({ error: 'Organization not found' }), { status: 404, headers });
+      }
+
+      const isMember = ownerCheck[0].role !== null;
+      const isCreator = ownerCheck[0].created_by === authContext.userId;
+
+      if (!isMember && !isCreator && !authContext.isPlatformAdmin) {
         return new Response(JSON.stringify({ error: 'Organization not found or you are not a member' }), { status: 404, headers });
       }
 
-      if (ownerCheck[0].role !== 'owner' && ownerCheck[0].role !== 'admin' && !authContext.isPlatformAdmin) {
+      const role = ownerCheck[0].role;
+      if (role !== 'owner' && role !== 'admin' && !isCreator && !authContext.isPlatformAdmin) {
         return new Response(JSON.stringify({ error: 'Only the organization owner or admin can delete it' }), { status: 403, headers });
       }
 
