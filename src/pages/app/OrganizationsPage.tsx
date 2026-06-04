@@ -32,6 +32,7 @@ function useDeleteOrganization() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["auth-me"] });
       queryClient.invalidateQueries({ queryKey: ["docker-hosts"] });
+      window.location.reload();
     },
   });
 }
