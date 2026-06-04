@@ -52,6 +52,40 @@ export default async (req: Request) => {
     }
 
     if (req.method === 'GET') {
+      // Use explicit orgId from query param if provided (e.g. OrgCard viewing a
+      // different org's hosts), otherwise fall back to Clerk active org.
+      const requestedOrgId = url.searchParams.get('orgId');
+      let listOrgId = orgId; // default: Clerk active org (internal UUID)
+
+      if (requestedOrgId && requestedOrgId !== orgId) {
+        // The frontend may send either a Clerk org ID (org_xxx) or an internal UUID.
+        // Resolve to an internal UUID if it looks like a Clerk ID.
+        let resolvedOrgId = requestedOrgId;
+        const isClerkId = requestedOrgId.startsWith('org_');
+        if (isClerkId) {
+          const orgLookup = await sql`
+            SELECT id FROM public.organizations WHERE clerk_org_id = ${requestedOrgId} LIMIT 1
+          `;
+          if (orgLookup.length === 0) {
+            return new Response(JSON.stringify({ error: 'Organization not found' }), { status: 404, headers });
+          }
+          resolvedOrgId = orgLookup[0].id;
+        }
+
+        // Verify the requesting user has membership in the resolved org
+        const membershipCheck = await sql`
+          SELECT 1
+          FROM public.organization_members
+          WHERE organization_id = ${resolvedOrgId}
+            AND user_id = ${auth.userId}
+          LIMIT 1
+        `;
+        if (membershipCheck.length === 0) {
+          return new Response(JSON.stringify({ error: 'Access denied to requested organization' }), { status: 403, headers });
+        }
+        listOrgId = resolvedOrgId;
+      }
+
       if (hostId) {
         await sql`
           UPDATE docker_hosts h
@@ -111,17 +145,17 @@ export default async (req: Request) => {
         }), { headers });
       }
 
-      if (!orgId) return new Response(JSON.stringify({ error: 'Active org required' }), { status: 400, headers });
+      if (!listOrgId) return new Response(JSON.stringify({ error: 'Active org required' }), { status: 400, headers });
 
       await enforceOrganizationNodeLimit({
-        organizationId: orgId,
+        organizationId: listOrgId,
         isPlatformAdmin: auth.isPlatformAdmin,
       });
 
       await sql`
         UPDATE docker_hosts
         SET status = 'stale'
-        WHERE organization_id = ${orgId}
+        WHERE organization_id = ${listOrgId}
           AND status = 'connected'
           AND last_seen_at IS NOT NULL
           AND last_seen_at < ${staleCutoff}
@@ -130,7 +164,7 @@ export default async (req: Request) => {
       const hosts = await sql`
         SELECT h.* FROM docker_hosts h
         JOIN organization_members om ON h.organization_id = om.organization_id
-        WHERE h.organization_id = ${orgId} AND om.user_id = ${auth.userId}
+        WHERE h.organization_id = ${listOrgId} AND om.user_id = ${auth.userId}
         ORDER BY h.created_at DESC
       `;
       return new Response(JSON.stringify(hosts), { headers });
