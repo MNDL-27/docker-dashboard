@@ -47,7 +47,7 @@ function badRequest(error: string, code?: string, status = 400) {
 }
 
 function parseConnectionMode(value: unknown): WatchtowerAgentConnectionMode | null {
-  return value === "agent" || value === "cloudflare_tunnel" ? value : null;
+  return value === "agent" || value === "cloudflare_tunnel" || value === "http" ? value : null;
 }
 
 function hashEnrollmentToken(token: string) {
@@ -548,7 +548,7 @@ export default async (req: Request) => {
 
       const connectionMode = parseConnectionMode(body?.connection_mode);
       if (!connectionMode) {
-        return badRequest("connection_mode must be 'agent' or 'cloudflare_tunnel'");
+        return badRequest("connection_mode must be 'agent', 'cloudflare_tunnel', or 'http'");
       }
 
       const hostName = trimOrDefault(body?.host_name, "");

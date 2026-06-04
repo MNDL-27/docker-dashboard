@@ -45,7 +45,7 @@ export interface OrganizationMember {
   created_at: string;
 }
 
-export type ConnectionMode = 'agent' | 'cloudflare_tunnel';
+export type ConnectionMode = 'agent' | 'cloudflare_tunnel' | 'http';
 
 export type ContainerRuntime = 'docker' | 'podman';
 

@@ -20,7 +20,8 @@ export type OnboardingStep =
 export const STEPS = ["Create Organization", "Connect Host", "You're Ready"] as const;
 
 export const CONNECTION_MODES: { value: ConnectionMode; label: string; desc: string }[] = [
-  { value: "agent", label: "Agent (Direct)", desc: "Connect to the Watchtower Agent over HTTPS." },
+  { value: "agent", label: "Agent (HTTPS)", desc: "Connect to the Watchtower Agent over HTTPS." },
+  { value: "http", label: "Agent (HTTP)", desc: "Connect to the Watchtower Agent over standard HTTP." },
   { value: "cloudflare_tunnel", label: "Agent via CF Tunnel", desc: "Same agent, accessed through a Cloudflare Tunnel." },
 ];
 

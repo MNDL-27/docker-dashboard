@@ -24,7 +24,7 @@ Options:
   --bind-address VALUE    Set AGENT_BIND_ADDRESS (default: 0.0.0.0)
   --bind VALUE            Alias for --bind-address
   --docker-socket PATH    Set DOCKER_SOCKET (default: /var/run/docker.sock)
-  --connection-mode MODE  Set connection mode for user-facing output (agent or cloudflare_tunnel)
+  --connection-mode MODE  Set connection mode for user-facing output (agent, http, or cloudflare_tunnel)
   --yes                   Accept defaults without prompting
   --help                  Show this help text
 EOF

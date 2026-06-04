@@ -35,9 +35,9 @@ interface EditableHostSecrets {
 
 type GuidedStage = "basics" | "install" | "finalizing";
 
-/* ── Icon map for connection mode cards ── */
 const MODE_ICONS: Record<ConnectionMode, typeof Terminal> = {
   agent: Terminal,
+  http: Terminal,
   cloudflare_tunnel: CloudCog,
 };
 
@@ -427,9 +427,9 @@ export function AddHostDialog({ orgId, trigger, host, disabledReason }: AddHostD
             </div>
 
             <div className="space-y-2">
-              <Label className="text-sm font-medium">{mode === "agent" ? "Agent URL" : "Tunnel URL"}</Label>
+              <Label className="text-sm font-medium">{mode === "cloudflare_tunnel" ? "Tunnel URL" : mode === "http" ? "HTTP Agent URL" : "Agent URL"}</Label>
               <Input
-                placeholder={mode === "agent" ? "https://your-host:9876" : "https://docker.your-team.cloudflareaccess.com"}
+                placeholder={mode === "cloudflare_tunnel" ? "https://docker.your-team.cloudflareaccess.com" : mode === "http" ? "http://your-host:9876" : "https://your-host:9876"}
                 value={hostUrl}
                 onChange={(e) => setHostUrl(e.target.value)}
                 className="h-10 bg-background"
@@ -570,19 +570,21 @@ export function AddHostDialog({ orgId, trigger, host, disabledReason }: AddHostD
 
               <div className="space-y-3 pt-1">
                 <Label htmlFor="host-url" className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/70">
-                  {mode === "agent" ? "Public Agent URL" : "Tunnel URL"}
+                  {mode === "cloudflare_tunnel" ? "Tunnel URL" : mode === "http" ? "Public HTTP Agent URL" : "Public Agent URL"}
                 </Label>
                 <Input
                   id="host-url"
-                  placeholder={mode === "agent" ? "https://agent.example.com:9876" : "https://docker.your-team.cloudflareaccess.com"}
+                  placeholder={mode === "cloudflare_tunnel" ? "https://docker.your-team.cloudflareaccess.com" : mode === "http" ? "http://agent.example.com:9876" : "https://agent.example.com:9876"}
                   value={hostUrl}
                   onChange={(e) => setHostUrl(e.target.value)}
                   className="h-11 bg-background"
                 />
                 <p className="text-[11px] text-muted-foreground leading-relaxed">
-                  {mode === "agent"
-                    ? "The external HTTPS URL of your agent. Ensure port 9876 is accessible."
-                    : "The Cloudflare Tunnel hostname routing to port 9876."}
+                  {mode === "cloudflare_tunnel"
+                    ? "The Cloudflare Tunnel hostname routing to port 9876."
+                    : mode === "http"
+                      ? "The external HTTP URL of your agent. Ensure port 9876 is accessible."
+                      : "The external HTTPS URL of your agent. Ensure port 9876 is accessible."}
                 </p>
               </div>
             </div>
