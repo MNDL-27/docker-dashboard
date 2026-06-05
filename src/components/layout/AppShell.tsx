@@ -4,7 +4,7 @@ import { AppTopBar } from "./AppTopBar";
 
 export function AppShell() {
   return (
-    <div className="flex min-h-dvh w-full md:h-screen">
+    <div className="flex h-dvh w-full overflow-hidden bg-background">
       <AppSidebar className="hidden md:flex" />
       <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
         <AppTopBar />
