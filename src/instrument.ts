@@ -15,6 +15,9 @@ Sentry.init({
   environment: import.meta.env.MODE,
   release: import.meta.env.VITE_APP_VERSION,
   sendDefaultPii: true,
+  ignoreErrors: [
+    /Failed to fetch dynamically imported module/i,
+  ],
 
   integrations: [
     Sentry.browserTracingIntegration(),
