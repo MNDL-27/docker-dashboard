@@ -49,7 +49,22 @@ const IPV6_BLOCKED_PREFIXES: Array<{ prefix: string; description: string }> = [
   { prefix: "fd", description: "unique-local fc00::/7" },
   { prefix: "fe80:", description: "link-local fe80::/10" },
   { prefix: "fec0:", description: "deprecated site-local" },
-  { prefix: "ff", description: "multicast ff00::/8" },
+  { prefix: "ff00::", description: "multicast ff00::/8" },
+  { prefix: "ff01::", description: "multicast ff01::/8" },
+  { prefix: "ff02::", description: "multicast ff02::/8" },
+  { prefix: "ff03::", description: "multicast ff03::/8" },
+  { prefix: "ff04::", description: "multicast ff04::/8" },
+  { prefix: "ff05::", description: "multicast ff05::/8" },
+  { prefix: "ff06::", description: "multicast ff06::/8" },
+  { prefix: "ff07::", description: "multicast ff07::/8" },
+  { prefix: "ff08::", description: "multicast ff08::/8" },
+  { prefix: "ff09::", description: "multicast ff09::/8" },
+  { prefix: "ff0a::", description: "multicast ff0a::/8" },
+  { prefix: "ff0b::", description: "multicast ff0b::/8" },
+  { prefix: "ff0c::", description: "multicast ff0c::/8" },
+  { prefix: "ff0d::", description: "multicast ff0d::/8" },
+  { prefix: "ff0e::", description: "multicast ff0e::/8" },
+  { prefix: "ff0f::", description: "multicast ff0f::/8" },
   { prefix: "100:", description: "discard 100::/64" },
   { prefix: "2001:db8:", description: "documentation 2001:db8::/32" },
   { prefix: "::ffff:", description: "IPv4-mapped" },
@@ -86,8 +101,7 @@ function isPrivateOrBlockedAddress(hostname: string, ipVersion: number): boolean
 }
 
 function allowLocalAgentUrls() {
-  if (process.env.NODE_ENV === "production") return false;
-  return isTrue(process.env.ALLOW_LOCAL_AGENT_URLS);
+  return process.env.NODE_ENV !== "production";
 }
 
 export function normalizeAndValidateHostUrl(input: string) {
