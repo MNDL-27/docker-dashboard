@@ -7,9 +7,10 @@ export default async () => {
   const baseUrl = (process.env.URL || process.env.DEPLOY_PRIME_URL || '').replace(/\/$/, '');
 
   if (!expectedSecret) {
+    // Fail-closed when DONOR_REMINDER_CRON_SECRET is unset
     return new Response(
-      JSON.stringify({ error: 'DONOR_REMINDER_CRON_SECRET is not configured' }),
-      { status: 503, headers: HEADERS },
+      JSON.stringify({ error: 'DONOR_REMINDER_CRON_SECRET is not configured - function disabled' }),
+      { status: 404, headers: HEADERS },
     );
   }
   if (!baseUrl) {
