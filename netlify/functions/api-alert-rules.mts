@@ -1,19 +1,16 @@
 import type { Config } from '@netlify/functions';
+import { buildCorsHeaders } from './lib/security.mjs';
 import { requireAuth } from './lib/auth.mjs';
 import { sql } from './lib/db.mjs';
 import { ensureAlertsSchema } from './lib/ensure-alerts-schema.mjs';
 import { listAlertRules, requireOrganizationAdmin, syncAlertEvents } from './lib/alerts.mjs';
 import { assertAdvancedAlertsAccessAllowed, resolveOrganizationEntitlements } from './lib/access-controls.mjs';
 
-const headers = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-  'Content-Type': 'application/json',
-};
 
+const buildHeaders = (req: Request) => buildCorsHeaders(req);
 export default async (req: Request) => {
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers });
+    return new Response(null, { headers: buildHeaders(req) });
   }
 
   try {
@@ -26,9 +23,9 @@ export default async (req: Request) => {
 
     if (req.method === 'GET') {
       if (!entitlements.canUseAdvancedAlerts) {
-        return new Response(JSON.stringify([]), { headers });
+        return new Response(JSON.stringify([]), { headers: buildHeaders(req) });
       }
-      return new Response(JSON.stringify(await listAlertRules(auth)), { headers });
+      return new Response(JSON.stringify(await listAlertRules(auth)), { headers: buildHeaders(req) });
     }
 
     if (req.method === 'POST') {
@@ -55,7 +52,7 @@ export default async (req: Request) => {
       `;
 
       await syncAlertEvents(auth);
-      return new Response(JSON.stringify(rule), { status: 201, headers });
+      return new Response(JSON.stringify(rule), { status: 201, headers: buildHeaders(req) });
     }
 
     if (req.method === 'PATCH') {
@@ -63,7 +60,7 @@ export default async (req: Request) => {
       await assertAdvancedAlertsAccessAllowed({ organizationId: auth.orgId, isPlatformAdmin: auth.isPlatformAdmin });
       const body = await req.json();
       if (!body?.id) {
-        return new Response(JSON.stringify({ error: 'Rule id required' }), { status: 400, headers });
+        return new Response(JSON.stringify({ error: 'Rule id required' }), { status: 400, headers: buildHeaders(req) });
       }
 
       const currentRows = await sql`
@@ -74,7 +71,7 @@ export default async (req: Request) => {
       `;
 
       if (currentRows.length === 0) {
-        return new Response(JSON.stringify({ error: 'Rule not found' }), { status: 404, headers });
+        return new Response(JSON.stringify({ error: 'Rule not found' }), { status: 404, headers: buildHeaders(req) });
       }
 
       const current = currentRows[0];
@@ -94,13 +91,13 @@ export default async (req: Request) => {
       `;
 
       await syncAlertEvents(auth);
-      return new Response(JSON.stringify(rule), { headers });
+      return new Response(JSON.stringify(rule), { headers: buildHeaders(req) });
     }
 
-    return new Response(JSON.stringify({ error: 'Method not allowed' }), { status: 405, headers });
+    return new Response(JSON.stringify({ error: 'Method not allowed' }), { status: 405, headers: buildHeaders(req) });
   } catch (error: any) {
     const status = /Admin access required|Access denied/.test(error?.message || '') ? 403 : 500;
-    return new Response(JSON.stringify({ error: error?.message || 'Failed to process alert rules' }), { status, headers });
+    return new Response(JSON.stringify({ error: error?.message || 'Failed to process alert rules' }), { status, headers: buildHeaders(req) });
   }
 };
 

@@ -8,17 +8,6 @@ import { buildCorsHeaders } from "./security.mjs";
 import { adminMatchBillingEvent, listUnmatchedBillingEvents, resendDonorEmailDelivery } from "./donor-billing.mjs";
 import { ensurePageViewsSchema } from "./ensure-page-views-schema.mjs";
 
-const headers = {
-  "Access-Control-Allow-Origin": "*",  // Will be overridden by buildCorsHeaders in responses
-  "Access-Control-Allow-Headers": "Content-Type, Authorization",
-  "Access-Control-Allow-Methods": "GET, POST, PATCH, DELETE, OPTIONS",
-  "Content-Type": "application/json",
-};
-
-function json(data: unknown, status = 200) {
-  return new Response(JSON.stringify(data), { status, headers });
-}
-
 async function readBody(req: Request) {
   return req.json().catch(() => ({}));
 }

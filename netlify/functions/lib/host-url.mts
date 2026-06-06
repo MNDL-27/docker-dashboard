@@ -27,13 +27,81 @@ function isPrivateIpv4(hostname: string) {
   );
 }
 
+function decodeIpv4MappedToV4(hostname: string): string | null {
+  // Node's URL normalizes ::ffff:1.2.3.4 to ::ffff:HHHH:HHHH (no dots).
+  // Match the IPv4-mapped prefix and decode the embedded IPv4.
+  const m = hostname.match(/^::ffff:([0-9a-f]{1,4}):([0-9a-f]{1,4})$/i);
+  if (!m) return null;
+  const hi = parseInt(m[1], 16);
+  const lo = parseInt(m[2], 16);
+  if (hi > 0xffff || lo > 0xffff) return null;
+  const a = (hi >> 8) & 0xff;
+  const b = hi & 0xff;
+  const c = (lo >> 8) & 0xff;
+  const d = lo & 0xff;
+  return `${a}.${b}.${c}.${d}`;
+}
+
+const IPV6_BLOCKED_PREFIXES: Array<{ prefix: string; description: string }> = [
+  { prefix: "::1", description: "loopback" },
+  { prefix: "::", description: "unspecified" },
+  { prefix: "fc", description: "unique-local fc00::/7" },
+  { prefix: "fd", description: "unique-local fc00::/7" },
+  { prefix: "fe80:", description: "link-local fe80::/10" },
+  { prefix: "fec0:", description: "deprecated site-local" },
+  { prefix: "ff00::", description: "multicast ff00::/8" },
+  { prefix: "ff01::", description: "multicast ff01::/8" },
+  { prefix: "ff02::", description: "multicast ff02::/8" },
+  { prefix: "ff03::", description: "multicast ff03::/8" },
+  { prefix: "ff04::", description: "multicast ff04::/8" },
+  { prefix: "ff05::", description: "multicast ff05::/8" },
+  { prefix: "ff06::", description: "multicast ff06::/8" },
+  { prefix: "ff07::", description: "multicast ff07::/8" },
+  { prefix: "ff08::", description: "multicast ff08::/8" },
+  { prefix: "ff09::", description: "multicast ff09::/8" },
+  { prefix: "ff0a::", description: "multicast ff0a::/8" },
+  { prefix: "ff0b::", description: "multicast ff0b::/8" },
+  { prefix: "ff0c::", description: "multicast ff0c::/8" },
+  { prefix: "ff0d::", description: "multicast ff0d::/8" },
+  { prefix: "ff0e::", description: "multicast ff0e::/8" },
+  { prefix: "ff0f::", description: "multicast ff0f::/8" },
+  { prefix: "100:", description: "discard 100::/64" },
+  { prefix: "2001:db8:", description: "documentation 2001:db8::/32" },
+  { prefix: "::ffff:", description: "IPv4-mapped" },
+  { prefix: "64:ff9b:", description: "IPv4-IPv6 translation" },
+];
+
 function isBlockedIpv6(hostname: string) {
   const normalized = hostname.trim().toLowerCase();
-  return normalized === "::1" || normalized.startsWith("fc") || normalized.startsWith("fd") || normalized.startsWith("fe80:");
+  for (const { prefix } of IPV6_BLOCKED_PREFIXES) {
+    if (normalized === prefix || normalized.startsWith(prefix)) return true;
+  }
+  return false;
+}
+
+function isPrivateOrBlockedAddress(hostname: string, ipVersion: number): boolean {
+  if (ipVersion === 4) {
+    return isPrivateIpv4(hostname);
+  }
+  if (ipVersion === 6) {
+    if (isBlockedIpv6(hostname)) {
+      // For IPv4-mapped IPv6 (::ffff:HHHH:HHHH) we already block on prefix,
+      // but also re-check the decoded IPv4 against the IPv4 private range so
+      // a public IPv4-mapped address is allowed while private is rejected.
+      if (/^::ffff:/i.test(hostname)) {
+        const innerV4 = decodeIpv4MappedToV4(hostname);
+        if (!innerV4) return true;
+        return isPrivateIpv4(innerV4);
+      }
+      return true;
+    }
+    return false;
+  }
+  return false;
 }
 
 function allowLocalAgentUrls() {
-  return process.env.NODE_ENV !== "production" || isTrue(process.env.ALLOW_LOCAL_AGENT_URLS);
+  return process.env.NODE_ENV !== "production";
 }
 
 /**
@@ -97,7 +165,7 @@ export function normalizeAndValidateHostUrl(input: string, connectionMode?: stri
     throw new Error("host_url must not include query parameters or fragments");
   }
 
-  const hostname = parsed.hostname.trim().toLowerCase();
+  const hostname = parsed.hostname.trim().toLowerCase().replace(/^\[|\]$/g, "");
   if (!hostname) {
     throw new Error("host_url must include a hostname");
   }
@@ -113,10 +181,8 @@ export function normalizeAndValidateHostUrl(input: string, connectionMode?: stri
     if (!allowLocalAgentUrls()) {
       throw new Error("host_url cannot target localhost in this environment");
     }
-  } else if (ipVersion === 4 && isPrivateIpv4(hostname)) {
-    throw new Error("host_url cannot target private, loopback, or link-local IPv4 ranges");
-  } else if (ipVersion === 6 && isBlockedIpv6(hostname)) {
-    throw new Error("host_url cannot target loopback, link-local, or unique-local IPv6 ranges");
+  } else if (isPrivateOrBlockedAddress(hostname, ipVersion)) {
+    throw new Error("host_url cannot target private, loopback, link-local, or unique-local ranges");
   }
 
   parsed.hostname = hostname;
@@ -150,7 +216,7 @@ function parseExternalHttpsUrl(input: string) {
     throw new Error("URL must not include embedded credentials");
   }
 
-  const hostname = parsed.hostname.trim().toLowerCase();
+  const hostname = parsed.hostname.trim().toLowerCase().replace(/^\[|\]$/g, "");
   if (!hostname) {
     throw new Error("URL must include a hostname");
   }
@@ -159,11 +225,8 @@ function parseExternalHttpsUrl(input: string) {
   if (isLocalHostname(hostname)) {
     throw new Error("URL cannot target localhost");
   }
-  if (ipVersion === 4 && isPrivateIpv4(hostname)) {
-    throw new Error("URL cannot target private, loopback, or link-local IPv4 ranges");
-  }
-  if (ipVersion === 6 && isBlockedIpv6(hostname)) {
-    throw new Error("URL cannot target loopback, link-local, or unique-local IPv6 ranges");
+  if (isPrivateOrBlockedAddress(hostname, ipVersion)) {
+    throw new Error("URL cannot target private, loopback, link-local, or unique-local ranges");
   }
 
   parsed.hostname = hostname;

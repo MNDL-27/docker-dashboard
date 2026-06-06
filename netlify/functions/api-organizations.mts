@@ -1,18 +1,14 @@
 import type { Config } from '@netlify/functions';
+import { buildCorsHeaders } from './lib/security.mjs';
 import { sql } from './lib/db.mjs';
 import { requireAuth } from './lib/auth.mjs';
-import { assertOrganizationWriteAllowed, assertUserOrganizationCapacityAvailable } from './lib/access-controls.mjs';
-import { clerkClient } from './lib/clerk.mjs';
+import { assertOrganizationWriteAllowed } from './lib/access-controls.mjs';
 
-const headers = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-  'Content-Type': 'application/json'
-};
 
+const buildHeaders = (req: Request) => buildCorsHeaders(req);
 export default async (req: Request) => {
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers });
+    return new Response(null, { headers: buildHeaders(req) });
   }
 
   try {
@@ -26,24 +22,18 @@ export default async (req: Request) => {
         WHERE om.user_id = ${authContext.userId}
         ORDER BY o.created_at ASC
       `;
-      return new Response(JSON.stringify(orgs), { headers });
+      return new Response(JSON.stringify(orgs), { headers: buildHeaders(req) });
     }
 
     if (req.method === 'POST') {
       const { name } = await req.json();
-      if (!name) return new Response(JSON.stringify({ error: 'Name required' }), { status: 400, headers });
-
-      // Enforce org limit based on user's effective plan
-      await assertUserOrganizationCapacityAvailable({
-        userId: authContext.userId,
-        isPlatformAdmin: authContext.isPlatformAdmin,
-      });
+      if (!name) return new Response(JSON.stringify({ error: 'Name required' }), { status: 400, headers: buildHeaders(req) });
 
       const [{ create_organization: orgId }] = await sql`
         SELECT public.create_organization(${name}, ${authContext.userId})
       `;
 
-      return new Response(JSON.stringify({ id: orgId }), { headers });
+      return new Response(JSON.stringify({ id: orgId }), { headers: buildHeaders(req) });
     }
 
     if (req.method === 'PATCH') {
@@ -55,7 +45,7 @@ export default async (req: Request) => {
       if (!allowedStatuses.includes(onboardingStatus)) {
         return new Response(
           JSON.stringify({ error: 'Invalid onboardingStatus. Allowed values: not_started, skipped, completed' }),
-          { status: 400, headers }
+          { status: 400, headers: buildHeaders(req) }
         );
       }
 
@@ -109,11 +99,11 @@ export default async (req: Request) => {
           } else if (activeClerkOrgId === requestedClerkOrgId) {
             return new Response(
               JSON.stringify({ error: 'Organization sync pending. Please retry.', retry: true }),
-              { status: 202, headers }
+              { status: 202, headers: buildHeaders(req) }
             );
           }
 
-          return new Response(JSON.stringify({ error: 'Requested organization not found for current user' }), { status: 404, headers });
+          return new Response(JSON.stringify({ error: 'Requested organization not found for current user' }), { status: 404, headers: buildHeaders(req) });
         }
 
         targetOrgId = requestedOrgRows[0].id;
@@ -121,13 +111,13 @@ export default async (req: Request) => {
 
       if (!targetOrgId) {
         if (membershipRows.length === 0) {
-          return new Response(JSON.stringify({ error: 'No organization membership found' }), { status: 400, headers });
+          return new Response(JSON.stringify({ error: 'No organization membership found' }), { status: 400, headers: buildHeaders(req) });
         }
 
         if (membershipRows.length > 1) {
           return new Response(
             JSON.stringify({ error: 'Multiple organizations found. Please select an active organization and retry.' }),
-            { status: 400, headers }
+            { status: 400, headers: buildHeaders(req) }
           );
         }
 
@@ -141,7 +131,7 @@ export default async (req: Request) => {
       `;
 
       if (memberships.length === 0) {
-        return new Response(JSON.stringify({ error: 'Access denied' }), { status: 403, headers });
+        return new Response(JSON.stringify({ error: 'Access denied' }), { status: 403, headers: buildHeaders(req) });
       }
 
       await assertOrganizationWriteAllowed({
@@ -166,17 +156,17 @@ export default async (req: Request) => {
       `;
 
       if (updated.length === 0) {
-        return new Response(JSON.stringify({ error: 'Organization not found' }), { status: 404, headers });
+        return new Response(JSON.stringify({ error: 'Organization not found' }), { status: 404, headers: buildHeaders(req) });
       }
 
-      return new Response(JSON.stringify(updated[0]), { headers });
+      return new Response(JSON.stringify(updated[0]), { headers: buildHeaders(req) });
     }
 
     if (req.method === 'DELETE') {
       const url = new URL(req.url);
       const rawOrgId = url.searchParams.get('orgId');
       if (!rawOrgId) {
-        return new Response(JSON.stringify({ error: 'orgId query parameter required' }), { status: 400, headers });
+        return new Response(JSON.stringify({ error: 'orgId query parameter required' }), { status: 400, headers: buildHeaders(req) });
       }
 
       let deleteOrgId = rawOrgId;
@@ -194,12 +184,12 @@ export default async (req: Request) => {
             const userMem = memberships.data.find((m: any) => m.publicUserData?.userId === authContext.clerkUserId);
             if ((userMem && (userMem.role === 'org:admin' || userMem.role === 'org:owner' || userMem.role === 'admin')) || authContext.isPlatformAdmin) {
               await clerkClient.organizations.deleteOrganization(rawOrgId);
-              return new Response(JSON.stringify({ success: true, message: 'Cleaned up ghost organization' }), { headers });
+              return new Response(JSON.stringify({ success: true, message: 'Cleaned up ghost organization' }), { headers: buildHeaders(req) });
             }
           } catch (e: any) {
             console.error('[api-organizations] Failed to check/delete ghost org from Clerk:', e?.message);
           }
-          return new Response(JSON.stringify({ error: 'Organization not found' }), { status: 404, headers });
+          return new Response(JSON.stringify({ error: 'Organization not found' }), { status: 404, headers: buildHeaders(req) });
         }
         deleteOrgId = orgLookup[0].id;
       }
@@ -213,19 +203,19 @@ export default async (req: Request) => {
       `;
 
       if (ownerCheck.length === 0) {
-        return new Response(JSON.stringify({ error: 'Organization not found' }), { status: 404, headers });
+        return new Response(JSON.stringify({ error: 'Organization not found' }), { status: 404, headers: buildHeaders(req) });
       }
 
       const isMember = ownerCheck[0].role !== null;
       const isCreator = ownerCheck[0].created_by === authContext.userId;
 
       if (!isMember && !isCreator && !authContext.isPlatformAdmin) {
-        return new Response(JSON.stringify({ error: 'Organization not found or you are not a member' }), { status: 404, headers });
+        return new Response(JSON.stringify({ error: 'Organization not found or you are not a member' }), { status: 404, headers: buildHeaders(req) });
       }
 
       const role = ownerCheck[0].role;
       if (role !== 'owner' && role !== 'admin' && !isCreator && !authContext.isPlatformAdmin) {
-        return new Response(JSON.stringify({ error: 'Only the organization owner or admin can delete it' }), { status: 403, headers });
+        return new Response(JSON.stringify({ error: 'Only the organization owner or admin can delete it' }), { status: 403, headers: buildHeaders(req) });
       }
 
       // Refuse deletion if org still has hosts
@@ -238,7 +228,7 @@ export default async (req: Request) => {
       if (Number.parseInt(hostCount ?? '0', 10) > 0) {
         return new Response(
           JSON.stringify({ error: 'Cannot delete an organization that still has connected hosts. Remove all hosts first.' }),
-          { status: 409, headers }
+          { status: 409, headers: buildHeaders(req) }
         );
       }
 
@@ -250,7 +240,7 @@ export default async (req: Request) => {
       `;
 
       if (deleted.length === 0) {
-        return new Response(JSON.stringify({ error: 'Organization not found' }), { status: 404, headers });
+        return new Response(JSON.stringify({ error: 'Organization not found' }), { status: 404, headers: buildHeaders(req) });
       }
 
       if (deleted[0].clerk_org_id) {
@@ -261,10 +251,10 @@ export default async (req: Request) => {
         }
       }
 
-      return new Response(JSON.stringify({ success: true, id: deleted[0].id }), { headers });
+      return new Response(JSON.stringify({ success: true, id: deleted[0].id }), { headers: buildHeaders(req) });
     }
 
-    return new Response(JSON.stringify({ error: 'Method not allowed' }), { status: 405, headers });
+    return new Response(JSON.stringify({ error: 'Method not allowed' }), { status: 405, headers: buildHeaders(req) });
 
   } catch (err: any) {
     console.error('[api-organizations] caught error:', err?.message);
@@ -276,7 +266,7 @@ export default async (req: Request) => {
       });
     }
 
-    return new Response(JSON.stringify({ error: err.message || 'Unauthorized' }), { status: 401, headers });
+    return new Response(JSON.stringify({ error: err.message || 'Unauthorized' }), { status: 401, headers: buildHeaders(req) });
   }
 };
 

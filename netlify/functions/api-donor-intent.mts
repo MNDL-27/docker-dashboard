@@ -18,13 +18,26 @@ export default async (req: Request) => {
     const auth = await requireAuth(req);
     const body = await req.json().catch(() => ({} as Record<string, unknown>));
 
+    const FORWARDED_FIELDS = new Set([
+      "amount_cents",
+      "currency",
+      "provider",
+      "interval",
+      "intent",
+      "metadata",
+    ]);
+    const sanitizedBody: Record<string, unknown> = {};
+    for (const key of FORWARDED_FIELDS) {
+      if (key in body) sanitizedBody[key] = (body as Record<string, unknown>)[key];
+    }
+
     const nextReq = new Request(req.url, {
       method: "POST",
       headers: req.headers,
       body: JSON.stringify({
-        ...body,
-        organization_id: body.organization_id || auth.orgId,
-        payer_email: body.payer_email || auth.email,
+        ...sanitizedBody,
+        organization_id: auth.orgId,
+        payer_email: auth.email,
       }),
     });
 

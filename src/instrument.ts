@@ -14,7 +14,7 @@ Sentry.init({
   dsn: import.meta.env.VITE_SENTRY_DSN,
   environment: import.meta.env.MODE,
   release: import.meta.env.VITE_APP_VERSION,
-  sendDefaultPii: true,
+  sendDefaultPii: false,
   ignoreErrors: [
     /Failed to fetch dynamically imported module/i,
   ],

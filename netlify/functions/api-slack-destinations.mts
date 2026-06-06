@@ -1,5 +1,6 @@
 import type { Config } from '@netlify/functions';
 
+import { buildCorsHeaders } from './lib/security.mjs';
 import { requireAuth } from './lib/auth.mjs';
 import { assertOrganizationFeatureAllowed, resolveOrganizationEntitlements } from './lib/access-controls.mjs';
 import { ensureAlertsSchema } from './lib/ensure-alerts-schema.mjs';
@@ -11,15 +12,11 @@ import {
   updateSlackDestination,
 } from './lib/slack-delivery.mjs';
 
-const headers = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-  'Content-Type': 'application/json',
-};
 
+const buildHeaders = (req: Request) => buildCorsHeaders(req);
 export default async (req: Request) => {
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers });
+    return new Response(null, { headers: buildHeaders(req) });
   }
 
   try {
@@ -34,14 +31,14 @@ export default async (req: Request) => {
 
     if (!entitlements.canUseSlackDestinations) {
       if (req.method === 'GET') {
-        return new Response(JSON.stringify({ destinations: [], role, can_manage: false }), { headers });
+        return new Response(JSON.stringify({ destinations: [], role, can_manage: false }), { headers: buildHeaders(req) });
       }
       throw new Error("This feature requires an Individual, Business, or Dedicated subscription.");
     }
 
     if (req.method === 'GET') {
       const destinations = await listSlackDestinations(auth);
-      return new Response(JSON.stringify({ destinations, role, can_manage: ['owner', 'admin'].includes(role) }), { headers });
+      return new Response(JSON.stringify({ destinations, role, can_manage: ['owner', 'admin'].includes(role) }), { headers: buildHeaders(req) });
     }
 
     if (req.method === 'POST') {
@@ -50,14 +47,14 @@ export default async (req: Request) => {
 
       if (body?.action === 'test') {
         if (!body?.id) {
-          return new Response(JSON.stringify({ error: 'Destination id required' }), { status: 400, headers });
+          return new Response(JSON.stringify({ error: 'Destination id required' }), { status: 400, headers: buildHeaders(req) });
         }
         const attempt = await sendSlackDestinationTest(auth, body.id);
-        return new Response(JSON.stringify(attempt), { headers });
+        return new Response(JSON.stringify(attempt), { headers: buildHeaders(req) });
       }
 
       if (!body?.name?.trim() || !body?.webhook_url?.trim()) {
-        return new Response(JSON.stringify({ error: 'Name and Slack webhook URL are required' }), { status: 400, headers });
+        return new Response(JSON.stringify({ error: 'Name and Slack webhook URL are required' }), { status: 400, headers: buildHeaders(req) });
       }
 
       const destination = await createSlackDestination(auth, {
@@ -65,14 +62,14 @@ export default async (req: Request) => {
         webhook_url: body.webhook_url.trim(),
         enabled: body.enabled ?? true,
       });
-      return new Response(JSON.stringify(destination), { status: 201, headers });
+      return new Response(JSON.stringify(destination), { status: 201, headers: buildHeaders(req) });
     }
 
     if (req.method === 'PATCH') {
       await requireOrganizationAdmin(auth);
       const body = await req.json();
       if (!body?.id) {
-        return new Response(JSON.stringify({ error: 'Destination id required' }), { status: 400, headers });
+        return new Response(JSON.stringify({ error: 'Destination id required' }), { status: 400, headers: buildHeaders(req) });
       }
 
       const destination = await updateSlackDestination(auth, {
@@ -81,17 +78,17 @@ export default async (req: Request) => {
         webhook_url: typeof body.webhook_url === 'string' ? body.webhook_url.trim() : undefined,
         enabled: Object.prototype.hasOwnProperty.call(body, 'enabled') ? body.enabled : undefined,
       });
-      return new Response(JSON.stringify(destination), { headers });
+      return new Response(JSON.stringify(destination), { headers: buildHeaders(req) });
     }
 
-    return new Response(JSON.stringify({ error: 'Method not allowed' }), { status: 405, headers });
+    return new Response(JSON.stringify({ error: 'Method not allowed' }), { status: 405, headers: buildHeaders(req) });
   } catch (error: any) {
     const status = /Admin access required|Access denied|require a[n]? /.test(error?.message || '')
       ? 403
       : /Slack webhook URL|URL must|URL cannot/.test(error?.message || '')
         ? 400
         : 500;
-    return new Response(JSON.stringify({ error: error?.message || 'Failed to process Slack destinations' }), { status, headers });
+    return new Response(JSON.stringify({ error: error?.message || 'Failed to process Slack destinations' }), { status, headers: buildHeaders(req) });
   }
 };
 

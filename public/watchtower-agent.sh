@@ -325,7 +325,24 @@ done
 
 SOCKET_PATH="${DOCKER_SOCK_OVERRIDE:-$DOCKER_SOCKET}"
 
-if [ "$AGENT_KEY" != "$AGENT_API_KEY" ]; then
+# Constant-time-ish string equality. We compare every byte and OR the
+# results so total time is proportional to input length, not to the
+# position of the first mismatch (which a plain `[ a != b ]` would
+# short-circuit on and leak).
+ct_equals() {
+  awk -v a="$1" -v b="$2" 'BEGIN {
+    if (length(a) != length(b)) { exit 1 }
+    diff = 0
+    for (i = 1; i <= length(a); i++) {
+      c = substr(a, i, 1)
+      d = substr(b, i, 1)
+      diff = diff || (c != d)
+    }
+    exit diff
+  }'
+}
+
+if ! ct_equals "$AGENT_KEY" "$AGENT_API_KEY"; then
   respond_json '401 Unauthorized' '{"error":"Invalid API key"}'
   exit 0
 fi

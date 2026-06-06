@@ -10,6 +10,7 @@ import { createProblemResponse as createBaseProblemResponse } from '../../shared
 import { ProxyRequestParamsSchema } from '../../shared/schema/proxy.ts';
 import { formatDiagnosticDetail, parseDiagnosticPayload } from '../../shared/lib/diagnostics.ts';
 import { buildCorsHeaders, applyRateLimit, RATE_LIMITS, logSecurityEvent, getClientIp } from './lib/security.mjs';
+import { parseTarDirectory } from './lib/tar-directory-parser.mjs';
 
 function sanitizeContainerId(id: string): string {
   const normalized = id.trim();
@@ -47,6 +48,7 @@ function buildRequest(
 
   return { url, method, headers: reqHeaders };
 }
+
 
 function buildAgentRequest(
   host: { host_url: string; connection_mode: string; docker_socket_path: string },
@@ -985,175 +987,48 @@ export default async (req: Request) => {
 
         const sanitizedId = sanitizeContainerId(containerId);
 
-        // Use sh -c with a portable ls command that falls back for BusyBox/Alpine
-        // GNU coreutils: ls -la --time-style=long-iso <path>
-        // BusyBox fallback: ls -la <path>  (no --time-style support)
-        const lsCmd = `ls -la --time-style=long-iso ${JSON.stringify(fsPath)} 2>/dev/null || ls -la ${JSON.stringify(fsPath)}`;
-
-        // Build the exec create request manually since we need to send a JSON body.
-        const execBody = JSON.stringify({
-          AttachStdout: true,
-          AttachStderr: true,
-          Cmd: ['sh', '-c', lsCmd],
-        });
-
-        const execCreateUrl = buildValidatedAgentUrl(
-          host.host_url.replace(/\/$/, ''),
-          `/docker/containers/${sanitizedId}/exec`,
-        );
-        const execCreateHeaders: Record<string, string> = { 'Content-Type': 'application/json' };
-        if (secrets?.agent_api_key) execCreateHeaders['X-Agent-Key'] = secrets.agent_api_key;
-        if (host.docker_socket_path && host.docker_socket_path !== '/var/run/docker.sock') {
-          execCreateHeaders['X-Docker-Socket'] = host.docker_socket_path;
-        }
-        if (host.connection_mode === 'cloudflare_tunnel') {
-          if (secrets?.cf_service_token_id) execCreateHeaders['CF-Access-Client-Id'] = secrets.cf_service_token_id;
-          if (secrets?.cf_service_token_secret) execCreateHeaders['CF-Access-Client-Secret'] = secrets.cf_service_token_secret;
-        }
-
-        let execCreateResponse: Response;
-        try {
-          execCreateResponse = await fetch(execCreateUrl, {
-            method: 'POST',
-            headers: execCreateHeaders,
-            body: execBody,
-            signal: AbortSignal.timeout(8000),
-          });
-        } catch (err: any) {
-          return createProblemResponse(502, "Failed to create exec instance", err?.message);
-        }
-
-        if (!execCreateResponse.ok) {
-          const detail = await execCreateResponse.text();
-          return createProblemResponse(execCreateResponse.status || 502, "Failed to create exec", detail);
-        }
-
-        const execData = await execCreateResponse.json();
-        const execId = execData?.Id;
-        if (!execId) {
-          return createProblemResponse(502, "No exec ID returned");
-        }
-
-        // Start exec
-        const execStartUrl = buildValidatedAgentUrl(
-          host.host_url.replace(/\/$/, ''),
-          `/docker/exec/${execId}/start`,
+        // Use Docker's archive API to fetch the directory contents as a tar
+        // stream. This avoids spawning `sh -c` in the container, eliminating
+        // the shell-injection surface flagged in the prior security audit.
+        const encodedDirPath = encodeURIComponent(fsPath);
+        const archiveReq = buildRequest(
+          host as any,
+          secrets,
+          `/containers/${sanitizedId}/archive?path=${encodedDirPath}`,
+          'GET',
         );
 
-        let execStartResponse: Response;
-        try {
-          execStartResponse = await fetch(execStartUrl, {
-            method: 'POST',
-            headers: execCreateHeaders,
-            body: JSON.stringify({ Detach: false, Tty: false }),
-            signal: AbortSignal.timeout(8000),
-          });
-        } catch (err: any) {
-          return createProblemResponse(502, "Failed to start exec", err?.message);
-        }
+        const archiveResp = await dockerFetch(archiveReq.url, archiveReq.method, archiveReq.headers, 10000);
 
-        if (!execStartResponse.ok) {
-          const detail = await execStartResponse.text();
-          return createProblemResponse(execStartResponse.status || 502, "Failed to exec ls", detail);
-        }
-
-        // Parse the multiplexed stream output
-        const execRawBytes = new Uint8Array(await execStartResponse.arrayBuffer());
-        let lsOutput = '';
-        let lsStderr = '';
-        let execOffset = 0;
-
-        while (execOffset + 8 <= execRawBytes.length) {
-          const streamType = execRawBytes[execOffset]; // 1=stdout, 2=stderr
-          const frameSize =
-            (execRawBytes[execOffset + 4] << 24) |
-            (execRawBytes[execOffset + 5] << 16) |
-            (execRawBytes[execOffset + 6] << 8) |
-            execRawBytes[execOffset + 7];
-          execOffset += 8;
-
-          if (execOffset + frameSize <= execRawBytes.length) {
-            const text = new TextDecoder().decode(execRawBytes.slice(execOffset, execOffset + frameSize));
-            if (streamType === 1) lsOutput += text;
-            else if (streamType === 2) lsStderr += text;
+        if (!archiveResp.ok) {
+          const detail = await archiveResp.text();
+          if (archiveResp.status === 404) {
+            return createProblemResponse(404, "Directory not found", `${fsPath} does not exist in this container`);
           }
-          execOffset += frameSize;
-        }
-
-        // Fallback: if no framing detected, treat entire output as plain text
-        if (!lsOutput && execOffset === 0 && execRawBytes.length > 0) {
-          lsOutput = new TextDecoder().decode(execRawBytes);
-        }
-
-        if (lsStderr && !lsOutput) {
-          return createProblemResponse(400, "Directory listing failed", lsStderr.trim());
-        }
-
-        // Parse ls -la output into structured entries
-        const lines = lsOutput.split('\n').filter(Boolean);
-        const entries: Array<{
-          name: string;
-          type: 'file' | 'directory' | 'symlink' | 'other';
-          size: number;
-          permissions: string;
-          modified: string;
-          linkTarget?: string;
-        }> = [];
-
-        for (const line of lines) {
-          // Skip "total" line
-          if (line.startsWith('total ')) continue;
-
-          // Try GNU coreutils long-iso format first:
-          //   drwxr-xr-x  2 root root 4096 2024-03-15 10:30 dirname
-          // Then BusyBox format (Month Day HH:MM or Month Day Year):
-          //   drwxr-xr-x  2 root root 4096 Mar 15 10:30 dirname
-          //   drwxr-xr-x  2 root root 4096 Mar 15  2024 dirname
-          let parts = line.match(
-            /^([dlcbps-])([rwxsStT-]{9})\s+\d+\s+\S+\s+\S+\s+(\d+)\s+(\d{4}-\d{2}-\d{2}\s+\d{2}:\d{2})\s+(.+)$/
+          if (archiveResp.status === 400) {
+            return createProblemResponse(400, "Not a directory", `${fsPath} is not a directory`);
+          }
+          return createProblemResponse(
+            archiveResp.status || 502,
+            "Failed to list directory",
+            detail,
           );
-          if (!parts) {
-            // BusyBox / traditional ls -la format
-            parts = line.match(
-              /^([dlcbps-])([rwxsStT-]{9})\s+\d+\s+\S+\s+\S+\s+(\d+)\s+(\w{3}\s+\d{1,2}\s+[\d:]+(?:\s+\d{4})?)\s+(.+)$/
-            );
-          }
-          if (!parts) continue;
-
-          const [, typeChar, perms, sizeStr, dateStr, nameField] = parts;
-          const fileType =
-            typeChar === 'd' ? 'directory' as const :
-            typeChar === 'l' ? 'symlink' as const :
-            typeChar === '-' ? 'file' as const :
-            'other' as const;
-
-          let name = nameField;
-          let linkTarget: string | undefined;
-          if (fileType === 'symlink' && nameField.includes(' -> ')) {
-            const arrowIndex = nameField.indexOf(' -> ');
-            name = nameField.slice(0, arrowIndex);
-            linkTarget = nameField.slice(arrowIndex + 4);
-          }
-
-          // Skip . and ..
-          if (name === '.' || name === '..') continue;
-
-          entries.push({
-            name,
-            type: fileType,
-            size: parseInt(sizeStr, 10),
-            permissions: typeChar + perms,
-            modified: dateStr,
-            linkTarget,
-          });
         }
 
-        // Sort: directories first, then alphabetical
-        entries.sort((a, b) => {
-          if (a.type === 'directory' && b.type !== 'directory') return -1;
-          if (a.type !== 'directory' && b.type === 'directory') return 1;
-          return a.name.localeCompare(b.name);
-        });
+        const tarBytes = new Uint8Array(await archiveResp.arrayBuffer());
+
+        // Cap directory listing tar size — a directory with thousands of
+        // large files could otherwise produce an arbitrarily large response.
+        const MAX_LISTING_TAR = 8 * 1024 * 1024;
+        if (tarBytes.length > MAX_LISTING_TAR) {
+          return createProblemResponse(
+            413,
+            "Directory listing too large",
+            "This directory contains too many or too large entries to list in a single request.",
+          );
+        }
+
+        const entries = parseTarDirectory(tarBytes);
 
         return new Response(JSON.stringify({ entries, path: fsPath }), { headers: corsHeaders });
       }

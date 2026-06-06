@@ -1213,12 +1213,76 @@ cat > "${INSTALL_DIR}/watchtower-agent-update.sh" <<'UPDATE_HELPER_EOF'
 #!/usr/bin/env bash
 set -euo pipefail
 INSTALL_DIR="/opt/watchtower-agent"
-UPDATE_URL="https://app.dockerdash.app/watchtower-agent-update.sh"
-TMP_FILE="$(mktemp "${TMPDIR:-/tmp}/watchtower-agent-update.XXXXXX")"
-trap 'rm -f "$TMP_FILE"' EXIT INT TERM
-curl -fsSL "$UPDATE_URL" -o "$TMP_FILE" || { echo "ERROR: Failed to download updater from ${UPDATE_URL}" >&2; exit 1; }
-chmod +x "$TMP_FILE"
-exec "$TMP_FILE" "$@"
+RUNTIME_URL="https://app.dockerdash.app/watchtower-agent.sh"
+MANIFEST_URL="https://app.dockerdash.app/watchtower-agent-manifest.json"
+
+# Verify the downloaded runtime against the published SHA-256 manifest
+# before installing. The manifest is served from the same CDN, so this
+# raises the bar from "compromise the runtime" to "compromise the runtime
+# AND the manifest"; publishing the manifest via a second channel
+# (GitHub release asset) makes a coordinated compromise harder.
+verify_runtime_hash() {
+  local runtime_file="$1" manifest_file="$2"
+  if ! command -v sha256sum >/dev/null 2>&1; then
+    echo "ERROR: sha256sum is required for manifest verification" >&2
+    return 1
+  fi
+  # Parse the manifest with whichever JSON tool is available.
+  local expected=""
+  if command -v python3 >/dev/null 2>&1; then
+    expected=$(python3 -c "
+import json,sys
+m=json.load(open(sys.argv[1]))
+for a in m.get('artifacts') or []:
+    if a.get('name')=='watchtower-agent.sh':
+        print(a.get('sha256') or '')
+        break
+" "$manifest_file" 2>/dev/null)
+  elif command -v node >/dev/null 2>&1; then
+    expected=$(node -e "
+const fs=require('fs');
+const m=JSON.parse(fs.readFileSync(process.argv[1],'utf8'));
+const e=(m.artifacts||[]).find(a=>a.name==='watchtower-agent.sh');
+if(e && e.sha256) process.stdout.write(e.sha256);
+" "$manifest_file" 2>/dev/null)
+  elif command -v jq >/dev/null 2>&1; then
+    expected=$(jq -r '.artifacts[] | select(.name=="watchtower-agent.sh") | .sha256' "$manifest_file" 2>/dev/null)
+  else
+    # Last-resort: pull the first sha256 we see inside the watchtower-agent.sh object.
+    expected=$(awk '
+      /"name"[[:space:]]*:[[:space:]]*"watchtower-agent.sh"/ {found=1; next}
+      found && /"sha256"[[:space:]]*:[[:space:]]*"/ {
+        match($0, /"sha256"[[:space:]]*:[[:space:]]*"([0-9a-f]+)"/, m)
+        if (m[1] != "") { print m[1]; exit }
+      }
+    ' "$manifest_file")
+  fi
+  if [ -z "$expected" ]; then
+    echo "ERROR: manifest is missing an entry for watchtower-agent.sh" >&2
+    return 1
+  fi
+  local actual
+  actual=$(sha256sum "$runtime_file" | awk '{print $1}')
+  if [ "$expected" != "$actual" ]; then
+    echo "ERROR: runtime hash mismatch." >&2
+    echo "  expected: $expected" >&2
+    echo "  actual:   $actual" >&2
+    return 1
+  fi
+  return 0
+}
+
+RUNTIME_FILE="$(mktemp "${TMPDIR:-/tmp}/watchtower-agent-runtime.XXXXXX")"
+MANIFEST_FILE="$(mktemp "${TMPDIR:-/tmp}/watchtower-agent-manifest.XXXXXX")"
+trap 'rm -f "$RUNTIME_FILE" "$MANIFEST_FILE"' EXIT INT TERM
+
+curl -fsSL "$MANIFEST_URL" -o "$MANIFEST_FILE" || { echo "ERROR: Failed to download manifest from ${MANIFEST_URL}" >&2; exit 1; }
+curl -fsSL "$RUNTIME_URL" -o "$RUNTIME_FILE" || { echo "ERROR: Failed to download runtime from ${RUNTIME_URL}" >&2; exit 1; }
+verify_runtime_hash "$RUNTIME_FILE" "$MANIFEST_FILE" || exit 1
+
+install -m 0755 "$RUNTIME_FILE" "${INSTALL_DIR}/watchtower-agent.sh"
+echo "watchtower-agent updated. Restart the service to apply:"
+echo "  sudo systemctl restart watchtower-agent"
 UPDATE_HELPER_EOF
 chmod 0755 "${INSTALL_DIR}/watchtower-agent-update.sh"
 install -m 0755 "${INSTALL_DIR}/watchtower-agent-update.sh" "$UPDATE_BIN"

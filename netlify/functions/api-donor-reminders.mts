@@ -1,24 +1,31 @@
 import type { Config } from "@netlify/functions";
 
+import { buildCorsHeaders } from './lib/security.mjs';
 import { donorJsonHeaders, sendDueDonorReminders, sendDueDonorRevocations } from "./lib/donor-billing.mjs";
 
 const headers = donorJsonHeaders();
 
+
+const buildHeaders = (req: Request) => buildCorsHeaders(req);
 export default async (req: Request) => {
   if (req.method === "OPTIONS") {
-    return new Response(null, { headers });
+    return new Response(null, { headers: buildHeaders(req) });
   }
 
-  if (req.method !== "POST" && req.method !== "GET") {
-    return new Response(JSON.stringify({ error: "Method not allowed" }), { status: 405, headers });
+  if (req.method !== "POST") {
+    return new Response(JSON.stringify({ error: "Method not allowed" }), { status: 405, headers: buildHeaders(req) });
   }
 
   const cronSecret = (process.env.DONOR_REMINDER_CRON_SECRET || "").trim();
-  if (cronSecret) {
-    const provided = req.headers.get("x-cron-secret") || "";
-    if (provided !== cronSecret) {
-      return new Response(JSON.stringify({ error: "Forbidden" }), { status: 403, headers });
-    }
+  if (!cronSecret) {
+    return new Response(
+      JSON.stringify({ error: "Cron secret is not configured" }),
+      { status: 503, headers: buildHeaders(req) },
+    );
+  }
+  const provided = req.headers.get("x-cron-secret") || "";
+  if (provided !== cronSecret) {
+    return new Response(JSON.stringify({ error: "Forbidden" }), { status: 403, headers: buildHeaders(req) });
   }
 
   try {
@@ -39,12 +46,12 @@ export default async (req: Request) => {
         revocations_scanned: revocationsResult.scanned,
         errors: combinedErrors.length > 0 ? combinedErrors : undefined,
       }),
-      { status, headers },
+      { status: 200, headers: buildHeaders(req) },
     );
   } catch (error) {
     return new Response(
       JSON.stringify({ error: error instanceof Error ? error.message : "Failed to send donor reminders" }),
-      { status: 500, headers },
+      { status: 500, headers: buildHeaders(req) },
     );
   }
 };
