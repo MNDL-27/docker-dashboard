@@ -61,7 +61,7 @@ export function AdminBillingManagement() {
           <SelectContent>
             {(organizationsQuery.data ?? []).map((organization) => (
               <SelectItem key={organization.id} value={organization.id}>
-                {organization.name}
+                {organization.name} ({organization.user_id} · {organization.email})
               </SelectItem>
             ))}
           </SelectContent>
