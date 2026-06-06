@@ -112,8 +112,8 @@ function shell({
                 ${
                   footer
                     ? footer
-                    : \`You're receiving this because you signed up for <a href="https://dockerdash.app" style="color:\${COLOR.accent};text-decoration:none;">dockerdash.app</a>.<br>
-                  Questions? Reply to this email — we're here to help.\`
+                    : `You're receiving this because you signed up for <a href="https://dockerdash.app" style="color:${COLOR.accent};text-decoration:none;">dockerdash.app</a>.<br>
+                  Questions? Reply to this email — we're here to help.`
                 }
               </p>
               <p style="margin:12px 0 0;color:${COLOR.textMuted};font-size:11px;text-align:center;">
