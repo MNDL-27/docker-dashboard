@@ -61,7 +61,7 @@ export function AdminBillingManagement() {
           <SelectContent>
             {(organizationsQuery.data ?? []).map((organization) => (
               <SelectItem key={organization.id} value={organization.id}>
-                {organization.name} ({organization.user_id} · {organization.email})
+                {organization.name}
               </SelectItem>
             ))}
           </SelectContent>
@@ -72,6 +72,8 @@ export function AdminBillingManagement() {
             <div className="rounded-lg border border-border p-4">
               <div className="text-sm font-medium">Provider mirror</div>
               <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                <DetailField label="User ID" value={selectedBillingOrganization.user_id} />
+                <DetailField label="Email" value={selectedBillingOrganization.email} />
                 <DetailField label="Plan" value={selectedBillingOrganization.plan} />
                 <DetailField label="Status" value={selectedBillingOrganization.subscription_status} />
 
