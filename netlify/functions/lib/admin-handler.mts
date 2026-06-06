@@ -997,8 +997,9 @@ async function sendAdminOnboardingReminder(userId: string, req: Request) {
 
   const res = await sendEmail({
     to: user.email,
-    subject: "Still looking to monitor your first Docker host?",
-    html: template,
+    subject: template.subject,
+    text: template.body,
+    html: template.html,
   });
 
   if (res.error) {
@@ -1069,8 +1070,9 @@ async function sendAdminRenewalReminder(organizationId: string, req: Request) {
 
   const res = await sendEmail({
     to: emails,
-    subject: "Action Required: Your Docker Dash Premium is Expiring Soon",
-    html: template,
+    subject: template.subject,
+    text: template.body,
+    html: template.html,
   });
 
   if (res.error) {
