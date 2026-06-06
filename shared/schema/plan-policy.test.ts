@@ -124,6 +124,12 @@ describe("getEffectivePlanForEnforcement", () => {
     ).toBe("enterprise");
   });
 
+  it("returns enterprise for a dedicated plan with active subscription", () => {
+    expect(
+      getEffectivePlanForEnforcement({ plan: "dedicated", subscriptionStatus: "active" }),
+    ).toBe("enterprise");
+  });
+
   // ── Past due (still paid, grace period) ────────────────────────────
 
   it("returns pro for a pro plan with past_due status", () => {
@@ -133,7 +139,20 @@ describe("getEffectivePlanForEnforcement", () => {
     ).toBe("pro");
   });
 
-  // ── Canceled / expired → DROPS TO FREE ─────────────────────────────
+  // ── Canceled / expired / dedicated offline ─────────────────────────────
+
+  it("returns enterprise for a dedicated plan regardless of status", () => {
+    // Dedicated plans don't rely on Stripe subscription statuses
+    expect(
+      getEffectivePlanForEnforcement({ plan: "dedicated", subscriptionStatus: "inactive" }),
+    ).toBe("enterprise");
+    expect(
+      getEffectivePlanForEnforcement({ plan: "dedicated", subscriptionStatus: "canceled" }),
+    ).toBe("enterprise");
+    expect(
+      getEffectivePlanForEnforcement({ plan: "dedicated", subscriptionStatus: null }),
+    ).toBe("enterprise");
+  });
 
   it("drops pro plan with canceled status to free (THE DOWNGRADE FLOW)", () => {
     // This is the exact scenario: paid user cancels → plan='pro', status='canceled'
@@ -297,6 +316,13 @@ describe("downgrade flow — effective node limit", () => {
     expect(
       resolveNodeLimit({ plan: "free", subscriptionStatus: "inactive", isDonorPremium: false }),
     ).toBe(1);
+  });
+
+  // ── SCENARIO: Dedicated (unlimited offline) ──────────────────────────────
+
+  it("SCENARIO: dedicated user → nodeLimit = null (unlimited) regardless of status", () => {
+    expect(resolveNodeLimit({ plan: "dedicated", subscriptionStatus: "inactive" })).toBeNull();
+    expect(resolveNodeLimit({ plan: "dedicated", subscriptionStatus: null })).toBeNull();
   });
 
   // ── SCENARIO: Enterprise (unlimited) ──────────────────────────────

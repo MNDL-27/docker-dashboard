@@ -140,7 +140,11 @@ export default function OrganizationsPage() {
               {
                 label: "Total workspaces",
                 value: organizations.length,
-                helper: "Organizations you belong to",
+                helper: orgLimit === null
+                  ? "Unlimited organizations allowed"
+                  : orgLimit - organizations.length > 0
+                    ? `You can create ${orgLimit - organizations.length} more`
+                    : "Organization limit reached",
                 icon: Users,
               },
             ].map((metric) => (

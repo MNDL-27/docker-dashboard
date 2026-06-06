@@ -115,7 +115,7 @@ export function getEffectivePlanForEnforcement({
   const isPaidPlan = normalizedPlan !== "free";
   const isPaidSubscriptionActive = isPaidPlan && isPaidSubscriptionStatus(normalizedStatus);
 
-  if (isPaidSubscriptionActive) {
+  if (isPaidSubscriptionActive || plan === "dedicated") {
     return normalizedPlan;
   }
 
