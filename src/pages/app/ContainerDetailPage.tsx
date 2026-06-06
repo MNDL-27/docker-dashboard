@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Link, useParams, useSearchParams } from "react-router-dom";
 import { formatDistanceToNowStrict } from "date-fns";
@@ -120,6 +120,26 @@ function calcBlkioTotal(stats: DockerContainerStats | null | undefined) {
   }
 
   return total > 0 ? total : 0;
+}
+
+function formatSpeed(bytesPerSecond: number | null | undefined): string {
+  if (!Number.isFinite(bytesPerSecond) || bytesPerSecond === null || bytesPerSecond === undefined || bytesPerSecond < 0) {
+    return "0 B/s";
+  }
+  if (bytesPerSecond === 0) return "0 B/s";
+  return `${formatBytes(bytesPerSecond)}/s`;
+}
+
+interface NetworkSnapshot {
+  rx: number;
+  tx: number;
+  timestamp: number;
+}
+
+interface NetworkSpeed {
+  rxPerSec: number;
+  txPerSec: number;
+  totalPerSec: number;
 }
 
 function getPrimaryIp(inspect: DockerContainerInspect | null | undefined) {
@@ -303,6 +323,43 @@ export default function ContainerDetailPage() {
     isFetching: statsFetching,
     refetch: refetchStats,
   } = useContainerStats(guardedHostId, containerId, 10000);
+
+  // ── Real-time network speed tracking ──
+  // Track previous stats snapshot to compute bytes/sec delta between polls
+  const prevNetworkRef = useRef<NetworkSnapshot | null>(null);
+  const [networkSpeed, setNetworkSpeed] = useState<NetworkSpeed | null>(null);
+
+  useEffect(() => {
+    const currentIo = calcNetworkIo(stats);
+    if (!currentIo) {
+      return;
+    }
+
+    const now = Date.now();
+    const prev = prevNetworkRef.current;
+
+    if (prev) {
+      const elapsedSec = (now - prev.timestamp) / 1000;
+      // Only compute speed if at least 1 second has elapsed (avoid division by zero / spikes)
+      if (elapsedSec >= 1) {
+        const rxDelta = Math.max(0, currentIo.rx - prev.rx);
+        const txDelta = Math.max(0, currentIo.tx - prev.tx);
+        const rxPerSec = rxDelta / elapsedSec;
+        const txPerSec = txDelta / elapsedSec;
+        setNetworkSpeed({
+          rxPerSec,
+          txPerSec,
+          totalPerSec: rxPerSec + txPerSec,
+        });
+      }
+    }
+
+    prevNetworkRef.current = {
+      rx: currentIo.rx,
+      tx: currentIo.tx,
+      timestamp: now,
+    };
+  }, [stats]);
   
   // MANUAL LOG FETCHING ONLY: To save Netlify resources, we never fetch logs automatically on this page.
   const [logsRequested, setLogsRequested] = useState(false);
@@ -598,9 +655,17 @@ export default function ContainerDetailPage() {
           />
           <DetailStatCard
             title="Network I/O"
-            value={networkIo ? formatBytes(networkIo.total) : "Unavailable"}
-            helper={networkIo ? `RX ${formatBytes(networkIo.rx)} / TX ${formatBytes(networkIo.tx)}` : "Network totals unavailable"}
-            progress={networkIo ? Math.min(100, (networkIo.total / (1024 * 1024 * 10)) * 100) : null}
+            value={networkSpeed ? formatSpeed(networkSpeed.totalPerSec) : networkIo ? "Measuring…" : "Unavailable"}
+            helper={
+              networkIo
+                ? `Total: ${formatBytes(networkIo.total)} · RX ${formatBytes(networkIo.rx)} / TX ${formatBytes(networkIo.tx)}${networkSpeed ? ` · ↓ ${formatSpeed(networkSpeed.rxPerSec)} ↑ ${formatSpeed(networkSpeed.txPerSec)}` : ""}`
+                : "Network stats unavailable"
+            }
+            progress={
+              networkSpeed
+                ? Math.min(100, (networkSpeed.totalPerSec / (1024 * 1024 * 100)) * 100)  // Scale to 100 MB/s
+                : null
+            }
           />
           <DetailStatCard
             title="Disk usage"
