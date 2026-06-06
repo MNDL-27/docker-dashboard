@@ -95,9 +95,9 @@ export const CURRENT_WATCHTOWER_AGENT_RELEASE: WatchtowerAgentRelease = {
   installerAssetName: "watchtower-agent-install.sh",
   runtimeAssetName: "watchtower-agent.sh",
   uninstallAssetName: "watchtower-agent-uninstall.sh",
-  installerSha256: "FA7CBD6867BF0B441FD007625A2795F2622EE683782DD39D693ADE1DF30EAF9D",
-  runtimeSha256: "4980258400D00C177DD99349A1897B27E487C4436BF71404C5607C75F842736E",
-  uninstallSha256: "449AFC5FF62742AF0FF15254827E82F120BDD17694C43500C08FAF9926D0985C",
+  installerSha256: "212eff2ea3006413cb56c7372b0bece008e868611dc0a70542877bf4139ec385",
+  runtimeSha256: "6d66c598f159705502d1f3bdbd93985ab18b7fab91000cbd6955390cf30bc825",
+  uninstallSha256: "449afc5ff62742af0ff15254827e82f120bdd17694c43500c08faf9926d0985c",
 };
 
 function buildAtomicInstallerCommand({
