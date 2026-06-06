@@ -15,6 +15,9 @@ import {
   Search,
   Server,
   Square,
+  ArrowUp,
+  ArrowDown,
+  ArrowUpDown,
 } from "lucide-react";
 
 import { SignalCard } from "@/components/dashboard/SignalCard";
@@ -62,6 +65,9 @@ const STATE_TABS = [
   { key: "restarting", label: "Restarting" },
   { key: "exited", label: "Exited" },
 ] as const;
+
+type SortField = 'name' | 'status' | 'host' | 'image' | 'cpu' | 'memory' | 'netio' | 'restarts' | 'age';
+type SortDirection = 'asc' | 'desc';
 
 function relativeAge(created?: number): string {
   if (!created) return "--";
@@ -172,6 +178,8 @@ export default function ContainersPage() {
   const [hostFilter, setHostFilter] = useState("");
   const [imageFilter, setImageFilter] = useState("");
   const [actionLoading, setActionLoading] = useState<string | null>(null);
+  const [sortField, setSortField] = useState<SortField>("name");
+  const [sortDirection, setSortDirection] = useState<SortDirection>("asc");
 
   const containers: ContainerListItem[] = useMemo(
     () => (Array.isArray(rawContainers) ? (rawContainers as ContainerListItem[]) : []),
@@ -243,7 +251,7 @@ export default function ContainersPage() {
   }, [fleetMetricsLoading, latestFleetMetrics]);
 
   const filtered = useMemo(() => {
-    return containers.filter((c) => {
+    let result = containers.filter((c) => {
       const name = (c.Names?.[0] || "").replace(/^\//, "").toLowerCase();
       const image = (c.Image || "").toLowerCase();
       const hostName = (c._hostName || "").toLowerCase();
@@ -259,7 +267,60 @@ export default function ContainersPage() {
       if (imageFilter && c.Image !== imageFilter) return false;
       return true;
     });
-  }, [containers, search, stateTab, hostFilter, imageFilter]);
+
+    result.sort((a, b) => {
+      let aVal: any = 0;
+      let bVal: any = 0;
+
+      const aStats = statsMap.get(a.Id);
+      const bStats = statsMap.get(b.Id);
+
+      switch (sortField) {
+        case 'name':
+          aVal = (a.Names?.[0] || "").replace(/^\//, "").toLowerCase();
+          bVal = (b.Names?.[0] || "").replace(/^\//, "").toLowerCase();
+          break;
+        case 'status':
+          aVal = a.State;
+          bVal = b.State;
+          break;
+        case 'host':
+          aVal = a._hostName || "";
+          bVal = b._hostName || "";
+          break;
+        case 'image':
+          aVal = a.Image || "";
+          bVal = b.Image || "";
+          break;
+        case 'cpu':
+          aVal = a.State === "running" && aStats ? aStats.cpu_percent : -1;
+          bVal = b.State === "running" && bStats ? bStats.cpu_percent : -1;
+          break;
+        case 'memory':
+          aVal = a.State === "running" && aStats ? aStats.memory_usage : -1;
+          bVal = b.State === "running" && bStats ? bStats.memory_usage : -1;
+          break;
+        case 'netio':
+          aVal = a.State === "running" && aStats ? aStats.net_rx + aStats.net_tx : -1;
+          bVal = b.State === "running" && bStats ? bStats.net_rx + bStats.net_tx : -1;
+          break;
+        case 'restarts':
+          aVal = a.RestartCount ?? (a.HostConfig?.RestartPolicy?.MaximumRetryCount || 0);
+          bVal = b.RestartCount ?? (b.HostConfig?.RestartPolicy?.MaximumRetryCount || 0);
+          break;
+        case 'age':
+          aVal = a.Created || 0;
+          bVal = b.Created || 0;
+          break;
+      }
+
+      if (aVal < bVal) return sortDirection === 'asc' ? -1 : 1;
+      if (aVal > bVal) return sortDirection === 'asc' ? 1 : -1;
+      return 0;
+    });
+
+    return result;
+  }, [containers, search, stateTab, hostFilter, imageFilter, sortField, sortDirection, statsMap]);
 
   const hasActiveFilters = !!search || stateTab !== "all" || !!hostFilter || !!imageFilter;
   const activeHostLabel = uniqueHosts.find(([id]) => id === hostFilter)?.[1] || "";
@@ -295,6 +356,31 @@ export default function ContainersPage() {
     setHostFilter("");
     setImageFilter("");
   }
+
+  const handleSort = (field: SortField) => {
+    if (sortField === field) {
+      setSortDirection(sortDirection === "asc" ? "desc" : "asc");
+    } else {
+      setSortField(field);
+      setSortDirection(field === "age" || field === "cpu" || field === "memory" || field === "netio" || field === "restarts" ? "desc" : "asc");
+    }
+  };
+
+  const SortableHeader = ({ field, label, className }: { field: SortField, label: string, className?: string }) => {
+    const isSorted = sortField === field;
+    return (
+      <TableHead className={cn("cursor-pointer hover:bg-white/5 transition-colors group select-none text-[11px] uppercase tracking-[0.18em]", className)} onClick={() => handleSort(field)}>
+        <div className={cn("flex items-center gap-1", className?.includes("text-right") ? "justify-end" : "")}>
+          {label}
+          {isSorted ? (
+            sortDirection === "asc" ? <ArrowUp className="h-3 w-3" /> : <ArrowDown className="h-3 w-3" />
+          ) : (
+            <ArrowUpDown className="h-3 w-3 opacity-0 group-hover:opacity-50 transition-opacity" />
+          )}
+        </div>
+      </TableHead>
+    );
+  };
 
   if (hostsLoading || containersLoading) {
     return <div className="flex h-64 items-center justify-center"><Loader2 className="h-8 w-8 animate-spin text-muted-foreground" /></div>;
@@ -428,15 +514,15 @@ export default function ContainersPage() {
         <Table>
           <TableHeader>
             <TableRow className="border-b border-white/5 bg-muted/20 hover:bg-muted/20">
-              <TableHead className="px-6 text-[11px] uppercase tracking-[0.18em]">Container</TableHead>
-              <TableHead className="text-[11px] uppercase tracking-[0.18em]">Status</TableHead>
-              <TableHead className="text-[11px] uppercase tracking-[0.18em]">Host</TableHead>
-              <TableHead className="hidden lg:table-cell text-[11px] uppercase tracking-[0.18em]">Image</TableHead>
-              <TableHead className="hidden xl:table-cell text-right text-[11px] uppercase tracking-[0.18em]">CPU</TableHead>
-              <TableHead className="hidden xl:table-cell text-right text-[11px] uppercase tracking-[0.18em]">Memory</TableHead>
-              <TableHead className="hidden xl:table-cell text-right text-[11px] uppercase tracking-[0.18em]">Net I/O</TableHead>
-              <TableHead className="hidden md:table-cell text-right text-[11px] uppercase tracking-[0.18em]">Restarts</TableHead>
-              <TableHead className="hidden md:table-cell text-right text-[11px] uppercase tracking-[0.18em]">Age</TableHead>
+              <SortableHeader field="name" label="Container" className="px-6" />
+              <SortableHeader field="status" label="Status" />
+              <SortableHeader field="host" label="Host" />
+              <SortableHeader field="image" label="Image" className="hidden lg:table-cell" />
+              <SortableHeader field="cpu" label="CPU" className="hidden xl:table-cell text-right" />
+              <SortableHeader field="memory" label="Memory" className="hidden xl:table-cell text-right" />
+              <SortableHeader field="netio" label="Net I/O" className="hidden xl:table-cell text-right" />
+              <SortableHeader field="restarts" label="Restarts" className="hidden md:table-cell text-right" />
+              <SortableHeader field="age" label="Age" className="hidden md:table-cell text-right" />
               <TableHead className="w-[116px] text-right text-[11px] uppercase tracking-[0.18em]">Action</TableHead>
             </TableRow>
           </TableHeader>
