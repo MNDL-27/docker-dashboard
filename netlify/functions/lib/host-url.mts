@@ -49,22 +49,7 @@ const IPV6_BLOCKED_PREFIXES: Array<{ prefix: string; description: string }> = [
   { prefix: "fd", description: "unique-local fc00::/7" },
   { prefix: "fe80:", description: "link-local fe80::/10" },
   { prefix: "fec0:", description: "deprecated site-local" },
-  { prefix: "ff00::", description: "multicast ff00::/8" },
-  { prefix: "ff01::", description: "multicast ff01::/8" },
-  { prefix: "ff02::", description: "multicast ff02::/8" },
-  { prefix: "ff03::", description: "multicast ff03::/8" },
-  { prefix: "ff04::", description: "multicast ff04::/8" },
-  { prefix: "ff05::", description: "multicast ff05::/8" },
-  { prefix: "ff06::", description: "multicast ff06::/8" },
-  { prefix: "ff07::", description: "multicast ff07::/8" },
-  { prefix: "ff08::", description: "multicast ff08::/8" },
-  { prefix: "ff09::", description: "multicast ff09::/8" },
-  { prefix: "ff0a::", description: "multicast ff0a::/8" },
-  { prefix: "ff0b::", description: "multicast ff0b::/8" },
-  { prefix: "ff0c::", description: "multicast ff0c::/8" },
-  { prefix: "ff0d::", description: "multicast ff0d::/8" },
-  { prefix: "ff0e::", description: "multicast ff0e::/8" },
-  { prefix: "ff0f::", description: "multicast ff0f::/8" },
+  { prefix: "ff", description: "multicast ff00::/8" },
   { prefix: "100:", description: "discard 100::/64" },
   { prefix: "2001:db8:", description: "documentation 2001:db8::/32" },
   { prefix: "::ffff:", description: "IPv4-mapped" },
@@ -101,60 +86,21 @@ function isPrivateOrBlockedAddress(hostname: string, ipVersion: number): boolean
 }
 
 function allowLocalAgentUrls() {
-  return process.env.NODE_ENV !== "production";
+  if (process.env.NODE_ENV === "production") return false;
+  return isTrue(process.env.ALLOW_LOCAL_AGENT_URLS);
 }
 
-/**
- * Infer a full URL from user input that may be a bare IP, hostname,
- * host:port, or an already-complete URL.
- *
- * Rules:
- *  - If the input already has a scheme (http:// or https://), use it as-is.
- *  - Otherwise, prepend the protocol based on connectionMode:
- *      • "http"               → http://
- *      • "cloudflare_tunnel"  → https://
- *      • "agent" (default)    → https://
- *  - If no explicit port is present and mode is NOT "cloudflare_tunnel",
- *    append `:9876` (the default agent port).
- */
-function inferFullUrl(input: string, connectionMode?: string): string {
-  let value = input.trim();
-  if (!value) return value;
-
-  // Already has a scheme – leave it alone.
-  if (/^https?:\/\//i.test(value)) return value;
-
-  // Strip any accidental leading slashes.
-  value = value.replace(/^\/+/, "");
-
-  // Choose protocol.
-  const scheme = connectionMode === "http" ? "http" : "https";
-
-  // Detect whether user supplied an explicit port (IPv6 bracket-notation aware).
-  const hasExplicitPort = value.includes("]:") || (
-    !value.startsWith("[") && /:\d+$/.test(value.split("/")[0])
-  );
-
-  const needsDefaultPort =
-    !hasExplicitPort && connectionMode !== "cloudflare_tunnel";
-
-  const host = needsDefaultPort ? `${value}:9876` : value;
-  return `${scheme}://${host}`;
-}
-
-export function normalizeAndValidateHostUrl(input: string, connectionMode?: string) {
-  const raw = input.trim();
-  if (!raw) {
+export function normalizeAndValidateHostUrl(input: string) {
+  const value = input.trim();
+  if (!value) {
     throw new Error("host_url is required");
   }
 
-  const fullUrl = inferFullUrl(raw, connectionMode);
-
   let parsed: URL;
   try {
-    parsed = new URL(fullUrl);
+    parsed = new URL(value);
   } catch {
-    throw new Error("host_url must be a valid IP address, hostname, or URL");
+    throw new Error("host_url must be a valid absolute URL");
   }
 
   if (parsed.username || parsed.password) {
@@ -173,8 +119,12 @@ export function normalizeAndValidateHostUrl(input: string, connectionMode?: stri
   const ipVersion = isIP(hostname);
   const isLocal = isLocalHostname(hostname);
 
-  if (parsed.protocol !== "http:" && parsed.protocol !== "https:") {
-    throw new Error("host_url must use http or https");
+  if (parsed.protocol === "http:") {
+    if (!isLocal || !allowLocalAgentUrls()) {
+      throw new Error("host_url must use https unless local agent URLs are explicitly allowed for development");
+    }
+  } else if (parsed.protocol !== "https:") {
+    throw new Error("host_url must use https");
   }
 
   if (isLocal) {
