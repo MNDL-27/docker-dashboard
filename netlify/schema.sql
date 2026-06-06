@@ -9,10 +9,12 @@ CREATE TABLE IF NOT EXISTS public.users (
   full_name text,
   avatar_url text,
   clerk_user_id text UNIQUE,
+  onboarding_reminder_email_sent_at timestamptz,
   created_at timestamptz NOT NULL DEFAULT now(),
   updated_at timestamptz NOT NULL DEFAULT now()
 );
 ALTER TABLE public.users ADD COLUMN IF NOT EXISTS clerk_user_id text UNIQUE;
+ALTER TABLE public.users ADD COLUMN IF NOT EXISTS onboarding_reminder_email_sent_at timestamptz;
 
 -- Step 3: Organizations
 CREATE TABLE IF NOT EXISTS public.organizations (
