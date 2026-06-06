@@ -56,6 +56,7 @@ export interface OrganizationEntitlements {
   canUseTeamCollaboration: boolean;
   canUseLogs: boolean;
   canUseFileManager: boolean;
+  canMonitorWithoutDocker: boolean;
 }
 
 type OrganizationFeature =
@@ -189,6 +190,7 @@ export function computeOrganizationEntitlements({
       canUseTeamCollaboration: paidTierPolicy.canUseTeamCollaboration,
       canUseLogs: paidTierPolicy.canUseLogs || activeDonorStatus,
       canUseFileManager: paidTierPolicy.canUseFileManager,
+      canMonitorWithoutDocker: paidTierPolicy.canMonitorWithoutDocker,
     };
   }
 
@@ -209,6 +211,7 @@ export function computeOrganizationEntitlements({
     canUseTeamCollaboration: paidTierPolicy.canUseTeamCollaboration,
     canUseLogs: paidTierPolicy.canUseLogs || activeDonorStatus,
     canUseFileManager: paidTierPolicy.canUseFileManager,
+    canMonitorWithoutDocker: paidTierPolicy.canMonitorWithoutDocker,
   };
 }
 

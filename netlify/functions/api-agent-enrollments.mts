@@ -20,6 +20,7 @@ import {
   getWatchtowerAgentRecommendedBindAddress,
   type WatchtowerAgentConnectionMode,
 } from "../../shared/watchtower-agent-release.ts";
+import { getEffectivePlanForEnforcement, PLAN_POLICY_BY_PLAN } from "../../shared/schema/plan-policy.ts";
 
 type SessionStatus = "created" | "claimed" | "installed" | "expired" | "cancelled";
 type ReasonCode =
@@ -28,7 +29,8 @@ type ReasonCode =
   | "agent_not_installed"
   | "agent_outdated"
   | "cloudflare_access_missing"
-  | "metrics_unavailable";
+  | "metrics_unavailable"
+  | "docker_missing_upgrade_required";
 
 function json(body: unknown, init: ResponseInit = {}) {
   return new Response(JSON.stringify(body), {
@@ -174,6 +176,7 @@ async function pingEnrollmentHost(input: {
   agentApiKey: string;
   cfServiceTokenId: string | null;
   cfServiceTokenSecret: string | null;
+  organizationId: string;
 }) {
   const common = {
     hostUrl: input.hostUrl,
@@ -185,39 +188,9 @@ async function pingEnrollmentHost(input: {
   };
 
   try {
-    const pingReq = buildAgentHeaders({ ...common, path: "/docker/_ping" });
-    const pingResp = await fetchWithTimeout(pingReq.url, { method: "GET", headers: pingReq.headers }, 5000);
-    const pingText = await pingResp.text();
-
-    if (!pingResp.ok) {
-      return {
-        ok: false,
-        status: pingText,
-        reason_code: reasonFromFailure({
-          status: pingResp.status,
-          connectionMode: input.connectionMode,
-          message: pingText,
-          stage: "ping",
-        }),
-      };
-    }
-
-    let dockerVersion: string | null = null;
-    let osInfo: string | null = null;
-    try {
-      const versionReq = buildAgentHeaders({ ...common, path: "/docker/version" });
-      const versionResp = await fetchWithTimeout(versionReq.url, { method: "GET", headers: versionReq.headers }, 5000);
-      if (versionResp.ok) {
-        const versionData = await versionResp.json();
-        dockerVersion = versionData.Version || null;
-        osInfo = versionData.Os ? `${versionData.Os}/${versionData.Arch}` : null;
-      }
-    } catch {
-      // best effort
-    }
-
     let agentVersion: string | null = null;
     let agentVersionError: string | null = null;
+    
     try {
       const agentReq = buildAgentHeaders({ ...common, path: "/agent/version" });
       const agentResp = await fetchWithTimeout(agentReq.url, { method: "GET", headers: agentReq.headers }, 5000);
@@ -226,9 +199,93 @@ async function pingEnrollmentHost(input: {
         agentVersion = agentData.agent_version || agentData.version || null;
       } else {
         agentVersionError = `GET /agent/version returned ${agentResp.status}`;
+        
+        // Check for agent level auth failures
+        if (agentResp.status === 401) {
+           return {
+             ok: false,
+             status: "Unauthorized",
+             reason_code: "agent_unauthorized",
+             docker_version: null,
+             agent_version: null,
+             agent_version_error: null,
+             os_info: null,
+             connection_mode: input.connectionMode,
+             ...buildWatchtowerAgentReleaseResponse(null),
+           };
+        }
       }
     } catch (error: any) {
       agentVersionError = error?.message || "GET /agent/version failed";
+      return {
+        ok: false,
+        status: error?.message || "Agent connection failed",
+        reason_code: reasonFromFailure({
+          connectionMode: input.connectionMode,
+          message: error?.message,
+          stage: "agent_version",
+        }),
+        docker_version: null,
+        agent_version: null,
+        agent_version_error: null,
+        os_info: null,
+        connection_mode: input.connectionMode,
+        ...buildWatchtowerAgentReleaseResponse(null),
+      };
+    }
+
+    // Now try docker ping
+    let dockerVersion: string | null = null;
+    let osInfo: string | null = null;
+    let pingText = "";
+    
+    try {
+      const pingReq = buildAgentHeaders({ ...common, path: "/docker/_ping" });
+      const pingResp = await fetchWithTimeout(pingReq.url, { method: "GET", headers: pingReq.headers }, 5000);
+      pingText = await pingResp.text();
+
+      if (pingResp.ok) {
+        // Fetch docker version since ping succeeded
+        try {
+          const versionReq = buildAgentHeaders({ ...common, path: "/docker/version" });
+          const versionResp = await fetchWithTimeout(versionReq.url, { method: "GET", headers: versionReq.headers }, 5000);
+          if (versionResp.ok) {
+            const versionData = await versionResp.json();
+            dockerVersion = versionData.Version || null;
+            osInfo = versionData.Os ? `${versionData.Os}/${versionData.Arch}` : null;
+          }
+        } catch {
+          // best effort
+        }
+      }
+    } catch {
+       // ping failed, docker socket probably unreachable
+    }
+
+    // If dockerVersion is missing, check plan limits
+    if (!dockerVersion) {
+      const orgs = await sql`SELECT plan, subscription_status FROM organizations WHERE id = ${input.organizationId}`;
+      if (orgs.length > 0) {
+        const effectivePlan = getEffectivePlanForEnforcement({
+          plan: orgs[0].plan,
+          subscriptionStatus: orgs[0].subscription_status,
+        });
+        const policy = PLAN_POLICY_BY_PLAN[effectivePlan];
+        
+        if (!policy.canMonitorWithoutDocker) {
+          return {
+            ok: false,
+            status: "Docker not installed",
+            reason_code: "docker_missing_upgrade_required",
+            docker_version: null,
+            agent_version: agentVersion,
+            agent_version_error: agentVersionError,
+            os_info: null,
+            connection_mode: input.connectionMode,
+            ...buildWatchtowerAgentReleaseResponse(agentVersion),
+          };
+        }
+      }
     }
 
     let metricsReason: ReasonCode | null = null;
@@ -515,6 +572,7 @@ export default async (req: Request) => {
         agentApiKey,
         cfServiceTokenId,
         cfServiceTokenSecret,
+        organizationId: auth.orgId,
       });
 
       const remediationCommand = pingResult.reason_code

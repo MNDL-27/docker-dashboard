@@ -16,6 +16,7 @@ import { sanitizeConnectionError } from "@/lib/error-sanitizer";
 import { CONNECTION_MODES } from "@/pages/onboarding/useOnboardingState";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { PremiumFeatureBlock } from "@/components/shared/PremiumFeatureBlock";
 
 interface AddHostDialogProps {
   orgId: string;
@@ -489,10 +490,19 @@ export function AddHostDialog({ orgId, trigger, host, disabledReason }: AddHostD
             </div>
 
             {testStatus === "error" && testError ? (
-              <div className="flex items-start gap-2 p-3 rounded-md bg-destructive/10 border border-destructive/20">
-                <XCircle className="h-4 w-4 text-destructive shrink-0 mt-0.5" />
-                <p className="text-xs text-destructive">{testError}</p>
-              </div>
+              testError.includes("non-Docker hosts") ? (
+                <PremiumFeatureBlock
+                  title="Docker Not Installed"
+                  description="This host does not have Docker installed. Upgrade to the Team or Enterprise plan to monitor pure Linux machines."
+                  hasAccess={false}
+                  className="p-6 mt-2 border border-border shadow-sm"
+                />
+              ) : (
+                <div className="flex items-start gap-2 p-3 rounded-md bg-destructive/10 border border-destructive/20">
+                  <XCircle className="h-4 w-4 text-destructive shrink-0 mt-0.5" />
+                  <p className="text-xs text-destructive">{testError}</p>
+                </div>
+              )
             ) : null}
 
             {testStatus === "success" ? (
@@ -590,13 +600,22 @@ export function AddHostDialog({ orgId, trigger, host, disabledReason }: AddHostD
             ) : null}
 
             {testStatus === "error" && testError ? (
-              <div className="space-y-3">
-                <div className="flex items-start gap-2 p-3 rounded-md bg-destructive/10 border border-destructive/20">
-                  <XCircle className="h-4 w-4 text-destructive shrink-0 mt-0.5" />
-                  <p className="text-xs text-destructive">{testError}</p>
+              testError.includes("non-Docker hosts") ? (
+                <PremiumFeatureBlock
+                  title="Docker Not Installed"
+                  description="This host does not have Docker installed. Upgrade to the Team or Enterprise plan to monitor pure Linux machines."
+                  hasAccess={false}
+                  className="p-6 mt-2 border border-border shadow-sm"
+                />
+              ) : (
+                <div className="space-y-3">
+                  <div className="flex items-start gap-2 p-3 rounded-md bg-destructive/10 border border-destructive/20">
+                    <XCircle className="h-4 w-4 text-destructive shrink-0 mt-0.5" />
+                    <p className="text-xs text-destructive">{testError}</p>
+                  </div>
+                  {remediationCommand ? <CommandBlock label="Suggested remediation command" command={remediationCommand} /> : null}
                 </div>
-                {remediationCommand ? <CommandBlock label="Suggested remediation command" command={remediationCommand} /> : null}
-              </div>
+              )
             ) : null}
 
             {testStatus === "success" ? (

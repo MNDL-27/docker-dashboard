@@ -1179,20 +1179,41 @@ export default async (req: Request) => {
         }
 
         if (dockerSocketFailure) {
+          const agentVersionReport = await fetchAgentVersionReport(host as any, secrets);
+          if (agentVersionReport.agentVersion) {
+            const entitlements = await resolveOrganizationEntitlements({
+              organizationId: host.organization_id,
+              isPlatformAdmin: auth.isPlatformAdmin,
+            });
+            
+            if (entitlements.canMonitorWithoutDocker) {
+              // The agent is reachable, we're just missing Docker.
+              // We're entitled to monitor without Docker, so we shouldn't fail the ping.
+              // We'll break out of the !ok block and proceed with agent updates.
+            } else {
+              return createProblemResponse(
+                403,
+                'Docker not installed',
+                'This host does not have Docker installed. Upgrade your plan to monitor non-Docker hosts.',
+                'docker_missing_upgrade_required',
+              );
+            }
+          } else {
+            return createProblemResponse(
+              502,
+              'Docker socket unavailable',
+              detail,
+              'docker_socket_unavailable',
+            );
+          }
+        } else {
           return createProblemResponse(
-            502,
-            'Docker socket unavailable',
+            upstreamStatus,
+            'Connection test failed',
             detail,
-            'docker_socket_unavailable',
+            'agent_connection_failed',
           );
         }
-
-        return createProblemResponse(
-          upstreamStatus,
-          'Connection test failed',
-          detail,
-          'agent_connection_failed',
-        );
       }
 
       let dockerVersion = null;
@@ -1225,7 +1246,7 @@ export default async (req: Request) => {
 
       await sql`
         UPDATE docker_hosts 
-        SET status = ${ok ? 'connected' : 'error'}, 
+        SET status = 'connected', 
             last_seen_at = now(),
             docker_version = COALESCE(${dockerVersion}, docker_version),
             agent_version = COALESCE(${agentVersion}, agent_version),

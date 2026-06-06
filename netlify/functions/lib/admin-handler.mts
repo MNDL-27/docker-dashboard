@@ -12,6 +12,10 @@ async function readBody(req: Request) {
   return req.json().catch(() => ({}));
 }
 
+function createJsonResponse(data: unknown, req: Request, status = 200) {
+  return new Response(JSON.stringify(data), { status, headers: buildCorsHeaders(req) });
+}
+
 function parsePath(req: Request) {
   const url = new URL(req.url);
   return (url.pathname.replace(/^\/api\/admin/, "") || "/").split("/").filter(Boolean);
@@ -423,7 +427,7 @@ async function mutateUserApproval(userId: string, approved: boolean, req: Reques
     WHERE id = ${userId}
     LIMIT 1
   `;
-  if (before.length === 0) return json({ error: "User not found" }, 404);
+  if (before.length === 0) return createJsonResponse({ error: "User not found" }, req, 404);
 
   const updated = await sql`
     UPDATE public.users
@@ -444,7 +448,7 @@ async function mutateUserApproval(userId: string, approved: boolean, req: Reques
     requestMetadata: { ip: req.headers.get("x-forwarded-for") || null },
   });
 
-  return json({ user: updated[0] });
+  return createJsonResponse({ user: updated[0] }, req);
 }
 
 async function mutateUserAccess(userId: string, mode: "suspend" | "unsuspend" | "hard-disable" | "hard-enable", req: Request) {
@@ -461,7 +465,7 @@ async function mutateUserAccess(userId: string, mode: "suspend" | "unsuspend" | 
     WHERE u.id = ${userId}
     LIMIT 1
   `;
-  if (users.length === 0) return json({ error: "User not found" }, 404);
+  if (users.length === 0) return createJsonResponse({ error: "User not found" }, req, 404);
 
   const before = users[0] as Record<string, unknown>;
   const user = users[0];
@@ -517,7 +521,7 @@ async function mutateUserAccess(userId: string, mode: "suspend" | "unsuspend" | 
     afterState: afterRows[0] as Record<string, unknown>,
   });
 
-  return json({ control: afterRows[0] });
+  return createJsonResponse({ control: afterRows[0] }, req);
 }
 
 async function addOrganizationBan(userId: string, req: Request) {
@@ -527,7 +531,7 @@ async function addOrganizationBan(userId: string, req: Request) {
   const reason = normalizeAdminReason(body.reason);
   assertAdminReason(reason);
 
-  if (!organizationId) return json({ error: "organization_id is required" }, 400);
+  if (!organizationId) return createJsonResponse({ error: "organization_id is required" }, req, 400);
 
   const before = await sql`
     SELECT organization_id, user_id, reason
@@ -554,7 +558,7 @@ async function addOrganizationBan(userId: string, req: Request) {
     afterState: afterRows[0] as Record<string, unknown>,
   });
 
-  return json({ ban: afterRows[0] }, 201);
+  return createJsonResponse({ ban: afterRows[0] }, req, 201);
 }
 
 async function removeOrganizationBan(userId: string, organizationId: string, req: Request) {
@@ -568,7 +572,7 @@ async function removeOrganizationBan(userId: string, organizationId: string, req
     FROM public.organization_user_bans
     WHERE organization_id = ${organizationId} AND user_id = ${userId}
   `;
-  if (before.length === 0) return json({ error: "Ban not found" }, 404);
+  if (before.length === 0) return createJsonResponse({ error: "Ban not found" }, req, 404);
 
   await sql`
     DELETE FROM public.organization_user_bans
@@ -586,7 +590,7 @@ async function removeOrganizationBan(userId: string, organizationId: string, req
     afterState: {},
   });
 
-  return json({ success: true });
+  return createJsonResponse({ success: true }, req);
 }
 
 async function mutateOrganizationLock(organizationId: string, locked: boolean, req: Request) {
@@ -636,7 +640,7 @@ async function mutateOrganizationLock(organizationId: string, locked: boolean, r
     afterState: afterRows[0] as Record<string, unknown>,
   });
 
-  return json({ organization_control: afterRows[0] });
+  return createJsonResponse({ organization_control: afterRows[0] }, req);
 }
 
 async function updateOrganizationBilling(organizationId: string, req: Request) {
@@ -666,7 +670,7 @@ async function updateOrganizationBilling(organizationId: string, req: Request) {
     WHERE o.id = ${organizationId}
     LIMIT 1
   `;
-  if (before.length === 0) return json({ error: "Organization not found" }, 404);
+  if (before.length === 0) return createJsonResponse({ error: "Organization not found" }, req, 404);
 
   const [organization] = await sql`
     UPDATE public.organizations
@@ -718,7 +722,7 @@ async function updateOrganizationBilling(organizationId: string, req: Request) {
     afterState: { organization, overrides },
   });
 
-  return json({ organization, overrides });
+  return createJsonResponse({ organization, overrides }, req);
 }
 
 async function resetOrganizationOnboarding(organizationId: string, req: Request) {
@@ -733,7 +737,7 @@ async function resetOrganizationOnboarding(organizationId: string, req: Request)
     WHERE id = ${organizationId}
     LIMIT 1
   `;
-  if (before.length === 0) return json({ error: "Organization not found" }, 404);
+  if (before.length === 0) return createJsonResponse({ error: "Organization not found" }, req, 404);
 
   const afterRows = await sql`
     UPDATE public.organizations
@@ -756,7 +760,7 @@ async function resetOrganizationOnboarding(organizationId: string, req: Request)
     afterState: afterRows[0] as Record<string, unknown>,
   });
 
-  return json({ organization: afterRows[0] });
+  return createJsonResponse({ organization: afterRows[0] }, req);
 }
 
 async function mutateHostControl(hostId: string, mode: "quarantine" | "unquarantine" | "mark-needs-reconnect", req: Request) {
@@ -821,7 +825,7 @@ async function mutateHostControl(hostId: string, mode: "quarantine" | "unquarant
     afterState: afterRows[0] as Record<string, unknown>,
   });
 
-  return json({ host_control: afterRows[0] });
+  return createJsonResponse({ host_control: afterRows[0] }, req);
 }
 
 async function runAdminSecretMigration(req: Request) {
@@ -869,10 +873,10 @@ async function runAdminSecretMigration(req: Request) {
     targetId: String(operation.id),
     reason,
     beforeState: {},
-    afterState: { result, operationId: operation.id },
+    afterState: { result_summary: result.summary, processed_hosts: result.processed_hosts }
   });
 
-  return json({ success: true, result, operation: { ...operation, created_at: new Date(String(operation.created_at)).toISOString() } });
+  return createJsonResponse({ success: true, result, operation: { ...operation, created_at: new Date(String(operation.created_at)).toISOString() } }, req);
 }
 
 async function listNotifications() {

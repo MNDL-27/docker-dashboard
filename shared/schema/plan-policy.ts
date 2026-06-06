@@ -14,6 +14,7 @@ export interface PlanPolicy {
   canUseTeamCollaboration: boolean;
   canUseLogs: boolean;
   canUseFileManager: boolean;
+  canMonitorWithoutDocker: boolean;
 }
 
 export const PLAN_POLICY_BY_PLAN: Record<PlanId, PlanPolicy> = {
@@ -29,6 +30,7 @@ export const PLAN_POLICY_BY_PLAN: Record<PlanId, PlanPolicy> = {
     canUseTeamCollaboration: false,
     canUseLogs: false,
     canUseFileManager: false,
+    canMonitorWithoutDocker: false,
   },
   pro: {
     seatLimit: 1,
@@ -42,6 +44,7 @@ export const PLAN_POLICY_BY_PLAN: Record<PlanId, PlanPolicy> = {
     canUseTeamCollaboration: false,
     canUseLogs: true,
     canUseFileManager: true,
+    canMonitorWithoutDocker: false,
   },
   team: {
     seatLimit: 10,
@@ -55,6 +58,7 @@ export const PLAN_POLICY_BY_PLAN: Record<PlanId, PlanPolicy> = {
     canUseTeamCollaboration: true,
     canUseLogs: true,
     canUseFileManager: true,
+    canMonitorWithoutDocker: true,
   },
   enterprise: {
     seatLimit: null,
@@ -68,6 +72,7 @@ export const PLAN_POLICY_BY_PLAN: Record<PlanId, PlanPolicy> = {
     canUseTeamCollaboration: true,
     canUseLogs: true,
     canUseFileManager: true,
+    canMonitorWithoutDocker: true,
   },
 };
 

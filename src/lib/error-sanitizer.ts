@@ -58,6 +58,10 @@ const DOCKERDASH_EDGE_PATTERNS = [
   /dockerdash\.app\s*\|\s*502/i,
 ];
 
+const DOCKER_MISSING_UPGRADE_PATTERNS = [
+  /docker_missing_upgrade_required/i,
+];
+
 function isCloudflareError(msg: string) {
   return CLOUDFLARE_PATTERNS.some((pattern) => pattern.test(msg));
 }
@@ -135,6 +139,15 @@ export function sanitizeConnectionError(error: unknown): SanitizedError {
       title: "API key mismatch",
       description:
         "The agent is reachable, but it rejected the saved API key. Re-enter the key from /etc/watchtower-agent/watchtower-agent.env or run the agent repair command so both sides use the same key.",
+      raw,
+    };
+  }
+
+  const isDockerMissingUpgradeError = DOCKER_MISSING_UPGRADE_PATTERNS.some((pattern) => pattern.test(`${raw} ${stringifyStructuredError(error)}`));
+  if (isDockerMissingUpgradeError) {
+    return {
+      title: "Docker not installed",
+      description: "This host does not have Docker installed. Upgrade your plan to monitor non-Docker hosts.",
       raw,
     };
   }
