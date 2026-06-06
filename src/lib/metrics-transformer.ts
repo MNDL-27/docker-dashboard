@@ -195,6 +195,7 @@ export function getHostMetricsFailure(error: unknown): HostMetricsFailure | null
     let detailText: string | null = null;
     if (typeof details === "string") detailText = details;
     else if (details && typeof details === "object") {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         detailText = (details as any).error || JSON.stringify(details);
     }
     

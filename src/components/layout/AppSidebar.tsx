@@ -36,13 +36,13 @@ export function AppSidebar({ className }: AppSidebarProps) {
             {navGroups.map((group) => (
               <div key={group.label} className="flex flex-col items-center gap-1">
                 {group.items.map((item) => (
-                  <NavItems key={item.href} navGroups={[{ label: "", items: [item] }]} entitlements={entitlements as any} />
+                  <NavItems key={item.href} navGroups={[{ label: "", items: [item] }]} entitlements={entitlements as unknown as Record<string, boolean>} />
                 ))}
               </div>
             ))}
           </div>
         ) : (
-          <NavItems navGroups={navGroups} entitlements={entitlements as any} />
+          <NavItems navGroups={navGroups} entitlements={entitlements as unknown as Record<string, boolean>} />
         )}
       </nav>
 

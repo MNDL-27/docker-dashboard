@@ -77,6 +77,7 @@ export default function OrganizationsPage() {
           description: `"${newName.trim()}" has been created successfully.`,
         });
       }
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
       toast({
         title: "Failed to create organization",
@@ -250,6 +251,7 @@ function OrgCard({ org }: { org: { id: string; name: string; slug: string | null
         title: "Organization deleted",
         description: `"${org.name}" has been deleted.`,
       });
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
       toast({
         title: "Failed to delete organization",

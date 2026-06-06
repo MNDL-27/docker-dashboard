@@ -122,7 +122,7 @@ export function AppTopBar() {
                 Docker Dashboard
               </div>
               <nav className="h-[calc(100dvh-3.5rem)] overflow-y-auto px-3 py-3 space-y-4">
-                <NavItems navGroups={navGroups} entitlements={entitlements as any} isMobile />
+                <NavItems navGroups={navGroups} entitlements={entitlements as unknown as Record<string, boolean>} isMobile />
               </nav>
             </SheetContent>
           </Sheet>

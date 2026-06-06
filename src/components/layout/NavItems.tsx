@@ -41,7 +41,7 @@ export function NavItems({ navGroups, entitlements, isMobile }: NavItemsProps) {
             >
               <item.icon className="h-4 w-4 shrink-0" />
               <span className="truncate">{item.label}</span>
-              {item.premiumKey && !entitlements?.[item.premiumKey as any] && (
+              {item.premiumKey && !entitlements?.[item.premiumKey as keyof typeof entitlements] && (
                 <Lock className="h-3.5 w-3.5 ml-auto text-muted-foreground/60 shrink-0" />
               )}
             </Link>
