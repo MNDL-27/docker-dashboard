@@ -48,7 +48,7 @@ export async function sendDueOnboardingReminders() {
     try {
       const template = onboardingReminderTemplate({
         name: user.full_name,
-        dashboardUrl: \`\${baseUrl}/\`,
+        dashboardUrl: `${baseUrl}/`,
       });
 
       const res = await sendEmail({
