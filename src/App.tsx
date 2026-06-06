@@ -21,6 +21,7 @@ import { useViewerState } from "@/hooks/useViewerState";
  * This happens when a new version is deployed and the user's browser tries to fetch
  * an old JS chunk hash that no longer exists on the server.
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function lazyLoad<T extends React.ComponentType<any>>(factory: () => Promise<{ default: T }>) {
   return lazy(async () => {
     try {
@@ -30,6 +31,7 @@ function lazyLoad<T extends React.ComponentType<any>>(factory: () => Promise<{ d
         console.warn('Chunk load error detected. Reloading page to fetch latest version...', error);
         window.location.reload();
         // Return a dummy module while the page reloads
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         return { default: () => <div className="min-h-screen flex items-center justify-center"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div> } as any;
       }
       throw error;

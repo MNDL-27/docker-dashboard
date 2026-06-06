@@ -28,6 +28,7 @@ describe("transformApiMetrics", () => {
       memory_used: 8000000000,
       memory_limit: 16000000000,
     };
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const result = transformApiMetrics(raw as any);
     expect(result).not.toBeNull();
     expect(result?.usedCores).toBe(2);
@@ -44,6 +45,7 @@ describe("transformApiMetrics", () => {
       memoryUsed: 8000000000,
       memoryLimit: 16000000000,
     };
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const result = transformApiMetrics(raw as any);
     expect(result.memory).toBeNull();
   });
@@ -58,6 +60,7 @@ describe("transformApiMetrics", () => {
       memoryUsed: 20000000000,
       memoryLimit: 16000000000, // used > limit
     };
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const result = transformApiMetrics(raw as any);
     expect(result).not.toBeNull();
     expect(result?.cpu).toBe(100);
@@ -77,6 +80,7 @@ describe("transformApiMetrics", () => {
       memoryLimit: 16000000000,
       networkInBytesPerSec: "", // Should become null, not 0
     };
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const result = transformApiMetrics(raw as any);
     expect(result?.networkInBytesPerSec).toBeNull();
   });
