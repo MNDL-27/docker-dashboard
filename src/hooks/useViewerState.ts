@@ -9,6 +9,7 @@ export interface ViewerEntitlements {
   isDonorPremium: boolean;
   seatLimit: number | null;
   nodeLimit: number | null;
+  orgLimit: number | null;
   canUseWebhookDestinations: boolean;
   canUseSlackDestinations: boolean;
   canUseAdvancedAlerts: boolean;

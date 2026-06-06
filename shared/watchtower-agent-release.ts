@@ -36,7 +36,7 @@ export interface WatchtowerAgentReleaseResponse {
   mode_label: string;
 }
 
-export type WatchtowerAgentConnectionMode = "agent" | "cloudflare_tunnel";
+export type WatchtowerAgentConnectionMode = "agent" | "cloudflare_tunnel" | "http";
 
 export interface WatchtowerAgentEnrollmentCommandOptions {
   enrollmentToken: string;
@@ -150,7 +150,7 @@ export function getWatchtowerAgentRecommendedBindAddress(
 export function getWatchtowerAgentModeLabel(
   connectionMode: WatchtowerAgentConnectionMode,
 ) {
-  return connectionMode === "cloudflare_tunnel" ? "Agent via Cloudflare Tunnel" : "Agent (Direct)";
+  return connectionMode === "cloudflare_tunnel" ? "Agent via Cloudflare Tunnel" : connectionMode === "http" ? "Agent (HTTP)" : "Agent (Direct)";
 }
 
 function buildInstallerExtraArgs({
@@ -230,19 +230,25 @@ curl -i "http://\${AGENT_BIND_ADDRESS}:\${AGENT_PORT}/metrics" -H "X-Agent-Key: 
 export function buildWatchtowerAgentSetupSummary(connectionMode: WatchtowerAgentConnectionMode) {
   return connectionMode === "cloudflare_tunnel"
     ? "Install the agent locally, keep it on localhost, then route traffic through your Cloudflare Tunnel."
-    : "Install the agent on the host, expose it behind HTTPS, then finish the connection test in Dockerdash.";
+    : connectionMode === "http"
+      ? "Install the agent on the host, expose it behind HTTP, then finish the connection test in Dockerdash."
+      : "Install the agent on the host, expose it behind HTTPS, then finish the connection test in Dockerdash.";
 }
 
 export function buildWatchtowerAgentVerifySummary(connectionMode: WatchtowerAgentConnectionMode) {
   return connectionMode === "cloudflare_tunnel"
     ? "Verify the local agent first, then confirm your tunnel hostname forwards to the same local service."
-    : "Verify the local agent first, then confirm your public HTTPS endpoint reaches the same local service.";
+    : connectionMode === "http"
+      ? "Verify the local agent first, then confirm your HTTP endpoint reaches the same local service."
+      : "Verify the local agent first, then confirm your public HTTPS endpoint reaches the same local service.";
 }
 
 export function buildWatchtowerAgentNextStepSummary(connectionMode: WatchtowerAgentConnectionMode) {
   return connectionMode === "cloudflare_tunnel"
     ? "After the local verify passes, return to Dockerdash and click Finish setup to test the tunnel URL."
-    : "After the local verify passes, return to Dockerdash and click Finish setup to test the HTTPS agent URL.";
+    : connectionMode === "http"
+      ? "After the local verify passes, return to Dockerdash and click Finish setup to test the HTTP agent URL."
+      : "After the local verify passes, return to Dockerdash and click Finish setup to test the HTTPS agent URL.";
 }
 
 export function buildWatchtowerAgentRepairCommand(

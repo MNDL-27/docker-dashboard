@@ -17,6 +17,7 @@ import {
   Square,
 } from "lucide-react";
 
+import { SignalCard } from "@/components/dashboard/SignalCard";
 import { KPICard } from "@/components/shared/KPICard";
 import { PageHeader } from "@/components/shared/PageHeader";
 import { StatusBadge } from "@/components/shared/StatusBadge";

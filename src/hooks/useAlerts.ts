@@ -6,7 +6,7 @@ import type { AlertRuleFormValues } from "@/types/alerts";
 export function useAlertsWorkspace(orgId?: string | null, filters: { severity?: string; status?: string } = {}, enabled = true) {
   return useQuery({
     queryKey: ["alerts-workspace", orgId, filters],
-    queryFn: () => alertsApi.getWorkspace(filters),
+    queryFn: () => alertsApi.listAlerts(filters),
     enabled: !!orgId && enabled,
     refetchInterval: 30000,
   });

@@ -49,6 +49,41 @@ export default async (req: Request) => {
     }
 
     if (req.method === 'GET') {
+      // Use explicit orgId from query param if provided (e.g. OrgCard viewing a
+      // different org's hosts), otherwise fall back to Clerk active org.
+      const requestedOrgId = url.searchParams.get('orgId');
+      let listOrgId = orgId; // default: Clerk active org (internal UUID)
+
+      if (requestedOrgId && requestedOrgId !== orgId) {
+        // The frontend may send either a Clerk org ID (org_xxx) or an internal UUID.
+        // Resolve to an internal UUID if it looks like a Clerk ID.
+        let resolvedOrgId = requestedOrgId;
+        const isClerkId = requestedOrgId.startsWith('org_');
+        if (isClerkId) {
+          const orgLookup = await sql`
+            SELECT id FROM public.organizations WHERE clerk_org_id = ${requestedOrgId} LIMIT 1
+          `;
+          if (orgLookup.length === 0) {
+            return new Response(JSON.stringify({ error: 'Organization not found' }), { status: 404, headers: buildHeaders(req) });
+          }
+          resolvedOrgId = orgLookup[0].id;
+        }
+
+        // Verify the requesting user has membership in the resolved org or is the creator
+        const membershipCheck = await sql`
+          SELECT 1
+          FROM public.organizations o
+          LEFT JOIN public.organization_members om ON o.id = om.organization_id AND om.user_id = ${auth.userId}
+          WHERE o.id = ${resolvedOrgId}
+            AND (om.user_id IS NOT NULL OR o.created_by = ${auth.userId})
+          LIMIT 1
+        `;
+        if (membershipCheck.length === 0) {
+          return new Response(JSON.stringify({ error: 'Access denied to requested organization' }), { status: 403, headers: buildHeaders(req) });
+        }
+        listOrgId = resolvedOrgId;
+      }
+
       if (hostId) {
         await sql`
           UPDATE docker_hosts h
@@ -108,17 +143,17 @@ export default async (req: Request) => {
         }), { headers: buildHeaders(req) });
       }
 
-      if (!orgId) return new Response(JSON.stringify({ error: 'Active org required' }), { status: 400, headers: buildHeaders(req) });
+      if (!listOrgId) return new Response(JSON.stringify({ error: 'Active org required' }), { status: 400, headers: buildHeaders(req) });
 
       await enforceOrganizationNodeLimit({
-        organizationId: orgId,
+        organizationId: listOrgId,
         isPlatformAdmin: auth.isPlatformAdmin,
       });
 
       await sql`
         UPDATE docker_hosts
         SET status = 'stale'
-        WHERE organization_id = ${orgId}
+        WHERE organization_id = ${listOrgId}
           AND status = 'connected'
           AND last_seen_at IS NOT NULL
           AND last_seen_at < ${staleCutoff}
@@ -127,7 +162,7 @@ export default async (req: Request) => {
       const hosts = await sql`
         SELECT h.* FROM docker_hosts h
         JOIN organization_members om ON h.organization_id = om.organization_id
-        WHERE h.organization_id = ${orgId} AND om.user_id = ${auth.userId}
+        WHERE h.organization_id = ${listOrgId} AND om.user_id = ${auth.userId}
         ORDER BY h.created_at DESC
       `;
       return new Response(JSON.stringify(hosts), { headers: buildHeaders(req) });
@@ -146,7 +181,7 @@ export default async (req: Request) => {
       });
       let hostUrl: string;
       try {
-        hostUrl = normalizeAndValidateHostUrl(String(body.host_url ?? ""));
+        hostUrl = normalizeAndValidateHostUrl(String(body.host_url ?? ""), String(body.connection_mode ?? ""));
       } catch (error: any) {
         return new Response(JSON.stringify({ error: error?.message || 'Invalid host_url' }), { status: 400, headers: buildHeaders(req) });
       }
@@ -203,7 +238,7 @@ export default async (req: Request) => {
       const body = await req.json();
       let hostUrl: string;
       try {
-        hostUrl = normalizeAndValidateHostUrl(String(body.host_url ?? ""));
+        hostUrl = normalizeAndValidateHostUrl(String(body.host_url ?? ""), String(body.connection_mode ?? ""));
       } catch (error: any) {
         return new Response(JSON.stringify({ error: error?.message || 'Invalid host_url' }), { status: 400, headers: buildHeaders(req) });
       }

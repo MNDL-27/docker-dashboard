@@ -16,4 +16,11 @@ export interface DashboardContainerSummary {
   _hostId?: string;
   _hostName?: string;
 }
-
+export interface ContainerStatsItem {
+  containerId: string;
+  cpu_percent: number;
+  memory_usage: number;
+  memory_limit: number;
+  net_rx: number;
+  net_tx: number;
+}

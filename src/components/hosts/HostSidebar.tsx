@@ -28,8 +28,8 @@ export function HostSidebar({
   isHostLocked,
 }: HostSidebarProps) {
   return (
-    <div className="glass-card overflow-hidden">
-      <div className="border-b border-white/5 px-5 py-4 space-y-4">
+    <div className="glass-card flex flex-col overflow-hidden sticky top-0 max-h-[calc(100vh-3rem)] lg:max-h-[calc(100vh-4rem)]">
+      <div className="border-b border-white/5 px-5 py-4 space-y-4 shrink-0">
         <div className="flex items-start justify-between gap-4">
           <div>
             <p className="text-xs uppercase tracking-[0.22em] text-muted-foreground">Host infrastructure</p>
@@ -56,7 +56,7 @@ export function HostSidebar({
           />
         </div>
       </div>
-      <ScrollArea className="h-[50vh] lg:h-[calc(100vh-18rem)]">
+      <ScrollArea className="flex-1 min-h-0">
         <div className="space-y-3 p-4">
           {filteredHosts.length === 0 ? (
             <div className="rounded-2xl border border-dashed border-white/10 p-6 text-center text-sm text-muted-foreground">

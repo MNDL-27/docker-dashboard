@@ -133,14 +133,24 @@ export default async (req: Request) => {
       // without breaking FK constraint if this is an INSERT. We will skip it or use a default if need be.
       // But usually user.created fires before organization.created.
 
-      await sql`
+      const [insertedOrg] = await sql`
         INSERT INTO public.organizations (clerk_org_id, name, slug, created_by)
         VALUES (${id}, ${name}, ${slug}, ${creatorId})
         ON CONFLICT (clerk_org_id) DO UPDATE
         SET name = EXCLUDED.name,
             slug = EXCLUDED.slug,
             updated_at = now()
+        RETURNING id
       `;
+
+      if (creatorId && eventType === 'organization.created') {
+        await sql`
+          INSERT INTO public.organization_members (organization_id, user_id, role)
+          VALUES (${insertedOrg.id}, ${creatorId}, 'owner')
+          ON CONFLICT (organization_id, user_id) DO NOTHING
+        `;
+      }
+
       console.log(`Synced org ${id} (${name})`);
     }
     else if (eventType === 'organizationMembership.created') {
@@ -175,7 +185,10 @@ export default async (req: Request) => {
           INSERT INTO public.organization_members (organization_id, user_id, role)
           VALUES (${internalOrgId}, ${internalUserId}, ${role})
           ON CONFLICT (organization_id, user_id) DO UPDATE
-          SET role = EXCLUDED.role
+          SET role = CASE 
+                       WHEN organization_members.role = 'owner' THEN 'owner'
+                       ELSE EXCLUDED.role 
+                     END
         `;
         console.log(`Synced membership for user ${userId} in org ${organizationId}`);
       } else {

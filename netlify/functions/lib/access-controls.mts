@@ -47,6 +47,7 @@ export interface OrganizationEntitlements {
   isDonorPremium: boolean;
   seatLimit: number | null;
   nodeLimit: number | null;
+  orgLimit: number | null;
   logTailLines: number;
   maxPayloadBytes: number;
   canUseWebhookDestinations: boolean;
@@ -179,6 +180,7 @@ export function computeOrganizationEntitlements({
       // Admins are still subject to plan limits
       seatLimit: paidTierPolicy.seatLimit,
       nodeLimit: paidTierPolicy.nodeLimit,
+      orgLimit: paidTierPolicy.orgLimit,
       logTailLines: paidTierPolicy.logTailLines,
       maxPayloadBytes: paidTierPolicy.maxPayloadBytes,
       canUseWebhookDestinations: paidTierPolicy.canUseWebhookDestinations,
@@ -198,6 +200,7 @@ export function computeOrganizationEntitlements({
     isDonorPremium: activeDonorStatus,
     seatLimit: paidTierPolicy.seatLimit,
     nodeLimit: paidTierPolicy.nodeLimit,
+    orgLimit: paidTierPolicy.orgLimit,
     logTailLines: paidTierPolicy.logTailLines,
     maxPayloadBytes: paidTierPolicy.maxPayloadBytes,
     canUseWebhookDestinations: paidTierPolicy.canUseWebhookDestinations,
@@ -397,6 +400,63 @@ export async function assertOrganizationSeatCapacityAvailable({
   }
 
   throw new Error(`This plan allows up to ${entitlements.seatLimit} seat(s). Upgrade for team access.`);
+}
+
+/**
+ * Enforce user-level organization capacity based on the effective plan.
+ * The org limit is checked per-user (total memberships), not per-org.
+ * We resolve the limit from the user's "best" org plan so that paid-tier
+ * users who own multiple orgs aren't locked out.
+ */
+export async function assertUserOrganizationCapacityAvailable({
+  userId,
+  isPlatformAdmin,
+}: {
+  userId: string;
+  isPlatformAdmin: boolean;
+}) {
+  // Count current org memberships for this user
+  const [{ count }] = await sql<Array<{ count: string }>>`
+    SELECT COUNT(*)::text AS count
+    FROM public.organization_members
+    WHERE user_id = ${userId}
+  `;
+  const orgCount = Number.parseInt(count ?? "0", 10);
+
+  // Resolve the highest org limit across all orgs the user belongs to.
+  // This way, if a user has a Pro org (limit 3), they get that limit
+  // even when their active org is Free.
+  const userOrgs = await sql<Array<{ id: string }>>`
+    SELECT o.id
+    FROM public.organizations o
+    JOIN public.organization_members om ON o.id = om.organization_id
+    WHERE om.user_id = ${userId}
+    ORDER BY om.created_at ASC
+  `;
+
+  let effectiveOrgLimit: number | null = PLAN_POLICY_BY_PLAN.free.orgLimit;
+
+  for (const org of userOrgs) {
+    const entitlements = await resolveOrganizationEntitlements({
+      organizationId: org.id,
+      isPlatformAdmin,
+    });
+    if (entitlements.orgLimit === null) {
+      // Unlimited — no restriction
+      return;
+    }
+    if (effectiveOrgLimit !== null && entitlements.orgLimit > effectiveOrgLimit) {
+      effectiveOrgLimit = entitlements.orgLimit;
+    }
+  }
+
+  if (effectiveOrgLimit === null || orgCount < effectiveOrgLimit) {
+    return;
+  }
+
+  throw new Error(
+    `Your plan allows up to ${effectiveOrgLimit} organization(s). Upgrade your plan to create more.`
+  );
 }
 
 export async function getUserAccessControl(userId: string): Promise<UserAccessControl> {
