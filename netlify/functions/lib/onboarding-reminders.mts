@@ -66,13 +66,13 @@ export async function sendDueOnboardingReminders() {
         UPDATE public.users
         SET onboarding_reminder_email_sent_at = now(),
             updated_at = now()
-        WHERE id = \${user.id}
+        WHERE id = ${user.id}
       `;
 
       sent++;
     } catch (e: any) {
-      console.error(\`Failed to send onboarding reminder to user \${user.id}:\`, e);
-      errors.push(\`User \${user.id}: \${e.message}\`);
+      console.error(`Failed to send onboarding reminder to user ${user.id}:`, e);
+      errors.push(`User ${user.id}: ${e.message}`);
     }
   }
 
