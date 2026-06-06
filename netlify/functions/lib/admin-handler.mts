@@ -179,13 +179,16 @@ async function listOrganizations() {
       oac.subscription_status_override,
       oac.current_period_ends_at_override,
       oac.cancel_at_period_end_override,
+      u.id AS user_id,
+      u.email,
       COUNT(DISTINCT om.user_id)::int AS member_count,
       COUNT(DISTINCT h.id)::int AS host_count
     FROM public.organizations o
+    LEFT JOIN public.users u ON u.id = o.created_by
     LEFT JOIN public.organization_access_controls oac ON oac.organization_id = o.id
     LEFT JOIN public.organization_members om ON om.organization_id = o.id
     LEFT JOIN public.docker_hosts h ON h.organization_id = o.id
-    GROUP BY o.id, oac.organization_id
+    GROUP BY o.id, oac.organization_id, u.id, u.email
     ORDER BY o.created_at DESC
   `;
 

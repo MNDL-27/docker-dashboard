@@ -57,6 +57,8 @@ export interface AdminOrganizationRow {
   subscription_status_override: string | null;
   current_period_ends_at_override: string | null;
   cancel_at_period_end_override: boolean | null;
+  user_id: string;
+  email: string;
   member_count: number;
   host_count: number;
 }
