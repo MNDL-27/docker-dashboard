@@ -16,6 +16,7 @@ import {
   useHardDisableAdminUser,
   useHardEnableAdminUser,
   useAddAdminOrgBan,
+  useSendAdminOnboardingReminder,
 } from "@/hooks/useAdmin";
 import { StatusPill, DetailField, AdminActionDialog } from "./AdminShared";
 import { formatDate, filterByQuery } from "./admin-utils";
@@ -45,6 +46,7 @@ export function AdminUserManagement() {
   const hardDisableMutation = useHardDisableAdminUser();
   const hardEnableMutation = useHardEnableAdminUser();
   const addOrgBanMutation = useAddAdminOrgBan();
+  const sendOnboardingReminderMutation = useSendAdminOnboardingReminder();
 
   const users = filterByQuery(usersQuery.data ?? [], userQuery, ["email", "full_name"]) as AdminUserRow[];
 
@@ -59,7 +61,8 @@ export function AdminUserManagement() {
     unsuspendMutation.isPending ||
     hardDisableMutation.isPending ||
     hardEnableMutation.isPending ||
-    addOrgBanMutation.isPending;
+    addOrgBanMutation.isPending ||
+    sendOnboardingReminderMutation.isPending;
 
   const runAction = async (reason: string) => {
     if (!pendingAction) return;
@@ -90,6 +93,9 @@ export function AdminUserManagement() {
             organizationId: banOrganizationId,
             reason,
           });
+          break;
+        case "send-onboarding-reminder":
+          await sendOnboardingReminderMutation.mutateAsync({ userId: pendingAction.targetId, reason });
           break;
       }
       toast({ title: "Admin action completed" });
@@ -219,6 +225,21 @@ export function AdminUserManagement() {
               >
                 <Shield className="mr-1.5 h-4 w-4" />
                 {userDetailQuery.data.is_hard_disabled ? "Re-enable" : "Hard Disable"}
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() =>
+                  setPendingAction({
+                    kind: "send-onboarding-reminder",
+                    targetId: userDetailQuery.data!.id,
+                    title: "Send Onboarding Reminder",
+                    description: "This will manually trigger the automated onboarding reminder email to the user.",
+                    confirmLabel: "Send Reminder",
+                  })
+                }
+              >
+                Send Onboarding Reminder
               </Button>
             </div>
             <div className="space-y-2">

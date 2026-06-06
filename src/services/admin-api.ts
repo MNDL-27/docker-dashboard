@@ -84,4 +84,8 @@ export const adminApi = {
     apiFetch("/admin/notifications", { method: "POST", body: values }),
   deleteNotification: async (id: string, reason: string) =>
     apiFetch(`/admin/notifications/${id}`, { method: "DELETE", body: { reason } }),
+  sendOnboardingReminder: async (userId: string, reason: string) => 
+    apiFetch(`/admin/users/${userId}/send-onboarding-reminder`, { method: "POST", body: { reason } }),
+  sendRenewalReminder: async (organizationId: string, reason: string) => 
+    apiFetch(`/admin/organizations/${organizationId}/send-renewal-reminder`, { method: "POST", body: { reason } }),
 };

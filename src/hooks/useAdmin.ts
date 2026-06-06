@@ -184,3 +184,12 @@ export function useCreateAdminNotification() {
 export function useDeleteAdminNotification() {
   return useAdminMutation(({ id, reason }: { id: string; reason: string }) => adminApi.deleteNotification(id, reason));
 }
+
+export function useSendAdminOnboardingReminder() {
+  return useAdminMutation(({ userId, reason }: { userId: string; reason: string }) => adminApi.sendOnboardingReminder(userId, reason));
+}
+
+export function useSendAdminRenewalReminder() {
+  return useAdminMutation(({ organizationId, reason }: { organizationId: string; reason: string }) => adminApi.sendRenewalReminder(organizationId, reason));
+}
+
