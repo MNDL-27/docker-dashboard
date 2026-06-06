@@ -1,7 +1,8 @@
 import type { Config } from '@netlify/functions';
 import { sql } from './lib/db.mjs';
 import { requireAuth } from './lib/auth.mjs';
-import { assertOrganizationWriteAllowed } from './lib/access-controls.mjs';
+import { assertOrganizationWriteAllowed, assertUserOrganizationCapacityAvailable } from './lib/access-controls.mjs';
+import { clerkClient } from './lib/clerk.mjs';
 
 const headers = {
   'Access-Control-Allow-Origin': '*',
@@ -31,6 +32,12 @@ export default async (req: Request) => {
     if (req.method === 'POST') {
       const { name } = await req.json();
       if (!name) return new Response(JSON.stringify({ error: 'Name required' }), { status: 400, headers });
+
+      // Enforce org limit based on user's effective plan
+      await assertUserOrganizationCapacityAvailable({
+        userId: authContext.userId,
+        isPlatformAdmin: authContext.isPlatformAdmin,
+      });
 
       const [{ create_organization: orgId }] = await sql`
         SELECT public.create_organization(${name}, ${authContext.userId})
@@ -163,6 +170,98 @@ export default async (req: Request) => {
       }
 
       return new Response(JSON.stringify(updated[0]), { headers });
+    }
+
+    if (req.method === 'DELETE') {
+      const url = new URL(req.url);
+      const rawOrgId = url.searchParams.get('orgId');
+      if (!rawOrgId) {
+        return new Response(JSON.stringify({ error: 'orgId query parameter required' }), { status: 400, headers });
+      }
+
+      let deleteOrgId = rawOrgId;
+      if (rawOrgId.startsWith('org_')) {
+        const orgLookup = await sql`
+          SELECT id FROM public.organizations WHERE clerk_org_id = ${rawOrgId} LIMIT 1
+        `;
+        
+        if (orgLookup.length === 0) {
+          // Ghost organization: deleted locally but still exists in Clerk.
+          // Try to clean it up in Clerk so the UI stops rendering it.
+          try {
+            // Verify permission via Clerk SDK
+            const memberships = await clerkClient.organizations.getOrganizationMembershipList({ organizationId: rawOrgId });
+            const userMem = memberships.data.find((m: any) => m.publicUserData?.userId === authContext.clerkUserId);
+            if ((userMem && (userMem.role === 'org:admin' || userMem.role === 'org:owner' || userMem.role === 'admin')) || authContext.isPlatformAdmin) {
+              await clerkClient.organizations.deleteOrganization(rawOrgId);
+              return new Response(JSON.stringify({ success: true, message: 'Cleaned up ghost organization' }), { headers });
+            }
+          } catch (e: any) {
+            console.error('[api-organizations] Failed to check/delete ghost org from Clerk:', e?.message);
+          }
+          return new Response(JSON.stringify({ error: 'Organization not found' }), { status: 404, headers });
+        }
+        deleteOrgId = orgLookup[0].id;
+      }
+
+      // Verify user is the owner of this org (or the creator, in case of orphaned memberships)
+      const ownerCheck = await sql`
+        SELECT om.role, o.created_by
+        FROM organizations o
+        LEFT JOIN organization_members om ON o.id = om.organization_id AND om.user_id = ${authContext.userId}
+        WHERE o.id = ${deleteOrgId}
+      `;
+
+      if (ownerCheck.length === 0) {
+        return new Response(JSON.stringify({ error: 'Organization not found' }), { status: 404, headers });
+      }
+
+      const isMember = ownerCheck[0].role !== null;
+      const isCreator = ownerCheck[0].created_by === authContext.userId;
+
+      if (!isMember && !isCreator && !authContext.isPlatformAdmin) {
+        return new Response(JSON.stringify({ error: 'Organization not found or you are not a member' }), { status: 404, headers });
+      }
+
+      const role = ownerCheck[0].role;
+      if (role !== 'owner' && role !== 'admin' && !isCreator && !authContext.isPlatformAdmin) {
+        return new Response(JSON.stringify({ error: 'Only the organization owner or admin can delete it' }), { status: 403, headers });
+      }
+
+      // Refuse deletion if org still has hosts
+      const [{ count: hostCount }] = await sql<Array<{ count: string }>>`
+        SELECT COUNT(*)::text AS count
+        FROM public.docker_hosts
+        WHERE organization_id = ${deleteOrgId}
+      `;
+
+      if (Number.parseInt(hostCount ?? '0', 10) > 0) {
+        return new Response(
+          JSON.stringify({ error: 'Cannot delete an organization that still has connected hosts. Remove all hosts first.' }),
+          { status: 409, headers }
+        );
+      }
+
+      // Delete org (cascades to members, alerts, etc. via FK)
+      const deleted = await sql`
+        DELETE FROM public.organizations
+        WHERE id = ${deleteOrgId}
+        RETURNING id, clerk_org_id
+      `;
+
+      if (deleted.length === 0) {
+        return new Response(JSON.stringify({ error: 'Organization not found' }), { status: 404, headers });
+      }
+
+      if (deleted[0].clerk_org_id) {
+        try {
+          await clerkClient.organizations.deleteOrganization(deleted[0].clerk_org_id);
+        } catch (clerkErr: any) {
+          console.error('[api-organizations] Failed to delete org from Clerk:', clerkErr?.message);
+        }
+      }
+
+      return new Response(JSON.stringify({ success: true, id: deleted[0].id }), { headers });
     }
 
     return new Response(JSON.stringify({ error: 'Method not allowed' }), { status: 405, headers });

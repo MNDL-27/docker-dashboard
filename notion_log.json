@@ -1,0 +1,88 @@
+{
+  "children": [
+    {
+      "object": "block",
+      "type": "paragraph",
+      "paragraph": {
+        "rich_text": [
+          {
+            "type": "text",
+            "text": {
+              "content": "Session Log — 2026-06-03: Implement app-level notification toggle and relocate external channels to Alerts page."
+            }
+          }
+        ]
+      }
+    },
+    {
+      "object": "block",
+      "type": "bulleted_list_item",
+      "bulleted_list_item": {
+        "rich_text": [
+          {
+            "type": "text",
+            "text": {
+              "content": "Repository: https://github.com/MNDL-27/docker-watchtower-dash | Branch: main | Commit: f23f3d9"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "object": "block",
+      "type": "bulleted_list_item",
+      "bulleted_list_item": {
+        "rich_text": [
+          {
+            "type": "text",
+            "text": {
+              "content": "Objective: Improve notification management by adding a local toggle and moving delivery channels to the Alerts page."
+            }
+          }
+        ]
+      }
+    },
+    {
+      "object": "block",
+      "type": "bulleted_list_item",
+      "bulleted_list_item": {
+        "rich_text": [
+          {
+            "type": "text",
+            "text": {
+              "content": "Changes: 1. DesktopNotificationSettings.tsx: Added Mute switch and Send Test button. 2. useNotifications.ts: Respects browser_notifications_enabled setting. 3. AlertsPage.tsx: Integrated Slack and Webhook destination management. 4. SettingsPage.tsx: Simplified tabs, removed external channels. 5. useHostMetrics.test.ts: Fixed legacy test failures."
+            }
+          }
+        ]
+      }
+    },
+    {
+      "object": "block",
+      "type": "bulleted_list_item",
+      "bulleted_list_item": {
+        "rich_text": [
+          {
+            "type": "text",
+            "text": {
+              "content": "Files modified: src/components/settings/DesktopNotificationSettings.tsx; src/hooks/useNotifications.ts; src/pages/app/AlertsPage.tsx; src/pages/app/SettingsPage.tsx; src/hooks/useHostMetrics.test.ts"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "object": "block",
+      "type": "bulleted_list_item",
+      "bulleted_list_item": {
+        "rich_text": [
+          {
+            "type": "text",
+            "text": {
+              "content": "Result: Pushed to main branch, verified with build and tests."
+            }
+          }
+        ]
+      }
+    }
+  ]
+}

@@ -47,7 +47,7 @@ function badRequest(error: string, code?: string, status = 400) {
 }
 
 function parseConnectionMode(value: unknown): WatchtowerAgentConnectionMode | null {
-  return value === "agent" || value === "cloudflare_tunnel" ? value : null;
+  return value === "agent" || value === "cloudflare_tunnel" || value === "http" ? value : null;
 }
 
 function hashEnrollmentToken(token: string) {
@@ -430,7 +430,7 @@ export default async (req: Request) => {
       const providedHostUrl = typeof body?.host_url === "string" ? body.host_url.trim() : "";
       if (providedHostUrl) {
         try {
-          finalHostUrl = normalizeAndValidateHostUrl(providedHostUrl);
+          finalHostUrl = normalizeAndValidateHostUrl(providedHostUrl, session.connection_mode);
           await sql`
             UPDATE agent_enrollment_sessions
             SET host_url = ${finalHostUrl}
@@ -548,7 +548,7 @@ export default async (req: Request) => {
 
       const connectionMode = parseConnectionMode(body?.connection_mode);
       if (!connectionMode) {
-        return badRequest("connection_mode must be 'agent' or 'cloudflare_tunnel'");
+        return badRequest("connection_mode must be 'agent', 'cloudflare_tunnel', or 'http'");
       }
 
       const hostName = trimOrDefault(body?.host_name, "");
@@ -564,7 +564,7 @@ export default async (req: Request) => {
       let normalizedHostUrl: string;
       if (hostUrl) {
         try {
-          normalizedHostUrl = normalizeAndValidateHostUrl(hostUrl);
+          normalizedHostUrl = normalizeAndValidateHostUrl(hostUrl, connectionMode);
         } catch (error: any) {
           return badRequest(error?.message || "host_url is invalid");
         }

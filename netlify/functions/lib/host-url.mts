@@ -36,17 +36,57 @@ function allowLocalAgentUrls() {
   return process.env.NODE_ENV !== "production" || isTrue(process.env.ALLOW_LOCAL_AGENT_URLS);
 }
 
-export function normalizeAndValidateHostUrl(input: string) {
-  const value = input.trim();
-  if (!value) {
+/**
+ * Infer a full URL from user input that may be a bare IP, hostname,
+ * host:port, or an already-complete URL.
+ *
+ * Rules:
+ *  - If the input already has a scheme (http:// or https://), use it as-is.
+ *  - Otherwise, prepend the protocol based on connectionMode:
+ *      • "http"               → http://
+ *      • "cloudflare_tunnel"  → https://
+ *      • "agent" (default)    → https://
+ *  - If no explicit port is present and mode is NOT "cloudflare_tunnel",
+ *    append `:9876` (the default agent port).
+ */
+function inferFullUrl(input: string, connectionMode?: string): string {
+  let value = input.trim();
+  if (!value) return value;
+
+  // Already has a scheme – leave it alone.
+  if (/^https?:\/\//i.test(value)) return value;
+
+  // Strip any accidental leading slashes.
+  value = value.replace(/^\/+/, "");
+
+  // Choose protocol.
+  const scheme = connectionMode === "http" ? "http" : "https";
+
+  // Detect whether user supplied an explicit port (IPv6 bracket-notation aware).
+  const hasExplicitPort = value.includes("]:") || (
+    !value.startsWith("[") && /:\d+$/.test(value.split("/")[0])
+  );
+
+  const needsDefaultPort =
+    !hasExplicitPort && connectionMode !== "cloudflare_tunnel";
+
+  const host = needsDefaultPort ? `${value}:9876` : value;
+  return `${scheme}://${host}`;
+}
+
+export function normalizeAndValidateHostUrl(input: string, connectionMode?: string) {
+  const raw = input.trim();
+  if (!raw) {
     throw new Error("host_url is required");
   }
 
+  const fullUrl = inferFullUrl(raw, connectionMode);
+
   let parsed: URL;
   try {
-    parsed = new URL(value);
+    parsed = new URL(fullUrl);
   } catch {
-    throw new Error("host_url must be a valid absolute URL");
+    throw new Error("host_url must be a valid IP address, hostname, or URL");
   }
 
   if (parsed.username || parsed.password) {
@@ -65,12 +105,8 @@ export function normalizeAndValidateHostUrl(input: string) {
   const ipVersion = isIP(hostname);
   const isLocal = isLocalHostname(hostname);
 
-  if (parsed.protocol === "http:") {
-    if (!isLocal || !allowLocalAgentUrls()) {
-      throw new Error("host_url must use https unless local agent URLs are explicitly allowed for development");
-    }
-  } else if (parsed.protocol !== "https:") {
-    throw new Error("host_url must use https");
+  if (parsed.protocol !== "http:" && parsed.protocol !== "https:") {
+    throw new Error("host_url must use http or https");
   }
 
   if (isLocal) {

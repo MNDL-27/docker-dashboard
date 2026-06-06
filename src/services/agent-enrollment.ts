@@ -5,7 +5,7 @@ import type { DockerHostPingResult } from "@/services/docker-api";
 export interface CreateAgentEnrollmentInput {
   organizationId: string;
   hostName: string;
-  hostUrl: string;
+  hostUrl?: string;
   connectionMode: ConnectionMode;
   dockerSocketPath?: string;
   cfServiceTokenId?: string;
@@ -46,9 +46,9 @@ export const agentEnrollmentApi = {
       }),
     }) as Promise<AgentEnrollmentCreateResponse>,
 
-  finalize: (sessionId: string) =>
+  finalize: (sessionId: string, hostUrl?: string) =>
     apiFetch("/agent-enrollments/finalize", {
       method: "POST",
-      body: JSON.stringify({ session_id: sessionId }),
+      body: JSON.stringify({ session_id: sessionId, host_url: hostUrl }),
     }) as Promise<AgentEnrollmentFinalizeResponse>,
 };

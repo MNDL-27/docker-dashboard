@@ -33,7 +33,8 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
-import { cn } from "@/lib/utils";
+import { cn, formatBytes } from "@/lib/utils";
+import { PremiumFeatureBlock } from "@/components/shared/PremiumFeatureBlock";
 import { useContainerInspect, useContainerLogs, useContainerStats, useDockerHosts } from "@/hooks/useDocker";
 import { useViewerState } from "@/hooks/useViewerState";
 import { dockerApi } from "@/services/docker-api";

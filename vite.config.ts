@@ -1,7 +1,41 @@
-import { defineConfig } from "vite";
+import { defineConfig, type Plugin } from "vite";
 import react from "@vitejs/plugin-react-swc";
 import { sentryVitePlugin } from "@sentry/vite-plugin";
 import path from "path";
+import { createHash } from "crypto";
+import fs from "fs";
+
+/**
+ * Vite plugin that generates a `/version.json` file in the build output
+ * containing a unique build hash. The client-side `useAppUpdate` hook polls
+ * this file to detect new deployments and prompt the user to reload.
+ */
+function buildVersionPlugin(): Plugin {
+  const buildHash = createHash("sha256")
+    .update(`${Date.now()}-${Math.random()}`)
+    .digest("hex")
+    .slice(0, 12);
+
+  return {
+    name: "build-version",
+    config() {
+      return {
+        define: {
+          "import.meta.env.VITE_BUILD_HASH": JSON.stringify(buildHash),
+        },
+      };
+    },
+    writeBundle(options) {
+      const outDir = options.dir ?? "dist";
+      const versionPayload = JSON.stringify(
+        { hash: buildHash, builtAt: new Date().toISOString() },
+        null,
+        2
+      );
+      fs.writeFileSync(path.resolve(outDir, "version.json"), versionPayload);
+    },
+  };
+}
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
@@ -14,6 +48,7 @@ export default defineConfig(({ mode }) => ({
   },
   plugins: [
     react(),
+    buildVersionPlugin(),
     sentryVitePlugin({
       org: process.env.SENTRY_ORG,
       project: process.env.SENTRY_PROJECT,

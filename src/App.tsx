@@ -10,43 +10,65 @@ import { isAppSubdomain, isDocsSubdomain, isPreviewAuthBypassEnabled } from "@/l
 import { RequireAppSubdomain } from "@/components/RequireAppSubdomain";
 import { ClerkProvider } from "@clerk/react";
 import { RequirePlatformAdmin } from "@/components/RequirePlatformAdmin";
+import { AppUpdateBanner } from "@/components/AppUpdateBanner";
 import { Loader2 } from "lucide-react";
 import { lazy, Suspense, useEffect } from "react";
 import { usePageViewTracking } from "@/hooks/usePageViewTracking";
 import { useViewerState } from "@/hooks/useViewerState";
 
-const LandingPage = lazy(() => import("./pages/LandingPage"));
-const FeaturesPage = lazy(() => import("./pages/FeaturesPage"));
-const PricingPage = lazy(() => import("./pages/PricingPage"));
-const SecurityPage = lazy(() => import("./pages/SecurityPage"));
-const DocsPage = lazy(() => import("./pages/DocsPage"));
-const LoginPage = lazy(() => import("./pages/LoginPage"));
-const SignupPage = lazy(() => import("./pages/SignupPage"));
-const CreateOrgPage = lazy(() => import("./pages/CreateOrgPage"));
-const TermsPage = lazy(() => import("./pages/TermsPage"));
-const PrivacyPage = lazy(() => import("./pages/PrivacyPage"));
-const RefundsPage = lazy(() => import("./pages/RefundsPage"));
-const ContactPage = lazy(() => import("./pages/ContactPage"));
-const OnboardingPage = lazy(() => import("./pages/OnboardingPage"));
-const DedicatedStartPage = lazy(() => import("./pages/DedicatedStartPage"));
-const DedicatedIntakePage = lazy(() => import("./pages/DedicatedIntakePage"));
-const DashboardPage = lazy(() => import("./pages/app/DashboardPage"));
-const HostsPage = lazy(() => import("./pages/app/HostsPage"));
-const HostDetailPage = lazy(() => import("./pages/app/HostDetailPage"));
-const ContainersPage = lazy(() => import("./pages/app/ContainersPage"));
-const ContainerDetailPage = lazy(() => import("./pages/app/ContainerDetailPage"));
-const FileManagerPage = lazy(() => import("./pages/app/FileManagerPage"));
-const LogsPage = lazy(() => import("./pages/app/LogsPage"));
-const AlertsPage = lazy(() => import("./pages/app/AlertsPage"));
-const MembersPage = lazy(() => import("./pages/app/MembersPage"));
-const BillingPage = lazy(() => import("./pages/app/BillingPage"));
-const SettingsPage = lazy(() => import("./pages/app/SettingsPage"));
-const OrganizationsPage = lazy(() => import("./pages/app/OrganizationsPage"));
-const AdminPage = lazy(() => import("./pages/app/AdminPage"));
-const HelpPage = lazy(() => import("./pages/app/HelpPage"));
-const SetupGuidePage = lazy(() => import("./pages/app/SetupGuidePage"));
-const DedicatedDeploymentPage = lazy(() => import("./pages/app/DedicatedDeploymentPage"));
-const NotFound = lazy(() => import("./pages/NotFound"));
+/**
+ * Wraps React.lazy to automatically reload the page if a chunk fails to load.
+ * This happens when a new version is deployed and the user's browser tries to fetch
+ * an old JS chunk hash that no longer exists on the server.
+ */
+function lazyLoad<T extends React.ComponentType<any>>(factory: () => Promise<{ default: T }>) {
+  return lazy(async () => {
+    try {
+      return await factory();
+    } catch (error) {
+      if (error instanceof TypeError && error.message.includes('Failed to fetch dynamically imported module')) {
+        console.warn('Chunk load error detected. Reloading page to fetch latest version...', error);
+        window.location.reload();
+        // Return a dummy module while the page reloads
+        return { default: () => <div className="min-h-screen flex items-center justify-center"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div> } as any;
+      }
+      throw error;
+    }
+  });
+}
+
+const LandingPage = lazyLoad(() => import("./pages/LandingPage"));
+const FeaturesPage = lazyLoad(() => import("./pages/FeaturesPage"));
+const PricingPage = lazyLoad(() => import("./pages/PricingPage"));
+const SecurityPage = lazyLoad(() => import("./pages/SecurityPage"));
+const DocsPage = lazyLoad(() => import("./pages/DocsPage"));
+const LoginPage = lazyLoad(() => import("./pages/LoginPage"));
+const SignupPage = lazyLoad(() => import("./pages/SignupPage"));
+const CreateOrgPage = lazyLoad(() => import("./pages/CreateOrgPage"));
+const TermsPage = lazyLoad(() => import("./pages/TermsPage"));
+const PrivacyPage = lazyLoad(() => import("./pages/PrivacyPage"));
+const RefundsPage = lazyLoad(() => import("./pages/RefundsPage"));
+const ContactPage = lazyLoad(() => import("./pages/ContactPage"));
+const OnboardingPage = lazyLoad(() => import("./pages/OnboardingPage"));
+const DedicatedStartPage = lazyLoad(() => import("./pages/DedicatedStartPage"));
+const DedicatedIntakePage = lazyLoad(() => import("./pages/DedicatedIntakePage"));
+const DashboardPage = lazyLoad(() => import("./pages/app/DashboardPage"));
+const HostsPage = lazyLoad(() => import("./pages/app/HostsPage"));
+const HostDetailPage = lazyLoad(() => import("./pages/app/HostDetailPage"));
+const ContainersPage = lazyLoad(() => import("./pages/app/ContainersPage"));
+const ContainerDetailPage = lazyLoad(() => import("./pages/app/ContainerDetailPage"));
+const FileManagerPage = lazyLoad(() => import("./pages/app/FileManagerPage"));
+const LogsPage = lazyLoad(() => import("./pages/app/LogsPage"));
+const AlertsPage = lazyLoad(() => import("./pages/app/AlertsPage"));
+const MembersPage = lazyLoad(() => import("./pages/app/MembersPage"));
+const BillingPage = lazyLoad(() => import("./pages/app/BillingPage"));
+const SettingsPage = lazyLoad(() => import("./pages/app/SettingsPage"));
+const OrganizationsPage = lazyLoad(() => import("./pages/app/OrganizationsPage"));
+const AdminPage = lazyLoad(() => import("./pages/app/AdminPage"));
+const HelpPage = lazyLoad(() => import("./pages/app/HelpPage"));
+const SetupGuidePage = lazyLoad(() => import("./pages/app/SetupGuidePage"));
+const DedicatedDeploymentPage = lazyLoad(() => import("./pages/app/DedicatedDeploymentPage"));
+const NotFound = lazyLoad(() => import("./pages/NotFound"));
 
 const queryClient = new QueryClient();
 
@@ -86,6 +108,7 @@ const App = () => {
         <DarkModeInit>
             <Toaster />
             <Sonner />
+            <AppUpdateBanner />
             <BrowserRouter>
               <PageViewTracker />
               <Suspense fallback={<RouteFallback />}>

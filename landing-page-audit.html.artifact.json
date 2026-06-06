@@ -1,0 +1,22 @@
+{
+  "version": 1,
+  "kind": "html",
+  "title": "Visual Audit: Landing Page",
+  "entry": "landing-page-audit.html",
+  "renderer": "html",
+  "status": "complete",
+  "exports": [
+    "html",
+    "pdf",
+    "zip"
+  ],
+  "primary": true,
+  "createdAt": "2026-06-03T08:07:21.093Z",
+  "updatedAt": "2026-06-03T08:07:21.100Z",
+  "sourceSkillId": "agent-browser",
+  "metadata": {
+    "identifier": "landing-page-audit",
+    "artifactType": "text/html",
+    "inferred": false
+  }
+}

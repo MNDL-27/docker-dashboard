@@ -15,6 +15,7 @@ import { CURRENT_WATCHTOWER_AGENT_VERSION, isAgentVersionOutdated } from "@/lib/
 import { sanitizeConnectionError } from "@/lib/error-sanitizer";
 import { CONNECTION_MODES } from "@/pages/onboarding/useOnboardingState";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 interface AddHostDialogProps {
   orgId: string;
@@ -35,9 +36,9 @@ interface EditableHostSecrets {
 
 type GuidedStage = "basics" | "install" | "finalizing";
 
-/* ── Icon map for connection mode cards ── */
 const MODE_ICONS: Record<ConnectionMode, typeof Terminal> = {
   agent: Terminal,
+  http: Terminal,
   cloudflare_tunnel: CloudCog,
 };
 
@@ -93,34 +94,30 @@ function ConnectionModeSelector({
 }) {
   return (
     <div className="space-y-3">
-      <Label className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground/70">Connection Method</Label>
-      <div className="grid grid-cols-2 gap-3">
-        {CONNECTION_MODES.map((m) => {
-          const isSelected = connectionMode === m.value;
-          const Icon = MODE_ICONS[m.value];
-          return (
-            <button
-              key={m.value}
-              type="button"
-              onClick={() => onConnectionModeChange(m.value)}
-              className={`relative p-3 rounded-xl border text-left transition-all ${
-                isSelected
-                  ? "border-primary bg-primary/5 ring-1 ring-primary/30 shadow-[0_0_15px_-3px_rgba(14,154,184,0.15)]"
-                  : "border-border hover:border-primary/40 hover:bg-muted/30"
-              }`}
-            >
-              {isSelected && (
-                <div className="absolute top-2 right-2 w-3.5 h-3.5 rounded-full bg-primary flex items-center justify-center">
-                  <Check className="h-2 w-2 text-primary-foreground" />
+      <Label className="text-sm font-semibold uppercase tracking-wider text-muted-foreground/70">Connection Method</Label>
+      <Select value={connectionMode} onValueChange={(val: string) => onConnectionModeChange(val as ConnectionMode)}>
+        <SelectTrigger className="h-14 bg-background w-full">
+          <SelectValue placeholder="Select a connection method" />
+        </SelectTrigger>
+        <SelectContent>
+          {CONNECTION_MODES.map((m) => {
+            const Icon = MODE_ICONS[m.value];
+            return (
+              <SelectItem key={m.value} value={m.value} className="py-3 cursor-pointer">
+                <div className="flex items-center gap-4">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-md bg-muted text-muted-foreground shrink-0">
+                    <Icon className="h-4 w-4" />
+                  </div>
+                  <div className="flex flex-col items-start gap-0.5">
+                    <span className="text-sm font-semibold leading-none">{m.label}</span>
+                    <span className="text-xs text-muted-foreground">{m.desc}</span>
+                  </div>
                 </div>
-              )}
-              <Icon className={`h-4 w-4 mb-1.5 ${isSelected ? "text-primary" : "text-muted-foreground"}`} />
-              <div className={`text-xs font-semibold ${isSelected ? "text-foreground" : "text-foreground/80"}`}>{m.label}</div>
-              <div className="text-[9px] text-muted-foreground mt-0.5 leading-snug">{m.desc}</div>
-            </button>
-          );
-        })}
-      </div>
+              </SelectItem>
+            );
+          })}
+        </SelectContent>
+      </Select>
     </div>
   );
 }
@@ -209,10 +206,8 @@ export function AddHostDialog({ orgId, trigger, host, disabledReason }: AddHostD
   }, [open, host, toast]);
 
   const handleSaveEdit = async () => {
-    try {
-      new URL(hostUrl);
-    } catch {
-      toast({ title: "Invalid URL", description: "Enter a valid agent or tunnel URL.", variant: "destructive" });
+    if (!hostUrl.trim()) {
+      toast({ title: "Invalid Host", description: "Enter a valid agent IP or hostname.", variant: "destructive" });
       return;
     }
 
@@ -318,10 +313,8 @@ export function AddHostDialog({ orgId, trigger, host, disabledReason }: AddHostD
       return;
     }
 
-    try {
-      new URL(hostUrl);
-    } catch {
-      setGuidedError("Enter a valid URL (e.g. https://agent.example.com:9876)");
+    if (!hostUrl.trim()) {
+      setGuidedError("Enter a valid IP or hostname (e.g. 192.168.1.5)");
       return;
     }
 
@@ -427,9 +420,9 @@ export function AddHostDialog({ orgId, trigger, host, disabledReason }: AddHostD
             </div>
 
             <div className="space-y-2">
-              <Label className="text-sm font-medium">{mode === "agent" ? "Agent URL" : "Tunnel URL"}</Label>
+              <Label className="text-sm font-medium">{mode === "cloudflare_tunnel" ? "Tunnel Hostname" : mode === "http" ? "HTTP Agent Hostname/IP" : "Agent Hostname/IP"}</Label>
               <Input
-                placeholder={mode === "agent" ? "https://your-host:9876" : "https://docker.your-team.cloudflareaccess.com"}
+                placeholder={mode === "cloudflare_tunnel" ? "docker.your-team.cloudflareaccess.com" : "192.168.1.5"}
                 value={hostUrl}
                 onChange={(e) => setHostUrl(e.target.value)}
                 className="h-10 bg-background"
@@ -570,19 +563,21 @@ export function AddHostDialog({ orgId, trigger, host, disabledReason }: AddHostD
 
               <div className="space-y-3 pt-1">
                 <Label htmlFor="host-url" className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/70">
-                  {mode === "agent" ? "Public Agent URL" : "Tunnel URL"}
+                  {mode === "cloudflare_tunnel" ? "Tunnel Hostname" : mode === "http" ? "Public HTTP Agent Hostname/IP" : "Public Agent Hostname/IP"}
                 </Label>
                 <Input
                   id="host-url"
-                  placeholder={mode === "agent" ? "https://agent.example.com:9876" : "https://docker.your-team.cloudflareaccess.com"}
+                  placeholder={mode === "cloudflare_tunnel" ? "docker.your-team.cloudflareaccess.com" : "agent.example.com"}
                   value={hostUrl}
                   onChange={(e) => setHostUrl(e.target.value)}
                   className="h-11 bg-background"
                 />
                 <p className="text-[11px] text-muted-foreground leading-relaxed">
-                  {mode === "agent"
-                    ? "The external HTTPS URL of your agent. Ensure port 9876 is accessible."
-                    : "The Cloudflare Tunnel hostname routing to port 9876."}
+                  {mode === "cloudflare_tunnel"
+                    ? "The Cloudflare Tunnel hostname routing to port 9876."
+                    : mode === "http"
+                      ? "The external IP or hostname of your agent. Ensure port 9876 is accessible."
+                      : "The external IP or hostname of your agent. Ensure port 9876 is accessible."}
                 </p>
               </div>
             </div>
