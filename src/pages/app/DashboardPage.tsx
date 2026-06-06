@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useRef } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useOrganization, useOrganizationList } from "@clerk/react";
 import { useDockerHosts, useContainers, useAllContainerStats } from "@/hooks/useDocker";
@@ -35,8 +35,15 @@ export default function DashboardPage() {
 
   const {
     data: rawStats = [],
+    isLoading: statsLoading,
     isFetching: statsFetching,
   } = useAllContainerStats(currentOrg?.id, hosts.length > 0, 15000);
+
+  // Track whether we've ever successfully loaded containers so that
+  // subsequent background refetches don't flash the skeleton UI.
+  const hasLoadedOnce = useRef(false);
+  if (containers.length > 0) hasLoadedOnce.current = true;
+  const showContainerSkeleton = containersLoading && !hasLoadedOnce.current;
 
   const stats = useMemo(() => buildDashboardStats(hosts, containers), [hosts, containers]);
 
@@ -69,7 +76,8 @@ export default function DashboardPage() {
       hosts={hosts}
       stats={stats}
       rawStats={rawStats}
-      containersLoading={containersLoading || statsFetching}
+      containersLoading={showContainerSkeleton || statsLoading}
+      isFetching={containersFetching || statsFetching}
       liveDataError={containersError instanceof Error ? containersError.message : null}
       fleetMetricsRefetchInterval={10000}
     />

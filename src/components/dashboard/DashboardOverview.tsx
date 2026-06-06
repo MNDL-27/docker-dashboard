@@ -15,6 +15,7 @@ interface DashboardOverviewProps {
   stats: DashboardStats;
   rawStats: unknown;
   containersLoading: boolean;
+  isFetching?: boolean;
   liveDataError?: string | null;
   fleetMetricsRefetchInterval?: number | false;
 }
@@ -26,6 +27,7 @@ export function DashboardOverview({
   stats,
   rawStats,
   containersLoading,
+  isFetching,
   liveDataError,
   fleetMetricsRefetchInterval = 10000,
 }: DashboardOverviewProps) {
@@ -67,7 +69,7 @@ export function DashboardOverview({
 
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 sm:gap-6">
         <div className="lg:col-span-3 min-h-[350px] sm:min-h-[450px]">
-          <ContainersTable containers={stats.containers} rawStats={rawStats} isLoading={containersLoading} />
+          <ContainersTable containers={stats.containers} rawStats={rawStats} isLoading={containersLoading} isFetching={isFetching} />
         </div>
         <div className="lg:col-span-1 min-h-[350px] sm:min-h-[450px]">
           <DashboardAlerts alerts={stats.alerts} />

@@ -9,10 +9,11 @@ interface ContainersTableProps {
   containers: DashboardContainerSummary[];
   rawStats?: unknown;
   isLoading?: boolean;
+  isFetching?: boolean;
   className?: string;
 }
 
-export function ContainersTable({ containers, rawStats, isLoading, className }: ContainersTableProps) {
+export function ContainersTable({ containers, rawStats, isLoading, isFetching, className }: ContainersTableProps) {
   const statsMap = useMemo(() => {
     const map = new Map<string, ContainerStatsItem>();
     if (Array.isArray(rawStats)) {
@@ -27,6 +28,7 @@ export function ContainersTable({ containers, rawStats, isLoading, className }: 
         <div className="flex items-center gap-2">
           <Box className="h-4 w-4 text-primary" />
           <h3 className="text-sm font-semibold tracking-tight">Active Containers</h3>
+          {isFetching && <RefreshCcw className="h-3 w-3 text-muted-foreground animate-spin ml-1" />}
         </div>
         <Link to="/app/containers" className="text-[11px] font-bold text-primary hover:underline flex items-center shrink-0">
           VIEW ALL <ExternalLink className="h-3 w-3 ml-0.5" />

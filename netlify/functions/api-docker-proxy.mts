@@ -708,7 +708,6 @@ export default async (req: Request) => {
         LEFT JOIN docker_host_admin_controls hac ON hac.host_id = h.id
         WHERE h.organization_id = ${orgId}
           AND h.id = ANY(${limitState.allowedHostIds})
-          AND h.status = 'connected'
           AND COALESCE(hac.is_quarantined, false) = false
       `;
       const allStats: any[] = [];
@@ -731,14 +730,14 @@ export default async (req: Request) => {
           // Update heartbeat — agent responded successfully
           await sql`UPDATE docker_hosts SET status = 'connected', last_seen_at = now(), consecutive_failures = 0 WHERE id = ${host.id}`;
 
-          // Cap at 20 containers per host to bound latency
-          const capped = containers.slice(0, 20);
+          // Cap at 100 containers per host to bound latency
+          const capped = containers.slice(0, 100);
 
           await mapConcurrent(capped, 20, async (container: any) => {
             try {
               const cId = container.Id;
               const statsReq = buildRequest(host, secrets, `/containers/${cId}/stats?stream=false`, 'GET');
-              const statsResp = await dockerFetch(statsReq.url, statsReq.method, statsReq.headers, 2000);
+              const statsResp = await dockerFetch(statsReq.url, statsReq.method, statsReq.headers, 5000);
               if (!statsResp.ok) return;
               const s = await statsResp.json();
 
