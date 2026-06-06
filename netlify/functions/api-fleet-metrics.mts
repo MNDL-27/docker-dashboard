@@ -260,7 +260,7 @@ export default async (req: Request) => {
       }];
 
     return new Response(JSON.stringify(fleetMetrics), {
-      headers,
+      headers: buildHeaders(req),
     });
 
   } catch (error: any) {
