@@ -64,7 +64,7 @@ export function AdminOperations() {
             <Select
               value={migrationScope.organization_id ?? "all"}
               onValueChange={(value) =>
-                setMigrationScope((current) => ({ ...current, organization_id: value === "all" ? undefined : value }))
+                setMigrationScope((current) => ({ ...current, organization_id: value === "all" ? undefined : value, host_id: undefined }))
               }
             >
               <SelectTrigger>
@@ -93,7 +93,9 @@ export function AdminOperations() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All hosts</SelectItem>
-                {(hostsQuery.data ?? []).map((host) => (
+                {(hostsQuery.data ?? [])
+                  .filter((host) => !migrationScope.organization_id || host.organization_id === migrationScope.organization_id)
+                  .map((host) => (
                   <SelectItem key={host.id} value={host.id}>
                     {host.name} ({host.organization_name})
                   </SelectItem>
