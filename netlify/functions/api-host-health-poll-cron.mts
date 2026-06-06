@@ -39,6 +39,5 @@ export default async () => {
 };
 
 export const config: Config = {
-  // Internal wrapper — no public path. Invoked only via netlify.toml [[scheduled]].
-  schedule: '@never',
+  schedule: '* * * * *',
 };

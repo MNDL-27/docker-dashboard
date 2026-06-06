@@ -68,13 +68,7 @@
   to = "/.netlify/functions/auth-:splat"
   status = 200
 
-[[scheduled]]
-  function = "api-donor-reminders-cron"
-  cron = "0 8 * * *"
 
-[[scheduled]]
-  function = "api-host-health-poll-cron"
-  cron = "* * * * *"
 
 # Catch-all rule for React Router (must be at the very bottom)
 [[redirects]]
