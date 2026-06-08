@@ -2,6 +2,9 @@
   command = "npm run build && npm audit --omit=dev --audit-level=critical"
   publish = "dist"
 
+[functions]
+  directory = "apps/backend/netlify/functions"
+
 [build.environment]
   NODE_VERSION = "20"
 

@@ -1,4 +1,4 @@
-import { PLAN_POLICY_BY_PLAN, type PlanId } from "../../shared/schema/plan-policy.ts";
+import { PLAN_POLICY_BY_PLAN, type PlanId } from "../../../../shared/schema/plan-policy.ts";
 
 export interface PricingPlan {
   id: PlanId;

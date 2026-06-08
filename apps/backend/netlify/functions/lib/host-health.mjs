@@ -4,7 +4,7 @@ import {
   parseStaleThresholdMinutes,
   shouldMarkHostStale,
   failureStatusForCount
-} from "../../../shared/lib/host-health";
+} from "../../../../../shared/lib/host-health";
 
 export { 
   DEFAULT_STALE_THRESHOLD_MINUTES,

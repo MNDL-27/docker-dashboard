@@ -38,7 +38,7 @@ import { PremiumFeatureBlock } from "@/components/shared/PremiumFeatureBlock";
 import { useContainerInspect, useContainerLogs, useContainerStats, useDockerHosts } from "@/hooks/useDocker";
 import { useViewerState } from "@/hooks/useViewerState";
 import { dockerApi } from "@/services/docker-api";
-import { PLAN_POLICY_BY_PLAN, normalizePlan } from "../../../shared/schema/plan-policy";
+import { PLAN_POLICY_BY_PLAN, normalizePlan } from "../../../../../shared/schema/plan-policy";
 import { useToast } from "@/hooks/use-toast";
 
 interface DockerContainerStats {

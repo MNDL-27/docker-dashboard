@@ -1,6 +1,6 @@
 import type { DockerHost } from "@/types/database";
 import type { ViewerState } from "@/hooks/useViewerState";
-import { normalizePlan, PLAN_POLICY_BY_PLAN } from "../../shared/schema/plan-policy";
+import { normalizePlan, PLAN_POLICY_BY_PLAN } from "../../../../shared/schema/plan-policy";
 
 /**
  * Shared utility for enforcing and calculating host-related limits on the frontend.

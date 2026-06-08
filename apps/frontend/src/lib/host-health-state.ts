@@ -1,7 +1,7 @@
 import { 
   normalizeHostStatus,
   NormalizedHostStatus 
-} from "../../shared/lib/host-health";
+} from "../../../../shared/lib/host-health";
 
 export { 
   normalizeHostStatus,
@@ -10,8 +10,8 @@ export {
   parseStaleThresholdMinutes,
   DEFAULT_STALE_THRESHOLD_MINUTES,
   DEFAULT_UNHEALTHY_THRESHOLD
-} from "../../shared/lib/host-health";
-export type { NormalizedHostStatus } from "../../shared/lib/host-health";
+} from "../../../../shared/lib/host-health";
+export type { NormalizedHostStatus } from "../../../../shared/lib/host-health";
 
 export function isReadableHostStatus(status: string | null | undefined): boolean {
   const normalizedStatus = normalizeHostStatus(status);

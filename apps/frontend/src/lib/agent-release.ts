@@ -19,4 +19,4 @@ export {
   getWatchtowerAgentUpdateStatusCopy,
   type WatchtowerAgentUpdateStatus,
   type WatchtowerAgentConnectionMode,
-} from "../../shared/watchtower-agent-release.ts";
+} from "../../../../shared/watchtower-agent-release.ts";

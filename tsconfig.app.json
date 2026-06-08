@@ -18,7 +18,7 @@
     "noUnusedParameters": true,
     "paths": {
       "@/*": [
-        "./src/*"
+        "./apps/frontend/src/*"
       ]
     },
     "skipLibCheck": true,
@@ -28,8 +28,8 @@
       "vitest/globals"
     ],
     "useDefineForClassFields": true
-  },
-  "include": [
-    "src"
-  ]
-}
+    },
+    "include": [
+    "apps/frontend/src"
+    ]
+    }
