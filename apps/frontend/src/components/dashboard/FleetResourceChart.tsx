@@ -4,6 +4,7 @@ import { cn, formatBytes } from "@/lib/utils";
 import { useState, useEffect } from "react";
 import { useFleetMetrics, type FleetMetrics } from "@/hooks/useFleetMetrics";
 import { buildInitialFleetData } from "./fleet-resource-helpers";
+import { FAST_POLL_INTERVAL_MS } from "@/lib/constants";
 
 interface FleetResourceChartProps {
   orgId: string | null;
@@ -134,7 +135,7 @@ export function FleetResourceChart({
   orgId,
   className,
   maxDataPoints = MAX_DATA_POINTS,
-  refetchInterval = 10000,
+  refetchInterval = FAST_POLL_INTERVAL_MS,
 }: FleetResourceChartProps) {
   const [chartData, setChartData] = useState<FleetMetrics[]>([]);
   const { data: newData, isLoading, error } = useFleetMetrics(orgId, refetchInterval);

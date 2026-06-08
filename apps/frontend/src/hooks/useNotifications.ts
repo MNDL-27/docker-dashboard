@@ -5,6 +5,7 @@ import { useEffect, useRef } from "react";
 import { Notification as DbNotification } from "../types/database";
 import { requestNotificationPermission, sendNativeNotification } from "@/lib/browser-notifications";
 import { useViewerState } from "./useViewerState";
+import { SLOW_POLL_INTERVAL_MS, TOAST_DURATION_MS } from "@/lib/constants";
 
 export const NOTIFICATIONS_QUERY_KEY = ["notifications"];
 
@@ -19,7 +20,7 @@ export function useNotifications(organizationId: string | null) {
       return api.getNotifications(organizationId);
     },
     enabled: !!organizationId,
-    refetchInterval: 30000, // Poll every 30 seconds
+    refetchInterval: SLOW_POLL_INTERVAL_MS,
   });
 
   // Request permission on mount
@@ -47,7 +48,7 @@ export function useNotifications(organizationId: string | null) {
 
         toastFn(n.title, {
           description: n.message,
-          duration: 5000,
+          duration: TOAST_DURATION_MS,
         });
 
         // 2. Trigger Native Browser Notification

@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { apiFetch } from "@/lib/api";
+import { FAST_POLL_INTERVAL_MS } from "@/lib/constants";
 
 export interface FleetMetrics {
   timestamp: number;
@@ -155,7 +156,7 @@ function normalizeFleetMetricPoint(point: FleetMetricsApiPoint): FleetMetrics | 
   };
 }
 
-export function useFleetMetrics(orgId: string | null | undefined, refetchInterval: number | false = 10000) {
+export function useFleetMetrics(orgId: string | null | undefined, refetchInterval: number | false = FAST_POLL_INTERVAL_MS) {
   return useQuery({
     queryKey: ['fleet-metrics', orgId],
     queryFn: async (): Promise<FleetMetrics[]> => {

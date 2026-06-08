@@ -13,6 +13,7 @@ import { apiFetch } from "@/lib/api";
 import type { ConnectionMode, DockerHost } from "@/types/database";
 import { CURRENT_WATCHTOWER_AGENT_VERSION, isAgentVersionOutdated } from "@/lib/agent-version";
 import { sanitizeConnectionError } from "@/lib/error-sanitizer";
+import { COPY_FEEDBACK_DURATION_MS } from "@/lib/constants";
 import { CONNECTION_MODES } from "@/pages/onboarding/useOnboardingState";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -59,7 +60,7 @@ function CommandBlock({
   const handleCopy = async () => {
     await navigator.clipboard.writeText(command);
     setCopied(true);
-    window.setTimeout(() => setCopied(false), 1500);
+    window.setTimeout(() => setCopied(false), COPY_FEEDBACK_DURATION_MS);
   };
 
   return (
@@ -272,7 +273,7 @@ export function AddHostDialog({ orgId, trigger, host, disabledReason }: AddHostD
       setTimeout(() => {
         setOpen(false);
         resetForm();
-      }, 1500);
+      }, COPY_FEEDBACK_DURATION_MS);
     } catch (error) {
       const sanitized = sanitizeConnectionError(error);
       toast({ title: "Failed to update host", description: sanitized.description, variant: "destructive" });
@@ -344,7 +345,7 @@ export function AddHostDialog({ orgId, trigger, host, disabledReason }: AddHostD
         setTimeout(() => {
           setOpen(false);
           resetForm();
-        }, 1500);
+        }, COPY_FEEDBACK_DURATION_MS);
       } else {
         setTestStatus("error");
         setTestError(result.status || "Connection test failed.");

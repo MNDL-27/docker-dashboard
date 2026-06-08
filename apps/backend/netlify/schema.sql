@@ -361,3 +361,233 @@ CREATE TABLE IF NOT EXISTS public.notification_dismissals (
 
 CREATE INDEX IF NOT EXISTS idx_notifications_org_time ON public.notifications (organization_id, created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_notification_dismissals_user ON public.notification_dismissals (user_id);
+
+-- Step 10: Host Metrics & Cache Tables
+-- These tables were introduced via runtime migrations and are now part of the canonical schema.
+
+CREATE TABLE IF NOT EXISTS public.host_network_usage (
+  host_id uuid NOT NULL REFERENCES public.docker_hosts(id) ON DELETE CASCADE,
+  month_bucket text NOT NULL,
+  last_raw_rx double precision NOT NULL DEFAULT 0,
+  last_raw_tx double precision NOT NULL DEFAULT 0,
+  accumulated_rx double precision NOT NULL DEFAULT 0,
+  accumulated_tx double precision NOT NULL DEFAULT 0,
+  created_at timestamptz NOT NULL DEFAULT now(),
+  updated_at timestamptz NOT NULL DEFAULT now(),
+  PRIMARY KEY (host_id, month_bucket)
+);
+
+CREATE TABLE IF NOT EXISTS public.host_metrics_cache (
+  host_id uuid NOT NULL REFERENCES public.docker_hosts(id) ON DELETE CASCADE,
+  collected_at timestamptz NOT NULL DEFAULT now(),
+  cpu double precision,
+  memory double precision,
+  used_cores double precision,
+  total_cores double precision,
+  memory_used double precision,
+  memory_limit double precision,
+  network_in_bytes_per_sec double precision,
+  network_out_bytes_per_sec double precision,
+  network_monthly_total double precision,
+  disk_read_bytes_per_sec double precision,
+  disk_write_bytes_per_sec double precision,
+  uptime_seconds bigint,
+  disks jsonb DEFAULT '[]'::jsonb,
+  PRIMARY KEY (host_id, collected_at)
+);
+CREATE INDEX IF NOT EXISTS idx_host_metrics_cache_host_time ON public.host_metrics_cache (host_id, collected_at DESC);
+
+CREATE TABLE IF NOT EXISTS public.container_list_cache (
+  host_id uuid NOT NULL REFERENCES public.docker_hosts(id) ON DELETE CASCADE,
+  cached_at timestamptz NOT NULL DEFAULT now(),
+  containers jsonb NOT NULL DEFAULT '[]'::jsonb,
+  PRIMARY KEY (host_id)
+);
+
+-- Step 11: Proxy Audit Log
+CREATE TABLE IF NOT EXISTS public.proxy_audit_log (
+  id bigserial PRIMARY KEY,
+  organization_id text NOT NULL,
+  actor_user_id text NOT NULL,
+  action text NOT NULL,
+  host_id text NOT NULL,
+  container_id text,
+  path text,
+  request_metadata jsonb DEFAULT '{}'::jsonb,
+  created_at timestamptz DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS idx_proxy_audit_log_org_created ON public.proxy_audit_log (organization_id, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_proxy_audit_log_host ON public.proxy_audit_log (host_id, created_at DESC);
+
+-- Step 12: Security Tables
+CREATE TABLE IF NOT EXISTS public.security_rate_limits (
+  id bigserial PRIMARY KEY,
+  key text NOT NULL,
+  window_start timestamptz NOT NULL DEFAULT now(),
+  count integer NOT NULL DEFAULT 1,
+  reset_at timestamptz NOT NULL,
+  created_at timestamptz NOT NULL DEFAULT now()
+);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_security_rate_limits_key_window ON public.security_rate_limits (key, window_start);
+
+CREATE TABLE IF NOT EXISTS public.security_webhook_nonces (
+  id bigserial PRIMARY KEY,
+  nonce text NOT NULL UNIQUE,
+  source_ip text,
+  received_at timestamptz NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS idx_security_webhook_nonces_nonce ON public.security_webhook_nonces (nonce);
+
+-- Step 13: Admin & Access Control Tables
+CREATE TABLE IF NOT EXISTS public.runtime_schema_markers (
+  key text PRIMARY KEY,
+  applied_at timestamptz NOT NULL DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS public.user_access_controls (
+  user_id uuid PRIMARY KEY REFERENCES public.users(id) ON DELETE CASCADE,
+  is_suspended boolean NOT NULL DEFAULT false,
+  suspension_reason text,
+  suspended_at timestamptz,
+  suspended_by uuid REFERENCES public.users(id) ON DELETE SET NULL,
+  created_at timestamptz NOT NULL DEFAULT now(),
+  updated_at timestamptz NOT NULL DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS public.organization_access_controls (
+  organization_id uuid PRIMARY KEY REFERENCES public.organizations(id) ON DELETE CASCADE,
+  is_locked boolean NOT NULL DEFAULT false,
+  lock_reason text,
+  locked_at timestamptz,
+  locked_by uuid REFERENCES public.users(id) ON DELETE SET NULL,
+  plan_override text,
+  created_at timestamptz NOT NULL DEFAULT now(),
+  updated_at timestamptz NOT NULL DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS public.organization_user_bans (
+  id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
+  organization_id uuid NOT NULL REFERENCES public.organizations(id) ON DELETE CASCADE,
+  user_id uuid NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
+  banned_by uuid NOT NULL REFERENCES public.users(id) ON DELETE RESTRICT,
+  reason text,
+  banned_at timestamptz NOT NULL DEFAULT now(),
+  UNIQUE(organization_id, user_id)
+);
+
+CREATE TABLE IF NOT EXISTS public.docker_host_admin_controls (
+  host_id uuid PRIMARY KEY REFERENCES public.docker_hosts(id) ON DELETE CASCADE,
+  is_quarantined boolean NOT NULL DEFAULT false,
+  quarantine_reason text,
+  quarantined_at timestamptz,
+  reconnect_requested_at timestamptz,
+  created_at timestamptz NOT NULL DEFAULT now(),
+  updated_at timestamptz NOT NULL DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS public.admin_operation_runs (
+  id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
+  operation_type text NOT NULL,
+  target_type text NOT NULL,
+  target_id text NOT NULL,
+  actor_user_id uuid NOT NULL REFERENCES public.users(id) ON DELETE RESTRICT,
+  status text NOT NULL DEFAULT 'pending',
+  result jsonb,
+  started_at timestamptz NOT NULL DEFAULT now(),
+  completed_at timestamptz,
+  created_at timestamptz NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS idx_admin_operation_runs_target ON public.admin_operation_runs (target_type, target_id, created_at DESC);
+
+CREATE TABLE IF NOT EXISTS public.admin_audit_log (
+  id bigserial PRIMARY KEY,
+  actor_user_id uuid NOT NULL REFERENCES public.users(id) ON DELETE RESTRICT,
+  actor_email text NOT NULL,
+  action text NOT NULL,
+  target_type text NOT NULL,
+  target_id text NOT NULL,
+  reason text NOT NULL,
+  before_state jsonb DEFAULT '{}'::jsonb,
+  after_state jsonb DEFAULT '{}'::jsonb,
+  request_metadata jsonb DEFAULT '{}'::jsonb,
+  created_at timestamptz NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS idx_admin_audit_log_actor_time ON public.admin_audit_log (actor_user_id, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_admin_audit_log_target ON public.admin_audit_log (target_type, target_id, created_at DESC);
+
+-- Step 14: Billing Tables
+CREATE TABLE IF NOT EXISTS public.billing_events (
+  id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
+  organization_id uuid NOT NULL REFERENCES public.organizations(id) ON DELETE CASCADE,
+  provider text NOT NULL DEFAULT 'stripe',
+  event_type text NOT NULL,
+  payload jsonb NOT NULL DEFAULT '{}'::jsonb,
+  processed boolean NOT NULL DEFAULT false,
+  created_at timestamptz NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS idx_billing_events_org_time ON public.billing_events (organization_id, created_at DESC);
+
+CREATE TABLE IF NOT EXISTS public.donor_email_deliveries (
+  id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
+  organization_id uuid NOT NULL REFERENCES public.organizations(id) ON DELETE CASCADE,
+  email_type text NOT NULL,
+  recipient_email text NOT NULL,
+  status text NOT NULL DEFAULT 'pending',
+  sent_at timestamptz,
+  error_message text,
+  created_at timestamptz NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS idx_donor_email_deliveries_org_time ON public.donor_email_deliveries (organization_id, created_at DESC);
+
+-- Step 15: Page Views
+CREATE TABLE IF NOT EXISTS public.page_views (
+  id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
+  user_id uuid NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
+  organization_id uuid REFERENCES public.organizations(id) ON DELETE SET NULL,
+  page_path text NOT NULL,
+  last_active_at timestamptz NOT NULL DEFAULT now(),
+  created_at timestamptz NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS idx_page_views_user_active ON public.page_views (user_id, last_active_at DESC);
+CREATE INDEX IF NOT EXISTS idx_page_views_org_active ON public.page_views (organization_id, last_active_at DESC);
+
+-- Step 16: Dedicated Deployments
+CREATE TABLE IF NOT EXISTS public.dedicated_deployments (
+  id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
+  organization_id uuid NOT NULL REFERENCES public.organizations(id) ON DELETE CASCADE,
+  name text NOT NULL,
+  plan_id text NOT NULL,
+  status text NOT NULL DEFAULT 'pending',
+  region text,
+  config jsonb NOT NULL DEFAULT '{}'::jsonb,
+  created_by uuid NOT NULL REFERENCES public.users(id) ON DELETE RESTRICT,
+  created_at timestamptz NOT NULL DEFAULT now(),
+  updated_at timestamptz NOT NULL DEFAULT now(),
+  CONSTRAINT dedicated_deployments_status_check CHECK (status IN ('pending', 'provisioning', 'active', 'failed', 'terminated')),
+  CONSTRAINT dedicated_deployments_plan_id_check CHECK (plan_id IN ('starter', 'business', 'enterprise'))
+);
+
+CREATE TABLE IF NOT EXISTS public.dedicated_deployment_updates (
+  id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
+  deployment_id uuid NOT NULL REFERENCES public.dedicated_deployments(id) ON DELETE CASCADE,
+  status text NOT NULL,
+  message text,
+  metadata jsonb NOT NULL DEFAULT '{}'::jsonb,
+  created_at timestamptz NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS idx_dedicated_deployment_updates_deploy ON public.dedicated_deployment_updates (deployment_id, created_at DESC);
+
+DROP TRIGGER IF EXISTS update_dedicated_deployments_updated_at ON public.dedicated_deployments;
+CREATE TRIGGER update_dedicated_deployments_updated_at BEFORE UPDATE ON public.dedicated_deployments FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+-- Step 17: Beta Allowlist
+CREATE TABLE IF NOT EXISTS public.beta_allowlist (
+  id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
+  email text NOT NULL UNIQUE,
+  added_by uuid REFERENCES public.users(id) ON DELETE SET NULL,
+  created_at timestamptz NOT NULL DEFAULT now()
+);
+
+-- Note: runtime_schema_markers is used by ensure-*.mts modules to track which
+-- runtime migrations have been applied. This table is the bridge between the
+-- SQL migration files and the TypeScript runtime schema management.

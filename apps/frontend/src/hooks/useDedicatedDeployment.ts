@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useOrganizationList } from "@clerk/react";
 import { apiFetch } from "@/lib/api";
 import { dedicatedDeploymentApi } from "@/services/dedicated-deployment-api";
+import { MEDIUM_POLL_INTERVAL_MS } from "@/lib/constants";
 import type {
   DedicatedDeploymentIntake,
   DedicatedDeploymentRecord,
@@ -66,7 +67,7 @@ export function useDedicatedDeployment() {
   return useQuery({
     queryKey: ["dedicated-deployment", "current"],
     queryFn: () => dedicatedDeploymentApi.getCurrent(),
-    staleTime: 15_000,
+    staleTime: MEDIUM_POLL_INTERVAL_MS,
     retry: false,
   });
 }

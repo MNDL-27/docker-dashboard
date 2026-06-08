@@ -73,5 +73,40 @@ export async function ensureDockerHostSchema() {
     )
   `;
 
+  await sql`
+    CREATE TABLE IF NOT EXISTS public.host_metrics_cache (
+      host_id uuid NOT NULL REFERENCES public.docker_hosts(id) ON DELETE CASCADE,
+      collected_at timestamptz NOT NULL DEFAULT now(),
+      cpu double precision,
+      memory double precision,
+      used_cores double precision,
+      total_cores double precision,
+      memory_used double precision,
+      memory_limit double precision,
+      network_in_bytes_per_sec double precision,
+      network_out_bytes_per_sec double precision,
+      network_monthly_total double precision,
+      disk_read_bytes_per_sec double precision,
+      disk_write_bytes_per_sec double precision,
+      uptime_seconds bigint,
+      disks jsonb DEFAULT '[]'::jsonb,
+      PRIMARY KEY (host_id, collected_at)
+    )
+  `;
+
+  await sql`
+    CREATE INDEX IF NOT EXISTS idx_host_metrics_cache_host_time
+    ON public.host_metrics_cache (host_id, collected_at DESC)
+  `;
+
+  await sql`
+    CREATE TABLE IF NOT EXISTS public.container_list_cache (
+      host_id uuid NOT NULL REFERENCES public.docker_hosts(id) ON DELETE CASCADE,
+      cached_at timestamptz NOT NULL DEFAULT now(),
+      containers jsonb NOT NULL DEFAULT '[]'::jsonb,
+      PRIMARY KEY (host_id)
+    )
+  `;
+
   schemaEnsured = true;
 }

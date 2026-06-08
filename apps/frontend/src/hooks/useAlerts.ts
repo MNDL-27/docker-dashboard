@@ -2,13 +2,14 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import { alertsApi } from "@/services/alerts-api";
 import type { AlertRuleFormValues } from "@/types/alerts";
+import { SLOW_POLL_INTERVAL_MS } from "@/lib/constants";
 
 export function useAlertsWorkspace(orgId?: string | null, filters: { severity?: string; status?: string } = {}, enabled = true) {
   return useQuery({
     queryKey: ["alerts-workspace", orgId, filters],
     queryFn: () => alertsApi.listAlerts(filters),
     enabled: !!orgId && enabled,
-    refetchInterval: 30000,
+    refetchInterval: SLOW_POLL_INTERVAL_MS,
   });
 }
 
@@ -25,7 +26,7 @@ export function useIncidentsFeed(orgId?: string | null, enabled = true) {
     queryKey: ["incidents-feed", orgId],
     queryFn: () => alertsApi.listIncidents(),
     enabled: !!orgId && enabled,
-    refetchInterval: 30000,
+    refetchInterval: SLOW_POLL_INTERVAL_MS,
   });
 }
 

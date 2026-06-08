@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
+import { COPY_FEEDBACK_DURATION_MS } from "@/lib/constants";
 import type { DockerHost } from "@/types/database";
 import {
   CURRENT_WATCHTOWER_AGENT_RELEASE,
@@ -58,7 +59,7 @@ function AgentCommandBlock({
     await navigator.clipboard.writeText(command);
     setCopied(true);
     toast({ title: "Copied to clipboard" });
-    window.setTimeout(() => setCopied(false), 1500);
+    window.setTimeout(() => setCopied(false), COPY_FEEDBACK_DURATION_MS);
   };
 
   return (

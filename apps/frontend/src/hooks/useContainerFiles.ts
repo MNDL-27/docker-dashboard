@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { dockerApi } from "@/services/docker-api";
+import { MEDIUM_POLL_INTERVAL_MS, SLOW_POLL_INTERVAL_MS } from "@/lib/constants";
 
 export function useContainerFileList(
   hostId?: string | null,
@@ -11,7 +12,7 @@ export function useContainerFileList(
     queryFn: () => dockerApi.listFiles(hostId!, containerId!, path),
     enabled: !!hostId && !!containerId,
     retry: false,
-    staleTime: 15_000,
+    staleTime: MEDIUM_POLL_INTERVAL_MS,
     refetchOnWindowFocus: false,
   });
 }
@@ -26,7 +27,7 @@ export function useContainerFileContent(
     queryFn: () => dockerApi.readFile(hostId!, containerId!, path!),
     enabled: !!hostId && !!containerId && !!path,
     retry: false,
-    staleTime: 30_000,
+    staleTime: SLOW_POLL_INTERVAL_MS,
     refetchOnWindowFocus: false,
   });
 }

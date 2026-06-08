@@ -5,6 +5,7 @@ import { FleetResourceChart } from "@/components/dashboard/FleetResourceChart";
 import { ContainersTable } from "@/components/dashboard/ContainersTable";
 import { DashboardAlerts } from "@/components/dashboard/DashboardAlerts";
 import { Activity, AlertCircle, Box, Server } from "lucide-react";
+import { FAST_POLL_INTERVAL_MS } from "@/lib/constants";
 import type { DockerHost } from "@/types/database";
 import type { DashboardStats } from "@/lib/dashboard-summary";
 
@@ -29,7 +30,7 @@ export function DashboardOverview({
   containersLoading,
   isFetching,
   liveDataError,
-  fleetMetricsRefetchInterval = 10000,
+  fleetMetricsRefetchInterval = FAST_POLL_INTERVAL_MS,
 }: DashboardOverviewProps) {
   return (
     <div className="space-y-4 sm:space-y-6 animate-fade-in pb-10">

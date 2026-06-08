@@ -4,6 +4,11 @@ import { apiFetch } from "@/lib/api";
 import type { DockerHost, ConnectionMode } from "@/types/database";
 import { useViewerState } from "@/hooks/useViewerState";
 import { resolveNodeLimit, sortHostsByCreation } from "@/lib/host-limits";
+import {
+  FAST_POLL_INTERVAL_MS,
+  MEDIUM_POLL_INTERVAL_MS,
+  SLOW_POLL_INTERVAL_MS,
+} from "@/lib/constants";
 
 // ── Shared types & helpers ──────────────────────────────────────────
 
@@ -66,7 +71,7 @@ export function useDockerHosts(orgId?: string | null, options: { filterByPlan?: 
       return sorted.slice(0, nodeLimit);
     },
     enabled: !!orgId,
-    refetchInterval: (query) => (query.state.error ? false : 15000),
+    refetchInterval: (query) => (query.state.error ? false : MEDIUM_POLL_INTERVAL_MS),
   });
 }
 
@@ -118,7 +123,7 @@ export function useUpdateDockerHost() {
   });
 }
 
-export function useContainers(orgId?: string | null, hasHosts = true, refetchInterval: number | false = 30000) {
+export function useContainers(orgId?: string | null, hasHosts = true, refetchInterval: number | false = SLOW_POLL_INTERVAL_MS) {
   const queryClient = useQueryClient();
   const { data: allowedHosts } = useDockerHosts(orgId, { filterByPlan: true });
 
@@ -164,7 +169,7 @@ export function useContainers(orgId?: string | null, hasHosts = true, refetchInt
   });
 }
 
-export function useAllContainerStats(orgId?: string | null, hasHosts = true, refetchInterval: number | false = 15000) {
+export function useAllContainerStats(orgId?: string | null, hasHosts = true, refetchInterval: number | false = MEDIUM_POLL_INTERVAL_MS) {
   return useQuery({
     queryKey: ['all-container-stats', orgId],
     queryFn: () => dockerApi.allContainerStats(orgId!),
@@ -176,7 +181,7 @@ export function useAllContainerStats(orgId?: string | null, hasHosts = true, ref
   });
 }
 
-export function useHostContainers(hostId?: string | null, refetchInterval: number | false = 15000) {
+export function useHostContainers(hostId?: string | null, refetchInterval: number | false = MEDIUM_POLL_INTERVAL_MS) {
   return useQuery({
     queryKey: ['host-containers', hostId],
     queryFn: () => dockerApi.listContainers(hostId!),
@@ -199,7 +204,7 @@ export function useContainerInspect(hostId?: string | null, containerId?: string
 export function useContainerStats(
   hostId?: string | null,
   containerId?: string | null,
-  refetchInterval: number | false = 10000,
+  refetchInterval: number | false = FAST_POLL_INTERVAL_MS,
 ) {
   return useQuery({
     queryKey: ['container-stats', hostId, containerId],

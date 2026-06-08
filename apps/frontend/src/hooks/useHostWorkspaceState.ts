@@ -10,6 +10,11 @@ import { dockerApi } from "@/services/docker-api";
 import { CURRENT_WATCHTOWER_AGENT_VERSION } from "@/lib/agent-version";
 import { sanitizeConnectionError } from "@/lib/error-sanitizer";
 import {
+  MEDIUM_POLL_INTERVAL_MS,
+  FAST_POLL_INTERVAL_MS,
+  DEFAULT_MAX_DATA_POINTS,
+} from "@/lib/constants";
+import {
   CURRENT_WATCHTOWER_AGENT_RELEASE,
   getWatchtowerAgentUpdateStatus,
   getWatchtowerAgentUpdateStatusCopy,
@@ -88,11 +93,11 @@ export function useHostWorkspaceState() {
   const selectedHostAutoProbe = selectedHost ? ["connected", "stale"].includes(normalizeHostStatus(selectedHost.status)) : false;
   const selectedHostLocked = selectedHost ? isHostLocked(selectedHost.id) : false;
   
-  const containersQuery = useHostContainers(selectedHostAutoProbe && !selectedHostLocked ? selectedHost?.id : null, 15000);
+  const containersQuery = useHostContainers(selectedHostAutoProbe && !selectedHostLocked ? selectedHost?.id : null, MEDIUM_POLL_INTERVAL_MS);
   const metricsQuery = useHostMetricsHistory(selectedHostAutoProbe && !selectedHostLocked ? selectedHost?.id : null, {
     enabled: selectedHostAutoProbe && !selectedHostLocked,
-    refetchInterval: 10000,
-    maxDataPoints: 24,
+    refetchInterval: FAST_POLL_INTERVAL_MS,
+    maxDataPoints: DEFAULT_MAX_DATA_POINTS,
   });
 
   const containers = Array.isArray(containersQuery.data) ? containersQuery.data : [];
