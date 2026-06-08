@@ -36,9 +36,9 @@ export async function handleAllContainers(
       AND h.id = ANY(${limitState.allowedHostIds})
       AND COALESCE(hac.is_quarantined, false) = false
   `;
-  const allContainers: any[] = [];
+  const allContainers: Record<string, unknown>[] = [];
 
-  await mapConcurrent(hosts as any[], 50, async (host) => {
+  await mapConcurrent(hosts as Record<string, unknown>[], 50, async (host) => {
     try {
       const secretsRecord = await sql`
         SELECT agent_api_key, cf_service_token_id, cf_service_token_secret 
@@ -51,7 +51,7 @@ export async function handleAllContainers(
       
       if (resp.ok && resp.status !== 413) {
         const containers = await resp.json();
-        allContainers.push(...containers.map((c: any) => ({ ...c, _hostId: host.id, _hostName: host.name })));
+        allContainers.push(...(containers as Record<string, unknown>[]).map((c) => ({ ...c, _hostId: host.id, _hostName: host.name })));
         await sql`UPDATE docker_hosts SET status = 'connected', last_seen_at = now(), consecutive_failures = 0, last_error = null WHERE id = ${host.id}`;
       } else {
         await sql`UPDATE docker_hosts SET status = 'error' WHERE id = ${host.id}`;
@@ -96,9 +96,9 @@ export async function handleAllContainerStats(
       AND h.id = ANY(${limitState.allowedHostIds})
       AND COALESCE(hac.is_quarantined, false) = false
   `;
-  const allStats: any[] = [];
+  const allStats: Record<string, unknown>[] = [];
 
-  await mapConcurrent(hosts as any[], 50, async (host) => {
+  await mapConcurrent(hosts as Record<string, unknown>[], 50, async (host) => {
     try {
       const secretsRecord = await sql`
         SELECT agent_api_key, cf_service_token_id, cf_service_token_secret 
@@ -116,7 +116,7 @@ export async function handleAllContainerStats(
 
       const capped = containers.slice(0, 100);
 
-      await mapConcurrent(capped, 20, async (container: any) => {
+      await mapConcurrent(capped as Record<string, unknown>[], 20, async (container) => {
         try {
           const cId = container.Id;
           const statsReq = buildRequest(host, secrets, `/containers/${cId}/stats?stream=false`, 'GET');
@@ -134,7 +134,7 @@ export async function handleAllContainerStats(
 
           let netRx = 0, netTx = 0;
           if (s.networks) {
-            for (const iface of Object.values(s.networks) as any[]) {
+            for (const iface of Object.values(s.networks) as Record<string, unknown>[]) {
               netRx += iface.rx_bytes ?? 0;
               netTx += iface.tx_bytes ?? 0;
             }

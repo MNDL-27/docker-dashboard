@@ -9,7 +9,7 @@ import type { ProxyContext } from '../types';
 export async function handleContainerLogs(
   ctx: ProxyContext,
   containerId: string,
-  params: Record<string, any>,
+  params: Record<string, unknown>,
 ) {
   const { host, secrets, auth, corsHeaders, createProblemResponse } = ctx;
 

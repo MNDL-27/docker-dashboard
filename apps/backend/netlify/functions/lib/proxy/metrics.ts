@@ -4,7 +4,7 @@ import { trimDiagnostic } from './errors';
 import { formatDiagnosticDetail, parseDiagnosticPayload } from '../../../../../../shared/lib/diagnostics';
 import type { Host, HostSecrets } from './types';
 
-export function createHostMetricsPoint(data: any) {
+export function createHostMetricsPoint(data: Record<string, unknown>) {
   const cpuTimeNs = Math.max(0, toFiniteNumber(data?.cpu_time_ns) ?? 0);
   const systemTimeNs = Math.max(0, toFiniteNumber(data?.system_time_ns) ?? 0);
   const totalCores = Math.max(0, toFiniteNumber(data?.online_cpus) ?? 0);
@@ -13,7 +13,7 @@ export function createHostMetricsPoint(data: any) {
   const uptimeSecondsRaw = toFiniteNumber(data?.uptime_seconds ?? data?.uptimeSeconds);
   const uptimeSeconds = uptimeSecondsRaw !== null && uptimeSecondsRaw >= 0 ? uptimeSecondsRaw : null;
   const disks = Array.isArray(data?.disks)
-    ? data.disks.map((disk: any) => normalizeDiskMetric(disk)).filter(Boolean)
+    ? data.disks.map((disk: unknown) => normalizeDiskMetric(disk)).filter(Boolean)
     : [];
   const timestamp = Date.now();
 
@@ -103,10 +103,11 @@ export async function fetchAgentVersionReport(
     }
 
     return { agentVersion, agentVersionError: null as string | null };
-  } catch (err: any) {
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : String(err);
     return {
       agentVersion: null as string | null,
-      agentVersionError: trimDiagnostic(`GET /agent/version failed: ${err?.message || 'Unknown error'}`),
+      agentVersionError: trimDiagnostic(`GET /agent/version failed: ${msg}`),
     };
   }
 }

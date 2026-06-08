@@ -10,7 +10,7 @@ const CACHE_TTL_MS = 30_000; // 30 seconds
 interface CachedContainerList {
   hostId: string;
   hostName: string;
-  containers: any[];
+  containers: Record<string, unknown>[];
   cachedAt: Date;
 }
 
@@ -46,7 +46,7 @@ export async function getCachedContainerList(hostId: string): Promise<CachedCont
 
 export async function setCachedContainerList(
   hostId: string,
-  containers: any[],
+  containers: Record<string, unknown>[],
 ): Promise<void> {
   await ensureContainerCacheSchema();
 
@@ -99,14 +99,14 @@ export async function getCachedContainersForOrg(
       AND COALESCE(hac.is_quarantined, false) = false
   `;
 
-  const allContainers: any[] = [];
-  const staleHosts: any[] = [];
+  const allContainers: Record<string, unknown>[] = [];
+  const staleHosts: Record<string, unknown>[] = [];
 
   // Check cache for each host
-  await mapConcurrent(hosts as any[], 50, async (host) => {
+  await mapConcurrent(hosts as Record<string, unknown>[], 50, async (host) => {
     const cached = await getCachedContainerList(host.id);
     if (cached) {
-      allContainers.push(...cached.containers.map((c: any) => ({
+      allContainers.push(...cached.containers.map((c: Record<string, unknown>) => ({
         ...c,
         _hostId: host.id,
         _hostName: host.name,
@@ -118,7 +118,7 @@ export async function getCachedContainersForOrg(
 
   // Fetch stale hosts from agents
   if (staleHosts.length > 0) {
-    await mapConcurrent(staleHosts, 50, async (host) => {
+    await mapConcurrent(staleHosts as Record<string, unknown>[], 50, async (host) => {
       try {
         const secretsRecord = await dbSql`
           SELECT agent_api_key, cf_service_token_id, cf_service_token_secret
@@ -131,7 +131,7 @@ export async function getCachedContainersForOrg(
 
         if (resp.ok && resp.status !== 413) {
           const containers = await resp.json();
-          const tagged = containers.map((c: any) => ({ ...c, _hostId: host.id, _hostName: host.name }));
+          const tagged = (containers as Record<string, unknown>[]).map((c) => ({ ...c, _hostId: host.id, _hostName: host.name }));
           allContainers.push(...tagged);
           await setCachedContainerList(host.id, tagged);
           await dbSql`UPDATE docker_hosts SET status = 'connected', last_seen_at = now(), consecutive_failures = 0, last_error = null WHERE id = ${host.id}`;

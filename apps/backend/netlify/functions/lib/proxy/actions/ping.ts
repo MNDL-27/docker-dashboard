@@ -100,7 +100,7 @@ export async function handlePing(ctx: ProxyContext) {
       dockerVersion = vData.Version || null;
       osInfo = vData.Os ? `${vData.Os}/${vData.Arch}` : null;
     }
-  } catch (_) {}
+  } catch (_) { /* version endpoint optional */ }
 
   const agentVersionReport = await fetchAgentVersionReport(host, secrets);
   agentVersion = agentVersionReport.agentVersion;

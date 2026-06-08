@@ -8,7 +8,7 @@ import type { ProxyContext } from '../types';
 export async function handleFsList(
   ctx: ProxyContext,
   containerId: string,
-  params: Record<string, any>,
+  params: Record<string, unknown>,
 ) {
   const { host, secrets, auth, corsHeaders, createProblemResponse } = ctx;
 
@@ -84,7 +84,7 @@ export async function handleFsList(
 export async function handleFsRead(
   ctx: ProxyContext,
   containerId: string,
-  params: Record<string, any>,
+  params: Record<string, unknown>,
 ) {
   const { host, secrets, auth, corsHeaders, createProblemResponse } = ctx;
 

@@ -126,7 +126,7 @@ export async function routeProxyRequest(req: Request): Promise<Response> {
     // ── Container logs (special handling) ──
     if (action === 'container-logs') {
       if (!containerId) return createProblemResponse(400, "containerId required");
-      return handleContainerLogs(ctx, containerId, params as Record<string, any>);
+      return handleContainerLogs(ctx, containerId, params as Record<string, unknown>);
     }
 
     // ── Container mutations ──
@@ -137,18 +137,18 @@ export async function routeProxyRequest(req: Request): Promise<Response> {
         organizationId: host.organization_id,
         isPlatformAdmin: auth.isPlatformAdmin,
       });
-      return handleContainerMutation(ctx, containerId, action as any, idempotencyKey);
+      return handleContainerMutation(ctx, containerId, action as 'container-start' | 'container-stop' | 'container-restart', idempotencyKey);
     }
 
     // ── File system actions ──
     if (action === 'container-fs-list') {
       if (!containerId) return createProblemResponse(400, "containerId required");
-      return handleFsList(ctx, containerId, params as Record<string, any>);
+      return handleFsList(ctx, containerId, params as Record<string, unknown>);
     }
 
     if (action === 'container-fs-read') {
       if (!containerId) return createProblemResponse(400, "containerId required");
-      return handleFsRead(ctx, containerId, params as Record<string, any>);
+      return handleFsRead(ctx, containerId, params as Record<string, unknown>);
     }
 
     // ── Simple proxy actions ──
@@ -176,7 +176,7 @@ export async function routeProxyRequest(req: Request): Promise<Response> {
     }
     return new Response(JSON.stringify(payload), { headers: responseHeaders });
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     const { SecretCryptoError } = await import('../crypto.mjs');
     if (error instanceof SecretCryptoError) {
       return createProblemResponse(500, 'Secret storage failed', error.message);

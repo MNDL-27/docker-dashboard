@@ -69,11 +69,12 @@ export async function dockerFetch(
       headers: reqHeaders,
       signal: AbortSignal.timeout(timeoutMs),
     });
-  } catch (err: any) {
-    if (err.name === 'AbortError' || err.name === 'TimeoutError') {
+  } catch (err: unknown) {
+    const errObj = err instanceof Error ? err : new Error(String(err));
+    if (errObj.name === 'AbortError' || errObj.name === 'TimeoutError') {
       return new Response(JSON.stringify({ error: 'Agent connection timed out' }), { status: 504, headers: { 'Content-Type': 'application/json' } });
     }
-    return new Response(JSON.stringify({ error: 'Agent connection failed', details: err.message }), { status: 502, headers: { 'Content-Type': 'application/json' } });
+    return new Response(JSON.stringify({ error: 'Agent connection failed', details: errObj.message }), { status: 502, headers: { 'Content-Type': 'application/json' } });
   }
 
   if (!response.body) return response;
@@ -99,11 +100,12 @@ export async function dockerFetch(
         chunks.push(value);
       }
     }
-  } catch (err: any) {
-    if (err.name === 'AbortError' || err.name === 'TimeoutError') {
+  } catch (err: unknown) {
+    const errObj = err instanceof Error ? err : new Error(String(err));
+    if (errObj.name === 'AbortError' || errObj.name === 'TimeoutError') {
       return new Response(JSON.stringify({ error: 'Agent stream timed out' }), { status: 504, headers: { 'Content-Type': 'application/json' } });
     }
-    return new Response(JSON.stringify({ error: 'Stream read error', details: err.message }), { status: 502, headers: { 'Content-Type': 'application/json' } });
+    return new Response(JSON.stringify({ error: 'Stream read error', details: errObj.message }), { status: 502, headers: { 'Content-Type': 'application/json' } });
   }
 
   const fullBody = new Uint8Array(totalSize);

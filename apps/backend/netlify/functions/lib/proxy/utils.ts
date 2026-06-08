@@ -39,7 +39,7 @@ export function normalizeOptionalRate(value: unknown): number | null {
   return numeric;
 }
 
-export function normalizeDiskMetric(value: any) {
+export function normalizeDiskMetric(value: unknown) {
   if (!value || typeof value !== 'object') {
     return null;
   }
