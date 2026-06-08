@@ -21,8 +21,14 @@ export default function DashboardPage() {
   });
 
   const currentOrg = organization;
-  const hasOrgs = userMemberships.count ? userMemberships.count > 0 : false;
-  const orgLoading = !orgLoaded || !listLoaded;
+  // An active organization means the user definitely has one. Otherwise fall
+  // back to the memberships count.
+  const hasOrgs = !!currentOrg || (userMemberships.count ?? 0) > 0;
+  // `listLoaded`/`orgLoaded` only signal that the Clerk client is ready — the
+  // memberships list itself may still be fetching, during which `count` is 0.
+  // Wait for that fetch too, otherwise the no-organization onboarding flashes
+  // before the dashboard data appears.
+  const orgLoading = !orgLoaded || !listLoaded || userMemberships.isLoading;
 
   const { data: hosts = [], isLoading: hostsLoading, isError: hostsError, error: hostsQueryError } = useDockerHosts(currentOrg?.id, { filterByPlan: true });
   const {
