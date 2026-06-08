@@ -7,6 +7,9 @@ import { runSecretMigration } from "./secret-migration.mjs";
 import { buildCorsHeaders } from "./security.mjs";
 import { adminMatchBillingEvent, listUnmatchedBillingEvents, resendDonorEmailDelivery } from "./donor-billing.mjs";
 import { ensurePageViewsSchema } from "./ensure-page-views-schema.mjs";
+import { sendEmail } from "./email.mjs";
+import { onboardingReminderTemplate } from "./onboarding-email-templates.mjs";
+import { donorRenewalReminderTemplate } from "./donor-email-templates.mjs";
 
 async function readBody(req: Request) {
   return req.json().catch(() => ({}));
@@ -971,6 +974,125 @@ async function deleteNotification(id: string, req: Request) {
   return { success: true };
 }
 
+async function sendAdminOnboardingReminder(userId: string, req: Request) {
+  const admin = await requirePlatformAdmin(req);
+  const body = await readBody(req);
+  const reason = normalizeAdminReason(body.reason);
+  assertAdminReason(reason);
+
+  const users = await sql`
+    SELECT id, email, full_name
+    FROM public.users
+    WHERE id = ${userId}
+    LIMIT 1
+  `;
+  if (users.length === 0) throw new Error("User not found");
+  const user = users[0];
+
+  const baseUrl = process.env.VITE_API_BASE_URL || "https://dockerdash.app";
+  const template = onboardingReminderTemplate({
+    name: user.full_name,
+    dashboardUrl: `${baseUrl}/`,
+  });
+
+  const res = await sendEmail({
+    to: user.email,
+    subject: template.subject,
+    text: template.body,
+    html: template.html,
+  });
+
+  if (res.error) {
+    throw new Error(`Failed to send email: ${res.error}`);
+  }
+
+  // Update their sent at timestamp so they don't get the automated one again
+  await sql`
+    UPDATE public.users
+    SET onboarding_reminder_email_sent_at = now()
+    WHERE id = ${userId} AND onboarding_reminder_email_sent_at IS NULL
+  `;
+
+  await recordAdminAudit({
+    actorUserId: admin.auth.userId,
+    actorEmail: admin.actorEmail,
+    action: "send-onboarding-reminder",
+    targetType: "user",
+    targetId: userId,
+    reason,
+    beforeState: {},
+    afterState: { sent_to: user.email },
+  });
+
+  return { success: true, email: user.email };
+}
+
+async function sendAdminRenewalReminder(organizationId: string, req: Request) {
+  const admin = await requirePlatformAdmin(req);
+  const body = await readBody(req);
+  const reason = normalizeAdminReason(body.reason);
+  assertAdminReason(reason);
+
+  const orgs = await sql`
+    SELECT id, name, donor_premium_expires_at
+    FROM public.organizations
+    WHERE id = ${organizationId}
+    LIMIT 1
+  `;
+  if (orgs.length === 0) throw new Error("Organization not found");
+  const org = orgs[0];
+
+  if (!org.donor_premium_expires_at) {
+    throw new Error("Organization does not have a donor premium expiration date");
+  }
+
+  const expirationDate = new Date(String(org.donor_premium_expires_at));
+  const diffTime = expirationDate.getTime() - Date.now();
+  const daysLeft = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+  const members = await sql`
+    SELECT u.email
+    FROM public.organization_members om
+    JOIN public.users u ON u.id = om.user_id
+    WHERE om.organization_id = ${organizationId} AND om.role IN ('owner', 'admin')
+  `;
+
+  if (members.length === 0) throw new Error("No admin members found to send email to");
+
+  const emails = members.map((m) => m.email);
+
+  const template = donorRenewalReminderTemplate({
+    orgName: org.name,
+    expiresAt: expirationDate.toISOString(),
+    daysLeft,
+    referenceToken: `MANUAL-${organizationId.substring(0, 8)}`,
+  });
+
+  const res = await sendEmail({
+    to: emails,
+    subject: template.subject,
+    text: template.body,
+    html: template.html,
+  });
+
+  if (res.error) {
+    throw new Error(`Failed to send email: ${res.error}`);
+  }
+
+  await recordAdminAudit({
+    actorUserId: admin.auth.userId,
+    actorEmail: admin.actorEmail,
+    action: "send-renewal-reminder",
+    targetType: "organization",
+    targetId: organizationId,
+    reason,
+    beforeState: {},
+    afterState: { sent_to: emails, daysLeft },
+  });
+
+  return { success: true, emails };
+}
+
 export async function handleAdminRequest(req: Request) {
   // Build secure CORS headers based on request origin
   const corsHeaders = buildCorsHeaders(req);
@@ -1016,6 +1138,7 @@ export async function handleAdminRequest(req: Request) {
     if (req.method === "POST" && parts.length === 3 && parts[0] === "users" && parts[2] === "hard-enable") return await mutateUserAccess(parts[1], "hard-enable", req);
     if (req.method === "POST" && parts.length === 3 && parts[0] === "users" && parts[2] === "org-bans") return await addOrganizationBan(parts[1], req);
     if (req.method === "DELETE" && parts.length === 4 && parts[0] === "users" && parts[2] === "org-bans") return await removeOrganizationBan(parts[1], parts[3], req);
+    if (req.method === "POST" && parts.length === 3 && parts[0] === "users" && parts[2] === "send-onboarding-reminder") return json(await sendAdminOnboardingReminder(parts[1], req));
 
     if (req.method === "GET" && parts.length === 1 && parts[0] === "organizations") {
       await requirePlatformAdmin(req);
@@ -1032,6 +1155,7 @@ export async function handleAdminRequest(req: Request) {
     if (req.method === "POST" && parts.length === 3 && parts[0] === "organizations" && parts[2] === "unlock") return await mutateOrganizationLock(parts[1], false, req);
     if (req.method === "POST" && parts.length === 3 && parts[0] === "organizations" && parts[2] === "billing") return await updateOrganizationBilling(parts[1], req);
     if (req.method === "POST" && parts.length === 3 && parts[0] === "organizations" && parts[2] === "reset-onboarding") return await resetOrganizationOnboarding(parts[1], req);
+    if (req.method === "POST" && parts.length === 3 && parts[0] === "organizations" && parts[2] === "send-renewal-reminder") return json(await sendAdminRenewalReminder(parts[1], req));
 
     if (req.method === "GET" && parts.length === 1 && parts[0] === "hosts") {
       await requirePlatformAdmin(req);

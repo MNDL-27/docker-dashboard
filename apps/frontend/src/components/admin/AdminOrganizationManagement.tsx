@@ -10,6 +10,7 @@ import {
   useLockAdminOrganization,
   useUnlockAdminOrganization,
   useResetAdminOnboarding,
+  useSendAdminRenewalReminder,
 } from "@/hooks/useAdmin";
 import { StatusPill, DetailField, AdminActionDialog } from "./AdminShared";
 import { formatDate, filterByQuery } from "./admin-utils";
@@ -33,6 +34,7 @@ export function AdminOrganizationManagement() {
   const lockOrgMutation = useLockAdminOrganization();
   const unlockOrgMutation = useUnlockAdminOrganization();
   const resetOnboardingMutation = useResetAdminOnboarding();
+  const sendRenewalReminderMutation = useSendAdminRenewalReminder();
 
   const organizations = filterByQuery(organizationsQuery.data ?? [], organizationQuery, [
     "name",
@@ -46,7 +48,7 @@ export function AdminOrganizationManagement() {
   }, [organizationsQuery.data, selectedOrganizationId]);
 
   const pendingDialogSubmitting =
-    lockOrgMutation.isPending || unlockOrgMutation.isPending || resetOnboardingMutation.isPending;
+    lockOrgMutation.isPending || unlockOrgMutation.isPending || resetOnboardingMutation.isPending || sendRenewalReminderMutation.isPending;
 
   const runAction = async (reason: string) => {
     if (!pendingAction) return;
@@ -60,6 +62,9 @@ export function AdminOrganizationManagement() {
           break;
         case "reset-onboarding":
           await resetOnboardingMutation.mutateAsync({ organizationId: pendingAction.targetId, reason });
+          break;
+        case "send-renewal-reminder":
+          await sendRenewalReminderMutation.mutateAsync({ organizationId: pendingAction.targetId, reason });
           break;
       }
       toast({ title: "Admin action completed" });
@@ -167,6 +172,21 @@ export function AdminOrganizationManagement() {
               >
                 <RefreshCcw className="mr-1.5 h-4 w-4" />
                 Reset Onboarding
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() =>
+                  setPendingAction({
+                    kind: "send-renewal-reminder",
+                    targetId: organizationDetailQuery.data!.id,
+                    title: "Send Renewal Reminder",
+                    description: "This will manually trigger the automated donor premium renewal reminder to the organization's billing contacts.",
+                    confirmLabel: "Send Reminder",
+                  })
+                }
+              >
+                Send Renewal Reminder
               </Button>
             </div>
           </div>
