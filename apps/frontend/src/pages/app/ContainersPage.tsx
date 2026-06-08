@@ -32,7 +32,7 @@ import { useFleetMetrics } from "@/hooks/useFleetMetrics";
 import { useViewerState } from "@/hooks/useViewerState";
 import { dockerApi } from "@/services/docker-api";
 import { cn, formatPercent, formatBytes } from "@/lib/utils";
-import { PLAN_POLICY_BY_PLAN, normalizePlan } from "../../../shared/schema/plan-policy";
+import { PLAN_POLICY_BY_PLAN, normalizePlan } from "../../../../../shared/schema/plan-policy";
 
 type BadgeStatus = "running" | "unhealthy" | "exited" | "restarting" | "paused" | "critical" | "warning";
 
@@ -251,7 +251,7 @@ export default function ContainersPage() {
   }, [fleetMetricsLoading, latestFleetMetrics]);
 
   const filtered = useMemo(() => {
-    let result = containers.filter((c) => {
+    const result = containers.filter((c) => {
       const name = (c.Names?.[0] || "").replace(/^\//, "").toLowerCase();
       const image = (c.Image || "").toLowerCase();
       const hostName = (c._hostName || "").toLowerCase();
@@ -269,8 +269,8 @@ export default function ContainersPage() {
     });
 
     result.sort((a, b) => {
-      let aVal: any = 0;
-      let bVal: any = 0;
+      let aVal: string | number = 0;
+      let bVal: string | number = 0;
 
       const aStats = statsMap.get(a.Id);
       const bStats = statsMap.get(b.Id);

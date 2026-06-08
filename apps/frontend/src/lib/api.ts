@@ -1,6 +1,6 @@
 const API_BASE = import.meta.env.VITE_API_BASE_URL || '/api';
 
-import { summarizeDiagnosticText } from "../../shared/lib/diagnostics";
+import { summarizeDiagnosticText } from "../../../../shared/lib/diagnostics";
 
 type ClerkSession = {
   getToken?: (options?: { skipCache?: boolean }) => Promise<string | null>;

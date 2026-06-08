@@ -6,9 +6,9 @@ import { decryptHostSecrets, SecretCryptoError } from './lib/crypto.mjs';
 import { buildWatchtowerAgentReleaseResponse } from './lib/agent-release.mts';
 import { ensureDockerHostSchema } from './lib/ensure-docker-host-schema.mjs';
 import { buildValidatedAgentUrl } from './lib/host-url.mjs';
-import { createProblemResponse as createBaseProblemResponse } from '../../shared/schema/error.ts';
-import { ProxyRequestParamsSchema } from '../../shared/schema/proxy.ts';
-import { formatDiagnosticDetail, parseDiagnosticPayload } from '../../shared/lib/diagnostics.ts';
+import { createProblemResponse as createBaseProblemResponse } from '../../../../shared/schema/error.ts';
+import { ProxyRequestParamsSchema } from '../../../../shared/schema/proxy.ts';
+import { formatDiagnosticDetail, parseDiagnosticPayload } from '../../../../shared/lib/diagnostics.ts';
 import { buildCorsHeaders, applyRateLimit, RATE_LIMITS, logSecurityEvent, getClientIp } from './lib/security.mjs';
 import { parseTarDirectory } from './lib/tar-directory-parser.mjs';
 

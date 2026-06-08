@@ -39,6 +39,7 @@ function buildVersionPlugin(): Plugin {
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
+  root: "apps/frontend",
   server: {
     host: "::",
     port: 8080,
@@ -56,6 +57,8 @@ export default defineConfig(({ mode }) => ({
     }),
   ].filter(Boolean),
   build: {
+    outDir: "../../dist",
+    emptyOutDir: true,
     sourcemap: "hidden",
     rollupOptions: {
       output: {
@@ -95,7 +98,7 @@ export default defineConfig(({ mode }) => ({
   },
   resolve: {
     alias: {
-      "@": path.resolve(__dirname, "./src"),
+      "@": path.resolve(__dirname, "./apps/frontend/src"),
     },
   },
 }));

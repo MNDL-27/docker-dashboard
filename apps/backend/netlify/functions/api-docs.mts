@@ -1,6 +1,6 @@
 import type { Config } from '@netlify/functions';
 import { buildCorsHeaders } from './lib/security.mjs';
-import { generateOpenAPI } from '../../shared/schema/api.js';
+import { generateOpenAPI } from '../../../../shared/schema/api.js';
 
 
 const buildHeaders = (req: Request) => buildCorsHeaders(req);

@@ -19,8 +19,8 @@ import {
   getWatchtowerAgentModeLabel,
   getWatchtowerAgentRecommendedBindAddress,
   type WatchtowerAgentConnectionMode,
-} from "../../shared/watchtower-agent-release.ts";
-import { getEffectivePlanForEnforcement, PLAN_POLICY_BY_PLAN } from "../../shared/schema/plan-policy.ts";
+} from "../../../../shared/watchtower-agent-release.ts";
+import { getEffectivePlanForEnforcement, PLAN_POLICY_BY_PLAN } from "../../../../shared/schema/plan-policy.ts";
 
 type SessionStatus = "created" | "claimed" | "installed" | "expired" | "cancelled";
 type ReasonCode =

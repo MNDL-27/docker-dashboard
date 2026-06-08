@@ -10,7 +10,7 @@ import {
   isPaidSubscriptionStatus,
   type PlanId,
   type SubscriptionStatus,
-} from "../../../shared/schema/plan-policy.ts";
+} from "../../../../../shared/schema/plan-policy.ts";
 
 function requiresPlatformApproval() {
   const value = (process.env.REQUIRE_PLATFORM_APPROVALS || "").trim().toLowerCase();
