@@ -27,7 +27,7 @@ interface CachedMetricsResponse {
 }
 
 async function fetchCachedMetrics(hostId: string): Promise<CachedMetricsResponse> {
-  return apiFetch(`/host-metrics-cached?hostId=${hostId}&limit=24`);
+  return apiFetch(`/host-metrics-cached?hostId=${hostId}&limit=${DEFAULT_MAX_DATA_POINTS}`);
 }
 
 async function fetchRealTimeMetrics(hostId: string): Promise<HostMetricsPoint> {

@@ -5,6 +5,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { agentEnrollmentApi, type AgentEnrollmentCreateResponse, type AgentEnrollmentFinalizeResponse } from "@/services/agent-enrollment";
 import type { ConnectionMode } from "@/types/database";
 import { deriveNeedsOnboarding, normalizeOnboardingStatus } from "@/lib/onboarding-gate";
+import { SLOW_POLL_INTERVAL_MS } from "@/lib/constants";
 
 export type OnboardingStep =
   | { step: 0; phase: "form" }
@@ -133,7 +134,7 @@ type SyncPollingResult =
   | { status: "cancelled" };
 
 async function pollForOrganizationSync(onCancelCheck: () => boolean): Promise<SyncPollingResult> {
-  const maxWait = 30_000;
+  const maxWait = SLOW_POLL_INTERVAL_MS;
   const start = Date.now();
   let delay = 500;
 

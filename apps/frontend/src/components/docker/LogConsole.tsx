@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
+import { MINUTE_POLL_INTERVAL_MS } from "@/lib/constants";
 
 type LogTone = "error" | "warning" | "info" | "neutral";
 type TimeRangeValue = "all" | "5m" | "15m" | "1h" | "6h" | "24h";
@@ -96,7 +97,7 @@ export function LogConsole({
     const messageNeedle = search.trim().toLowerCase();
     const timestampNeedle = timestampFilter.trim().toLowerCase();
     const selectedRange = timeRangeOptions.find((option) => option.value === timeRange);
-    const cutoff = selectedRange?.minutes ? Date.now() - selectedRange.minutes * 60_000 : null;
+    const cutoff = selectedRange?.minutes ? Date.now() - selectedRange.minutes * MINUTE_POLL_INTERVAL_MS : null;
 
     return parsedLogs.filter((line) => {
       const matchesTone = !activeTone || line.tone === activeTone;

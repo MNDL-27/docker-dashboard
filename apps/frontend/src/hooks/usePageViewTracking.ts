@@ -1,5 +1,6 @@
 import { useEffect, useRef } from "react";
 import { useLocation } from "react-router-dom";
+import { MINUTE_POLL_INTERVAL_MS } from "@/lib/constants";
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL || "/api";
 
@@ -26,7 +27,7 @@ export function usePageViewTracking() {
 
     intervalRef.current = setInterval(() => {
       sendHeartbeat(location.pathname);
-    }, 60_000);
+    }, MINUTE_POLL_INTERVAL_MS);
 
     return () => {
       if (intervalRef.current) {

@@ -13,79 +13,35 @@ export interface AppAuthContext {
   email: string;
 }
 
-interface AuthOptions {
-  requireOrg?: boolean;
+export interface ClerkAuthResult {
+  authenticated: boolean;
+  userId: string;
 }
 
-type AppAuthErrorCode = 'SYNC_PENDING';
+export async function buildClerkAuthFromRequest(req: Request): Promise<ClerkAuthResult> {
+  const requestState = await clerkClient.authenticateRequest(req, {
+    ...getClerkConfig(),
+    authorizedParties: getAuthorizedParties(req),
+  });
 
-interface AppAuthError extends Error {
-  code?: AppAuthErrorCode;
-}
-
-const DEFAULT_AUTHORIZED_PARTIES = [
-  'https://app.dockerdash.app',
-  'https://dockerdash.app',
-  'https://www.dockerdash.app',
-  'http://localhost:5173',
-  'http://localhost:8080',
-  'http://localhost:8081',
-  'http://localhost:8888',
-];
-
-function makeAppAuthError(message: string, code?: AppAuthErrorCode): AppAuthError {
-  const err: AppAuthError = new Error(message);
-  if (code) err.code = code;
-  return err;
-}
-
-function normalizeAuthorizedParty(value: string | null | undefined): string | null {
-  if (!value) return null;
-
-  const trimmed = value.trim();
-  if (!trimmed) return null;
-
-  try {
-    return new URL(trimmed).origin;
-  } catch {
-    return null;
-  }
-}
-
-function getAuthorizedParties(req: Request) {
-  const parties = new Set<string>();
-
-  for (const value of DEFAULT_AUTHORIZED_PARTIES) {
-    const normalized = normalizeAuthorizedParty(value);
-    if (normalized) parties.add(normalized);
+  if (!requestState.isSignedIn) {
+    return { authenticated: false, userId: '' };
   }
 
-  for (const value of (process.env.CLERK_AUTHORIZED_PARTIES || '').split(',')) {
-    const normalized = normalizeAuthorizedParty(value);
-    if (normalized) parties.add(normalized);
+  const authData = requestState.toAuth();
+  if (!authData.userId) {
+    return { authenticated: false, userId: '' };
   }
 
-  const requestOrigin = normalizeAuthorizedParty(req.headers.get('origin'));
-  if (requestOrigin) {
-    parties.add(requestOrigin);
+  const userResult = await sql`SELECT id FROM public.users WHERE clerk_user_id = ${authData.userId}`;
+  if (userResult.length === 0) {
+    return { authenticated: false, userId: '' };
   }
 
-  try {
-    parties.add(new URL(req.url).origin);
-  } catch {
-    // Netlify provides an absolute URL in production, but keep auth resilient in local tests.
-  }
-
-  const forwardedProto = req.headers.get('x-forwarded-proto');
-  const forwardedHost = req.headers.get('x-forwarded-host');
-  if (forwardedProto && forwardedHost) {
-    const forwardedOrigin = normalizeAuthorizedParty(`${forwardedProto}://${forwardedHost}`);
-    if (forwardedOrigin) {
-      parties.add(forwardedOrigin);
-    }
-  }
-
-  return Array.from(parties);
+  return {
+    authenticated: true,
+    userId: userResult[0].id,
+  };
 }
 
 export async function requireAuth(

@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { apiFetch } from "@/lib/api";
 import { useAuth } from "@clerk/react";
+import { SLOW_POLL_INTERVAL_MS } from "@/lib/constants";
 
 export interface ViewerEntitlements {
   plan: "free" | "pro" | "team" | "enterprise";
@@ -50,6 +51,6 @@ export function useViewerState() {
     },
     enabled: isLoaded && isSignedIn,
     retry: false,
-    staleTime: 30_000,
+    staleTime: SLOW_POLL_INTERVAL_MS,
   });
 }

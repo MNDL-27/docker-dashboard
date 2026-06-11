@@ -1,4 +1,5 @@
 import type { FleetMetrics } from "@/hooks/useFleetMetrics";
+import { MINUTE_POLL_INTERVAL_MS } from "@/lib/constants";
 
 const MOCK_TOTAL_CORES = 4;
 const MOCK_MEMORY_LIMIT_BYTES = 8 * 1024 * 1024 * 1024;
@@ -7,7 +8,7 @@ export function buildInitialFleetData(maxDataPoints: number): FleetMetrics[] {
   const now = new Date();
   const data: FleetMetrics[] = [];
   for (let i = maxDataPoints - 1; i >= 0; i--) {
-    const date = new Date(now.getTime() - i * 60000);
+    const date = new Date(now.getTime() - i * MINUTE_POLL_INTERVAL_MS);
     const cpu = Math.max(0, Math.min(100, 30 + Math.random() * 20));
     const memory = Math.max(0, Math.min(100, 45 + Math.random() * 20));
     data.push({

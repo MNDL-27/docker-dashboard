@@ -1,16 +1,11 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { FAST_POLL_INTERVAL_MS, MINUTE_POLL_INTERVAL_MS } from "@/lib/constants";
 
 /**
  * Build hash injected by the Vite build-version plugin.
  * During dev mode this will be "dev", so version polling is skipped.
  */
 const BUILD_HASH = import.meta.env.VITE_BUILD_HASH ?? "dev";
-
-/** How often to check for a new version (ms). Default: 60 seconds. */
-const POLL_INTERVAL_MS = 60_000;
-
-/** How long to wait after a fetch error before retrying (ms). */
-const ERROR_BACKOFF_MS = 120_000;
 
 interface VersionPayload {
   hash: string;
@@ -36,7 +31,7 @@ export function useAppUpdate() {
         cache: "no-store",
       });
       if (!res.ok) {
-        scheduleNext(ERROR_BACKOFF_MS);
+        scheduleNext(2 * MINUTE_POLL_INTERVAL_MS);
         return;
       }
       const data: VersionPayload = await res.json();
@@ -46,10 +41,10 @@ export function useAppUpdate() {
         // Stop polling once we know an update is available
         return;
       }
-      scheduleNext(POLL_INTERVAL_MS);
+      scheduleNext(MINUTE_POLL_INTERVAL_MS);
     } catch {
       // Network error — retry later
-      scheduleNext(ERROR_BACKOFF_MS);
+      scheduleNext(2 * MINUTE_POLL_INTERVAL_MS);
     }
   }, []);
 
@@ -65,7 +60,7 @@ export function useAppUpdate() {
   const dismiss = useCallback(() => {
     setUpdateAvailable(false);
     // Resume polling so the banner can re-appear later
-    scheduleNext(POLL_INTERVAL_MS * 5);
+    scheduleNext(MINUTE_POLL_INTERVAL_MS * 5);
   }, []);
 
   useEffect(() => {
@@ -73,7 +68,7 @@ export function useAppUpdate() {
     if (BUILD_HASH === "dev") return;
 
     // Give the app a few seconds to settle before the first check
-    timerRef.current = setTimeout(check, 10_000);
+    timerRef.current = setTimeout(check, FAST_POLL_INTERVAL_MS);
 
     return () => {
       activeRef.current = false;
