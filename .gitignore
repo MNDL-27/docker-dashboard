@@ -81,3 +81,9 @@ Thumbs.db
 
 # Graphify knowledge graph output (regenerable)
 graphify-out/
+
+# Agent planning artifacts
+.paperclip/
+
+# Legacy SPA directory (monorepo moved to apps/frontend)
+/src/

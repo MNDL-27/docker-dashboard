@@ -56,6 +56,9 @@ export default function OrganizationsPage() {
   const orgLimit = viewer?.entitlements?.orgLimit ?? 1;
   const isAtOrgLimit = orgLimit !== null && organizations.length >= orgLimit;
 
+  // Host limit (node limit) for display
+  const nodeLimit = viewer?.entitlements?.nodeLimit ?? null;
+
   const handleCreate = async () => {
     if (!newName.trim()) return;
     if (isAtOrgLimit) {
@@ -227,7 +230,7 @@ export default function OrganizationsPage() {
       ) : (
         <div className="space-y-4">
           {organizations.map(org => (
-            <OrgCard key={org.id} org={org} />
+            <OrgCard key={org.id} org={org} nodeLimit={nodeLimit} />
           ))}
         </div>
       )}
@@ -235,7 +238,7 @@ export default function OrganizationsPage() {
   );
 }
 
-function OrgCard({ org }: { org: { id: string; name: string; slug: string | null } }) {
+function OrgCard({ org, nodeLimit }: { org: { id: string; name: string; slug: string | null }; nodeLimit: number | null }) {
   // Drop `filterByPlan` here: it would cap the count using the *active* org's
   // node limit, not the target org's. Each org's host count must reflect that
   // org's own state, not the viewer's currently-selected org's entitlements.
@@ -281,7 +284,7 @@ function OrgCard({ org }: { org: { id: string; name: string; slug: string | null
         </div>
         <div className="flex items-center gap-3">
           <Badge variant="outline" className="text-[10px] uppercase tracking-widest">
-            {hostCount} host{hostCount !== 1 ? "s" : ""}
+            {nodeLimit !== null ? `${hostCount} / ${nodeLimit} hosts` : `${hostCount} host${hostCount !== 1 ? "s" : ""}`}
           </Badge>
           <Button asChild size="sm" variant="outline" className="gap-1.5">
             <Link to="/app/members">

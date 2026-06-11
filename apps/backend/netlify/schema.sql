@@ -15,6 +15,7 @@ CREATE TABLE IF NOT EXISTS public.users (
 );
 ALTER TABLE public.users ADD COLUMN IF NOT EXISTS clerk_user_id text UNIQUE;
 ALTER TABLE public.users ADD COLUMN IF NOT EXISTS onboarding_reminder_email_sent_at timestamptz;
+ALTER TABLE public.users ADD COLUMN IF NOT EXISTS is_approved boolean NOT NULL DEFAULT false;
 
 -- Step 3: Organizations
 CREATE TABLE IF NOT EXISTS public.organizations (
@@ -75,6 +76,18 @@ UPDATE public.organizations
 SET onboarding_completed_at = COALESCE(onboarding_completed_at, updated_at)
 WHERE onboarding_status = 'completed' AND onboarding_completed_at IS NULL;
 
+-- Billing & subscription columns (added via migrations)
+ALTER TABLE public.organizations ADD COLUMN IF NOT EXISTS plan text NOT NULL DEFAULT 'free';
+ALTER TABLE public.organizations ADD COLUMN IF NOT EXISTS subscription_status text NOT NULL DEFAULT 'inactive';
+ALTER TABLE public.organizations ADD COLUMN IF NOT EXISTS current_period_ends_at timestamptz;
+ALTER TABLE public.organizations ADD COLUMN IF NOT EXISTS cancel_at_period_end boolean NOT NULL DEFAULT false;
+ALTER TABLE public.organizations ADD COLUMN IF NOT EXISTS billing_updated_at timestamptz NOT NULL DEFAULT now();
+ALTER TABLE public.organizations ADD COLUMN IF NOT EXISTS donor_premium_expires_at timestamptz;
+ALTER TABLE public.organizations ADD COLUMN IF NOT EXISTS payment_provider text;
+
+UPDATE public.organizations SET plan = 'free' WHERE plan IS NULL;
+UPDATE public.organizations SET subscription_status = 'active' WHERE plan = 'free' AND subscription_status = 'inactive';
+
 -- Step 4: Organization Members
 CREATE TABLE IF NOT EXISTS public.organization_members (
   id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
@@ -104,6 +117,11 @@ CREATE TABLE IF NOT EXISTS public.docker_hosts (
   created_at timestamptz NOT NULL DEFAULT now(),
   updated_at timestamptz NOT NULL DEFAULT now()
 );
+
+ALTER TABLE public.docker_hosts ADD COLUMN IF NOT EXISTS runtime_type text NOT NULL DEFAULT 'docker';
+ALTER TABLE public.docker_hosts DROP CONSTRAINT IF EXISTS docker_hosts_runtime_type_check;
+ALTER TABLE public.docker_hosts ADD CONSTRAINT docker_hosts_runtime_type_check CHECK (runtime_type IN ('docker', 'podman'));
+CREATE INDEX IF NOT EXISTS idx_docker_hosts_runtime_type ON public.docker_hosts (runtime_type);
 
 -- Step 6: Docker Host Secrets (No selecting by frontend)
 CREATE TABLE IF NOT EXISTS public.docker_host_secrets (
@@ -377,6 +395,9 @@ CREATE TABLE IF NOT EXISTS public.host_network_usage (
   PRIMARY KEY (host_id, month_bucket)
 );
 
+DROP TRIGGER IF EXISTS update_host_network_usage_updated_at ON public.host_network_usage;
+CREATE TRIGGER update_host_network_usage_updated_at BEFORE UPDATE ON public.host_network_usage FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
 CREATE TABLE IF NOT EXISTS public.host_metrics_cache (
   host_id uuid NOT NULL REFERENCES public.docker_hosts(id) ON DELETE CASCADE,
   collected_at timestamptz NOT NULL DEFAULT now(),
@@ -454,6 +475,9 @@ CREATE TABLE IF NOT EXISTS public.user_access_controls (
   updated_at timestamptz NOT NULL DEFAULT now()
 );
 
+DROP TRIGGER IF EXISTS update_user_access_controls_updated_at ON public.user_access_controls;
+CREATE TRIGGER update_user_access_controls_updated_at BEFORE UPDATE ON public.user_access_controls FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
 CREATE TABLE IF NOT EXISTS public.organization_access_controls (
   organization_id uuid PRIMARY KEY REFERENCES public.organizations(id) ON DELETE CASCADE,
   is_locked boolean NOT NULL DEFAULT false,
@@ -464,6 +488,9 @@ CREATE TABLE IF NOT EXISTS public.organization_access_controls (
   created_at timestamptz NOT NULL DEFAULT now(),
   updated_at timestamptz NOT NULL DEFAULT now()
 );
+
+DROP TRIGGER IF EXISTS update_organization_access_controls_updated_at ON public.organization_access_controls;
+CREATE TRIGGER update_organization_access_controls_updated_at BEFORE UPDATE ON public.organization_access_controls FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
 CREATE TABLE IF NOT EXISTS public.organization_user_bans (
   id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
@@ -484,6 +511,9 @@ CREATE TABLE IF NOT EXISTS public.docker_host_admin_controls (
   created_at timestamptz NOT NULL DEFAULT now(),
   updated_at timestamptz NOT NULL DEFAULT now()
 );
+
+DROP TRIGGER IF EXISTS update_docker_host_admin_controls_updated_at ON public.docker_host_admin_controls;
+CREATE TRIGGER update_docker_host_admin_controls_updated_at BEFORE UPDATE ON public.docker_host_admin_controls FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
 CREATE TABLE IF NOT EXISTS public.admin_operation_runs (
   id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),

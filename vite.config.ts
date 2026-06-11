@@ -50,12 +50,14 @@ export default defineConfig(({ mode }) => ({
   plugins: [
     react(),
     buildVersionPlugin(),
-    sentryVitePlugin({
-      org: process.env.SENTRY_ORG,
-      project: process.env.SENTRY_PROJECT,
-      authToken: process.env.SENTRY_AUTH_TOKEN,
-    }),
-  ].filter(Boolean),
+    ...(process.env.SENTRY_ORG && process.env.SENTRY_PROJECT && process.env.SENTRY_AUTH_TOKEN
+      ? [sentryVitePlugin({
+          org: process.env.SENTRY_ORG,
+          project: process.env.SENTRY_PROJECT,
+          authToken: process.env.SENTRY_AUTH_TOKEN,
+        })]
+      : []),
+  ],
   build: {
     outDir: "../../dist",
     emptyOutDir: true,
