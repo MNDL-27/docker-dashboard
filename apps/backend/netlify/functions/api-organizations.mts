@@ -3,6 +3,8 @@ import { buildCorsHeaders } from './lib/security.mjs';
 import { sql } from './lib/db.mjs';
 import { requireAuth } from './lib/auth.mjs';
 import { assertOrganizationWriteAllowed } from './lib/access-controls.mjs';
+import { resolveOrganizationEntitlements } from './lib/access-controls.mjs';
+import { isPlatformAdminEmail } from './lib/platform-admin.mjs';
 
 
 const buildHeaders = (req: Request) => buildCorsHeaders(req);
@@ -22,7 +24,21 @@ export default async (req: Request) => {
         WHERE om.user_id = ${authContext.userId}
         ORDER BY o.created_at ASC
       `;
-      return new Response(JSON.stringify(orgs), { headers: buildHeaders(req) });
+
+      const isPlatformAdmin = isPlatformAdminEmail(authContext.userEmail ?? '');
+      const orgsWithLimits = await Promise.all(orgs.map(async (org: any) => {
+        const entitlements = await resolveOrganizationEntitlements({
+          organizationId: org.id,
+          isPlatformAdmin,
+        });
+        return {
+          ...org,
+          hostLimit: entitlements.nodeLimit,
+          effectivePlan: entitlements.effectivePlan,
+        };
+      }));
+
+      return new Response(JSON.stringify(orgsWithLimits), { headers: buildHeaders(req) });
     }
 
     if (req.method === 'POST') {
