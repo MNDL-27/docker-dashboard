@@ -87,3 +87,9 @@ graphify-out/
 
 # Legacy SPA directory (monorepo moved to apps/frontend)
 /src/
+
+# Stale vitest per-project config (replaced by root vitest.workspace.ts)
+apps/frontend/vitest.config.ts
+apps/backend/vitest.config.ts
+shared/vitest.config.ts
+/vitest.config.ts

@@ -1,34 +1,34 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-vi.mock("./lib/db.mjs", () => ({
+vi.mock("../lib/db.mjs", () => ({
   sql: vi.fn(),
 }));
 
-vi.mock("./lib/auth.mjs", () => ({
+vi.mock("../lib/auth.mjs", () => ({
   requireAuth: vi.fn(),
 }));
 
-vi.mock("./lib/access-controls.mjs", () => ({
+vi.mock("../lib/access-controls.mjs", () => ({
   assertHostProxyAllowed: vi.fn(),
   assertOrganizationWriteAllowed: vi.fn(),
   enforceOrganizationNodeLimit: vi.fn(),
   resolveOrganizationEntitlements: vi.fn(),
 }));
 
-vi.mock("./lib/crypto.mjs", () => ({
+vi.mock("../lib/crypto.mjs", () => ({
   decryptHostSecrets: vi.fn(),
   SecretCryptoError: class SecretCryptoError extends Error {},
 }));
 
-vi.mock("./lib/agent-release.mts", () => ({
+vi.mock("../lib/agent-release.mts", () => ({
   buildWatchtowerAgentReleaseResponse: vi.fn(),
 }));
 
-vi.mock("./lib/ensure-docker-host-schema.mjs", () => ({
+vi.mock("../lib/ensure-docker-host-schema.mjs", () => ({
   ensureDockerHostSchema: vi.fn(),
 }));
 
-vi.mock("./lib/security.mts", () => ({
+vi.mock("../lib/security.mts", () => ({
   buildCorsHeaders: vi.fn(() => ({ "Access-Control-Allow-Origin": "https://dockerdash.app" })),
   applyRateLimit: vi.fn(async () => null),
   RATE_LIMITS: { PROXY: { maxRequests: 600, windowMs: 60_000 } },
@@ -36,30 +36,30 @@ vi.mock("./lib/security.mts", () => ({
   getClientIp: vi.fn(() => "203.0.113.10"),
 }));
 
-vi.mock("./lib/tar-directory-parser.mts", () => ({
+vi.mock("../lib/tar-directory-parser.mts", () => ({
   parseTarDirectory: vi.fn(),
   buildDirectoryTar: vi.fn(),
 }));
 
-import { sql } from "./lib/db.mjs";
-import { requireAuth } from "./lib/auth.mjs";
+import { sql } from "../lib/db.mjs";
+import { requireAuth } from "../lib/auth.mjs";
 import {
   assertHostProxyAllowed,
   assertOrganizationWriteAllowed,
   enforceOrganizationNodeLimit,
   resolveOrganizationEntitlements,
-} from "./lib/access-controls.mjs";
-import { decryptHostSecrets } from "./lib/crypto.mjs";
-import { buildWatchtowerAgentReleaseResponse } from "./lib/agent-release.mts";
-import { ensureDockerHostSchema } from "./lib/ensure-docker-host-schema.mjs";
+} from "../lib/access-controls.mjs";
+import { decryptHostSecrets } from "../lib/crypto.mjs";
+import { buildWatchtowerAgentReleaseResponse } from "../lib/agent-release.mts";
+import { ensureDockerHostSchema } from "../lib/ensure-docker-host-schema.mjs";
 import {
   applyRateLimit,
   buildCorsHeaders,
   logSecurityEvent,
-} from "./lib/security.mts";
-import { parseTarDirectory } from "./lib/tar-directory-parser.mts";
+} from "../lib/security.mts";
+import { parseTarDirectory } from "../lib/tar-directory-parser.mts";
 
-import handler, { config } from "./api-docker-proxy.mts";
+import handler, { config } from "../api-docker-proxy.mts";
 
 const mockedSql = vi.mocked(sql);
 const mockedRequireAuth = vi.mocked(requireAuth);
@@ -746,7 +746,7 @@ describe("api-docker-proxy integration suite", () => {
     });
 
     it("returns the secret storage error when crypto throws", async () => {
-      const { SecretCryptoError } = await import("./lib/crypto.mts");
+      const { SecretCryptoError } = await import("../lib/crypto.mts");
       mockedDecryptHostSecrets.mockImplementationOnce(() => {
         throw new SecretCryptoError("cipher mismatch");
       });
